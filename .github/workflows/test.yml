@@ -1,0 +1,49 @@
+# https://github.com/actions/virtual-environments
+
+name: test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test
+    runs-on: macos-12
+    strategy:
+      matrix:
+        xcode_version:
+          - 13.3
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode_version }}.app
+    steps:
+      - uses: actions/checkout@v2
+      - name: Show environments
+        run: |
+          swift --version
+          xcodebuild -version
+      - name: Test library
+        run: make test-library
+      - name: Test examples
+        run: make test-examples
+
+  validation:
+    name: Validation
+    runs-on: macos-12
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_13.3.app
+    steps:
+      - uses: actions/checkout@v2
+      - name: Validate lint
+        run: make lint
+      - name: Validate format
+        run: |
+          make format
+          if [ -n "$(git status --porcelain)" ]; then echo "Make sure that the code is formated by 'make format'."; exit 1; fi
+      - name: Validate example project
+        run: |
+          make proj
+          if [ -n "$(git status --porcelain)" ]; then echo "Make sure that 'Examples/App.xcodeproj' is formated by 'make proj'."; exit 1; fi
