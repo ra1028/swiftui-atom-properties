@@ -372,7 +372,7 @@ See [Guides](#guides) section for more detail. Also, the [Examples](Examples) di
 
 ## Guides
 
-This section introduces the available APIs and their uses. Click on ► `Example` to expand the example code.  
+This section introduces the available APIs and their uses.  
 To look into the APIs in more detail, visit the [API referrence](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms).
 
 ---
@@ -422,7 +422,7 @@ In order to provide the best interface and effective state management for the ty
 
 #### [ValueAtom](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/valueatom)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct LocaleAtom: ValueAtom, Hashable {
@@ -451,7 +451,7 @@ struct LocaleView: View {
 
 #### [StateAtom](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/stateatom)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct CounterAtom: StateAtom, Hashable {
@@ -490,7 +490,7 @@ struct CounterView: View {
 
 #### [TaskAtom](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/taskatom)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct FetchUserAtom: TaskAtom, Hashable {
@@ -521,7 +521,7 @@ struct UserView: View {
 
 #### [ThrowingTaskAtom](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/throwingtaskatom)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct FetchMoviesAtom: ThrowingTaskAtom, Hashable {
@@ -558,7 +558,7 @@ struct MoviesView: View {
 
 #### [AsyncSequenceAtom](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/asyncsequenceatom)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct NotificationAtom: AsyncSequenceAtom, Hashable {
@@ -595,7 +595,7 @@ struct NotificationView: View {
 
 #### [PublisherAtom](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/publisheratom)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct TimerAtom: PublisherAtom, Hashable {
@@ -628,7 +628,7 @@ struct TimerView: View {
 
 #### [ObservableObjectAtom](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/observableobjectatom)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 class Contact: ObservableObject {
@@ -678,7 +678,7 @@ Modifiers can be applied to an atom to produce a different versions of the origi
 
 #### [select(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atom/select(_:))
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct CountAtom: StateAtom, Hashable {
@@ -708,7 +708,7 @@ struct CountDisplayView: View {
 
 #### [phase](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atom/phase)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct FetchWeatherAtom: ThrowingTaskAtom, Hashable {
@@ -754,7 +754,7 @@ By retrieving the atom through these property wrappers, the internal system mark
 
 #### [@Watch](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/watch)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct UserNameAtom: StateAtom, Hashable {
@@ -782,7 +782,7 @@ struct UserNameDisplayView: View {
 
 #### [@WatchState](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/watchstate)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct UserNameAtom: StateAtom, Hashable {
@@ -797,7 +797,7 @@ struct UserNameInputView: View {
 
     var body: some View {
         VStack {
-            TextField("User name", text: $text)
+            TextField("User name", text: $name)
             Button("Clear") {
                 name = ""
             }
@@ -815,7 +815,7 @@ struct UserNameInputView: View {
 
 #### [@WatchStateObject](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/watchstateobject)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 class Counter: ObservableObject {
@@ -857,7 +857,7 @@ struct CounterView: View {
 
 #### [@ViewContext](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/viewcontext)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct FetchBookAtom: ThrowingTaskAtom, Hashable {
@@ -911,21 +911,21 @@ The context also provides a flexible solution for passing dynamic parameters to 
 
 Contexts are context structure for using and interacting with the state of other atoms from a view or an another atom. The basic API common to all contexts is as follows:
 
-|API            |Use                                                               |
-|:--------------|:-----------------------------------------------------------------|
-|`watch(_:)`    |Obtains an atom value and starts watching its update.             |
-|`read(_:)`     |Obtains an atom value but does not watch its update.              |
-|`set(_:for:)`  |Sets a new value to the atom.                                     |
-|`subscript(:_)`|Read-write access for applying mutating methods.                  |
-|`state(_:)`    |Gets a binding to the atom state.                                 |
-|`refresh(_:)`  |Reset an atom and await until asynchronous operation is complete. |
-|`reset(_:)`    |Reset an atom to the default value or a first output.             |
+|API|Use|
+|:--|:--|
+|[watch(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomwatchablecontext/watch(_:))|Obtains an atom value and starts watching its update.|
+|[read(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomcontext/read(_:))|Obtains an atom value but does not watch its update.|
+|[set(_:for:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomcontext/set(_:for:))|Sets a new value to the atom.|
+|[[:_]](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomcontext/subscript(_:)) subscript|Read-write access for applying mutating methods.|
+|[state(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomwatchablecontext/state(_:))|Gets a binding to the atom state.|
+|[refresh(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomcontext/refresh(_:))|Reset an atom and await until asynchronous operation is complete.|
+|[reset(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomcontext/reset(_:))|Reset an atom to the default value or a first output.|
 
 There are the following types context as different contextual environments, and they have some specific APIs for each.
 
 #### [AtomViewContext](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomviewcontext)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct SearchQueryAtom: StateAtom, Hashable {
@@ -996,7 +996,7 @@ Context available through the `@ViewContext` property wrapper when using atoms f
 
 #### [AtomRelationContext](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomrelationcontext)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 class LocationManagerDelegate: NSObject, CLLocationManagerDelegate { ... }
@@ -1026,14 +1026,14 @@ struct CoordinateAtom: ValueAtom, Hashable {
 
 Context passed as a parameter to the primary function of each atom type.
 
-|API                         |Use                                                                             |
-|:---------------------------|:-------------------------------------------------------------------------------|
-|`addTermination(_:)`        |Calls the passed closure when the atom is updated or is no longer used.         |
-|`keepUntilTermination(_:)`  |Retains the given object instance until the atom is updated or is no loger used.|
+|API|Use|
+|:--|:--|
+|[addTermination(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomrelationcontext/addtermination(_:))|Calls the passed closure when the atom is updated or is no longer used.|
+|[keepUntilTermination(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomrelationcontext/keepuntiltermination(_:))|Retains the given object instance until the atom is updated or is no loger used.|
 
 #### [AtomTestContext](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomtestcontext)
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 protocol APIClientProtocol { 
@@ -1076,12 +1076,12 @@ class FetchMusicsTests: XCTestCase {
 
 Context that can simulate any scenarios in which atoms are used from a view or another atom and provides a comprehensive means of testing.
 
-|API                |Use                                                                                          |
-|:------------------|:--------------------------------------------------------------------------------------------|
-|`unwatch(_:)`      |Simulates a scenario in which the atom is no longer watched.                                 |
-|`override(_:with:)`|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
-|`observe(_:)`      |Observes changes in any atom values and its lifecycles.                                      |
-|`onUpdate`         |Sets a closure that notifies there has been an update to one of the atoms.                   |
+|API|Use|
+|:--|:--|
+|[unwatch(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomtestcontext/unwatch(_:))|Simulates a scenario in which the atom is no longer watched.|
+|[override(_:with:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomtestcontext/override(_:with:)-67ivk)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
+|[observe(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomtestcontext/observe(_:))|Observes changes in any atom values and its lifecycles.|
+|[onUpdate](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomtestcontext/onupdate)|Sets a closure that notifies there has been an update to one of the atoms.|
 
 ---
 
@@ -1235,7 +1235,7 @@ struct NewsList_Preview: PreviewProvider {
 
 ### Observability
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct Logger: AtomObserver {
@@ -1288,7 +1288,7 @@ In addition, this observability can be applied to do [time travel debugging](htt
 
 #### Obtain an atom value without watching to it
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct TextAtom: StateAtom, Hashable {
@@ -1315,7 +1315,7 @@ The `read(_:)` function is a way to get the state of an atom without having watc
 
 #### Dynamically initiate an atom with external parameters
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 struct FetchUserAtom: ThrowingTaskAtom {
@@ -1357,7 +1357,7 @@ Each atom must have a unique `key` to be uniquely associated with its value. As 
 
 #### Pass a context to your object to interact with other atoms
 
-<details><summary><code>Example</code></summary>
+<details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
 @MainActor
@@ -1415,7 +1415,7 @@ You can pass a context to your object and interact with other atoms at any async
 
 #### In iOS14, modal presentation causes assertionFailure when dismissing it
 
-<details><summary><code>Workaround</code></summary>
+<details><summary><code>💡 Click to expand workaround</code></summary>
 
 ```swift
 struct RootView: View {
@@ -1445,7 +1445,7 @@ As a workaround, `AtomRelay` has the ability to explicitly inherit the internal 
 
 #### Some SwiftUI modifiers cause memory leak
 
-<details><summary><code>Workaround</code></summary>
+<details><summary><code>💡 Click to expand workaround</code></summary>
 
 ```swift
 @ViewContext
