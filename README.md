@@ -515,7 +515,7 @@ struct UserView: View {
 
 |           |Description|
 |:----------|:----------|
-|Summary    |Initiates a nonthrowing `Task` from the given `async` function.|
+|Summary    |Initiates a non-throwing `Task` from the given `async` function.|
 |Output     |`Task<T, Never>`|
 |Use Case   |Non-throwing asynchronous operation e.g. Expensive calculation|
 
@@ -1029,7 +1029,7 @@ Context passed as a parameter to the primary function of each atom type.
 |API|Use|
 |:--|:--|
 |[addTermination(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomrelationcontext/addtermination(_:))|Calls the passed closure when the atom is updated or is no longer used.|
-|[keepUntilTermination(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomrelationcontext/keepuntiltermination(_:))|Retains the given object instance until the atom is updated or is no loger used.|
+|[keepUntilTermination(_:)](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomrelationcontext/keepuntiltermination(_:))|Retains the given object instance until the atom is updated or is no longer used.|
 
 #### [AtomTestContext](https://ra1028.github.io/swiftui-atomic-architecture/documentation/atoms/atomtestcontext)
 
