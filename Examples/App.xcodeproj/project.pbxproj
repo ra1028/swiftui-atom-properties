@@ -266,10 +266,6 @@
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				"EXCLUDED_ARCHS[sdk=appletv*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=appletvsimulator*]" = arm64;
-				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				INFOPLIST_FILE = "App/Info-iOS.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -294,10 +290,6 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				"EXCLUDED_ARCHS[sdk=appletv*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=appletvsimulator*]" = arm64;
-				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				INFOPLIST_FILE = "App/Info-CrossPlatform_macOS.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -320,10 +312,6 @@
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				"EXCLUDED_ARCHS[sdk=appletv*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=appletvsimulator*]" = arm64;
-				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				INFOPLIST_FILE = "App/Info-CrossPlatform_iOS.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -347,10 +335,6 @@
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				"EXCLUDED_ARCHS[sdk=appletv*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=appletvsimulator*]" = arm64;
-				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				INFOPLIST_FILE = "App/Info-iOS.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -429,10 +413,6 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				"EXCLUDED_ARCHS[sdk=appletv*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=appletvsimulator*]" = arm64;
-				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				INFOPLIST_FILE = "App/Info-CrossPlatform_macOS.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -456,10 +436,6 @@
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				"EXCLUDED_ARCHS[sdk=appletv*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=appletvsimulator*]" = arm64;
-				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				INFOPLIST_FILE = "App/Info-CrossPlatform_tvOS.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -484,10 +460,6 @@
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				"EXCLUDED_ARCHS[sdk=appletv*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=appletvsimulator*]" = arm64;
-				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				INFOPLIST_FILE = "App/Info-CrossPlatform_tvOS.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -572,10 +544,6 @@
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				"EXCLUDED_ARCHS[sdk=appletv*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=appletvsimulator*]" = arm64;
-				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = arm64;
 				INFOPLIST_FILE = "App/Info-CrossPlatform_iOS.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
