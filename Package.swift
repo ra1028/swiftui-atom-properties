@@ -14,20 +14,10 @@ let package = Package(
         .library(name: "Atoms", targets: ["Atoms"])
     ],
     targets: [
-        .target(
-            name: "Atoms",
-            swiftSettings: [
-                .unsafeFlags([
-                    "-Xfrontend",
-                    "-enable-actor-data-race-checks",
-                ])
-            ]
-        ),
+        .target(name: "Atoms"),
         .testTarget(
             name: "AtomsTests",
-            dependencies: [
-                "Atoms"
-            ]
+            dependencies: ["Atoms"]
         ),
     ],
     swiftLanguageVersions: [.v5]
