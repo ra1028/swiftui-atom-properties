@@ -1,5 +1,5 @@
 <h1 align="center">SwiftUI Atom Properties</h1>
-<p align="center">A Reactive Data-Binding and Dependency Injection Library </br>for SwiftUI x Concurrency</p>
+<p align="center">A Reactive Data-Binding and Dependency Injection Library</br>for SwiftUI x Concurrency</p>
 <p align="center"><a href="https://ra1028.github.io/swiftui-atom-properties/documentation/atoms">📔 API Reference</a></p>
 <p align="center">
   <a href="https://github.com/ra1028/swiftui-atom-properties/actions"><img alt="build" src="https://github.com/ra1028/swiftui-atom-properties/workflows/test/badge.svg"></a>
@@ -43,7 +43,7 @@
 
 |Reactive Data Binding|Effective Data Caching|Compile Safe<br>Dependency Injection|
 |:------------------------|:----------------|:--------------------------------|
-|Piece of value that can be accessed from anywhere propagates changes reactively.|Recompute atom value and views only when truly need, otherwise it caches values until no longer used.|Successful compilation guarantees that dependency injection is ready.|
+|Piece of app data that can be accessed from anywhere propagates changes reactively.|Recompute atom data and views only when truly need, otherwise it caches data until no longer used.|Successful compilation guarantees that dependency injection is ready.|
 
 </p>
 
@@ -399,7 +399,7 @@ struct ExampleApp: App {
 
 ### Atoms
 
-An atom represents a piece of state and is the source of truth for your app. It can also represent a derived value by combining and transforming one or more other atoms.  
+An atom represents a piece of state and is the source of truth for your app. It can also represent a derived data by combining and transforming one or more other atoms.  
 Each atom does not actually have a global data inside, and retrieve values from the internal store provided by the `AtomRoot`. That's why *they can be accessed from anywhere, but never lose testability.*  
 
 An atom and its value are associated using a unique `key` which is automatically defined if the atom conforms to `Hashable`, but you can also define it explicitly without Hashable.  
@@ -447,7 +447,7 @@ struct LocaleView: View {
 |:----------|:----------|
 |Summary    |Provides a read-only value.|
 |Output     |`T`|
-|Use Case   |Computed property, Derived value, Dependency injection|
+|Use Case   |Computed property, Derived data, Dependency injection|
 
 #### [StateAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/stateatom)
 
