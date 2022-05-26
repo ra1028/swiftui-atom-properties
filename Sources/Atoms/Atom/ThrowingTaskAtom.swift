@@ -13,20 +13,20 @@
 /// ## Example
 ///
 /// ```swift
-/// struct AsyncTitleAtom: ThrowingTaskAtom, Hashable {
+/// struct AsyncTextAtom: ThrowingTaskAtom, Hashable {
 ///     func value(context: Context) async throws -> String {
 ///         try await Task.sleep(nanoseconds: 1_000_000_000)
-///         return "The Atomic Architecture"
+///         return "Swift"
 ///     }
 /// }
 ///
 /// struct DelayedTitleView: View {
-///     @Watch(AsyncTitleAtom())
-///     var title
+///     @Watch(AsyncTextAtom())
+///     var text
 ///
 ///     var body: some View {
-///         Suspense(title) { title in
-///             Text(title)
+///         Suspense(text) { text in
+///             Text(text)
 ///         } suspending: {
 ///             Text("Loading")
 ///         } catch: {

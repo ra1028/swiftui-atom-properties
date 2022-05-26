@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "swiftui-atomic-architecture",
+    name: "swiftui-atom-properties",
     platforms: [
         .iOS(.v14),
         .macOS(.v11),

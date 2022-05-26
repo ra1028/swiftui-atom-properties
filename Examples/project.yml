@@ -1,6 +1,6 @@
 name: App
 options:
-  bundleIdPrefix: com.ryo.swiftui-atomic-architecture.examples
+  bundleIdPrefix: com.ryo.swiftui-atom-properties.examples
   createIntermediateGroups: true
 settingGroups:
   app:

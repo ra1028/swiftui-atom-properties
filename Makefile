@@ -26,7 +26,7 @@ docs:
 	  --product Atoms \
 	  --disable-indexing \
 	  --transform-for-static-hosting \
-	  --hosting-base-path swiftui-atomic-architecture \
+	  --hosting-base-path swiftui-atom-properties \
 	  --output-path docs
 
 .PHONY: docs-preview
@@ -42,7 +42,7 @@ test: test-library test-examples
 .PHONY: test-library
 test-library:
 	for platform in "$(TEST_PLATFORM_IOS)" "$(TEST_PLATFORM_MACOS)" "$(TEST_PLATFORM_TVOS)" "$(TEST_PLATFORM_WATCHOS)"; do \
-	    xcodebuild test -scheme swiftui-atomic-architecture -destination platform="$$platform"; \
+	    xcodebuild test -scheme swiftui-atom-properties -destination platform="$$platform"; \
 	done
 
 .PHONY: test-examples
