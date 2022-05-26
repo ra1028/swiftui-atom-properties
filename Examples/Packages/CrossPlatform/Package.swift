@@ -2,7 +2,7 @@
 
 import PackageDescription
 
-let atoms = Target.Dependency.product(name: "Atoms", package: "swiftui-atomic-architecture")
+let atoms = Target.Dependency.product(name: "Atoms", package: "swiftui-atom-properties")
 
 let package = Package(
     name: "CrossPlatformExamples",

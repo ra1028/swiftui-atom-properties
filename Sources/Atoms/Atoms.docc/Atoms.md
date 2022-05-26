@@ -1,14 +1,14 @@
 # ``Atoms``
 
-A declarative state management and dependency injection library for SwiftUI x Concurrency.
+A Reactive Data-Binding and Dependency Injection Library for SwiftUI x Concurrency.
 
 ## Overview
 
-The Atomic Architecture offers practical capabilities to manage the complexity of modern apps. It effectively integrates the solution for both state management and dependency injection while allowing us to rapidly building an application.
+SwiftUI Atom Properties offers practical capabilities to manage the complexity of modern apps. It effectively integrates the solution for both data-binding and dependency injection while allowing us to rapidly building an application.
 
 ## Source Code
 
-<https://github.com/ra1028/swiftui-atomic-architecture>
+<https://github.com/ra1028/swiftui-atom-properties>
 
 ## Topics
 

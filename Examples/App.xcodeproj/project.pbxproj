@@ -276,7 +276,7 @@
 					"-Xfrontend",
 					"-enable-actor-data-race-checks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atomic-architecture.examples.iOS";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.iOS";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -300,7 +300,7 @@
 					"-Xfrontend",
 					"-enable-actor-data-race-checks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atomic-architecture.examples.CrossPlatform-macOS";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-macOS";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -322,7 +322,7 @@
 					"-Xfrontend",
 					"-enable-actor-data-race-checks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atomic-architecture.examples.CrossPlatform-iOS";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-iOS";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -345,7 +345,7 @@
 					"-Xfrontend",
 					"-enable-actor-data-race-checks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atomic-architecture.examples.iOS";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.iOS";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -423,7 +423,7 @@
 					"-Xfrontend",
 					"-enable-actor-data-race-checks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atomic-architecture.examples.CrossPlatform-macOS";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-macOS";
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -445,7 +445,7 @@
 					"-Xfrontend",
 					"-enable-actor-data-race-checks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atomic-architecture.examples.CrossPlatform-tvOS";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-tvOS";
 				SDKROOT = appletvos;
 				TARGETED_DEVICE_FAMILY = 3;
 				TVOS_DEPLOYMENT_TARGET = 14.0;
@@ -469,7 +469,7 @@
 					"-Xfrontend",
 					"-enable-actor-data-race-checks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atomic-architecture.examples.CrossPlatform-tvOS";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-tvOS";
 				SDKROOT = appletvos;
 				TARGETED_DEVICE_FAMILY = 3;
 				TVOS_DEPLOYMENT_TARGET = 14.0;
@@ -554,7 +554,7 @@
 					"-Xfrontend",
 					"-enable-actor-data-race-checks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atomic-architecture.examples.CrossPlatform-iOS";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-iOS";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
