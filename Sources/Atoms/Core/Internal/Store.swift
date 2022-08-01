@@ -1,3 +1,5 @@
+import Foundation
+
 @MainActor
 internal struct Store: AtomStore {
     private(set) weak var container: StoreContainer?
@@ -85,15 +87,29 @@ internal struct Store: AtomStore {
     func watch<Node: Atom>(
         _ atom: Node,
         relationship: Relationship,
+        shouldNotifyAfterUpdates: Bool = false,
         notifyUpdate: @MainActor @escaping () -> Void
     ) -> Node.Hook.Value {
         // Assign the observation to the given relationship.
-        relationship[atom] = host(of: atom).observe(notifyUpdate)
+        relationship[atom] = host(of: atom).observe {
+            if shouldNotifyAfterUpdates {
+                RunLoop.current.perform {
+                    notifyUpdate()
+                }
+            }
+            else {
+                notifyUpdate()
+            }
+        }
         return read(atom)
     }
 
-    func watch<Node: Atom, Caller: Atom>(_ atom: Node, belongTo caller: Caller) -> Node.Hook.Value {
-        watch(atom, relationship: host(of: caller).relationship) {
+    func watch<Node: Atom, Caller: Atom>(
+        _ atom: Node,
+        belongTo caller: Caller,
+        shouldNotifyAfterUpdates: Bool = false
+    ) -> Node.Hook.Value {
+        watch(atom, relationship: host(of: caller).relationship, shouldNotifyAfterUpdates: shouldNotifyAfterUpdates) {
             let oldValue = read(caller)
 
             // Terminate the value & the ongoing task, but keep assignment until finishing notify update.
