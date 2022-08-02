@@ -1,67 +1,62 @@
 public extension Atom where Hook: AtomTaskHook {
-    /// Converts the `Task` that the original atom provides into ``AsyncPhase`` that
-    /// changes overtime.
-    ///
-    /// ```swift
-    /// struct AsyncIntAtom: TaskAtom, Hashable {
-    ///     func value(context: Context) async -> Int {
-    ///         try? await Task.sleep(nanoseconds: 1_000_000_000)
-    ///         return 12345
-    ///     }
-    /// }
-    ///
-    /// struct ExampleView: View {
-    ///     @Watch(AsyncIntAtom().phase)
-    ///     var intPhase
-    ///
-    ///     var body: some View {
-    ///         switch intPhase {
-    ///         case .success(let value):
-    ///             Text("Value is \(value)")
-    ///
-    ///         case .suspending:
-    ///             Text("Loading")
-    ///         }
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// This modifier converts the `Task` that the original atom provides into ``AsyncPhase``
-    /// and notifies its changes to downstream atoms and views.
     @MainActor
-    var phase: TaskPhaseModifierAtom<Self> {
-        TaskPhaseModifierAtom(base: self)
+    var phase: ModifiedAtom<TaskPhaseModifier<Self>> {
+        ModifiedAtom(modifier: TaskPhaseModifier(atom: self))
     }
 }
 
-/// An atom that provides a sequential value of the base atom as an enum
-/// representation ``AsyncPhase`` that changes overtime.
-///
-/// You can also use ``Atom/phase`` to constract this atom.
-public struct TaskPhaseModifierAtom<Base: Atom>: Atom where Base.Hook: AtomTaskHook {
-    /// A type representing the stable identity of this atom associated with an instance.
-    public struct Key: Hashable {
-        private let base: Base.Key
+public struct TaskPhaseModifier<Node: Atom>: AtomModifier where Node.Hook: AtomTaskHook {
+    public typealias Value = AsyncPhase<Node.Hook.Success, Node.Hook.Failure>
 
-        fileprivate init(_ base: Base.Key) {
-            self.base = base
+    public struct Key: Hashable {
+        private let atomKey: Node.Key
+
+        fileprivate init(_ atomKey: Node.Key) {
+            self.atomKey = atomKey
         }
     }
 
-    private let base: Base
-
-    /// Creates a new atom instance with given base atom.
-    public init(base: Base) {
-        self.base = base
+    public final class Coordinator {
+        internal var phase: Value?
     }
 
-    /// A unique value used to identify the atom internally.
+    private let atom: Node
+
+    internal init(atom: Node) {
+        self.atom = atom
+    }
+
     public var key: Key {
-        Key(base.key)
+        Key(atom.key)
     }
 
-    /// The hook for managing the state of this atom internally.
-    public var hook: TaskPhaseModifierHook<Base> {
-        Hook(base: base)
+    public func shouldNotifyUpdate(newValue: AsyncPhase<Node.Hook.Success, Node.Hook.Failure>, oldValue: AsyncPhase<Node.Hook.Success, Node.Hook.Failure>) -> Bool {
+        true
+    }
+
+    public func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    public func value(context: Context) -> Value {
+        context.coordinator.phase ?? _assertingFallbackValue(context: context)
+    }
+
+    public func update(context: Context) {
+        let task = Task {
+            let phase = await AsyncPhase(context.atomContext.watch(atom).result)
+
+            if !Task.isCancelled {
+                context.coordinator.phase = phase
+                context.notifyUpdate()
+            }
+        }
+
+        context.coordinator.phase = .suspending
+        context.addTermination(task.cancel)
+    }
+
+    public func updateOverride(context: Context, with value: Value) {
+        context.coordinator.phase = value
     }
 }
