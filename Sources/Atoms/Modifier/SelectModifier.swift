@@ -28,7 +28,7 @@ public struct SelectModifier<Node: Atom, Value: Equatable>: AtomModifier {
     private let atom: Node
     private let keyPath: KeyPath<Node.Hook.Value, Value>
 
-    public init(atom: Node, keyPath: KeyPath<Node.Hook.Value, Value>) {
+    internal init(atom: Node, keyPath: KeyPath<Node.Hook.Value, Value>) {
         self.atom = atom
         self.keyPath = keyPath
     }

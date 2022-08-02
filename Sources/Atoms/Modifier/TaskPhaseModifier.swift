@@ -30,7 +30,7 @@ public struct TaskPhaseModifier<Node: Atom>: AtomModifier where Node.Hook: AtomT
         Key(atom.key)
     }
 
-    public func shouldNotifyUpdate(newValue: AsyncPhase<Node.Hook.Success, Node.Hook.Failure>, oldValue: AsyncPhase<Node.Hook.Success, Node.Hook.Failure>) -> Bool {
+    public func shouldNotifyUpdate(newValue: Value, oldValue: Value) -> Bool {
         true
     }
 
