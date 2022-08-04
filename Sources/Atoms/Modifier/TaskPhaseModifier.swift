@@ -1,36 +1,24 @@
 public extension Atom where Hook: AtomTaskHook {
     @MainActor
-    var phase: ModifiedAtom<TaskPhaseModifier<Self>> {
-        ModifiedAtom(modifier: TaskPhaseModifier(atom: self))
+    var phase: ModifiedAtom<Self, TaskPhaseModifier<Hook.Success, Hook.Failure>> {
+        modifier(TaskPhaseModifier())
     }
 }
 
-public struct TaskPhaseModifier<Node: Atom>: AtomModifier where Node.Hook: AtomTaskHook {
-    public typealias Value = AsyncPhase<Node.Hook.Success, Node.Hook.Failure>
+public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
+    public typealias Phase = AsyncPhase<Success, Failure>
 
-    public struct Key: Hashable {
-        private let atomKey: Node.Key
-
-        fileprivate init(_ atomKey: Node.Key) {
-            self.atomKey = atomKey
-        }
-    }
+    public struct Key: Hashable {}
 
     public final class Coordinator {
-        internal var phase: Value?
-    }
-
-    private let atom: Node
-
-    internal init(atom: Node) {
-        self.atom = atom
+        internal var phase: Phase?
     }
 
     public var key: Key {
-        Key(atom.key)
+        Key()
     }
 
-    public func shouldNotifyUpdate(newValue: Value, oldValue: Value) -> Bool {
+    public func shouldNotifyUpdate(newValue: Phase, oldValue: Phase) -> Bool {
         true
     }
 
@@ -38,13 +26,17 @@ public struct TaskPhaseModifier<Node: Atom>: AtomModifier where Node.Hook: AtomT
         Coordinator()
     }
 
-    public func value(context: Context) -> Value {
-        context.coordinator.phase ?? _assertingFallbackValue(context: context)
+    public func get(context: Context) -> Phase? {
+        context.coordinator.phase
     }
 
-    public func update(context: Context) {
+    public func set(value: Phase, context: Context) {
+        context.coordinator.phase = value
+    }
+
+    public func update(context: Context, with value: Task<Success, Failure>) {
         let task = Task {
-            let phase = await AsyncPhase(context.atomContext.watch(atom).result)
+            let phase = await AsyncPhase(value.result)
 
             if !Task.isCancelled {
                 context.coordinator.phase = phase
@@ -54,9 +46,5 @@ public struct TaskPhaseModifier<Node: Atom>: AtomModifier where Node.Hook: AtomT
 
         context.coordinator.phase = .suspending
         context.addTermination(task.cancel)
-    }
-
-    public func updateOverride(context: Context, with value: Value) {
-        context.coordinator.phase = value
     }
 }

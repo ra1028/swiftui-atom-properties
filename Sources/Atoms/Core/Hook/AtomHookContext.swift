@@ -4,6 +4,7 @@ public struct AtomHookContext<Coordinator> {
     @usableFromInline
     internal let _box: _AnyAtomHookContextBox
 
+    @usableFromInline
     internal let coordinator: Coordinator
 
     internal init<Node: Atom>(
