@@ -25,12 +25,6 @@ final class TaskPhaseModifierTests: XCTestCase {
         XCTAssertEqual(modifier.key.hashValue, modifier.key.hashValue)
     }
 
-    func testShouldNotifyUpdate() {
-        let modifier = TaskPhaseModifier<Int, Never>()
-
-        XCTAssertTrue(modifier.shouldNotifyUpdate(newValue: .suspending, oldValue: .suspending))
-    }
-
     func testMakeCoordinator() {
         let modifier = TaskPhaseModifier<Int, Never>()
         let coordinator = modifier.makeCoordinator()

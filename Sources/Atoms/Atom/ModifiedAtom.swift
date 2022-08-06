@@ -1,4 +1,8 @@
+/// An atom type that applies a modifier to an atom.
+///
+/// Use ``Atom/modifier(_:)`` instead of using this atom directly.
 public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.Hook.Value == Modifier.Value {
+    /// A type representing the stable identity of this atom.
     public struct Key: Hashable {
         private let atomKey: Node.Key
         private let modifierKey: Modifier.Key
@@ -20,14 +24,18 @@ public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.
         self.modifier = modifier
     }
 
+    /// A unique value used to identify the atom internally.
     public var key: Key {
         Key(atomKey: atom.key, modifierKey: modifier.key)
     }
 
+    /// Internal use, the hook for managing the state of this atom.
     public var hook: ModifiedHook<Node, Modifier> {
         ModifiedHook(atom: atom, modifier: modifier)
     }
 
+    /// Returns a boolean value that determines whether it should notify the value update to
+    /// watchers with comparing the given old value and the new value.
     public func shouldNotifyUpdate(newValue: Modifier.ModifiedValue, oldValue: Modifier.ModifiedValue) -> Bool {
         modifier.shouldNotifyUpdate(newValue: newValue, oldValue: oldValue)
     }
