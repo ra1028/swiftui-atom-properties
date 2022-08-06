@@ -27,59 +27,68 @@ final class SelectModifierTests: XCTestCase {
     }
 
     func testKey() {
-        let atom = TestStateAtom(defaultValue: "")
-        let modifier = SelectModifier(atom: atom, keyPath: \.count)
+        let modifier0 = SelectModifier<Int, Int>(keyPath: \.byteSwapped)
+        let modifier1 = SelectModifier<Int, Int>(keyPath: \.leadingZeroBitCount)
 
-        XCTAssertNotEqual(ObjectIdentifier(type(of: atom.key)), ObjectIdentifier(type(of: modifier.key)))
-        XCTAssertNotEqual(atom.key.hashValue, modifier.key.hashValue)
+        XCTAssertEqual(modifier0.key, modifier0.key)
+        XCTAssertEqual(modifier0.key.hashValue, modifier0.key.hashValue)
+        XCTAssertNotEqual(modifier0.key, modifier1.key)
+        XCTAssertNotEqual(modifier0.key.hashValue, modifier1.key.hashValue)
     }
 
     func testShouldNotifyUpdate() {
-        let atom = TestStateAtom(defaultValue: "")
-        let modifier = SelectModifier(atom: atom, keyPath: \.count)
+        let modifier = SelectModifier<String, Int>(keyPath: \.count)
 
         XCTAssertFalse(modifier.shouldNotifyUpdate(newValue: 100, oldValue: 100))
         XCTAssertTrue(modifier.shouldNotifyUpdate(newValue: 100, oldValue: 200))
     }
 
     func testMakeCoordinator() {
-        let atom = TestValueAtom(value: 0)
-        let modifier = SelectModifier(atom: atom, keyPath: \.description)
+        let modifier = SelectModifier<Int, String>(keyPath: \.description)
         let coordinator = modifier.makeCoordinator()
 
-        XCTAssertNil(coordinator.value)
+        XCTAssertNil(coordinator.selected)
     }
 
-    func testValue() {
-        let atom = TestValueAtom(value: 100)
-        let modifier = SelectModifier(atom: atom, keyPath: \.description)
+    func testGet() {
+        let modifier = SelectModifier<Int, String>(keyPath: \.description)
         let coordinator = modifier.makeCoordinator()
         let context = AtomHookContext(
-            atom: TestAtom(key: 0, hook: modifier),
+            atom: TestValueAtom(value: 0),
             coordinator: coordinator,
             store: Store(container: StoreContainer())
         )
 
-        coordinator.value = "test"
+        coordinator.selected = "test"
 
-        XCTAssertEqual(modifier.value(context: context), "test")
+        XCTAssertEqual(modifier.get(context: context), "test")
+    }
+
+    func testSet() {
+        let modifier = SelectModifier<Int, String>(keyPath: \.description)
+        let coordinator = modifier.makeCoordinator()
+        let context = AtomHookContext(
+            atom: TestValueAtom(value: 0),
+            coordinator: coordinator,
+            store: Store(container: StoreContainer())
+        )
+
+        modifier.set(value: "test", context: context)
+
+        XCTAssertEqual(coordinator.selected, "test")
     }
 
     func testUpdate() {
-        let atom = TestValueAtom(value: 100)
-        let modifier = SelectModifier(atom: atom, keyPath: \.description)
-        let modified = ModifiedAtom(modifier: modifier)
-        let context = AtomTestContext()
+        let modifier = SelectModifier<Int, String>(keyPath: \.description)
+        let coordinator = modifier.makeCoordinator()
+        let context = AtomHookContext(
+            atom: TestValueAtom(value: 0),
+            coordinator: coordinator,
+            store: Store(container: StoreContainer())
+        )
 
-        XCTContext.runActivity(named: "Value") { _ in
-            XCTAssertEqual(context.watch(modified), "100")
-        }
+        modifier.update(context: context, with: 100)
 
-        XCTContext.runActivity(named: "Override") { _ in
-            context.unwatch(modified)
-            context.override(modified) { _ in "override" }
-
-            XCTAssertEqual(context.watch(modified), "override")
-        }
+        XCTAssertEqual(coordinator.selected, "100")
     }
 }

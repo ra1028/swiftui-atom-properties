@@ -19,102 +19,76 @@ final class TaskPhaseModifierTests: XCTestCase {
     }
 
     func testKey() {
-        let atom = TestTaskAtom(value: 0)
-        let modifier = TaskPhaseModifier(atom: atom)
+        let modifier = TaskPhaseModifier<Int, Never>()
 
-        XCTAssertEqual(atom.key.hashValue, modifier.key.hashValue)
-        XCTAssertNotEqual(
-            ObjectIdentifier(type(of: atom.key)),
-            ObjectIdentifier(type(of: modifier.key))
-        )
+        XCTAssertEqual(modifier.key, modifier.key)
+        XCTAssertEqual(modifier.key.hashValue, modifier.key.hashValue)
     }
 
     func testShouldNotifyUpdate() {
-        let atom = TestTaskAtom(value: 0)
-        let modifier = TaskPhaseModifier(atom: atom)
+        let modifier = TaskPhaseModifier<Int, Never>()
 
         XCTAssertTrue(modifier.shouldNotifyUpdate(newValue: .suspending, oldValue: .suspending))
-        XCTAssertTrue(modifier.shouldNotifyUpdate(newValue: .success(100), oldValue: .success(200)))
     }
 
     func testMakeCoordinator() {
-        let atom = TestTaskAtom(value: 0)
-        let modifier = TaskPhaseModifier(atom: atom)
+        let modifier = TaskPhaseModifier<Int, Never>()
         let coordinator = modifier.makeCoordinator()
 
         XCTAssertNil(coordinator.phase)
     }
 
-    func testValue() {
-        let atom = TestTaskAtom(value: 0)
-        let modifier = TaskPhaseModifier(atom: atom)
+    func testGet() {
+        let modifier = TaskPhaseModifier<Int, Never>()
         let coordinator = modifier.makeCoordinator()
         let context = AtomHookContext(
-            atom: TestAtom(key: 0, hook: modifier),
+            atom: TestValueAtom(value: 0),
             coordinator: coordinator,
             store: Store(container: StoreContainer())
         )
 
         coordinator.phase = .success(100)
 
-        XCTAssertEqual(modifier.value(context: context).value, 100)
+        XCTAssertEqual(modifier.get(context: context), .success(100))
+    }
+
+    func testSet() {
+        let modifier = TaskPhaseModifier<Int, Never>()
+        let coordinator = modifier.makeCoordinator()
+        let context = AtomHookContext(
+            atom: TestValueAtom(value: 0),
+            coordinator: coordinator,
+            store: Store(container: StoreContainer())
+        )
+
+        modifier.set(value: .success(100), context: context)
+
+        XCTAssertEqual(coordinator.phase, .success(100))
     }
 
     func testUpdate() {
-        var getValue: () async throws -> Int = { 0 }
-        let atom = TestAtom(
-            key: 0,
-            hook: ThrowingTaskHook { _ in try await getValue() }
+        let modifier = TaskPhaseModifier<Int, Never>()
+        let atom = TestValueAtom(value: 0)
+        let container = StoreContainer()
+        let coordinator = modifier.makeCoordinator()
+        let context = AtomHookContext(
+            atom: atom,
+            coordinator: coordinator,
+            store: Store(container: container)
         )
-        let modifier = TaskPhaseModifier(atom: atom)
-        let modified = ModifiedAtom(modifier: modifier)
-        let context = AtomTestContext()
+        let task = Task { 100 }
+        let host = AtomHost<TestValueAtom<Int>.Hook.Coordinator>()
+        let expectation = expectation(description: "testUpdate")
 
-        XCTContext.runActivity(named: "Initially suspending") { _ in
-            XCTAssertTrue(context.watch(modified).isSuspending)
-        }
+        host.coordinator = atom.hook.makeCoordinator()
+        host.onUpdate = { _ in expectation.fulfill() }
+        container.entries[AtomKey(atom.key)] = WeakStoreEntry(host: host)
+        modifier.update(context: context, with: task)
 
-        XCTContext.runActivity(named: "Value") { _ in
-            let expectation = expectation(description: "Update")
-            context.onUpdate = expectation.fulfill
+        XCTAssertEqual(coordinator.phase, .suspending)
 
-            wait(for: [expectation], timeout: 1)
-            XCTAssertEqual(context.watch(modified).value, 0)
-        }
+        wait(for: [expectation], timeout: 1)
 
-        XCTContext.runActivity(named: "Error") { _ in
-            getValue = { throw URLError(.badURL) }
-            context.onUpdate = nil
-            context.unwatch(modified)
-            context.watch(modified)
-
-            let expectation = expectation(description: "Update")
-            context.onUpdate = expectation.fulfill
-
-            wait(for: [expectation], timeout: 1)
-            XCTAssertEqual(
-                context.watch(modified).error as? URLError,
-                URLError(.badURL)
-            )
-        }
-
-        XCTContext.runActivity(named: "Termination") { _ in
-            getValue = { 0 }
-            context.unwatch(modified)
-            context.watch(modified)
-            context.unwatch(modified)
-
-            let expectation = expectation(description: "Update")
-            expectation.isInverted = true
-            context.onUpdate = expectation.fulfill
-
-            wait(for: [expectation], timeout: 1)
-        }
-
-        XCTContext.runActivity(named: "Override") { _ in
-            context.override(modified) { _ in .success(100) }
-
-            XCTAssertEqual(context.watch(modified).value, 100)
-        }
+        XCTAssertEqual(coordinator.phase, .success(100))
     }
 }
