@@ -4,6 +4,7 @@ public protocol AtomState: AnyObject {
     associatedtype Value
 
     func value(context: Context) -> Value
+    func terminate()
     func override(context: Context, with value: Value)
 }
 
