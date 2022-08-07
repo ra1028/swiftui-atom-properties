@@ -127,6 +127,11 @@ public struct AtomViewContext: AtomWatchableContext {
     @discardableResult
     @inlinable
     public func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
-        _store.watch(atom, relationship: _relationship, notifyUpdate: _notifyUpdate)
+        _store.watch(
+            atom,
+            relationship: _relationship,
+            shouldNotifyAfterUpdates: false,
+            notifyUpdate: _notifyUpdate
+        )
     }
 }

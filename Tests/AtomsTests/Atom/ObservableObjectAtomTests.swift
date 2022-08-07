@@ -25,15 +25,17 @@ final class ObservableObjectAtomTests: XCTestCase {
         let atom = TestAtom(value: 100)
         let context = AtomTestContext()
         let object = context.watch(atom)
-        var isUpdated = false
+        let expectation = expectation(description: "test")
+        var updatedValue: Int?
 
-        XCTAssertEqual(object.value, 100)
-        XCTAssertFalse(isUpdated)
+        context.onUpdate = {
+            updatedValue = object.value
+            expectation.fulfill()
+        }
 
-        context.onUpdate = { isUpdated = true }
         object.value = 200
 
-        XCTAssertEqual(object.value, 200)
-        XCTAssertTrue(isUpdated)
+        wait(for: [expectation], timeout: 1)
+        XCTAssertEqual(updatedValue, 200)
     }
 }

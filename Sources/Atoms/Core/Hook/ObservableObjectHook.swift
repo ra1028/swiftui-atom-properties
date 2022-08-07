@@ -2,7 +2,7 @@ import Combine
 
 /// Internal use, a hook type that determines behavioral details of corresponding atoms.
 @MainActor
-public struct ObservableObjectHook<ObjectType: ObservableObject>: AtomHook {
+public struct ObservableObjectHook<ObjectType: ObservableObject>: AtomObservableObjectHook {
     /// A reference type object to manage internal state.
     public final class Coordinator {
         internal var object: ObjectType?
