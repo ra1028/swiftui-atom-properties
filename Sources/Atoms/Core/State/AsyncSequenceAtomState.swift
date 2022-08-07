@@ -53,20 +53,19 @@ public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: RefreshableA
 
     public func refresh(context: Context) async -> Value {
         let sequence = sequence(context.atomContext)
-        let phase = Value.suspending
-        self.phase = phase
+        phase = .suspending
 
         do {
             for try await element in sequence {
-                self.phase = .success(element)
+                phase = .success(element)
             }
         }
         catch {
-            self.phase = .failure(error)
+            phase = .failure(error)
         }
 
         context.notifyUpdate()
-        return phase
+        return phase ?? .suspending
     }
 
     public func refreshOverride(context: Context, with phase: Value) async -> Value {
