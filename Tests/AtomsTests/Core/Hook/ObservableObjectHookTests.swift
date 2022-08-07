@@ -4,7 +4,15 @@ import XCTest
 
 @MainActor
 final class ObservableObjectHookTests: XCTestCase {
-    final class TestObject: ObservableObject {}
+    @MainActor
+    final class TestObject: ObservableObject {
+        @Published
+        private(set) var updatedCount = 0
+
+        func update() {
+            updatedCount += 1
+        }
+    }
 
     func testMakeCoordinator() {
         let object = TestObject()
@@ -33,43 +41,77 @@ final class ObservableObjectHookTests: XCTestCase {
         let hook = ObservableObjectHook { _ in TestObject() }
         let atom = TestAtom(key: 0, hook: hook)
         let context = AtomTestContext()
-        var updateCount = 0
-
-        context.onUpdate = { updateCount += 1 }
-
-        let object0 = context.watch(atom)
 
         XCTContext.runActivity(named: "Update") { _ in
-            object0.objectWillChange.send()
+            let object = context.watch(atom)
+            var updateCount = 0
+            let expectation = expectation(description: "Update")
+
+            context.onUpdate = {
+                updateCount = object.updatedCount
+                expectation.fulfill()
+            }
+            object.update()
+
+            wait(for: [expectation], timeout: 1)
             XCTAssertEqual(updateCount, 1)
         }
 
         XCTContext.runActivity(named: "Termination") { _ in
             context.unwatch(atom)
 
-            object0.objectWillChange.send()
+            let object = context.watch(atom)
+            var updateCount = 0
+            let expectation = expectation(description: "Termination")
+
+            context.onUpdate = {
+                updateCount = object.updatedCount
+                expectation.fulfill()
+            }
+            object.update()
+
+            wait(for: [expectation], timeout: 1)
             XCTAssertEqual(updateCount, 1)
         }
 
-        let overrideObject = TestObject()
-        context.override(atom) { _ in overrideObject }
-
-        let object1 = context.watch(atom)
-
         XCTContext.runActivity(named: "Override") { _ in
-            XCTAssertTrue(object1 === overrideObject)
+            let overrideObject = TestObject()
+            context.unwatch(atom)
+            context.override(atom) { _ in overrideObject }
 
-            object1.objectWillChange.send()
+            let object = context.watch(atom)
+            var updateCount = 0
+            let expectation = expectation(description: "Override")
 
-            XCTAssertEqual(updateCount, 2)
+            context.onUpdate = {
+                updateCount = object.updatedCount
+                expectation.fulfill()
+            }
+            object.update()
+
+            XCTAssertTrue(object === overrideObject)
+            wait(for: [expectation], timeout: 1)
+            XCTAssertEqual(updateCount, 1)
         }
 
         XCTContext.runActivity(named: "Override termination") { _ in
+            let overrideObject = TestObject()
             context.unwatch(atom)
+            context.override(atom) { _ in overrideObject }
 
-            object1.objectWillChange.send()
+            let object = context.watch(atom)
+            var updateCount = 0
+            let expectation = expectation(description: "Override termination")
 
-            XCTAssertEqual(updateCount, 2)
+            context.onUpdate = {
+                updateCount = object.updatedCount
+                expectation.fulfill()
+            }
+            object.update()
+
+            XCTAssertTrue(object === overrideObject)
+            wait(for: [expectation], timeout: 1)
+            XCTAssertEqual(updateCount, 1)
         }
     }
 }

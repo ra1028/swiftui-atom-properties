@@ -36,15 +36,29 @@ internal struct DefaultStore: AtomStore {
     func watch<Node: Atom>(
         _ atom: Node,
         relationship: Relationship,
+        shouldNotifyAfterUpdates: Bool,
         notifyUpdate: @escaping @MainActor () -> Void
     ) -> Node.Hook.Value {
         assertionFailureStoreNotProvided()
-        return fallbackStore.watch(atom, relationship: relationship, notifyUpdate: notifyUpdate)
+        return fallbackStore.watch(
+            atom,
+            relationship: relationship,
+            shouldNotifyAfterUpdates: shouldNotifyAfterUpdates,
+            notifyUpdate: notifyUpdate
+        )
     }
 
-    func watch<Node: Atom, Caller: Atom>(_ atom: Node, belongTo caller: Caller) -> Node.Hook.Value {
+    func watch<Node: Atom, Caller: Atom>(
+        _ atom: Node,
+        belongTo caller: Caller,
+        shouldNotifyAfterUpdates: Bool
+    ) -> Node.Hook.Value {
         assertionFailureStoreNotProvided()
-        return fallbackStore.watch(atom, belongTo: caller)
+        return fallbackStore.watch(
+            atom,
+            belongTo: caller,
+            shouldNotifyAfterUpdates: shouldNotifyAfterUpdates
+        )
     }
 
     func notifyUpdate<Node: Atom>(_ atom: Node) {

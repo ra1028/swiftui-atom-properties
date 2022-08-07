@@ -1,3 +1,5 @@
+import Combine
+
 /// Internal use, a hook type that determines behavioral details of atoms.
 @MainActor
 public protocol AtomHook {
@@ -19,6 +21,10 @@ public protocol AtomHook {
     /// Overrides with the given value.
     func updateOverride(context: Context, with value: Value)
 }
+
+/// Internal use, a hook type that determines behavioral details of atoms which provide `ObservableObject`.
+@MainActor
+public protocol AtomObservableObjectHook: AtomHook where Value: ObservableObject {}
 
 /// Internal use, a hook type that determines behavioral details of read-write atoms.
 @MainActor

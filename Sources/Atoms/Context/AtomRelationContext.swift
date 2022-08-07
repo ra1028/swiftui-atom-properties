@@ -117,7 +117,30 @@ public struct AtomRelationContext: AtomWatchableContext {
     @inlinable
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
-        _box.watch(atom)
+        _box.watch(atom, shouldNotifyAfterUpdates: false)
+    }
+
+    /// Accesses the observable object associated with the given atom for reading and initialing watch to
+    /// receive its updates.
+    ///
+    /// This method returns an observable object for the given atom and initiate watching the atom so that
+    /// the current context to get updated when the atom notifies updates.
+    /// The observable object associated with the atom is cached until it is no longer watched to or until
+    /// it is updated.
+    ///
+    /// ```swift
+    /// let context = ...
+    /// let store = context.watch(AccountStoreAtom())
+    /// print(store.currentUser) // Prints the user value after update.
+    /// ```
+    ///
+    /// - Parameter atom: An atom that associates the observable object.
+    ///
+    /// - Returns: The observable object associated with the given atom.
+    @inlinable
+    @discardableResult
+    public func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value where Node.Hook: AtomObservableObjectHook {
+        _box.watch(atom, shouldNotifyAfterUpdates: true)
     }
 
     /// Add the termination action that will be performed when the atom will no longer be watched to
@@ -175,7 +198,7 @@ public struct AtomRelationContext: AtomWatchableContext {
 internal protocol _AnyAtomRelationContextBox {
     var store: AtomStore { get }
 
-    func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value
+    func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.Hook.Value
     func addTermination(_ termination: @MainActor @escaping () -> Void)
     func keepUntilTermination<Object: AnyObject>(_ object: Object)
 }
@@ -200,8 +223,12 @@ internal struct _AtomRelationContextBox<Caller: Atom>: _AnyAtomRelationContextBo
     let store: AtomStore
 
     @usableFromInline
-    func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
-        store.watch(atom, belongTo: caller)
+    func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.Hook.Value {
+        store.watch(
+            atom,
+            belongTo: caller,
+            shouldNotifyAfterUpdates: shouldNotifyAfterUpdates
+        )
     }
 
     @usableFromInline

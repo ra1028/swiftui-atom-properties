@@ -25,11 +25,16 @@ internal protocol AtomStore {
     func watch<Node: Atom>(
         _ atom: Node,
         relationship: Relationship,
+        shouldNotifyAfterUpdates: Bool,
         notifyUpdate: @MainActor @escaping () -> Void
     ) -> Node.Hook.Value
 
     @MainActor
-    func watch<Node: Atom, Caller: Atom>(_ atom: Node, belongTo caller: Caller) -> Node.Hook.Value
+    func watch<Node: Atom, Caller: Atom>(
+        _ atom: Node,
+        belongTo caller: Caller,
+        shouldNotifyAfterUpdates: Bool
+    ) -> Node.Hook.Value
 
     @MainActor
     func notifyUpdate<Node: Atom>(_ atom: Node)
