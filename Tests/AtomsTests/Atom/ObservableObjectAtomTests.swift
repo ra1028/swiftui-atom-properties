@@ -21,21 +21,19 @@ final class ObservableObjectAtomTests: XCTestCase {
         }
     }
 
-    func test() {
+    func test() async {
         let atom = TestAtom(value: 100)
         let context = AtomTestContext()
         let object = context.watch(atom)
-        let expectation = expectation(description: "test")
         var updatedValue: Int?
 
         context.onUpdate = {
             updatedValue = object.value
-            expectation.fulfill()
         }
 
         object.value = 200
+        await context.waitUntilNextUpdate()
 
-        wait(for: [expectation], timeout: 1)
         XCTAssertEqual(updatedValue, 200)
     }
 }

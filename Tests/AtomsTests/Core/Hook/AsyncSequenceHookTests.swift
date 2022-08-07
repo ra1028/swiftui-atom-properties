@@ -51,73 +51,64 @@ final class AsyncSequenceHookTests: XCTestCase {
         XCTAssertEqual(hook.value(context: context).value, 100)
     }
 
-    func testUpdate() {
+    func testUpdate() async {
         let pipe = AsyncThrowingStreamPipe<Int>()
         let hook = AsyncSequenceHook { _ in pipe.stream }
         let atom = TestAtom(key: 0, hook: hook)
         let context = AtomTestContext()
 
-        XCTContext.runActivity(named: "Initially suspending") { _ in
+        do {
             XCTAssertTrue(context.watch(atom).isSuspending)
         }
 
-        XCTContext.runActivity(named: "Value") { _ in
-            let expectation = expectation(description: "Update")
-            context.onUpdate = expectation.fulfill
+        do {
+            // Value
             pipe.continuation.yield(0)
+            await context.waitUntilNextUpdate()
 
-            wait(for: [expectation], timeout: 1)
             XCTAssertEqual(context.watch(atom).value, 0)
         }
 
-        XCTContext.runActivity(named: "Error") { _ in
-            let expectation = expectation(description: "Update")
-            context.onUpdate = expectation.fulfill
+        do {
+            // Failure
             pipe.continuation.finish(throwing: URLError(.badURL))
+            await context.waitUntilNextUpdate()
 
-            wait(for: [expectation], timeout: 1)
             XCTAssertEqual(context.watch(atom).error as? URLError, URLError(.badURL))
         }
 
-        XCTContext.runActivity(named: "Value after finished") { _ in
-            let expectation = expectation(description: "Update")
-            expectation.isInverted = true
-            context.onUpdate = expectation.fulfill
+        do {
+            // Yield value after finish
             pipe.continuation.yield(1)
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
 
-            wait(for: [expectation], timeout: 1)
-            XCTAssertEqual(context.watch(atom).error as? URLError, URLError(.badURL))
+            XCTAssertFalse(didUpdate)
         }
 
-        XCTContext.runActivity(named: "Value after termination") { _ in
-            context.unwatch(atom)
+        do {
+            // Yield value after termination
             pipe.reset()
-            context.watch(atom)
             context.unwatch(atom)
 
-            let expectation = expectation(description: "Update")
-            expectation.isInverted = true
-            context.onUpdate = expectation.fulfill
             pipe.continuation.yield(0)
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
 
-            wait(for: [expectation], timeout: 1)
+            XCTAssertFalse(didUpdate)
         }
 
-        XCTContext.runActivity(named: "Error after termination") { _ in
-            context.unwatch(atom)
+        do {
+            // Yield error after termination
             pipe.reset()
-            context.watch(atom)
             context.unwatch(atom)
 
-            let expectation = expectation(description: "Update")
-            expectation.isInverted = true
-            context.onUpdate = expectation.fulfill
             pipe.continuation.finish(throwing: URLError(.badURL))
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
 
-            wait(for: [expectation], timeout: 1)
+            XCTAssertFalse(didUpdate)
         }
 
-        XCTContext.runActivity(named: "Override") { _ in
+        do {
+            // Override
             context.override(atom) { _ in .success(100) }
 
             XCTAssertEqual(context.watch(atom).value, 100)
@@ -129,50 +120,60 @@ final class AsyncSequenceHookTests: XCTestCase {
         let hook = AsyncSequenceHook { _ in pipe.stream }
         let atom = TestAtom(key: 0, hook: hook)
         let context = AtomTestContext()
-        var updateCount = 0
 
-        context.onUpdate = { updateCount += 1 }
-
-        // Refresh
-
-        XCTAssertTrue(context.watch(atom).isSuspending)
-
-        Task {
-            pipe.continuation.yield(0)
-            pipe.continuation.finish(throwing: nil)
+        do {
+            XCTAssertTrue(context.watch(atom).isSuspending)
         }
 
-        pipe.reset()
-        let phase0 = await context.refresh(atom)
+        do {
+            // Refresh
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+            pipe.reset()
 
-        XCTAssertEqual(phase0.value, 0)
-        XCTAssertEqual(updateCount, 1)
+            Task {
+                pipe.continuation.yield(0)
+                pipe.continuation.finish(throwing: nil)
+            }
 
-        // Cancellation
+            let phase = await context.refresh(atom)
 
-        let refreshTask = Task {
-            await context.refresh(atom)
+            XCTAssertEqual(phase.value, 0)
+            XCTAssertEqual(updateCount, 1)
         }
 
-        Task {
-            pipe.continuation.yield(1)
-            refreshTask.cancel()
+        do {
+            // Cancellation
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+            pipe.reset()
+
+            let refreshTask = Task {
+                await context.refresh(atom)
+            }
+
+            Task {
+                pipe.continuation.yield(1)
+                refreshTask.cancel()
+            }
+
+            let phase = await refreshTask.value
+
+            XCTAssertEqual(phase.value, 1)
+            XCTAssertEqual(updateCount, 1)
         }
 
-        pipe.reset()
-        let phase1 = await refreshTask.value
+        do {
+            // Override
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+            context.override(atom) { _ in .success(200) }
+            pipe.reset()
 
-        XCTAssertEqual(phase1.value, 1)
-        XCTAssertEqual(updateCount, 2)
+            let phase = await context.refresh(atom)
 
-        // Override
-
-        context.override(atom) { _ in .success(200) }
-
-        pipe.reset()
-        let phase2 = await context.refresh(atom)
-
-        XCTAssertEqual(phase2.value, 200)
-        XCTAssertEqual(updateCount, 3)
+            XCTAssertEqual(phase.value, 200)
+            XCTAssertEqual(updateCount, 1)
+        }
     }
 }

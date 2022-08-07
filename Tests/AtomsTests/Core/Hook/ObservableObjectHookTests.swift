@@ -37,80 +37,76 @@ final class ObservableObjectHookTests: XCTestCase {
         XCTAssertTrue(hook.value(context: context) === object)
     }
 
-    func testUpdate() {
+    func testUpdate() async {
         let hook = ObservableObjectHook { _ in TestObject() }
         let atom = TestAtom(key: 0, hook: hook)
         let context = AtomTestContext()
 
-        XCTContext.runActivity(named: "Update") { _ in
+        do {
+            // Update
             let object = context.watch(atom)
             var updateCount = 0
-            let expectation = expectation(description: "Update")
 
             context.onUpdate = {
                 updateCount = object.updatedCount
-                expectation.fulfill()
             }
             object.update()
+            await context.waitUntilNextUpdate()
 
-            wait(for: [expectation], timeout: 1)
             XCTAssertEqual(updateCount, 1)
         }
 
-        XCTContext.runActivity(named: "Termination") { _ in
+        do {
+            // Termination
             context.unwatch(atom)
 
             let object = context.watch(atom)
             var updateCount = 0
-            let expectation = expectation(description: "Termination")
 
             context.onUpdate = {
                 updateCount = object.updatedCount
-                expectation.fulfill()
             }
             object.update()
+            await context.waitUntilNextUpdate()
 
-            wait(for: [expectation], timeout: 1)
             XCTAssertEqual(updateCount, 1)
         }
 
-        XCTContext.runActivity(named: "Override") { _ in
+        do {
+            // Override
             let overrideObject = TestObject()
             context.unwatch(atom)
             context.override(atom) { _ in overrideObject }
 
             let object = context.watch(atom)
             var updateCount = 0
-            let expectation = expectation(description: "Override")
 
             context.onUpdate = {
                 updateCount = object.updatedCount
-                expectation.fulfill()
             }
             object.update()
+            await context.waitUntilNextUpdate()
 
             XCTAssertTrue(object === overrideObject)
-            wait(for: [expectation], timeout: 1)
             XCTAssertEqual(updateCount, 1)
         }
 
-        XCTContext.runActivity(named: "Override termination") { _ in
+        do {
+            // Override termination
             let overrideObject = TestObject()
             context.unwatch(atom)
             context.override(atom) { _ in overrideObject }
 
             let object = context.watch(atom)
             var updateCount = 0
-            let expectation = expectation(description: "Override termination")
 
             context.onUpdate = {
                 updateCount = object.updatedCount
-                expectation.fulfill()
             }
             object.update()
+            await context.waitUntilNextUpdate()
 
             XCTAssertTrue(object === overrideObject)
-            wait(for: [expectation], timeout: 1)
             XCTAssertEqual(updateCount, 1)
         }
     }

@@ -50,73 +50,61 @@ final class PublisherHookTests: XCTestCase {
         XCTAssertEqual(hook.value(context: context).value, 100)
     }
 
-    func testUpdate() {
+    func testUpdate() async {
         let subject = TestSubject<Int, URLError>()
         let hook = PublisherHook { _ in subject }
         let atom = TestAtom(key: 0, hook: hook)
         let context = AtomTestContext()
 
-        XCTContext.runActivity(named: "Initially suspending") { _ in
+        do {
+            // Initially suspending
             XCTAssertTrue(context.watch(atom).isSuspending)
         }
 
-        XCTContext.runActivity(named: "Value") { _ in
-            let expectation = expectation(description: "Update")
-            context.onUpdate = expectation.fulfill
+        do {
+            // Value
             subject.send(0)
 
-            wait(for: [expectation], timeout: 1)
+            await context.waitUntilNextUpdate()
             XCTAssertEqual(context.watch(atom), .success(0))
         }
 
-        XCTContext.runActivity(named: "Error") { _ in
-            let expectation = expectation(description: "Update")
-            context.onUpdate = expectation.fulfill
+        do {
+            // Error
             subject.send(completion: .failure(URLError(.badURL)))
 
-            wait(for: [expectation], timeout: 1)
+            await context.waitUntilNextUpdate()
             XCTAssertEqual(context.watch(atom), .failure(URLError(.badURL)))
         }
 
-        XCTContext.runActivity(named: "Value after completion") { _ in
-            let expectation = expectation(description: "Update")
-            expectation.isInverted = true
-            context.onUpdate = expectation.fulfill
+        do {
+            // Send value after completion
             subject.send(1)
 
-            wait(for: [expectation], timeout: 1)
-            XCTAssertEqual(context.watch(atom), .failure(URLError(.badURL)))
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            XCTAssertFalse(didUpdate)
         }
 
-        XCTContext.runActivity(named: "Value after termination") { _ in
+        do {
+            // Send value after termination
             context.unwatch(atom)
-            subject.reset()
-            context.watch(atom)
-            context.unwatch(atom)
-
-            let expectation = expectation(description: "Update")
-            expectation.isInverted = true
-            context.onUpdate = expectation.fulfill
             subject.send(0)
 
-            wait(for: [expectation], timeout: 1)
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            XCTAssertFalse(didUpdate)
         }
 
-        XCTContext.runActivity(named: "Error after termination") { _ in
+        do {
+            // Send error after termination
             context.unwatch(atom)
-            subject.reset()
-            context.watch(atom)
-            context.unwatch(atom)
-
-            let expectation = expectation(description: "Update")
-            expectation.isInverted = true
-            context.onUpdate = expectation.fulfill
             subject.send(completion: .failure(URLError(.badURL)))
 
-            wait(for: [expectation], timeout: 1)
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            XCTAssertFalse(didUpdate)
         }
 
-        XCTContext.runActivity(named: "Override") { _ in
+        do {
+            // Override
             context.override(atom) { _ in .success(100) }
 
             XCTAssertEqual(context.watch(atom), .success(100))
@@ -132,46 +120,53 @@ final class PublisherHookTests: XCTestCase {
 
         context.onUpdate = { updateCount += 1 }
 
-        // Refresh
-
-        XCTAssertTrue(context.watch(atom).isSuspending)
-
-        Task {
-            subject.send(0)
-            subject.send(completion: .finished)
+        do {
+            XCTAssertTrue(context.watch(atom).isSuspending)
         }
 
-        subject.reset()
-        let phase0 = await context.refresh(atom)
+        do {
+            // Refresh
+            subject.reset()
 
-        XCTAssertEqual(phase0.value, 0)
-        XCTAssertEqual(updateCount, 1)
+            Task {
+                subject.send(0)
+                subject.send(completion: .finished)
+            }
 
-        // Cancellation
+            let phase = await context.refresh(atom)
 
-        let refreshTask = Task {
-            await context.refresh(atom)
+            XCTAssertEqual(phase.value, 0)
+            XCTAssertEqual(updateCount, 1)
         }
 
-        Task {
-            subject.send(1)
-            refreshTask.cancel()
+        do {
+            // Cancellation
+            subject.reset()
+
+            let refreshTask = Task {
+                await context.refresh(atom)
+            }
+
+            Task {
+                subject.send(1)
+                refreshTask.cancel()
+            }
+
+            let phase = await refreshTask.value
+
+            XCTAssertEqual(phase, .success(1))
+            XCTAssertEqual(updateCount, 2)
         }
 
-        subject.reset()
-        let phase1 = await refreshTask.value
+        do {
+            // Override
+            context.override(atom) { _ in .success(200) }
 
-        XCTAssertEqual(phase1, .success(1))
-        XCTAssertEqual(updateCount, 2)
+            subject.reset()
+            let phase = await context.refresh(atom)
 
-        // Override
-
-        context.override(atom) { _ in .success(200) }
-
-        subject.reset()
-        let phase2 = await context.refresh(atom)
-
-        XCTAssertEqual(phase2.value, 200)
-        XCTAssertEqual(updateCount, 3)
+            XCTAssertEqual(phase.value, 200)
+            XCTAssertEqual(updateCount, 3)
+        }
     }
 }
