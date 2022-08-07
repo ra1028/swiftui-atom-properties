@@ -29,9 +29,9 @@ final class ExampleMovieDBTests: XCTestCase {
         XCTAssertEqual(failurePhase.error as? URLError, error)
     }
 
-    func testFirstPageAtom() async {
+    func testMovieLoader() async {
         let apiClient = MockAPIClient()
-        let atom = FirstPageAtom()
+        let atom = MovieLoaderAtom()
         let context = AtomTestContext()
 
         context.override(APIClientAtom()) { _ in apiClient }
@@ -44,85 +44,46 @@ final class ExampleMovieDBTests: XCTestCase {
 
             apiClient.filteredMovieResponse = .success(expected)
 
-            let successPhase = await AsyncPhase(context.watch(atom).result)
+            await context.watch(atom).refresh()
 
-            XCTAssertEqual(successPhase.value, expected)
+            XCTAssertEqual(context.watch(atom).pages.value, [expected])
+
+            await context.watch(atom).loadNext()
+
+            XCTAssertEqual(context.watch(atom).pages.value, [expected, expected])
 
             context.reset(atom)
             apiClient.filteredMovieResponse = .failure(error)
 
-            let failurePhase = await AsyncPhase(context.watch(atom).result)
+            await context.watch(atom).refresh()
 
-            XCTAssertEqual(failurePhase.error as? URLError, error)
+            XCTAssertEqual(context.watch(atom).pages.error as? URLError, error)
         }
     }
 
-    func testNextPagesAtom() {
-        let atom = NextPagesAtom()
-        let context = AtomTestContext()
-        let pages = [
-            PagedResponse<Movie>(page: 1, totalPages: 100, results: [])
-        ]
-
-        XCTAssertEqual(context.watch(atom), [])
-
-        context[atom] = pages
-
-        XCTAssertEqual(context.watch(atom), pages)
-
-        context.reset(FirstPageAtom())
-
-        XCTAssertEqual(context.watch(atom), [])
-    }
-
-    func testLoadNextAtom() async {
-        let apiClient = MockAPIClient()
-        let atom = LoadNextAtom()
+    func testMyListAtom() {
+        let atom = MyListAtom()
         let context = AtomTestContext()
 
-        context.override(APIClientAtom()) { _ in apiClient }
+        XCTAssertEqual(context.watch(atom).movies, [])
 
-        apiClient.filteredMovieResponse = .success(.stub())
+        context.watch(atom).insert(movie: .stub(id: 0))
 
-        let loadNext = context.watch(atom)
+        XCTAssertEqual(context.watch(atom).movies, [.stub(id: 0)])
 
-        XCTAssertEqual(context.watch(NextPagesAtom()), [])
+        context.watch(atom).insert(movie: .stub(id: 1))
 
-        await loadNext()
+        XCTAssertEqual(context.watch(atom).movies, [.stub(id: 0), .stub(id: 1)])
 
-        XCTAssertEqual(context.watch(NextPagesAtom()), [.stub()])
+        context.watch(atom).insert(movie: .stub(id: 0))
 
-        await loadNext()
-
-        XCTAssertEqual(context.watch(NextPagesAtom()), [.stub(), .stub()])
-    }
-
-    func testMyListInsertAtom() {
-        let atom = MyListInsertAtom()
-        let context = AtomTestContext()
-        let action = context.watch(atom)
-
-        XCTAssertEqual(context.watch(MyListAtom()), [])
-
-        action(movie: .stub(id: 0))
-
-        XCTAssertEqual(context.watch(MyListAtom()), [.stub(id: 0)])
-
-        action(movie: .stub(id: 1))
-
-        XCTAssertEqual(context.watch(MyListAtom()), [.stub(id: 0), .stub(id: 1)])
-
-        action(movie: .stub(id: 0))
-
-        XCTAssertEqual(context.watch(MyListAtom()), [.stub(id: 1)])
+        XCTAssertEqual(context.watch(atom).movies, [.stub(id: 1)])
     }
 
     func testIsInMyListAtom() {
         let context = AtomTestContext()
 
-        XCTAssertFalse(context.watch(IsInMyListAtom(movie: .stub(id: 0))))
-
-        context[MyListAtom()].append(.stub(id: 0))
+        context.watch(MyListAtom()).insert(movie: .stub(id: 0))
 
         XCTAssertTrue(context.watch(IsInMyListAtom(movie: .stub(id: 0))))
         XCTAssertFalse(context.watch(IsInMyListAtom(movie: .stub(id: 1))))
