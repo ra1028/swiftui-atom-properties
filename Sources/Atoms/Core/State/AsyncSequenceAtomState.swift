@@ -1,4 +1,4 @@
-public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: AtomRefreshableState {
+public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: RefreshableAtomState {
     public typealias Value = AsyncPhase<Sequence.Element, Error>
 
     private var phase: Value?

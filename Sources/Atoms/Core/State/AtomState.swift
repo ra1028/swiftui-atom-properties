@@ -7,7 +7,7 @@ public protocol AtomState: AnyObject {
     func override(context: Context, with value: Value)
 }
 
-public protocol AtomRefreshableState: AtomState {
+public protocol RefreshableAtomState: AtomState {
     func refresh(context: Context) async -> Value
     func refreshOverride(context: Context, with value: Value) async -> Value
 }
