@@ -1,8 +1,7 @@
-public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: AtomState {
+public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: AtomRefreshableState {
     public typealias Value = AsyncPhase<Sequence.Element, Error>
 
-    internal var phase: Value?
-
+    private var phase: Value?
     private let sequence: @MainActor (AtomRelationContext) -> Sequence
 
     internal init(sequence: @MainActor @escaping (AtomRelationContext) -> Sequence) {
@@ -16,31 +15,63 @@ public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: AtomState {
 
         let sequence = sequence(context.atomContext)
         let box = UnsafeUncheckedSendableBox(sequence)
-        let task = Task {
+        let task = Task { [weak self] in
+            guard let self = self else {
+                return
+            }
+
             do {
                 for try await element in box.unboxed {
                     if !Task.isCancelled {
-                        phase = .success(element)
+                        self.phase = .success(element)
                         context.notifyUpdate()
                     }
                 }
             }
             catch {
                 if !Task.isCancelled {
-                    phase = .failure(error)
+                    self.phase = .failure(error)
                     context.notifyUpdate()
                 }
             }
         }
         context.addTermination(task.cancel)
 
-        let initialPhase = Value.suspending
-        phase = initialPhase
+        let phase = Value.suspending
+        self.phase = phase
 
-        return initialPhase
+        return phase
     }
 
     public func terminate() {
         phase = nil
+    }
+
+    public func override(context: Context, with phase: Value) {
+        self.phase = phase
+    }
+
+    public func refresh(context: Context) async -> Value {
+        let sequence = sequence(context.atomContext)
+        let phase = Value.suspending
+        self.phase = phase
+
+        do {
+            for try await element in sequence {
+                self.phase = .success(element)
+            }
+        }
+        catch {
+            self.phase = .failure(error)
+        }
+
+        context.notifyUpdate()
+        return phase
+    }
+
+    public func refreshOverride(context: Context, with phase: Value) async -> Value {
+        self.phase = phase
+        context.notifyUpdate()
+        return phase
     }
 }
