@@ -29,26 +29,26 @@ struct MoviesScreen: View {
                 FilterPicker()
 
                 switch pages.moviePages {
-                    case .success(let movies):
-                        ForEach(movies, id: \.page) { response in
-                            pageIndex(current: response.page, total: response.totalPages)
+                case .success(let movies):
+                    ForEach(movies, id: \.page) { response in
+                        pageIndex(current: response.page, total: response.totalPages)
 
-                            ForEach(response.results, id: \.id) { movie in
-                                movieRow(movie)
-                            }
+                        ForEach(response.results, id: \.id) { movie in
+                            movieRow(movie)
                         }
+                    }
 
-                        if let last = movies.last, last.hasNextPage {
-                            ProgressRow().task {
-                                await pages.loadNext()
-                            }
+                    if let last = movies.last, last.hasNextPage {
+                        ProgressRow().task {
+                            await pages.loadNext()
                         }
+                    }
 
-                    case .failure:
-                        CaveatRow(text: "Failed to get the data.")
+                case .failure:
+                    CaveatRow(text: "Failed to get the data.")
 
-                    case .suspending:
-                        ProgressRow()
+                case .suspending:
+                    ProgressRow()
                 }
             }
         }

@@ -32,7 +32,7 @@ final class MoviePages: ObservableObject {
 
         let nextPage = try? await api.getMovies(filter: filter, page: currentPage + 1)
 
-        guard let nextPage = nextPage else{
+        guard let nextPage = nextPage else {
             return
         }
 
