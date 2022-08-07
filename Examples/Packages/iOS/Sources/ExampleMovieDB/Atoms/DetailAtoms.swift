@@ -5,7 +5,7 @@ struct IsInMyListAtom: ValueAtom, Hashable {
 
     func value(context: Context) -> Bool {
         let myList = context.watch(MyListAtom())
-        return myList.contains(movie)
+        return myList.movies.contains(movie)
     }
 }
 

@@ -2,17 +2,11 @@ import Atoms
 import SwiftUI
 
 struct MoviesScreen: View {
-    @Watch(FirstPageAtom())
-    var firstPage
-
-    @Watch(NextPagesAtom())
-    var nextPages
+    @WatchStateObject(MovieLoaderAtom())
+    var loader
 
     @WatchState(SearchQueryAtom())
     var searchQuery
-
-    @Watch(LoadNextAtom())
-    var loadNext
 
     @ViewContext
     var context
@@ -34,9 +28,8 @@ struct MoviesScreen: View {
             Section {
                 FilterPicker()
 
-                Suspense(firstPage) { firstPage in
-                    let pages = [firstPage] + nextPages
-
+                switch loader.pages {
+                case .success(let pages):
                     ForEach(pages, id: \.page) { response in
                         pageIndex(current: response.page, total: response.totalPages)
 
@@ -47,13 +40,15 @@ struct MoviesScreen: View {
 
                     if let last = pages.last, last.hasNextPage {
                         ProgressRow().task {
-                            await loadNext()
+                            await loader.loadNext()
                         }
                     }
-                } suspending: {
-                    ProgressRow()
-                } catch: { _ in
+
+                case .failure:
                     CaveatRow(text: "Failed to get the data.")
+
+                case .suspending:
+                    ProgressRow()
                 }
             }
         }
@@ -71,8 +66,11 @@ struct MoviesScreen: View {
         .onSubmit(of: .search) { [$isShowingSearchScreen] in
             $isShowingSearchScreen.wrappedValue = true
         }
-        .refreshable { [context] in
-            await context.refresh(FirstPageAtom())
+        .task(id: loader.filter) {
+            await loader.refresh()
+        }
+        .refreshable { [loader] in
+            await loader.refresh()
         }
         .background {
             NavigationLink(

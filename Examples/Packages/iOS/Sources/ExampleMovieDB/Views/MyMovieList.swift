@@ -2,19 +2,19 @@ import Atoms
 import SwiftUI
 
 struct MyMovieList: View {
-    @Watch(MyListAtom())
+    @WatchStateObject(MyListAtom())
     var myList
 
     var onSelect: (Movie) -> Void
 
     var body: some View {
-        if myList.isEmpty {
+        if myList.movies.isEmpty {
             emptyContent
         }
         else {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack {
-                    ForEach(myList, id: \.id) { movie in
+                    ForEach(myList.movies, id: \.id) { movie in
                         item(movie: movie)
                     }
                 }
