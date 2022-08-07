@@ -29,9 +29,9 @@ final class ExampleMovieDBTests: XCTestCase {
         XCTAssertEqual(failurePhase.error as? URLError, error)
     }
 
-    func testMoviePages() async {
+    func testMovieLoader() async {
         let apiClient = MockAPIClient()
-        let atom = MoviePagesAtom()
+        let atom = MovieLoaderAtom()
         let context = AtomTestContext()
 
         context.override(APIClientAtom()) { _ in apiClient }
@@ -46,18 +46,18 @@ final class ExampleMovieDBTests: XCTestCase {
 
             await context.watch(atom).refresh()
 
-            XCTAssertEqual(context.watch(atom).moviePages.value, [expected])
+            XCTAssertEqual(context.watch(atom).pages.value, [expected])
 
             await context.watch(atom).loadNext()
 
-            XCTAssertEqual(context.watch(atom).moviePages.value, [expected, expected])
+            XCTAssertEqual(context.watch(atom).pages.value, [expected, expected])
 
             context.reset(atom)
             apiClient.filteredMovieResponse = .failure(error)
 
             await context.watch(atom).refresh()
 
-            XCTAssertEqual(context.watch(atom).moviePages.error as? URLError, error)
+            XCTAssertEqual(context.watch(atom).pages.error as? URLError, error)
         }
     }
 

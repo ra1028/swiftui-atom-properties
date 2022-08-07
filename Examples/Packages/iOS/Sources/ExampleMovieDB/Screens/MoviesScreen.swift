@@ -2,8 +2,8 @@ import Atoms
 import SwiftUI
 
 struct MoviesScreen: View {
-    @WatchStateObject(MoviePagesAtom())
-    var pages
+    @WatchStateObject(MovieLoaderAtom())
+    var loader
 
     @WatchState(SearchQueryAtom())
     var searchQuery
@@ -28,9 +28,9 @@ struct MoviesScreen: View {
             Section {
                 FilterPicker()
 
-                switch pages.moviePages {
-                case .success(let movies):
-                    ForEach(movies, id: \.page) { response in
+                switch loader.pages {
+                case .success(let pages):
+                    ForEach(pages, id: \.page) { response in
                         pageIndex(current: response.page, total: response.totalPages)
 
                         ForEach(response.results, id: \.id) { movie in
@@ -38,9 +38,9 @@ struct MoviesScreen: View {
                         }
                     }
 
-                    if let last = movies.last, last.hasNextPage {
+                    if let last = pages.last, last.hasNextPage {
                         ProgressRow().task {
-                            await pages.loadNext()
+                            await loader.loadNext()
                         }
                     }
 
@@ -66,11 +66,11 @@ struct MoviesScreen: View {
         .onSubmit(of: .search) { [$isShowingSearchScreen] in
             $isShowingSearchScreen.wrappedValue = true
         }
-        .task(id: pages.filter) {
-            await pages.refresh()
+        .task(id: loader.filter) {
+            await loader.refresh()
         }
-        .refreshable { [pages] in
-            await pages.refresh()
+        .refreshable { [loader] in
+            await loader.refresh()
         }
         .background {
             NavigationLink(

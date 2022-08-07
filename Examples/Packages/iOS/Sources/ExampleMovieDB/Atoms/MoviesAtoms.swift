@@ -2,9 +2,9 @@ import Atoms
 import Foundation
 
 @MainActor
-final class MoviePages: ObservableObject {
+final class MovieLoader: ObservableObject {
     @Published
-    private(set) var moviePages = AsyncPhase<[PagedResponse<Movie>], Error>.suspending
+    private(set) var pages = AsyncPhase<[PagedResponse<Movie>], Error>.suspending
     private let api: APIClientProtocol
     let filter: Filter
 
@@ -15,28 +15,28 @@ final class MoviePages: ObservableObject {
 
     func refresh() async {
         do {
-            moviePages = .suspending
+            pages = .suspending
 
             let page = try await api.getMovies(filter: filter, page: 1)
-            moviePages = .success([page])
+            pages = .success([page])
         }
         catch {
-            moviePages = .failure(error)
+            pages = .failure(error)
         }
     }
 
     func loadNext() async {
-        guard let pages = moviePages.value, let currentPage = pages.last?.page else {
+        guard let currentPages = pages.value, let lastPage = currentPages.last?.page else {
             return
         }
 
-        let nextPage = try? await api.getMovies(filter: filter, page: currentPage + 1)
+        let nextPage = try? await api.getMovies(filter: filter, page: lastPage + 1)
 
         guard let nextPage = nextPage else {
             return
         }
 
-        moviePages = .success(pages + [nextPage])
+        pages = .success(currentPages + [nextPage])
     }
 }
 
@@ -55,11 +55,11 @@ final class MyList: ObservableObject {
     }
 }
 
-struct MoviePagesAtom: ObservableObjectAtom, Hashable {
-    func object(context: Context) -> MoviePages {
+struct MovieLoaderAtom: ObservableObjectAtom, Hashable {
+    func object(context: Context) -> MovieLoader {
         let api = context.watch(APIClientAtom())
         let filter = context.watch(FilterAtom())
-        return MoviePages(api: api, filter: filter)
+        return MovieLoader(api: api, filter: filter)
     }
 }
 
