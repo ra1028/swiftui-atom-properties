@@ -2,10 +2,10 @@ public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: RefreshableA
     public typealias Value = AsyncPhase<Sequence.Element, Error>
 
     private var phase: Value?
-    private let sequence: @MainActor (AtomRelationContext) -> Sequence
+    private let makeSequence: @MainActor (AtomRelationContext) -> Sequence
 
-    internal init(sequence: @MainActor @escaping (AtomRelationContext) -> Sequence) {
-        self.sequence = sequence
+    internal init(makeSequence: @MainActor @escaping (AtomRelationContext) -> Sequence) {
+        self.makeSequence = makeSequence
     }
 
     public func value(context: Context) -> Value {
@@ -13,7 +13,7 @@ public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: RefreshableA
             return phase
         }
 
-        let sequence = sequence(context.atomContext)
+        let sequence = makeSequence(context.atomContext)
         let box = UnsafeUncheckedSendableBox(sequence)
         let task = Task {
             do {
@@ -39,16 +39,12 @@ public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: RefreshableA
         return phase
     }
 
-    public func terminate() {
-        phase = nil
-    }
-
     public func override(context: Context, with phase: Value) {
         self.phase = phase
     }
 
     public func refresh(context: Context) async -> Value {
-        let sequence = sequence(context.atomContext)
+        let sequence = makeSequence(context.atomContext)
         phase = .suspending
 
         do {

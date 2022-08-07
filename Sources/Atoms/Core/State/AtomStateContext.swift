@@ -1,10 +1,10 @@
 @MainActor
 public struct AtomStateContext {
     @usableFromInline
-    internal let _box: _AnyAtomHookContextBox
+    internal let _box: _AnyAtomStateContextBox
 
     internal init<Node: Atom>(atom: Node, store: AtomStore) {
-        _box = _AtomHookContextBox(atom: atom, store: store)
+        _box = _AtomStateContextBox(atom: atom, store: store)
     }
 
     @inlinable

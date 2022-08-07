@@ -36,7 +36,7 @@ public struct AtomViewContext: AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
-    public func read<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
+    public func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
         _store.read(atom)
     }
 
@@ -59,7 +59,7 @@ public struct AtomViewContext: AtomWatchableContext {
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
     @inlinable
-    public func set<Node: Atom>(_ value: Node.Hook.Value, for atom: Node) where Node.Hook: AtomStateHook {
+    public func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
         _store.set(value, for: atom)
     }
 
@@ -82,7 +82,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
     @inlinable
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.Hook.Value where Node.Hook: AtomRefreshableHook {
+    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomStateProtocol {
         await _store.refresh(atom)
     }
 
@@ -126,7 +126,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// - Returns: The value associated with the given atom.
     @discardableResult
     @inlinable
-    public func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
+    public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
         _store.watch(
             atom,
             relationship: _relationship,

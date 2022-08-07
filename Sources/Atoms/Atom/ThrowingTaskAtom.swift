@@ -36,7 +36,7 @@
 /// }
 /// ```
 ///
-public protocol ThrowingTaskAtom: Atom where Hook == ThrowingTaskHook<Value> {
+public protocol ThrowingTaskAtom: Atom where State == ThrowingTaskState<Value> {
     /// The type of value that this atom produces.
     associatedtype Value
 
@@ -57,7 +57,7 @@ public protocol ThrowingTaskAtom: Atom where Hook == ThrowingTaskHook<Value> {
 
 public extension ThrowingTaskAtom {
     @MainActor
-    var hook: Hook {
-        Hook(value: value)
+    func makeState() -> State {
+        State(getValue: value)
     }
 }

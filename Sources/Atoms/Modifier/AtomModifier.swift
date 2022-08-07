@@ -13,12 +13,11 @@ public extension Atom {
 public protocol AtomModifier {
     /// A type representing the stable identity of this modifier.
     associatedtype Key: Hashable
-    associatedtype Coordinator
     associatedtype Value
     associatedtype ModifiedValue
 
-    /// A type of the context structure that to interact with internal store.
-    typealias Context = AtomHookContext<Coordinator>
+    typealias Context = AtomStateContext
+    typealias Update = (ModifiedValue) -> Void
 
     /// A unique value used to identify the modifier internally.
     var key: Key { get }
@@ -35,21 +34,8 @@ public protocol AtomModifier {
     @MainActor
     func shouldNotifyUpdate(newValue: ModifiedValue, oldValue: ModifiedValue) -> Bool
 
-    /// Creates a coordinator instance.
     @MainActor
-    func makeCoordinator() -> Coordinator
-
-    /// Gets the value with the given context.
-    @MainActor
-    func get(context: Context) -> ModifiedValue?
-
-    /// Sets a value with the given context.
-    @MainActor
-    func set(value: ModifiedValue, context: Context)
-
-    /// Starts updating the current value by modifying the given value.
-    @MainActor
-    func update(context: Context, with value: Value)
+    func value(context: Context, with value: Value, update: @escaping Update) -> ModifiedValue
 }
 
 public extension AtomModifier {

@@ -16,11 +16,11 @@ public struct Snapshot<Node: Atom>: AtomHistory {
     public let atom: Node
 
     /// The snapshot value of the``atom``.
-    public let value: Node.Hook.Value
+    public let value: Node.State.Value
 
     private let store: AtomStore
 
-    internal init(atom: Node, value: Node.Hook.Value, store: AtomStore) {
+    internal init(atom: Node, value: Node.State.Value, store: AtomStore) {
         self.atom = atom
         self.value = value
         self.store = store

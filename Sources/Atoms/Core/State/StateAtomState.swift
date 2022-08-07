@@ -1,29 +1,9 @@
 public final class StateAtomState<Value>: AtomStateProtocol {
-    public typealias WillSet = @MainActor (
-        _ newValue: Value,
-        _ oldValue: Value,
-        _ context: AtomRelationContext
-    ) -> Void
-
-    public typealias DidSet = @MainActor (
-        _ newValue: Value,
-        _ oldValue: Value,
-        _ context: AtomRelationContext
-    ) -> Void
-
     private var value: Value?
     private let getDefaultValue: @MainActor (AtomRelationContext) -> Value
-    private let willSet: WillSet
-    private let didSet: DidSet
 
-    internal init(
-        getDefaultValue: @MainActor @escaping (AtomRelationContext) -> Value,
-        willSet: @escaping WillSet,
-        didSet: @escaping DidSet
-    ) {
+    internal init(getDefaultValue: @MainActor @escaping (AtomRelationContext) -> Value) {
         self.getDefaultValue = getDefaultValue
-        self.willSet = willSet
-        self.didSet = didSet
     }
 
     public func value(context: Context) -> Value {
@@ -39,18 +19,6 @@ public final class StateAtomState<Value>: AtomStateProtocol {
     public func set(value: Value, context: Context) {
         self.value = value
         context.notifyUpdate()
-    }
-
-    public func willSet(newValue: Value, oldValue: Value, context: Context) {
-        willSet(newValue, oldValue, context.atomContext)
-    }
-
-    public func didSet(newValue: Value, oldValue: Value, context: Context) {
-        didSet(newValue, oldValue, context.atomContext)
-    }
-
-    public func terminate() {
-        value = nil
     }
 
     public func override(context: Context, with value: Value) {

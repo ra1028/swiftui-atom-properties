@@ -78,7 +78,7 @@ public struct AtomRoot<Content: View>: View {
     ///   - value: A value that to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Hook.Value) -> Self {
+    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.State.Value) -> Self {
         mutating { $0.overrides.insert(atom, with: value) }
     }
 
@@ -94,7 +94,7 @@ public struct AtomRoot<Content: View>: View {
     ///   - value: A value that to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Hook.Value) -> Self {
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.State.Value) -> Self {
         mutating { $0.overrides.insert(atomType, with: value) }
     }
 

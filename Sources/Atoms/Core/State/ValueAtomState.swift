@@ -16,10 +16,6 @@ public final class ValueAtomState<Value>: AtomStateProtocol {
         return value
     }
 
-    public func terminate() {
-        value = nil
-    }
-
     public func override(context: Context, with value: Value) {
         self.value = value
     }

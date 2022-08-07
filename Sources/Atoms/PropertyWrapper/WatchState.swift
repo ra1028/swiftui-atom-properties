@@ -31,7 +31,7 @@ import SwiftUI
 /// ```
 ///
 @propertyWrapper
-public struct WatchState<Node: Atom>: DynamicProperty where Node.Hook: AtomStateHook {
+public struct WatchState<Node: StateAtom>: DynamicProperty {
     private let atom: Node
 
     @ViewContext
@@ -49,7 +49,7 @@ public struct WatchState<Node: Atom>: DynamicProperty where Node.Hook: AtomState
     /// with the `@WatchState` attribute.
     /// Accessing to the getter of this property starts watching to the atom, but doesn't
     /// by setting a new value.
-    public var wrappedValue: Node.Hook.Value {
+    public var wrappedValue: Node.State.Value {
         get { context.watch(atom) }
         nonmutating set { context.set(newValue, for: atom) }
     }
@@ -60,7 +60,7 @@ public struct WatchState<Node: Atom>: DynamicProperty where Node.Hook: AtomState
     /// To get the ``projectedValue``, prefix the property variable with `$`.
     /// Accessing to this property itself doesn't starts watching to the atom, but does when
     /// the view accesses to the getter of the binding.
-    public var projectedValue: Binding<Node.Hook.Value> {
+    public var projectedValue: Binding<Node.State.Value> {
         context.state(atom)
     }
 }

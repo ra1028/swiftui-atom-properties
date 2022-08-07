@@ -20,10 +20,6 @@ public final class TaskAtomState<Success>: TaskAtomStateProtocol, RefreshableAto
         return task
     }
 
-    public func terminate() {
-        task = nil
-    }
-
     public func override(context: Context, with task: Value) {
         self.task = task
         context.addTermination(task.cancel)

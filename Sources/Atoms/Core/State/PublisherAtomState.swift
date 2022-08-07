@@ -33,10 +33,6 @@ public final class PublisherAtomState<Publisher: Combine.Publisher>: Refreshable
         return phase
     }
 
-    public func terminate() {
-        phase = nil
-    }
-
     public func override(context: Context, with phase: Value) {
         self.phase = phase
     }

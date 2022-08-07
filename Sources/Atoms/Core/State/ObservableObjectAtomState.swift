@@ -18,10 +18,6 @@ public final class ObservableObjectAtomState<ObjectType: ObservableObject>: Atom
         return object
     }
 
-    public func terminate() {
-        object = nil
-    }
-
     public func override(context: Context, with object: ObjectType) {
         let cancellable = object.objectWillChange.sink { _ in
             context.notifyUpdate()

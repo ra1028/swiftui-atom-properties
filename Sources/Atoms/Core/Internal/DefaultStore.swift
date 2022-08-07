@@ -13,17 +13,17 @@ internal struct DefaultStore: AtomStore {
         []
     }
 
-    func read<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
+    func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
         assertionFailureStoreNotProvided()
         return fallbackStore.read(atom)
     }
 
-    func set<Node: Atom>(_ value: Node.Hook.Value, for atom: Node) where Node.Hook: AtomStateHook {
+    func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
         assertionFailureStoreNotProvided()
         fallbackStore.set(value, for: atom)
     }
 
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.Hook.Value where Node.Hook: AtomRefreshableHook {
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomStateProtocol {
         assertionFailureStoreNotProvided()
         return await fallbackStore.refresh(atom)
     }
@@ -38,7 +38,7 @@ internal struct DefaultStore: AtomStore {
         relationship: Relationship,
         shouldNotifyAfterUpdates: Bool,
         notifyUpdate: @escaping @MainActor () -> Void
-    ) -> Node.Hook.Value {
+    ) -> Node.State.Value {
         assertionFailureStoreNotProvided()
         return fallbackStore.watch(
             atom,
@@ -52,7 +52,7 @@ internal struct DefaultStore: AtomStore {
         _ atom: Node,
         belongTo caller: Caller,
         shouldNotifyAfterUpdates: Bool
-    ) -> Node.Hook.Value {
+    ) -> Node.State.Value {
         assertionFailureStoreNotProvided()
         return fallbackStore.watch(
             atom,
