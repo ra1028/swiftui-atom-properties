@@ -4,8 +4,8 @@ import SwiftUI
 struct DetailScreen: View {
     let movie: Movie
 
-    @Watch(MyListInsertAtom())
-    var myListInsert
+    @WatchStateObject(MyListAtom())
+    var myList
 
     @ViewContext
     var context
@@ -98,7 +98,7 @@ struct DetailScreen: View {
         let isOn = context.watch(IsInMyListAtom(movie: movie))
 
         Button {
-            myListInsert(movie: movie)
+            myList.insert(movie: movie)
         } label: {
             MyListButtonLabel(isOn: isOn)
         }

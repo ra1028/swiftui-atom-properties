@@ -1,76 +1,77 @@
 import Atoms
 import Foundation
 
-struct FirstPageAtom: ThrowingTaskAtom, Hashable {
-    func value(context: Context) async throws -> PagedResponse<Movie> {
-        let api = context.watch(APIClientAtom())
-        let filter = context.watch(FilterAtom())
+@MainActor
+final class MoviePages: ObservableObject {
+    @Published
+    private(set) var moviePages = AsyncPhase<[PagedResponse<Movie>], Error>.suspending
+    private let api: APIClientProtocol
+    let filter: Filter
 
-        return try await api.getMovies(filter: filter, page: 1)
+    init(api: APIClientProtocol, filter: Filter) {
+        self.api = api
+        self.filter = filter
     }
-}
 
-struct NextPagesAtom: StateAtom, Hashable {
-    func defaultValue(context: Context) -> [PagedResponse<Movie>] {
-        // Purges when the first page is updated.
-        context.watch(FirstPageAtom())
-        return []
-    }
-}
+    func refresh() async {
+        do {
+            moviePages = .suspending
 
-struct LoadNextAtom: ValueAtom, Hashable {
-    @MainActor
-    struct Action {
-        let context: AtomContext
-
-        func callAsFunction() async {
-            let api = context.read(APIClientAtom())
-            let filter = context.read(FilterAtom())
-            let currentPage = context.read(NextPagesAtom()).last?.page ?? 1
-            let nextPage = try? await api.getMovies(filter: filter, page: currentPage + 1)
-
-            if let nextPage = nextPage {
-                context[NextPagesAtom()].append(nextPage)
-            }
+            let page = try await api.getMovies(filter: filter, page: 1)
+            moviePages = .success([page])
+        }
+        catch {
+            moviePages = .failure(error)
         }
     }
 
-    func value(context: Context) -> Action {
-        Action(context: context)
+    func loadNext() async {
+        guard let pages = moviePages.value, let currentPage = pages.last?.page else {
+            return
+        }
+
+        let nextPage = try? await api.getMovies(filter: filter, page: currentPage + 1)
+
+        guard let nextPage = nextPage else{
+            return
+        }
+
+        moviePages = .success(pages + [nextPage])
+    }
+}
+
+@MainActor
+final class MyList: ObservableObject {
+    @Published
+    private(set) var movies = [Movie]()
+
+    func insert(movie: Movie) {
+        if let index = movies.firstIndex(of: movie) {
+            movies.remove(at: index)
+        }
+        else {
+            movies.append(movie)
+        }
+    }
+}
+
+struct MoviePagesAtom: ObservableObjectAtom, Hashable {
+    func object(context: Context) -> MoviePages {
+        let api = context.watch(APIClientAtom())
+        let filter = context.watch(FilterAtom())
+        return MoviePages(api: api, filter: filter)
+    }
+}
+
+struct MyListAtom: ObservableObjectAtom, Hashable, KeepAlive {
+    func object(context: Context) -> MyList {
+        MyList()
     }
 }
 
 struct FilterAtom: StateAtom, Hashable {
     func defaultValue(context: Context) -> Filter {
         .nowPlaying
-    }
-}
-
-struct MyListAtom: StateAtom, Hashable, KeepAlive {
-    func defaultValue(context: Context) -> [Movie] {
-        []
-    }
-}
-
-struct MyListInsertAtom: ValueAtom, Hashable {
-    @MainActor
-    struct Action {
-        let context: AtomContext
-
-        func callAsFunction(movie: Movie) {
-            let myList = MyListAtom()
-
-            if let index = context[myList].firstIndex(of: movie) {
-                context[myList].remove(at: index)
-            }
-            else {
-                context[myList].append(movie)
-            }
-        }
-    }
-
-    func value(context: Context) -> Action {
-        Action(context: context)
     }
 }
 

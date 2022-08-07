@@ -2,17 +2,11 @@ import Atoms
 import SwiftUI
 
 struct MoviesScreen: View {
-    @Watch(FirstPageAtom())
-    var firstPage
-
-    @Watch(NextPagesAtom())
-    var nextPages
+    @WatchStateObject(MoviePagesAtom())
+    var pages
 
     @WatchState(SearchQueryAtom())
     var searchQuery
-
-    @Watch(LoadNextAtom())
-    var loadNext
 
     @ViewContext
     var context
@@ -34,26 +28,27 @@ struct MoviesScreen: View {
             Section {
                 FilterPicker()
 
-                Suspense(firstPage) { firstPage in
-                    let pages = [firstPage] + nextPages
+                switch pages.moviePages {
+                    case .success(let movies):
+                        ForEach(movies, id: \.page) { response in
+                            pageIndex(current: response.page, total: response.totalPages)
 
-                    ForEach(pages, id: \.page) { response in
-                        pageIndex(current: response.page, total: response.totalPages)
-
-                        ForEach(response.results, id: \.id) { movie in
-                            movieRow(movie)
+                            ForEach(response.results, id: \.id) { movie in
+                                movieRow(movie)
+                            }
                         }
-                    }
 
-                    if let last = pages.last, last.hasNextPage {
-                        ProgressRow().task {
-                            await loadNext()
+                        if let last = movies.last, last.hasNextPage {
+                            ProgressRow().task {
+                                await pages.loadNext()
+                            }
                         }
-                    }
-                } suspending: {
-                    ProgressRow()
-                } catch: { _ in
-                    CaveatRow(text: "Failed to get the data.")
+
+                    case .failure:
+                        CaveatRow(text: "Failed to get the data.")
+
+                    case .suspending:
+                        ProgressRow()
                 }
             }
         }
@@ -71,8 +66,11 @@ struct MoviesScreen: View {
         .onSubmit(of: .search) { [$isShowingSearchScreen] in
             $isShowingSearchScreen.wrappedValue = true
         }
-        .refreshable { [context] in
-            await context.refresh(FirstPageAtom())
+        .task(id: pages.filter) {
+            await pages.refresh()
+        }
+        .refreshable { [pages] in
+            await pages.refresh()
         }
         .background {
             NavigationLink(
