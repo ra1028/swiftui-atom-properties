@@ -1,3 +1,6 @@
+import Combine
+import Foundation
+
 /// A context structure that to read, watch, and otherwise interacting with atoms in testing.
 ///
 /// This context has an internal Store that manages atoms, so it can be used to test individual
@@ -17,6 +20,58 @@ public struct AtomTestContext: AtomWatchableContext {
     public var onUpdate: (() -> Void)? {
         get { container.onUpdate }
         nonmutating set { container.onUpdate = newValue }
+    }
+
+    /// Waits until any of atoms watched through this context is updated for up to
+    /// the specified timeout, and then return a boolean value indicating whether an update is done.
+    ///
+    /// - Parameter interval: The maximum timeout interval that this function can wait until
+    ///                      the next update. The default timeout interval is `60`.
+    /// - Returns: A boolean value indicating whether an update is done.
+    @discardableResult
+    public func waitUntilNextUpdate(timeout interval: TimeInterval = 60) async -> Bool {
+        let updates = AsyncStream<Void> { continuation in
+            let cancellable = container.notifier.sink(
+                receiveCompletion: { completion in
+                    continuation.finish()
+                },
+                receiveValue: {
+                    continuation.yield()
+                }
+            )
+
+            let box = UnsafeUncheckedSendableBox(cancellable)
+            continuation.onTermination = { termination in
+                switch termination {
+                case .cancelled:
+                    box.unboxed.cancel()
+
+                case .finished:
+                    break
+
+                @unknown default:
+                    break
+                }
+            }
+        }
+
+        return await withTaskGroup(of: Bool.self) { group in
+            group.addTask {
+                var iterator = updates.makeAsyncIterator()
+                await iterator.next()
+                return true
+            }
+
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                return false
+            }
+
+            let didUpdate = await group.next() ?? false
+            group.cancelAll()
+
+            return didUpdate
+        }
     }
 
     /// Accesses the value associated with the given atom without watching to it.
@@ -199,7 +254,7 @@ private extension AtomTestContext {
     final class Container {
         private let storeContainer = StoreContainer()
         private var relationshipContainer = RelationshipContainer()
-
+        let notifier = PassthroughSubject<Void, Never>()
         var overrides: AtomOverrides
         var observers = [AtomObserver]()
         var onUpdate: (() -> Void)?
@@ -227,6 +282,7 @@ private extension AtomTestContext {
                 shouldNotifyAfterUpdates: shouldNotifyAfterUpdates
             ) { [weak self] in
                 self?.onUpdate?()
+                self?.notifier.send()
             }
         }
     }
