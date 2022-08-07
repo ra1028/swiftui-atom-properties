@@ -1,4 +1,4 @@
-public final class StateAtomState<Value>: AtomState {
+public final class StateAtomState<Value>: AtomStateProtocol {
     public typealias WillSet = @MainActor (
         _ newValue: Value,
         _ oldValue: Value,

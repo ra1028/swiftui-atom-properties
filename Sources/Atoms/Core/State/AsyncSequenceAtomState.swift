@@ -1,4 +1,4 @@
-public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: RefreshableAtomState {
+public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: RefreshableAtomStateProtocol {
     public typealias Value = AsyncPhase<Sequence.Element, Error>
 
     private var phase: Value?
@@ -15,11 +15,7 @@ public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: RefreshableA
 
         let sequence = sequence(context.atomContext)
         let box = UnsafeUncheckedSendableBox(sequence)
-        let task = Task { [weak self] in
-            guard let self = self else {
-                return
-            }
-
+        let task = Task {
             do {
                 for try await element in box.unboxed {
                     if !Task.isCancelled {

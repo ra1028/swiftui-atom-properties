@@ -1,6 +1,6 @@
 import Combine
 
-public final class PublisherAtomState<Publisher: Combine.Publisher>: RefreshableAtomState {
+public final class PublisherAtomState<Publisher: Combine.Publisher>: RefreshableAtomStateProtocol {
     public typealias Value = AsyncPhase<Publisher.Output, Publisher.Failure>
 
     private var phase: Value?
@@ -17,11 +17,7 @@ public final class PublisherAtomState<Publisher: Combine.Publisher>: Refreshable
 
         let results = makePublisher(context.atomContext).results
         let box = UnsafeUncheckedSendableBox(results)
-        let task = Task { [weak self] in
-            guard let self = self else {
-                return
-            }
-
+        let task = Task {
             for await result in box.unboxed {
                 if !Task.isCancelled {
                     self.phase = AsyncPhase(result)
