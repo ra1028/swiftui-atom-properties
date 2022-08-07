@@ -21,6 +21,7 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 - ``AsyncSequenceAtom``
 - ``PublisherAtom``
 - ``ObservableObjectAtom``
+- ``ModifiedAtom``
 
 ### Modifiers
 
@@ -65,8 +66,9 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 ### Internal System
 
 - ``Atom``
-- ``SelectModifierAtom``
-- ``TaskPhaseModifierAtom``
+- ``AtomModifier``
+- ``SelectModifier``
+- ``TaskPhaseModifier``
 - ``AtomHook``
 - ``AtomStateHook``
 - ``AtomTaskHook``
@@ -79,5 +81,4 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 - ``AsyncSequenceHook``
 - ``PublisherHook``
 - ``ObservableObjectHook``
-- ``SelectModifierHook``
-- ``TaskPhaseModifierHook``
+- ``ModifiedHook``
