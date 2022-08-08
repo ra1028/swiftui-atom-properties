@@ -37,13 +37,12 @@ internal struct Store: AtomStore {
             return
         }
 
-        let stateContext = AtomStateContext(atom: atom, store: self)
-        let atomContext = AtomRelationContext(atom: atom, store: self)
-        let oldValue = state.value(context: stateContext)
+        let context = AtomStateContext(atom: atom, store: self)
+        let oldValue = state.value(context: context)
 
-        atom.willSet(newValue: value, oldValue: oldValue, context: atomContext)
-        state.set(value: value, context: stateContext)
-        atom.didSet(newValue: value, oldValue: oldValue, context: atomContext)
+        atom.willSet(newValue: value, oldValue: oldValue, context: context.atomContext)
+        state.set(value: value, context: context)
+        atom.didSet(newValue: value, oldValue: oldValue, context: context.atomContext)
     }
 
     func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
