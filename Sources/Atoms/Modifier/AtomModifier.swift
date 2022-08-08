@@ -13,10 +13,17 @@ public extension Atom {
 public protocol AtomModifier {
     /// A type representing the stable identity of this modifier.
     associatedtype Key: Hashable
+
+    /// A type of original value to be modified.
     associatedtype Value
+
+    /// A type of modified value to provide.
     associatedtype ModifiedValue
 
+    /// A type of the context structure that to interact with an atom store.
     typealias Context = AtomStateContext
+
+    /// A typealias of closure to set a new value to the original atom's state.
     typealias SetValue = (ModifiedValue) -> Void
 
     /// A unique value used to identify the modifier internally.
@@ -34,6 +41,15 @@ public protocol AtomModifier {
     @MainActor
     func shouldNotifyUpdate(newValue: ModifiedValue, oldValue: ModifiedValue) -> Bool
 
+    /// Returns a value with initiating the update process and caches the value for
+    /// the next access.
+    ///
+    /// - Parameters:
+    ///   - context: The context structure that to interact with an atom store.
+    ///   - value: The original value to be modified.
+    ///   - setValue: The closure that to set a new value to the original atom's state.
+    ///
+    /// - Returns: A modified value.
     @MainActor
     func value(context: Context, with value: Value, setValue: @escaping SetValue) -> ModifiedValue
 }

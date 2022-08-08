@@ -1,5 +1,6 @@
 import Combine
 
+/// A state that is actual implementation of `ObservableObjectAtom`.
 public final class ObservableObjectAtomState<ObjectType: ObservableObject>: AtomState {
     private var object: ObjectType?
     private let makeObject: @MainActor (AtomRelationContext) -> ObjectType
@@ -8,6 +9,7 @@ public final class ObservableObjectAtomState<ObjectType: ObservableObject>: Atom
         self.makeObject = makeObject
     }
 
+    /// Returns a value with initiating the update process and caches the value for the next access.
     public func value(context: Context) -> ObjectType {
         if let object = object {
             return object
@@ -18,6 +20,7 @@ public final class ObservableObjectAtomState<ObjectType: ObservableObject>: Atom
         return object
     }
 
+    /// Overrides the value with an arbitrary value.
     public func override(context: Context, with object: ObjectType) {
         let cancellable = object.objectWillChange.sink { _ in
             context.notifyUpdate()

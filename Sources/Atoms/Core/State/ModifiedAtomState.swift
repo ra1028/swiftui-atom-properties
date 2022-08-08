@@ -1,3 +1,4 @@
+/// A state that is actual implementation of `ModifiedAtom`.
 public final class ModifiedAtomState<Node: Atom, Modifier: AtomModifier>: AtomState where Node.State.Value == Modifier.Value {
     private var modified: Modifier.ModifiedValue?
     private let atom: Node
@@ -8,6 +9,7 @@ public final class ModifiedAtomState<Node: Atom, Modifier: AtomModifier>: AtomSt
         self.modifier = modifier
     }
 
+    /// Returns a value with initiating the update process and caches the value for the next access.
     public func value(context: Context) -> Modifier.ModifiedValue {
         if let modified = modified {
             return modified
@@ -22,6 +24,7 @@ public final class ModifiedAtomState<Node: Atom, Modifier: AtomModifier>: AtomSt
         return modified
     }
 
+    /// Overrides the value with an arbitrary value.
     public func override(context: Context, with modified: Modifier.ModifiedValue) {
         self.modified = modified
     }

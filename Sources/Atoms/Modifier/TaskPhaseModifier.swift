@@ -39,6 +39,7 @@ public extension Atom where State: AsyncAtomState {
 ///
 /// Use ``Atom/phase`` instead of using this modifier directly.
 public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
+    /// A type of modified value to provide.
     public typealias ModifiedValue = AsyncPhase<Success, Failure>
 
     /// A type representing the stable identity of this atom associated with an instance.
@@ -49,6 +50,8 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
         Key()
     }
 
+    /// Returns a value with initiating the update process and caches the value for
+    /// the next access.
     public func value(context: Context, with task: Task<Success, Failure>, setValue: @escaping SetValue) -> ModifiedValue {
         let task = Task {
             let phase = await AsyncPhase(task.result)

@@ -9,6 +9,7 @@ public protocol Atom {
     /// A type representing the stable identity of this atom.
     associatedtype Key: Hashable
 
+    /// A type of state that is an actual implementation of this atom.
     associatedtype State: AtomState
 
     /// A type of the context structure that to read, watch, and otherwise interacting
@@ -31,6 +32,9 @@ public protocol Atom {
     /// If this atom conforms to `Hashable`, it will adopt itself as the `key` by default.
     var key: Key { get }
 
+    /// Creates a new state that is an actual implementation of this atom.
+    ///
+    /// - Returns: A state object that handles internal process and a value.
     @MainActor
     func makeState() -> State
 

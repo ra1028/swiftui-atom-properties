@@ -1,3 +1,4 @@
+/// A state that is actual implementation of `ValueAtom`.
 public final class ValueAtomState<Value>: AtomState {
     private var value: Value?
     private let getValue: @MainActor (AtomRelationContext) -> Value
@@ -6,6 +7,7 @@ public final class ValueAtomState<Value>: AtomState {
         self.getValue = getValue
     }
 
+    /// Returns a value with initiating the update process and caches the value for the next access.
     public func value(context: Context) -> Value {
         if let value = value {
             return value
@@ -16,6 +18,7 @@ public final class ValueAtomState<Value>: AtomState {
         return value
     }
 
+    /// Overrides the value with an arbitrary value.
     public func override(context: Context, with value: Value) {
         self.value = value
     }

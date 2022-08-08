@@ -37,6 +37,7 @@ public extension Atom {
 ///
 /// Use ``Atom/select(_:)`` instead of using this modifier directly.
 public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
+    /// A type of modified value to provide.
     public typealias ModifiedValue = Selected
 
     /// A type representing the stable identity of this modifier.
@@ -65,6 +66,8 @@ public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
         newValue != oldValue
     }
 
+    /// Returns a value with initiating the update process and caches the value for
+    /// the next access.
     public func value(context: Context, with value: Value, setValue: SetValue) -> Selected {
         value[keyPath: keyPath]
     }

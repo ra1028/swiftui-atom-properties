@@ -1,6 +1,8 @@
 import Combine
 
+/// A state that is actual implementation of `PublisherAtom`.
 public final class PublisherAtomState<Publisher: Combine.Publisher>: RefreshableAtomState {
+    /// A type of value to provide.
     public typealias Value = AsyncPhase<Publisher.Output, Publisher.Failure>
 
     private var phase: Value?
@@ -10,6 +12,7 @@ public final class PublisherAtomState<Publisher: Combine.Publisher>: Refreshable
         self.makePublisher = makePublisher
     }
 
+    /// Returns a value with initiating the update process and caches the value for the next access.
     public func value(context: Context) -> Value {
         if let phase = phase {
             return phase
@@ -33,10 +36,12 @@ public final class PublisherAtomState<Publisher: Combine.Publisher>: Refreshable
         return phase
     }
 
+    /// Overrides the value with an arbitrary value.
     public func override(context: Context, with phase: Value) {
         self.phase = phase
     }
 
+    /// Refreshes and awaits until the asynchronous value to be updated.
     public func refresh(context: Context) async -> Value {
         let results = makePublisher(context.atomContext).results
         phase = .suspending
@@ -49,6 +54,7 @@ public final class PublisherAtomState<Publisher: Combine.Publisher>: Refreshable
         return phase ?? .suspending
     }
 
+    /// Overrides with the given value and awaits until the value to be updated.
     public func refreshOverride(context: Context, with phase: Value) async -> Value {
         self.phase = phase
         context.notifyUpdate()

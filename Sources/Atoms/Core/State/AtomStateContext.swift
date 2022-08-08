@@ -1,3 +1,4 @@
+/// A type of the context structure that to interact with an atom store.
 @MainActor
 public struct AtomStateContext {
     @usableFromInline

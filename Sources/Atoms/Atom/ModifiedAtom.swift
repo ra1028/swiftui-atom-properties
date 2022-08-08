@@ -29,6 +29,9 @@ public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.
         Key(atomKey: atom.key, modifierKey: modifier.key)
     }
 
+    /// Creates a new state that is an actual implementation of this atom.
+    ///
+    /// - Returns: A state object that handles internal process and a value.
     public func makeState() -> ModifiedAtomState<Node, Modifier> {
         State(atom: atom, modifier: modifier)
     }
