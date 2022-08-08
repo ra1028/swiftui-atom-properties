@@ -1,6 +1,6 @@
 import Combine
 
-internal final class AtomHost<State: AtomStateProtocol>: AtomHostBase {
+internal final class AtomHost<State: AtomState>: AtomHostBase {
     private let notifier = PassthroughSubject<Void, Never>()
     private var container = RelationshipContainer()
     private var terminations = Set<AnyCancellable>()

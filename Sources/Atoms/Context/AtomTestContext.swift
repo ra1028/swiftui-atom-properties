@@ -132,7 +132,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomStateProtocol {
+    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
         await container.store.refresh(atom)
     }
 

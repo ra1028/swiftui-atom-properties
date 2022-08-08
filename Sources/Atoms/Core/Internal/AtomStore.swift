@@ -16,7 +16,7 @@ internal protocol AtomStore {
     func set<Node: StateAtom>(_ value: Node.Value, for atom: Node)
 
     @MainActor
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomStateProtocol
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState
 
     @MainActor
     func reset<Node: Atom>(_ atom: Node)

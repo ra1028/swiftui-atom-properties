@@ -23,7 +23,7 @@ internal struct DefaultStore: AtomStore {
         fallbackStore.set(value, for: atom)
     }
 
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomStateProtocol {
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
         assertionFailureStoreNotProvided()
         return await fallbackStore.refresh(atom)
     }

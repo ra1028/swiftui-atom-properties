@@ -1,4 +1,4 @@
-public final class ModifiedAtomState<Node: Atom, Modifier: AtomModifier>: AtomStateProtocol where Node.State.Value == Modifier.Value {
+public final class ModifiedAtomState<Node: Atom, Modifier: AtomModifier>: AtomState where Node.State.Value == Modifier.Value {
     private var modified: Modifier.ModifiedValue?
     private let atom: Node
     private let modifier: Modifier

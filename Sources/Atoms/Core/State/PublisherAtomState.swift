@@ -1,6 +1,6 @@
 import Combine
 
-public final class PublisherAtomState<Publisher: Combine.Publisher>: RefreshableAtomStateProtocol {
+public final class PublisherAtomState<Publisher: Combine.Publisher>: RefreshableAtomState {
     public typealias Value = AsyncPhase<Publisher.Output, Publisher.Failure>
 
     private var phase: Value?

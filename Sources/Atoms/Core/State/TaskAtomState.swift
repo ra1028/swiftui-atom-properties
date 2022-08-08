@@ -1,4 +1,4 @@
-public final class TaskAtomState<Success>: TaskAtomStateProtocol, RefreshableAtomStateProtocol {
+public final class TaskAtomState<Success>: AsyncAtomState {
     public typealias Value = Task<Success, Never>
 
     private var task: Value?

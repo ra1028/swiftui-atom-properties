@@ -1,6 +1,6 @@
 import Combine
 
-public final class ObservableObjectAtomState<ObjectType: ObservableObject>: AtomStateProtocol {
+public final class ObservableObjectAtomState<ObjectType: ObservableObject>: AtomState {
     private var object: ObjectType?
     private let makeObject: @MainActor (AtomRelationContext) -> ObjectType
 

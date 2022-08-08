@@ -1,5 +1,5 @@
 @MainActor
-public protocol AtomStateProtocol: AnyObject {
+public protocol AtomState: AnyObject {
     typealias Context = AtomStateContext
     associatedtype Value
 
@@ -7,12 +7,12 @@ public protocol AtomStateProtocol: AnyObject {
     func override(context: Context, with value: Value)
 }
 
-public protocol RefreshableAtomStateProtocol: AtomStateProtocol {
+public protocol RefreshableAtomState: AtomState {
     func refresh(context: Context) async -> Value
     func refreshOverride(context: Context, with value: Value) async -> Value
 }
 
-public protocol TaskAtomStateProtocol: AtomStateProtocol where Value == Task<Success, Failure> {
+public protocol AsyncAtomState: RefreshableAtomState where Value == Task<Success, Failure> {
     associatedtype Success
     associatedtype Failure: Error
 

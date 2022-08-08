@@ -59,7 +59,7 @@ public protocol AtomContext {
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomStateProtocol
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState
 
     /// Resets the value associated with the given atom, and then notify.
     ///

@@ -1,4 +1,4 @@
-public extension Atom where State: TaskAtomStateProtocol {
+public extension Atom where State: AsyncAtomState {
     /// Converts the `Task` that the original atom provides into ``AsyncPhase`` that
     /// changes overtime.
     ///

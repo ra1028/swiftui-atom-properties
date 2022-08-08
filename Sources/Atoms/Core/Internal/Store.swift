@@ -46,7 +46,7 @@ internal struct Store: AtomStore {
         atom.didSet(newValue: value, oldValue: oldValue, context: atomContext)
     }
 
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomStateProtocol {
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
         // Terminate the value & the ongoing task, but keep assignment until finishing refresh.
         await getHost(of: atom).withAsyncTermination { _ in
             let state = getState(of: atom)

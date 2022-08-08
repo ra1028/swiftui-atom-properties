@@ -9,7 +9,7 @@ public protocol Atom {
     /// A type representing the stable identity of this atom.
     associatedtype Key: Hashable
 
-    associatedtype State: AtomStateProtocol
+    associatedtype State: AtomState
 
     /// A type of the context structure that to read, watch, and otherwise interacting
     /// with other atoms.

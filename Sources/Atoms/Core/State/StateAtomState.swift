@@ -1,4 +1,4 @@
-public final class StateAtomState<Value>: AtomStateProtocol {
+public final class StateAtomState<Value>: AtomState {
     private var value: Value?
     private let getDefaultValue: @MainActor (AtomRelationContext) -> Value
 
