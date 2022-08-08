@@ -18,7 +18,7 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// It optionally provides the modifier ``AtomRoot/override(_:with:)-20r5z`` to replace the value of
+/// It optionally provides the modifier ``AtomRoot/override(_:with:)-32rse`` to replace the value of
 /// the specified atom, which is useful for dependency injection in testing.
 ///
 /// ```swift
