@@ -5,26 +5,58 @@ import XCTest
 @MainActor
 final class ModifiedAtomTests: XCTestCase {
     func testKey() {
-        let atom = TestValueAtom(value: 0)
+        let base = TestValueAtom(value: 0)
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
-        let modifiedAtom = ModifiedAtom(atom: atom, modifier: modifier)
+        let atom = ModifiedAtom(atom: base, modifier: modifier)
 
-        XCTAssertEqual(modifiedAtom.key, modifiedAtom.key)
-        XCTAssertEqual(modifiedAtom.key.hashValue, modifiedAtom.key.hashValue)
-        XCTAssertNotEqual(AnyHashable(modifiedAtom.key), AnyHashable(modifier.key))
-        XCTAssertNotEqual(AnyHashable(modifiedAtom.key).hashValue, AnyHashable(modifier.key).hashValue)
-        XCTAssertNotEqual(AnyHashable(modifiedAtom.key), AnyHashable(atom.key))
-        XCTAssertNotEqual(AnyHashable(modifiedAtom.key).hashValue, AnyHashable(atom.key).hashValue)
+        XCTAssertEqual(atom.key, atom.key)
+        XCTAssertEqual(atom.key.hashValue, atom.key.hashValue)
+        XCTAssertNotEqual(AnyHashable(atom.key), AnyHashable(modifier.key))
+        XCTAssertNotEqual(AnyHashable(atom.key).hashValue, AnyHashable(modifier.key).hashValue)
+        XCTAssertNotEqual(AnyHashable(atom.key), AnyHashable(base.key))
+        XCTAssertNotEqual(AnyHashable(atom.key).hashValue, AnyHashable(base.key).hashValue)
     }
 
     func testShouldNotifyUpdate() {
-        let atom = TestValueAtom(value: "test")
+        let base = TestValueAtom(value: "test")
         let modifier = SelectModifier<String, Int>(keyPath: \.count)
-        let modifiedAtom = ModifiedAtom(atom: atom, modifier: modifier)
+        let atom = ModifiedAtom(atom: base, modifier: modifier)
 
         XCTAssertEqual(
-            modifiedAtom.shouldNotifyUpdate(newValue: 100, oldValue: 200),
+            atom.shouldNotifyUpdate(newValue: 100, oldValue: 200),
             modifier.shouldNotifyUpdate(newValue: 100, oldValue: 200)
         )
+    }
+
+    func testValue() async {
+        let base = TestStateAtom(defaultValue: "test")
+        let modifier = SelectModifier<String, Int>(keyPath: \.count)
+        let atom = ModifiedAtom(atom: base, modifier: modifier)
+        let context = AtomTestContext()
+
+        do {
+            // Initial value
+            XCTAssertEqual(context.watch(atom), 4)
+        }
+
+        do {
+            // Update
+            Task {
+                context[base] = "testtest"
+            }
+
+            await context.waitUntilNextUpdate()
+            XCTAssertEqual(context.watch(atom), 8)
+        }
+
+        do {
+            // Override
+            context.unwatch(atom)
+            context.override(atom) { _ in
+                100
+            }
+
+            XCTAssertEqual(context.watch(atom), 100)
+        }
     }
 }

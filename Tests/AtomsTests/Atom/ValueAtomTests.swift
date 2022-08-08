@@ -4,18 +4,22 @@ import XCTest
 
 @MainActor
 final class ValueAtomTests: XCTestCase {
-    struct TestAtom: ValueAtom, Hashable {
-        let value: Int
-
-        func value(context: Context) -> Int {
-            value
-        }
-    }
-
-    func test() {
-        let atom = TestValueAtom(value: 100)
+    func testValue() {
+        let atom = TestValueAtom(value: 0)
         let context = AtomTestContext()
 
-        XCTAssertEqual(context.watch(atom), 100)
+        do {
+            // Initial value
+            let value = context.watch(atom)
+            XCTAssertEqual(value, 0)
+        }
+
+        do {
+            // Override
+            context.unwatch(atom)
+            context.override(atom) { _ in 1 }
+
+            XCTAssertEqual(context.watch(atom), 1)
+        }
     }
 }

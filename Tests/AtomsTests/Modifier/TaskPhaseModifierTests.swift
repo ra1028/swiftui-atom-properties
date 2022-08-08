@@ -23,63 +23,32 @@ final class TaskPhaseModifierTests: XCTestCase {
         XCTAssertEqual(modifier.key.hashValue, modifier.key.hashValue)
     }
 
-    func testMakeCoordinator() {
-        let modifier = TaskPhaseModifier<Int, Never>()
-        let coordinator = modifier.makeCoordinator()
-
-        XCTAssertNil(coordinator.phase)
-    }
-
-    func testGet() {
-        let modifier = TaskPhaseModifier<Int, Never>()
-        let coordinator = modifier.makeCoordinator()
-        let context = AtomHookContext(
-            atom: TestValueAtom(value: 0),
-            coordinator: coordinator,
-            store: Store(container: StoreContainer())
-        )
-
-        coordinator.phase = .success(100)
-
-        XCTAssertEqual(modifier.get(context: context), .success(100))
-    }
-
-    func testSet() {
-        let modifier = TaskPhaseModifier<Int, Never>()
-        let coordinator = modifier.makeCoordinator()
-        let context = AtomHookContext(
-            atom: TestValueAtom(value: 0),
-            coordinator: coordinator,
-            store: Store(container: StoreContainer())
-        )
-
-        modifier.set(value: .success(100), context: context)
-
-        XCTAssertEqual(coordinator.phase, .success(100))
-    }
-
-    func testUpdate() {
-        let modifier = TaskPhaseModifier<Int, Never>()
+    func testValue() {
         let atom = TestValueAtom(value: 0)
+        let modifier = TaskPhaseModifier<Int, Never>()
         let container = StoreContainer()
-        let coordinator = modifier.makeCoordinator()
-        let context = AtomHookContext(
-            atom: atom,
-            coordinator: coordinator,
-            store: Store(container: container)
-        )
-        let task = Task { 100 }
-        let host = AtomHost<TestValueAtom<Int>.Hook.Coordinator>()
+        let store = Store(container: container)
+        let context = AtomStateContext(atom: atom, store: store)
+        let host = AtomHost<TestValueAtom<Int>.State>()
         let expectation = expectation(description: "testUpdate")
+        let state = atom.makeState()
 
-        host.coordinator = atom.hook.makeCoordinator()
+        host.state = state
         host.onUpdate = { _ in expectation.fulfill() }
         container.entries[AtomKey(atom.key)] = WeakStoreEntry(host: host)
-        modifier.update(context: context, with: task)
 
-        XCTAssertEqual(coordinator.phase, .suspending)
+        var phase: AsyncPhase<Int, Never>?
+        let task = Task { 100 }
+        let initialPhase = modifier.value(
+            context: context,
+            with: task,
+            setValue: { phase = $0 }
+        )
+
+        XCTAssertEqual(initialPhase, .suspending)
 
         wait(for: [expectation], timeout: 1)
-        XCTAssertEqual(coordinator.phase, .success(100))
+
+        XCTAssertEqual(phase, .success(100))
     }
 }

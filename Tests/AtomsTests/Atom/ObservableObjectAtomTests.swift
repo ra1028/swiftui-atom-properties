@@ -4,36 +4,101 @@ import XCTest
 
 @MainActor
 final class ObservableObjectAtomTests: XCTestCase {
+    @MainActor
     final class TestObject: ObservableObject {
         @Published
-        var value: Int
+        private(set) var updatedCount = 0
 
-        init(value: Int) {
-            self.value = value
+        func update() {
+            updatedCount += 1
         }
     }
 
     struct TestAtom: ObservableObjectAtom, Hashable {
-        let value: Int
-
         func object(context: Context) -> TestObject {
-            TestObject(value: value)
+            TestObject()
         }
     }
 
     func test() async {
-        let atom = TestAtom(value: 100)
+        let atom = TestAtom()
         let context = AtomTestContext()
-        let object = context.watch(atom)
-        var updatedValue: Int?
 
-        context.onUpdate = {
-            updatedValue = object.value
+        do {
+            // Initial value
+            let object = context.watch(atom)
+            XCTAssertEqual(object.updatedCount, 0)
         }
 
-        object.value = 200
-        await context.waitUntilNextUpdate()
+        do {
+            // Update
+            let object = context.watch(atom)
+            var snapshot: Int?
 
-        XCTAssertEqual(updatedValue, 200)
+            context.onUpdate = {
+                // @Published property should be updated before notified
+                snapshot = object.updatedCount
+            }
+
+            object.update()
+            await context.waitUntilNextUpdate()
+
+            XCTAssertEqual(snapshot, 1)
+        }
+
+        do {
+            // Termination
+            context.unwatch(atom)
+
+            let object = context.watch(atom)
+            var updateCount = 0
+
+            context.onUpdate = {
+                updateCount = object.updatedCount
+            }
+
+            object.update()
+            await context.waitUntilNextUpdate()
+
+            XCTAssertEqual(updateCount, 1)
+        }
+
+        do {
+            // Override
+            let overrideObject = TestObject()
+            context.unwatch(atom)
+            context.override(atom) { _ in overrideObject }
+
+            let object = context.watch(atom)
+            var updateCount = 0
+
+            context.onUpdate = {
+                updateCount = object.updatedCount
+            }
+            object.update()
+            await context.waitUntilNextUpdate()
+
+            XCTAssertTrue(object === overrideObject)
+            XCTAssertEqual(updateCount, 1)
+        }
+
+        do {
+            // Override termination
+            let overrideObject = TestObject()
+            context.unwatch(atom)
+            context.override(atom) { _ in overrideObject }
+
+            let object = context.watch(atom)
+            var updateCount = 0
+
+            context.onUpdate = {
+                updateCount = object.updatedCount
+            }
+            object.update()
+            await context.waitUntilNextUpdate()
+
+            XCTAssertTrue(object === overrideObject)
+            XCTAssertEqual(updateCount, 1)
+        }
     }
 }

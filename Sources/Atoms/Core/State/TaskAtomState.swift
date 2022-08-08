@@ -17,6 +17,7 @@ public final class TaskAtomState<Success>: AsyncAtomState {
             await getValue(context.atomContext)
         }
         override(context: context, with: task)
+
         return task
     }
 

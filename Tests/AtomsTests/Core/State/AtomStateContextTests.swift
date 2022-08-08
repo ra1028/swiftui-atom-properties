@@ -3,11 +3,11 @@ import XCTest
 @testable import Atoms
 
 @MainActor
-final class AtomHookContextTests: XCTestCase {
+final class AtomStateContextTests: XCTestCase {
     func testAtomContext() {
         let atom = TestValueAtom(value: 100)
         let store = Store(container: StoreContainer())
-        let context = AtomHookContext(atom: atom, coordinator: 0, store: store)
+        let context = AtomStateContext(atom: atom, store: store)
 
         XCTAssertEqual(context.atomContext.read(atom), 100)
     }
@@ -18,7 +18,7 @@ final class AtomHookContextTests: XCTestCase {
         let store = Store(container: storeContainer)
         let relationshipContainer = RelationshipContainer()
         let relationship = Relationship(container: relationshipContainer)
-        let context = AtomHookContext(atom: atom, coordinator: 0, store: store)
+        let context = AtomStateContext(atom: atom, store: store)
         var updateCount = 0
 
         _ = store.watch(atom, relationship: relationship) {
@@ -38,7 +38,7 @@ final class AtomHookContextTests: XCTestCase {
         let store = Store(container: storeContainer)
         var relationshipContainer: RelationshipContainer? = RelationshipContainer()
         let relationship = Relationship(container: relationshipContainer!)
-        let context = AtomHookContext(atom: atom, coordinator: 0, store: store)
+        let context = AtomStateContext(atom: atom, store: store)
         var terminationCount0 = 0
         var terminationCount1 = 0
 

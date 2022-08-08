@@ -43,52 +43,13 @@ final class SelectModifierTests: XCTestCase {
         XCTAssertTrue(modifier.shouldNotifyUpdate(newValue: 100, oldValue: 200))
     }
 
-    func testMakeCoordinator() {
+    func testValue() {
+        let atom = TestValueAtom(value: 0)
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
-        let coordinator = modifier.makeCoordinator()
+        let store = Store(container: StoreContainer())
+        let context = AtomStateContext(atom: atom, store: store)
+        let value = modifier.value(context: context, with: 100, setValue: { _ in })
 
-        XCTAssertNil(coordinator.selected)
-    }
-
-    func testGet() {
-        let modifier = SelectModifier<Int, String>(keyPath: \.description)
-        let coordinator = modifier.makeCoordinator()
-        let context = AtomHookContext(
-            atom: TestValueAtom(value: 0),
-            coordinator: coordinator,
-            store: Store(container: StoreContainer())
-        )
-
-        coordinator.selected = "test"
-
-        XCTAssertEqual(modifier.get(context: context), "test")
-    }
-
-    func testSet() {
-        let modifier = SelectModifier<Int, String>(keyPath: \.description)
-        let coordinator = modifier.makeCoordinator()
-        let context = AtomHookContext(
-            atom: TestValueAtom(value: 0),
-            coordinator: coordinator,
-            store: Store(container: StoreContainer())
-        )
-
-        modifier.set(value: "test", context: context)
-
-        XCTAssertEqual(coordinator.selected, "test")
-    }
-
-    func testUpdate() {
-        let modifier = SelectModifier<Int, String>(keyPath: \.description)
-        let coordinator = modifier.makeCoordinator()
-        let context = AtomHookContext(
-            atom: TestValueAtom(value: 0),
-            coordinator: coordinator,
-            store: Store(container: StoreContainer())
-        )
-
-        modifier.update(context: context, with: 100)
-
-        XCTAssertEqual(coordinator.selected, "100")
+        XCTAssertEqual(value, "100")
     }
 }

@@ -4,25 +4,149 @@ import XCTest
 
 @MainActor
 final class AsyncSequenceAtomTests: XCTestCase {
-    struct TestAtom: AsyncSequenceAtom, Hashable {
-        let value: Int
+    final class AsyncThrowingStreamPipe<Element> {
+        var stream: AsyncThrowingStream<Element, Error>
+        var continuation: AsyncThrowingStream<Element, Error>.Continuation!
 
-        func sequence(context: Context) -> AsyncStream<Int> {
-            AsyncStream { continuation in
-                continuation.yield(value)
-                continuation.finish()
-            }
+        init() {
+            (stream, continuation) = Self.pipe()
+        }
+
+        func reset() {
+            (stream, continuation) = Self.pipe()
+        }
+
+        static func pipe() -> (
+            AsyncThrowingStream<Element, Error>,
+            AsyncThrowingStream<Element, Error>.Continuation
+        ) {
+            var continuation: AsyncThrowingStream<Element, Error>.Continuation!
+            let stream = AsyncThrowingStream { continuation = $0 }
+            return (stream, continuation)
         }
     }
 
-    func test() async {
-        let atom = TestAtom(value: 100)
+    func testValue() async {
+        let pipe = AsyncThrowingStreamPipe<Int>()
+        let atom = TestAsyncSequenceAtom { pipe.stream }
         let context = AtomTestContext()
 
-        context.watch(atom)
+        do {
+            XCTAssertTrue(context.watch(atom).isSuspending)
+        }
 
-        let phase = await context.refresh(atom)
+        do {
+            // Value
+            pipe.continuation.yield(0)
+            await context.waitUntilNextUpdate()
 
-        XCTAssertEqual(phase.value, 100)
+            XCTAssertEqual(context.watch(atom).value, 0)
+        }
+
+        do {
+            // Failure
+            pipe.continuation.finish(throwing: URLError(.badURL))
+            await context.waitUntilNextUpdate()
+
+            XCTAssertEqual(context.watch(atom).error as? URLError, URLError(.badURL))
+        }
+
+        do {
+            // Yield value after finish
+            pipe.continuation.yield(1)
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+
+            XCTAssertFalse(didUpdate)
+        }
+
+        do {
+            // Yield value after termination
+            pipe.reset()
+            context.unwatch(atom)
+
+            pipe.continuation.yield(0)
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+
+            XCTAssertFalse(didUpdate)
+        }
+
+        do {
+            // Yield error after termination
+            pipe.reset()
+            context.unwatch(atom)
+
+            pipe.continuation.finish(throwing: URLError(.badURL))
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+
+            XCTAssertFalse(didUpdate)
+        }
+
+        do {
+            // Override
+            context.override(atom) { _ in .success(100) }
+
+            XCTAssertEqual(context.watch(atom).value, 100)
+        }
+    }
+
+    func testRefresh() async {
+        let pipe = AsyncThrowingStreamPipe<Int>()
+        let atom = TestAsyncSequenceAtom { pipe.stream }
+        let context = AtomTestContext()
+
+        do {
+            XCTAssertTrue(context.watch(atom).isSuspending)
+        }
+
+        do {
+            // Refresh
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+            pipe.reset()
+
+            Task {
+                pipe.continuation.yield(0)
+                pipe.continuation.finish(throwing: nil)
+            }
+
+            let phase = await context.refresh(atom)
+
+            XCTAssertEqual(phase.value, 0)
+            XCTAssertEqual(updateCount, 1)
+        }
+
+        do {
+            // Cancellation
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+            pipe.reset()
+
+            let refreshTask = Task {
+                await context.refresh(atom)
+            }
+
+            Task {
+                pipe.continuation.yield(1)
+                refreshTask.cancel()
+            }
+
+            let phase = await refreshTask.value
+
+            XCTAssertEqual(phase.value, 1)
+            XCTAssertEqual(updateCount, 1)
+        }
+
+        do {
+            // Override
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+            context.override(atom) { _ in .success(200) }
+            pipe.reset()
+
+            let phase = await context.refresh(atom)
+
+            XCTAssertEqual(phase.value, 200)
+            XCTAssertEqual(updateCount, 1)
+        }
     }
 }
