@@ -1,42 +1,28 @@
 import Atoms
 import CoreLocation
 
-struct LocationManagerAtom: ValueAtom, Hashable {
-    func value(context: Context) -> LocationManagerProtocol {
+final class LocationObserver: NSObject, ObservableObject, CLLocationManagerDelegate {
+    let manager: LocationManagerProtocol
+
+    deinit {
+        manager.stopUpdatingLocation()
+    }
+
+    init(manager: LocationManagerProtocol) {
+        self.manager = manager
+        super.init()
+        manager.delegate = self
+    }
+
+    convenience override init() {
         let manager = CLLocationManager()
-        let delegate = LocationManagerDelegate()
-
-        manager.delegate = delegate
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        context.addTermination(manager.stopUpdatingLocation)
-        context.keepUntilTermination(delegate)
-        delegate.onChange = {
-            context.reset(AuthorizationStatusAtom())
-        }
 
-        return manager
+        self.init(manager: manager)
     }
-}
-
-struct CoordinateAtom: ValueAtom, Hashable {
-    func value(context: Context) -> CLLocationCoordinate2D? {
-        let manager = context.watch(LocationManagerAtom())
-        return manager.location?.coordinate
-    }
-}
-
-struct AuthorizationStatusAtom: ValueAtom, Hashable {
-    func value(context: Context) -> CLAuthorizationStatus {
-        let manager = context.watch(LocationManagerAtom())
-        return manager.authorizationStatus
-    }
-}
-
-private final class LocationManagerDelegate: NSObject, CLLocationManagerDelegate {
-    var onChange: (() -> Void)?
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        onChange?()
+        objectWillChange.send()
 
         switch manager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
@@ -55,5 +41,24 @@ private final class LocationManagerDelegate: NSObject, CLLocationManagerDelegate
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print(error.localizedDescription)
+    }
+}
+
+struct LocationObserverAtom: ObservableObjectAtom, Hashable {
+    func object(context: Context) -> LocationObserver {
+        LocationObserver()
+    }
+}
+
+struct CoordinateAtom: ValueAtom, Hashable {
+    func value(context: Context) -> CLLocationCoordinate2D? {
+        let observer = context.watch(LocationObserverAtom())
+        return observer.manager.location?.coordinate
+    }
+}
+
+struct AuthorizationStatusAtom: ValueAtom, Hashable {
+    func value(context: Context) -> CLAuthorizationStatus {
+        context.watch(LocationObserverAtom().select(\.manager.authorizationStatus))
     }
 }

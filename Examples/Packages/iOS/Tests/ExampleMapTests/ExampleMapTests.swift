@@ -6,28 +6,68 @@ import XCTest
 
 @MainActor
 final class ExampleMapTests: XCTestCase {
+    func testLocationObserverAtom() {
+        let atom = LocationObserverAtom()
+        let context = AtomTestContext()
+        let manager = MockLocationManager()
+
+        context.override(atom) { _ in
+            LocationObserver(manager: manager)
+        }
+
+        context.watch(atom)
+
+        XCTAssertNotNil(manager.delegate)
+        XCTAssertTrue(manager.isUpdatingLocation)
+
+        context.unwatch(atom)
+
+        XCTAssertFalse(manager.isUpdatingLocation)
+    }
+
     func testCoordinateAtom() {
         let atom = CoordinateAtom()
         let context = AtomTestContext()
-        let locationManager = MockLocationManager()
+        let manager = MockLocationManager()
 
-        context.override(LocationManagerAtom()) { _ in locationManager }
+        context.override(LocationObserverAtom()) { _ in
+            LocationObserver(manager: manager)
+        }
 
-        locationManager.location = CLLocation(latitude: 1, longitude: 2)
+        manager.location = CLLocation(latitude: 1, longitude: 2)
 
         XCTAssertEqual(context.watch(atom)?.latitude, 1)
         XCTAssertEqual(context.watch(atom)?.longitude, 2)
     }
 
-    func testAuthorizationStatusAtom() {
+    func testAuthorizationStatusAtom() async {
         let atom = AuthorizationStatusAtom()
-        let locationManager = MockLocationManager()
+        let manager = MockLocationManager()
         let context = AtomTestContext()
+        let observer = LocationObserver(manager: manager)
 
-        context.override(LocationManagerAtom()) { _ in locationManager }
+        context.override(LocationObserverAtom()) { _ in
+            observer
+        }
 
-        locationManager.authorizationStatus = .authorizedWhenInUse
+        manager.authorizationStatus = .authorizedWhenInUse
 
         XCTAssertEqual(context.watch(atom), .authorizedWhenInUse)
+
+        manager.authorizationStatus = .authorizedAlways
+
+        Task {
+            observer.objectWillChange.send()
+        }
+
+        await context.waitUntilNextUpdate()
+
+        XCTAssertEqual(context.watch(atom), .authorizedAlways)
+
+        observer.objectWillChange.send()
+        let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+
+        // Should not update if authorizationStatus is not changed.
+        XCTAssertFalse(didUpdate)
     }
 }
