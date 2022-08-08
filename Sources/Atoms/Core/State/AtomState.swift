@@ -12,7 +12,7 @@ public protocol AtomState: AnyObject {
     func value(context: Context) -> Value
 
     /// Overrides the value with an arbitrary value.
-    func override(context: Context, with value: Value)
+    func override(with value: Value, context: Context)
 }
 
 /// A state protocol that represents an actual implementation of the corresponding atom
@@ -22,7 +22,7 @@ public protocol RefreshableAtomState: AtomState {
     func refresh(context: Context) async -> Value
 
     /// Overrides with the given value and awaits until the value to be updated.
-    func refreshOverride(context: Context, with value: Value) async -> Value
+    func refreshOverride(with value: Value, context: Context) async -> Value
 }
 
 /// A state protocol that represents an actual implementation of the corresponding atom

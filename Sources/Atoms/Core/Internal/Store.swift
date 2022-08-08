@@ -52,7 +52,7 @@ internal struct Store: AtomStore {
             let context = AtomStateContext(atom: atom, store: self)
 
             if let value = overrides?[atom] {
-                return await state.refreshOverride(context: context, with: value)
+                return await state.refreshOverride(with: value, context: context)
             }
             else {
                 return await state.refresh(context: context)
@@ -130,7 +130,7 @@ internal struct Store: AtomStore {
         }
 
         let context = AtomStateContext(atom: snapshot.atom, store: self)
-        state.override(context: context, with: snapshot.value)
+        state.override(with: snapshot.value, context: context)
         host.notifyUpdate()
     }
 }
@@ -149,7 +149,7 @@ private extension Store {
         if let value = overrides?[atom] {
             // Set the override value.
             let context = AtomStateContext(atom: atom, store: self)
-            state.override(context: context, with: value)
+            state.override(with: value, context: context)
         }
 
         // Notify the initial update to observers.

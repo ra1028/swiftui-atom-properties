@@ -25,7 +25,7 @@ public final class ModifiedAtomState<Node: Atom, Modifier: AtomModifier>: AtomSt
     }
 
     /// Overrides the value with an arbitrary value.
-    public func override(context: Context, with modified: Modifier.ModifiedValue) {
+    public func override(with modified: Modifier.ModifiedValue, context: Context) {
         self.modified = modified
     }
 }

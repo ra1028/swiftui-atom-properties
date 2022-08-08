@@ -19,7 +19,7 @@ public final class ValueAtomState<Value>: AtomState {
     }
 
     /// Overrides the value with an arbitrary value.
-    public func override(context: Context, with value: Value) {
+    public func override(with value: Value, context: Context) {
         self.value = value
     }
 }

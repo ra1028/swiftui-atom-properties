@@ -16,12 +16,12 @@ public final class ObservableObjectAtomState<ObjectType: ObservableObject>: Atom
         }
 
         let object = makeObject(context.atomContext)
-        override(context: context, with: object)
+        override(with: object, context: context)
         return object
     }
 
     /// Overrides the value with an arbitrary value.
-    public func override(context: Context, with object: ObjectType) {
+    public func override(with object: ObjectType, context: Context) {
         let cancellable = object.objectWillChange.sink { _ in
             context.notifyUpdate()
         }

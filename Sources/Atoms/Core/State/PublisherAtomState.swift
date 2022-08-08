@@ -37,7 +37,7 @@ public final class PublisherAtomState<Publisher: Combine.Publisher>: Refreshable
     }
 
     /// Overrides the value with an arbitrary value.
-    public func override(context: Context, with phase: Value) {
+    public func override(with phase: Value, context: Context) {
         self.phase = phase
     }
 
@@ -55,7 +55,7 @@ public final class PublisherAtomState<Publisher: Combine.Publisher>: Refreshable
     }
 
     /// Overrides with the given value and awaits until the value to be updated.
-    public func refreshOverride(context: Context, with phase: Value) async -> Value {
+    public func refreshOverride(with phase: Value, context: Context) async -> Value {
         self.phase = phase
         context.notifyUpdate()
         return phase

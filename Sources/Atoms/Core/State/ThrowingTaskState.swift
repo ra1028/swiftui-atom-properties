@@ -19,12 +19,12 @@ public final class ThrowingTaskState<Success>: AsyncAtomState {
         let task = Task {
             try await getValue(context.atomContext)
         }
-        override(context: context, with: task)
+        override(with: task, context: context)
         return task
     }
 
     /// Overrides the value with an arbitrary value.
-    public func override(context: Context, with task: Value) {
+    public func override(with task: Value, context: Context) {
         self.task = task
         context.addTermination(task.cancel)
     }
@@ -35,11 +35,11 @@ public final class ThrowingTaskState<Success>: AsyncAtomState {
             try await getValue(context.atomContext)
         }
 
-        return await refreshOverride(context: context, with: task)
+        return await refreshOverride(with: task, context: context)
     }
 
     /// Overrides with the given value and awaits until the value to be updated.
-    public func refreshOverride(context: Context, with task: Value) async -> Value {
+    public func refreshOverride(with task: Value, context: Context) async -> Value {
         self.task = task
 
         return await withTaskCancellationHandler {
