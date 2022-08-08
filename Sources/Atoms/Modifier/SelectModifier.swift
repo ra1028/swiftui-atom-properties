@@ -65,7 +65,7 @@ public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
         newValue != oldValue
     }
 
-    public func value(context: Context, with value: Value, update: Update) -> Selected {
+    public func value(context: Context, with value: Value, setValue: SetValue) -> Selected {
         value[keyPath: keyPath]
     }
 }

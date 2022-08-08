@@ -17,7 +17,7 @@ public protocol AtomModifier {
     associatedtype ModifiedValue
 
     typealias Context = AtomStateContext
-    typealias Update = (ModifiedValue) -> Void
+    typealias SetValue = (ModifiedValue) -> Void
 
     /// A unique value used to identify the modifier internally.
     var key: Key { get }
@@ -35,7 +35,7 @@ public protocol AtomModifier {
     func shouldNotifyUpdate(newValue: ModifiedValue, oldValue: ModifiedValue) -> Bool
 
     @MainActor
-    func value(context: Context, with value: Value, update: @escaping Update) -> ModifiedValue
+    func value(context: Context, with value: Value, setValue: @escaping SetValue) -> ModifiedValue
 }
 
 public extension AtomModifier {

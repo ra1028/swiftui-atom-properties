@@ -49,19 +49,19 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
         Key()
     }
 
-    public func value(context: Context, with task: Task<Success, Failure>, update: @escaping Update) -> ModifiedValue {
+    public func value(context: Context, with task: Task<Success, Failure>, setValue: @escaping SetValue) -> ModifiedValue {
         let task = Task {
             let phase = await AsyncPhase(task.result)
 
             if !Task.isCancelled {
-                update(phase)
+                setValue(phase)
                 context.notifyUpdate()
             }
         }
         context.addTermination(task.cancel)
 
         let phase = ModifiedValue.suspending
-        update(phase)
+        setValue(phase)
 
         return phase
     }
