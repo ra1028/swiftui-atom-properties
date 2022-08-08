@@ -5,3 +5,5 @@ final class Object {
         onDeinit?()
     }
 }
+
+struct UniqueKey: Hashable {}

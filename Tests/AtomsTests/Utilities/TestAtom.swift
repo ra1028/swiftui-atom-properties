@@ -1,15 +1,6 @@
 import Atoms
 import Combine
 
-struct TestAtom<Key: Hashable, State: AtomState>: Atom {
-    var key: Key
-    var state: State
-
-    func makeState() -> State {
-        state
-    }
-}
-
 struct TestValueAtom<T: Hashable>: ValueAtom, Hashable {
     var value: T
 
@@ -18,17 +9,13 @@ struct TestValueAtom<T: Hashable>: ValueAtom, Hashable {
     }
 }
 
-struct TestStateAtom<T: Hashable>: StateAtom, Hashable {
+struct TestStateAtom<T>: StateAtom {
     var defaultValue: T
     var willSet: ((T, T) -> Void)?
     var didSet: ((T, T) -> Void)?
 
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.defaultValue == rhs.defaultValue
-    }
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(defaultValue)
+    var key: UniqueKey {
+        UniqueKey()
     }
 
     func defaultValue(context: Context) -> T {
@@ -44,8 +31,12 @@ struct TestStateAtom<T: Hashable>: StateAtom, Hashable {
     }
 }
 
-struct TestTaskAtom<T>: TaskAtom, Hashable {
+struct TestTaskAtom<T>: TaskAtom {
     var getValue: () -> T
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
 
     init(value: T) {
         self.getValue = { value }
@@ -55,19 +46,17 @@ struct TestTaskAtom<T>: TaskAtom, Hashable {
         self.getValue = getValue
     }
 
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        true
-    }
-
-    func hash(into hasher: inout Hasher) {}
-
     func value(context: Context) async -> T {
         getValue()
     }
 }
 
-struct TestThrowingTaskAtom<Success>: ThrowingTaskAtom, Hashable {
+struct TestThrowingTaskAtom<Success>: ThrowingTaskAtom {
     var getResult: () -> Result<Success, Error>
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
 
     init(result: Result<Success, Error>) {
         self.getResult = { result }
@@ -77,39 +66,29 @@ struct TestThrowingTaskAtom<Success>: ThrowingTaskAtom, Hashable {
         self.getResult = getResult
     }
 
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        true
-    }
-
-    func hash(into hasher: inout Hasher) {}
-
     func value(context: Context) async throws -> Success {
         try getResult().get()
     }
 }
 
-struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom, Hashable {
+struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom {
     var makePublisher: () -> Publisher
 
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        true
+    var key: UniqueKey {
+        UniqueKey()
     }
-
-    func hash(into hasher: inout Hasher) {}
 
     func publisher(context: Context) -> Publisher {
         makePublisher()
     }
 }
 
-struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom, Hashable {
+struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom {
     var makeSequence: () -> Sequence
 
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        true
+    var key: UniqueKey {
+        UniqueKey()
     }
-
-    func hash(into hasher: inout Hasher) {}
 
     func sequence(context: Context) -> Sequence {
         makeSequence()
