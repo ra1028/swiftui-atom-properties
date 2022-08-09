@@ -23,17 +23,17 @@ public final class PublisherAtomState<Publisher: Combine.Publisher>: Refreshable
         let task = Task {
             for await result in box.unboxed {
                 if !Task.isCancelled {
-                    self.phase = AsyncPhase(result)
+                    phase = AsyncPhase(result)
                     context.notifyUpdate()
                 }
             }
         }
         context.addTermination(task.cancel)
 
-        let phase = Value.suspending
-        self.phase = phase
+        let initialPhase = Value.suspending
+        phase = initialPhase
 
-        return phase
+        return initialPhase
     }
 
     /// Overrides the value with an arbitrary value.

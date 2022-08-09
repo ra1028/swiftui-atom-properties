@@ -153,7 +153,7 @@ private extension Store {
         }
 
         // Notify the initial update to observers.
-        notifyObserversOfUpdate(of: atom, state: state)
+        notifyChangesToObservers(of: atom, state: state)
 
         return state
     }
@@ -180,7 +180,7 @@ private extension Store {
 
         host.onUpdate = { state in
             // Notify the update to observers.
-            notifyObserversOfUpdate(of: atom, state: state)
+            notifyChangesToObservers(of: atom, state: state)
         }
 
         guard let container = container else {
@@ -231,7 +231,7 @@ private extension Store {
         return host
     }
 
-    func notifyObserversOfUpdate<Node: Atom>(
+    func notifyChangesToObservers<Node: Atom>(
         of atom: Node,
         state: Node.State
     ) {

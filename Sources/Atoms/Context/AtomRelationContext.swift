@@ -189,7 +189,8 @@ public struct AtomRelationContext: AtomWatchableContext {
     /// - Parameter object: An object that to be retained.
     @inlinable
     public func keepUntilTermination<Object: AnyObject>(_ object: Object) {
-        _box.keepUntilTermination(object)
+        let retainer = ObjectRetainer(object)
+        addTermination(retainer.release)
     }
 }
 
@@ -200,23 +201,10 @@ internal protocol _AnyAtomRelationContextBox {
 
     func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value
     func addTermination(_ termination: @MainActor @escaping () -> Void)
-    func keepUntilTermination<Object: AnyObject>(_ object: Object)
 }
 
 @usableFromInline
 internal struct _AtomRelationContextBox<Caller: Atom>: _AnyAtomRelationContextBox {
-    final class Retainer<Object: AnyObject> {
-        private var object: Object?
-
-        init(_ object: Object) {
-            self.object = object
-        }
-
-        func release() {
-            object = nil
-        }
-    }
-
     let caller: Caller
 
     @usableFromInline
@@ -235,10 +223,19 @@ internal struct _AtomRelationContextBox<Caller: Atom>: _AnyAtomRelationContextBo
     func addTermination(_ termination: @MainActor @escaping () -> Void) {
         store.addTermination(caller, termination: termination)
     }
+}
+
+@usableFromInline
+internal final class ObjectRetainer<Object: AnyObject> {
+    private var object: Object?
 
     @usableFromInline
-    func keepUntilTermination<Object: AnyObject>(_ object: Object) {
-        let retainer = Retainer(object)
-        store.addTermination(caller, termination: retainer.release)
+    init(_ object: Object) {
+        self.object = object
+    }
+
+    @usableFromInline
+    func release() {
+        object = nil
     }
 }

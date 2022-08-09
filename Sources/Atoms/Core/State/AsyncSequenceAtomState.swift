@@ -22,24 +22,24 @@ public final class AsyncSequenceAtomState<Sequence: AsyncSequence>: RefreshableA
             do {
                 for try await element in box.unboxed {
                     if !Task.isCancelled {
-                        self.phase = .success(element)
+                        phase = .success(element)
                         context.notifyUpdate()
                     }
                 }
             }
             catch {
                 if !Task.isCancelled {
-                    self.phase = .failure(error)
+                    phase = .failure(error)
                     context.notifyUpdate()
                 }
             }
         }
         context.addTermination(task.cancel)
 
-        let phase = Value.suspending
-        self.phase = phase
+        let initialPhase = Value.suspending
+        phase = initialPhase
 
-        return phase
+        return initialPhase
     }
 
     /// Overrides the value with an arbitrary value.

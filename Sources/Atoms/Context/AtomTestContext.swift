@@ -25,6 +25,21 @@ public struct AtomTestContext: AtomWatchableContext {
     /// Waits until any of atoms watched through this context is updated for up to
     /// the specified timeout, and then return a boolean value indicating whether an update is done.
     ///
+    /// ```swift
+    /// func testAsyncUpdate() async {
+    ///     let context = AtomTestContext()
+    ///
+    ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
+    ///     XCTAssertEqual(initialPhase, .suspending)
+    ///
+    ///     let didUpdate = await context.waitUntilNextUpdate()
+    ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
+    ///
+    ///     XCTAssertTure(didUpdate)
+    ///     XCTAssertEqual(currentPhase, .success(123))
+    /// }
+    /// ```
+    ///
     /// - Parameter interval: The maximum timeout interval that this function can wait until
     ///                      the next update. The default timeout interval is `60`.
     /// - Returns: A boolean value indicating whether an update is done.
