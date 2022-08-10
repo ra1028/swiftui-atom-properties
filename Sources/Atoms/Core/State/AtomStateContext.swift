@@ -8,6 +8,10 @@ public struct AtomStateContext {
         _box = _AtomStateContextBox(atom: atom, store: store)
     }
 
+    internal init<Node: Atom>(atom: Node, store: StoreInteractor) {
+        _box = _TempAtomStateContextBox(atom: atom, store: store)
+    }
+
     @inlinable
     internal var atomContext: AtomRelationContext {
         _box.atomContext
@@ -56,5 +60,26 @@ internal struct _AtomStateContextBox<Node: Atom>: _AnyAtomStateContextBox {
     @usableFromInline
     func addTermination(_ termination: @MainActor @escaping () -> Void) {
         store.addTermination(atom, termination: termination)
+    }
+}
+
+@usableFromInline
+internal struct _TempAtomStateContextBox<Node: Atom>: _AnyAtomStateContextBox {
+    let atom: Node
+    let store: StoreInteractor
+
+    @usableFromInline
+    var atomContext: AtomRelationContext {
+        AtomRelationContext(atom: atom, store: store)
+    }
+
+    @usableFromInline
+    func notifyUpdate() {
+        store.notifyUpdate(of: atom)
+    }
+
+    @usableFromInline
+    func addTermination(_ termination: @MainActor @escaping () -> Void) {
+        store.addTermination(for: atom, termination)
     }
 }

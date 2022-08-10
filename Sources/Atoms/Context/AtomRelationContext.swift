@@ -11,6 +11,10 @@ public struct AtomRelationContext: AtomWatchableContext {
         _box = _AtomRelationContextBox(caller: atom, store: store)
     }
 
+    internal init<Node: Atom>(atom: Node, store: StoreInteractor) {
+        _box = _TempAtomRelationContextBox(upstream: atom, _store: store)
+    }
+
     /// Accesses the value associated with the given atom without watching to it.
     ///
     /// This method returns a value for the given atom. Even if you access to a value with this method,
@@ -222,6 +226,30 @@ internal struct _AtomRelationContextBox<Caller: Atom>: _AnyAtomRelationContextBo
     @usableFromInline
     func addTermination(_ termination: @MainActor @escaping () -> Void) {
         store.addTermination(caller, termination: termination)
+    }
+}
+
+@usableFromInline
+internal struct _TempAtomRelationContextBox<Upstream: Atom>: _AnyAtomRelationContextBox {
+    @usableFromInline
+    let upstream: Upstream
+
+    @usableFromInline
+    let _store: StoreInteractor
+
+    @usableFromInline
+    var store: AtomStore {
+        fatalError()
+    }
+
+    @usableFromInline
+    func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value {
+        _store.watch(atom, upstream: upstream, shouldNotifyAfterUpdates: shouldNotifyAfterUpdates)
+    }
+
+    @usableFromInline
+    func addTermination(_ termination: @MainActor @escaping () -> Void) {
+        _store.addTermination(for: upstream, termination)
     }
 }
 
