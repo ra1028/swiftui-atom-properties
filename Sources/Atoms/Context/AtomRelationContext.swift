@@ -8,11 +8,11 @@ public struct AtomRelationContext: AtomWatchableContext {
     internal let _box: _AnyAtomRelationContextBox
 
     internal init<Node: Atom>(atom: Node, store: AtomStore) {
-        _box = _AtomRelationContextBox(caller: atom, store: store)
+        fatalError()
     }
 
-    internal init<Node: Atom>(atom: Node, store: StoreInteractor) {
-        _box = _TempAtomRelationContextBox(upstream: atom, _store: store)
+    internal init<Node: Atom>(atom: Node, store: AtomStoreInteractor) {
+        _box = _AtomRelationContextBox(downstream: atom, store: store)
     }
 
     /// Accesses the value associated with the given atom without watching to it.
@@ -201,69 +201,30 @@ public struct AtomRelationContext: AtomWatchableContext {
 @usableFromInline
 @MainActor
 internal protocol _AnyAtomRelationContextBox {
-    var store: AtomStore { get }
+    var store: AtomStoreInteractor { get }
 
     func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value
     func addTermination(_ termination: @MainActor @escaping () -> Void)
 }
 
 @usableFromInline
-internal struct _AtomRelationContextBox<Caller: Atom>: _AnyAtomRelationContextBox {
-    let caller: Caller
+internal struct _AtomRelationContextBox<Downstream: Atom>: _AnyAtomRelationContextBox {
+    let downstream: Downstream
 
     @usableFromInline
-    let store: AtomStore
+    let store: AtomStoreInteractor
 
     @usableFromInline
     func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value {
         store.watch(
             atom,
-            belongTo: caller,
+            downstream: downstream,
             shouldNotifyAfterUpdates: shouldNotifyAfterUpdates
         )
     }
 
     @usableFromInline
     func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        store.addTermination(caller, termination: termination)
-    }
-}
-
-@usableFromInline
-internal struct _TempAtomRelationContextBox<Upstream: Atom>: _AnyAtomRelationContextBox {
-    @usableFromInline
-    let upstream: Upstream
-
-    @usableFromInline
-    let _store: StoreInteractor
-
-    @usableFromInline
-    var store: AtomStore {
-        fatalError()
-    }
-
-    @usableFromInline
-    func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value {
-        _store.watch(atom, upstream: upstream, shouldNotifyAfterUpdates: shouldNotifyAfterUpdates)
-    }
-
-    @usableFromInline
-    func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        _store.addTermination(for: upstream, termination)
-    }
-}
-
-@usableFromInline
-internal final class ObjectRetainer<Object: AnyObject> {
-    private var object: Object?
-
-    @usableFromInline
-    init(_ object: Object) {
-        self.object = object
-    }
-
-    @usableFromInline
-    func release() {
-        object = nil
+        store.addTermination(for: downstream, termination)
     }
 }

@@ -59,12 +59,12 @@ public struct AtomRoot<Content: View>: View {
     /// The content and behavior of the view.
     public var body: some View {
         content.environment(
-            \.atomStore,
-            Store(
-                container: state.container,
+            \.atomStoreInteractor,
+             RootAtomStoreInteractor(
+                store: state.store,
                 overrides: overrides,
                 observers: observers
-            )
+             )
         )
     }
 
@@ -117,7 +117,7 @@ public struct AtomRoot<Content: View>: View {
 private extension AtomRoot {
     @MainActor
     final class State: ObservableObject {
-        let container = StoreContainer()
+        let store = NewAtomStore()
     }
 
     func `mutating`(_ mutation: (inout Self) -> Void) -> Self {

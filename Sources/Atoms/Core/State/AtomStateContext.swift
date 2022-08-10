@@ -5,11 +5,11 @@ public struct AtomStateContext {
     internal let _box: _AnyAtomStateContextBox
 
     internal init<Node: Atom>(atom: Node, store: AtomStore) {
-        _box = _AtomStateContextBox(atom: atom, store: store)
+        fatalError()
     }
 
-    internal init<Node: Atom>(atom: Node, store: StoreInteractor) {
-        _box = _TempAtomStateContextBox(atom: atom, store: store)
+    internal init<Node: Atom>(atom: Node, store: AtomStoreInteractor) {
+        _box = _AtomStateContextBox(atom: atom, store: store)
     }
 
     @inlinable
@@ -40,33 +40,7 @@ internal protocol _AnyAtomStateContextBox {
 @usableFromInline
 internal struct _AtomStateContextBox<Node: Atom>: _AnyAtomStateContextBox {
     let atom: Node
-    let store: AtomStore
-
-    init(atom: Node, store: AtomStore) {
-        self.atom = atom
-        self.store = store
-    }
-
-    @usableFromInline
-    var atomContext: AtomRelationContext {
-        AtomRelationContext(atom: atom, store: store)
-    }
-
-    @usableFromInline
-    func notifyUpdate() {
-        store.notifyUpdate(atom)
-    }
-
-    @usableFromInline
-    func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        store.addTermination(atom, termination: termination)
-    }
-}
-
-@usableFromInline
-internal struct _TempAtomStateContextBox<Node: Atom>: _AnyAtomStateContextBox {
-    let atom: Node
-    let store: StoreInteractor
+    let store: AtomStoreInteractor
 
     @usableFromInline
     var atomContext: AtomRelationContext {

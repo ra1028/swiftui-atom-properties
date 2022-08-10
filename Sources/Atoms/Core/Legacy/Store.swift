@@ -122,17 +122,6 @@ internal struct Store: AtomStore {
 
         host.addTermination(termination)
     }
-
-    func restore<Node: Atom>(snapshot: Snapshot<Node>) {
-        // Do nothing if the host is yet to be assigned.
-        guard let host = getExistingHost(of: snapshot.atom), let state = host.state else {
-            return
-        }
-
-        let context = AtomStateContext(atom: snapshot.atom, store: self)
-        state.override(with: snapshot.value, context: context)
-        host.notifyUpdate()
-    }
 }
 
 private extension Store {
@@ -241,7 +230,16 @@ private extension Store {
 
         let context = AtomStateContext(atom: atom, store: self)
         let value = state.value(context: context)
-        let snapshot = Snapshot(atom: atom, value: value, store: self)
+        let snapshot = Snapshot(atom: atom, value: value) {
+            // Do nothing if the host is yet to be assigned.
+            guard let host = getExistingHost(of: snapshot.atom), let state = host.state else {
+                return
+            }
+
+            let context = AtomStateContext(atom: snapshot.atom, store: self)
+            state.override(with: snapshot.value, context: context)
+            host.notifyUpdate()
+        }
 
         for observer in observers {
             observer.atomChanged(snapshot: snapshot)

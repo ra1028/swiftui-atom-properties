@@ -70,11 +70,6 @@ internal struct DefaultStore: AtomStore {
         assertionFailureStoreNotProvided()
         fallbackStore.addTermination(atom, termination: termination)
     }
-
-    func restore<Node: Atom>(snapshot: Snapshot<Node>) {
-        assertionFailureStoreNotProvided()
-        fallbackStore.restore(snapshot: snapshot)
-    }
 }
 
 private extension DefaultStore {

@@ -41,7 +41,4 @@ internal protocol AtomStore {
 
     @MainActor
     func addTermination<Node: Atom>(_ atom: Node, termination: @MainActor @escaping () -> Void)
-
-    @MainActor
-    func restore<Node: Atom>(snapshot: Snapshot<Node>)
 }

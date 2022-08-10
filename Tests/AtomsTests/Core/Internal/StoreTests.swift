@@ -325,32 +325,6 @@ final class StoreTests: XCTestCase {
         XCTAssertEqual(terminationCount, 2)
     }
 
-    func testRestore() {
-        let container = StoreContainer()
-        let relationshipContainer = RelationshipContainer()
-        let relationship = Relationship(container: relationshipContainer)
-        let atom = TestValueAtom(value: 0)
-        let store = Store(container: container)
-        var updateCount = 0
-
-        // Start watching.
-        let value = store.watch(
-            atom,
-            relationship: relationship,
-            notifyUpdate: { updateCount += 1 }
-        )
-
-        XCTAssertEqual(value, 0)
-        XCTAssertEqual(updateCount, 0)
-
-        let snapshot = Snapshot(atom: atom, value: 100, store: store)
-        store.restore(snapshot: snapshot)
-        let newValue = store.read(atom)
-
-        XCTAssertEqual(newValue, 100)
-        XCTAssertEqual(updateCount, 1)
-    }
-
     func testKeepAlive() {
         struct TestAtom: ValueAtom, Hashable, KeepAlive {
             func value(context: Context) -> Int {

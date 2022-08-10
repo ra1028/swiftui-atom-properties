@@ -18,16 +18,20 @@ public struct Snapshot<Node: Atom>: AtomHistory {
     /// The snapshot value of the``atom``.
     public let value: Node.State.Value
 
-    private let store: AtomStore
+    private let _restore: @MainActor () -> Void
 
-    internal init(atom: Node, value: Node.State.Value, store: AtomStore) {
+    internal init(
+        atom: Node,
+        value: Node.State.Value,
+        restore: @MainActor @escaping () -> Void
+    ) {
         self.atom = atom
         self.value = value
-        self.store = store
+        self._restore = restore
     }
 
     /// Restores the change in this snapshot.
     public func restore() {
-        store.restore(snapshot: self)
+        _restore()
     }
 }

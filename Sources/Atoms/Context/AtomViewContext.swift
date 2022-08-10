@@ -5,19 +5,19 @@
 @MainActor
 public struct AtomViewContext: AtomWatchableContext {
     @usableFromInline
-    internal let _relationship: Relationship
+    internal let _store: AtomStoreInteractor
     @usableFromInline
-    internal let _store: AtomStore
+    internal let _container: SubscriptionContainer.Wrapper
     @usableFromInline
-    internal let _notifyUpdate: @MainActor () -> Void
+    internal let _notifyUpdate: () -> Void
 
     internal init(
-        store: AtomStore,
-        relationship: Relationship,
-        notifyUpdate: @MainActor @escaping () -> Void
+        store: AtomStoreInteractor,
+        container: SubscriptionContainer.Wrapper,
+        notifyUpdate: @escaping () -> Void
     ) {
         _store = store
-        _relationship = relationship
+        _container = container
         _notifyUpdate = notifyUpdate
     }
 
@@ -129,8 +129,7 @@ public struct AtomViewContext: AtomWatchableContext {
     public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
         _store.watch(
             atom,
-            relationship: _relationship,
-            shouldNotifyAfterUpdates: false,
+            container: _container,
             notifyUpdate: _notifyUpdate
         )
     }

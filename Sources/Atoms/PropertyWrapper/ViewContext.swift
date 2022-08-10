@@ -36,7 +36,7 @@ public struct ViewContext: DynamicProperty {
     @StateObject
     private var state: State
 
-    @Environment(\.atomStore)
+    @Environment(\.atomStoreInteractor)
     private var store
 
     /// Creates a view context.
@@ -52,7 +52,7 @@ public struct ViewContext: DynamicProperty {
     public var wrappedValue: AtomViewContext {
         AtomViewContext(
             store: store,
-            relationship: Relationship(container: state.container),
+            container: state.container.wrapper,
             notifyUpdate: state.objectWillChange.send
         )
     }
@@ -61,6 +61,10 @@ public struct ViewContext: DynamicProperty {
 private extension ViewContext {
     @MainActor
     final class State: ObservableObject {
-        let container = RelationshipContainer()
+        let container: SubscriptionContainer
+
+        init() {
+            container = SubscriptionContainer()
+        }
     }
 }
