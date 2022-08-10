@@ -1,7 +1,5 @@
 /// Declares that a type can produce a value that can be accessed from everywhere.
 ///
-/// In summary, this protocol declares a hook that determines the behavioral details
-/// of this atom and a key determines the value uniqueness.
 /// The value produced by an atom is created only when the atom is watched from somewhere,
 /// and is immediately released when no longer watched to.
 ///
@@ -11,8 +9,8 @@ public protocol Atom {
     /// A type representing the stable identity of this atom.
     associatedtype Key: Hashable
 
-    /// A type of the hook that determines behavioral details.
-    associatedtype Hook: AtomHook
+    /// A type of state that is an actual implementation of this atom.
+    associatedtype State: AtomState
 
     /// A type of the context structure that to read, watch, and otherwise interacting
     /// with other atoms.
@@ -34,9 +32,11 @@ public protocol Atom {
     /// If this atom conforms to `Hashable`, it will adopt itself as the `key` by default.
     var key: Key { get }
 
-    /// Internal use, the hook for managing the state of this atom.
+    /// Creates a new state that is an actual implementation of this atom.
+    ///
+    /// - Returns: A state object that handles internal process and a value.
     @MainActor
-    var hook: Hook { get }
+    func makeState() -> State
 
     /// Returns a boolean value that determines whether it should notify the value update to
     /// watchers with comparing the given old value and the new value.
@@ -48,12 +48,12 @@ public protocol Atom {
     /// - Returns: A boolean value that determines whether it should notify the value update
     ///            to watchers.
     @MainActor
-    func shouldNotifyUpdate(newValue: Hook.Value, oldValue: Hook.Value) -> Bool
+    func shouldNotifyUpdate(newValue: State.Value, oldValue: State.Value) -> Bool
 }
 
 public extension Atom {
     @MainActor
-    func shouldNotifyUpdate(newValue: Hook.Value, oldValue: Hook.Value) -> Bool {
+    func shouldNotifyUpdate(newValue: State.Value, oldValue: State.Value) -> Bool {
         true
     }
 }

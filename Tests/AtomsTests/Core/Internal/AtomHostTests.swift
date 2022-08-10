@@ -5,12 +5,12 @@ import XCTest
 @MainActor
 final class AtomHostTests: XCTestCase {
     func testCast() {
-        let host: AtomHostBase = AtomHost<Int>()
-        XCTAssertNotNil(host as? AtomHost<Int>)
+        let host: AtomHostBase = AtomHost<ValueAtomState<Int>>()
+        XCTAssertNotNil(host as? AtomHost<ValueAtomState<Int>>)
     }
 
     func testRelationship() {
-        let host = AtomHost<Int>()
+        let host = AtomHost<ValueAtomState<Int>>()
         let atom = TestValueAtom(value: 0)
         var isTerminated = false
 
@@ -27,7 +27,7 @@ final class AtomHostTests: XCTestCase {
     }
 
     func testAddTermination() {
-        var host: AtomHost<Int>? = AtomHost()
+        var host: AtomHost<ValueAtomState<Int>>? = AtomHost()
         var isTerminated = false
 
         host?.addTermination {
@@ -40,10 +40,10 @@ final class AtomHostTests: XCTestCase {
     }
 
     func testNotifyUpdate() {
-        let host = AtomHost<Int>()
+        let host = AtomHost<ValueAtomState<Int>>()
         var isUpdated = false
 
-        host.coordinator = 0
+        host.state = ValueAtomState { _ in 0 }
         host.onUpdate = { _ in
             isUpdated = true
         }
@@ -54,7 +54,7 @@ final class AtomHostTests: XCTestCase {
     }
 
     func testWithTermination() {
-        var host: AtomHost<Int>? = AtomHost()
+        var host: AtomHost<ValueAtomState<Int>>? = AtomHost()
         weak var weakHost = host
         let atom = TestValueAtom(value: 0)
         var isTerminated = false
@@ -71,7 +71,7 @@ final class AtomHostTests: XCTestCase {
         host?.withTermination { _ in
             host = nil
 
-            XCTAssertNil(weakHost?.coordinator)
+            XCTAssertNil(weakHost?.state)
             XCTAssertNotNil(weakHost)
             XCTAssertTrue(isTerminated)
             XCTAssertFalse(isRelationPurged)
@@ -82,7 +82,7 @@ final class AtomHostTests: XCTestCase {
     }
 
     func testWithAsyncTermination() async {
-        var host: AtomHost<Int>? = AtomHost()
+        var host: AtomHost<ValueAtomState<Int>>? = AtomHost()
         weak var weakHost = host
         let atom = TestValueAtom(value: 0)
         var isTerminated = false
@@ -101,7 +101,7 @@ final class AtomHostTests: XCTestCase {
 
             await Task {}.value
 
-            XCTAssertNil(weakHost?.coordinator)
+            XCTAssertNil(weakHost?.state)
             XCTAssertNotNil(weakHost)
             XCTAssertTrue(isTerminated)
             XCTAssertFalse(isRelationPurged)
@@ -112,7 +112,7 @@ final class AtomHostTests: XCTestCase {
     }
 
     func testObserve() {
-        var host: AtomHost<Int>? = AtomHost()
+        var host: AtomHost<ValueAtomState<Int>>? = AtomHost()
         weak var weakHost = host
         var receiveCount = 0
 

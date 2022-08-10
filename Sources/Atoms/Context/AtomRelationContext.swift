@@ -26,7 +26,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
-    public func read<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
+    public func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
         _box.store.read(atom)
     }
 
@@ -49,7 +49,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
     @inlinable
-    public func set<Node: Atom>(_ value: Node.Hook.Value, for atom: Node) where Node.Hook: AtomStateHook {
+    public func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
         _box.store.set(value, for: atom)
     }
 
@@ -72,7 +72,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     /// - Returns: The value which completed refreshing associated with the given atom.
     @inlinable
     @discardableResult
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.Hook.Value where Node.Hook: AtomRefreshableHook {
+    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
         await _box.store.refresh(atom)
     }
 
@@ -116,7 +116,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     /// - Returns: The value associated with the given atom.
     @inlinable
     @discardableResult
-    public func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
+    public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
         _box.watch(atom, shouldNotifyAfterUpdates: false)
     }
 
@@ -139,7 +139,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     /// - Returns: The observable object associated with the given atom.
     @inlinable
     @discardableResult
-    public func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value where Node.Hook: AtomObservableObjectHook {
+    public func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.State.Value {
         _box.watch(atom, shouldNotifyAfterUpdates: true)
     }
 
@@ -189,7 +189,8 @@ public struct AtomRelationContext: AtomWatchableContext {
     /// - Parameter object: An object that to be retained.
     @inlinable
     public func keepUntilTermination<Object: AnyObject>(_ object: Object) {
-        _box.keepUntilTermination(object)
+        let retainer = ObjectRetainer(object)
+        addTermination(retainer.release)
     }
 }
 
@@ -198,32 +199,19 @@ public struct AtomRelationContext: AtomWatchableContext {
 internal protocol _AnyAtomRelationContextBox {
     var store: AtomStore { get }
 
-    func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.Hook.Value
+    func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value
     func addTermination(_ termination: @MainActor @escaping () -> Void)
-    func keepUntilTermination<Object: AnyObject>(_ object: Object)
 }
 
 @usableFromInline
 internal struct _AtomRelationContextBox<Caller: Atom>: _AnyAtomRelationContextBox {
-    final class Retainer<Object: AnyObject> {
-        private var object: Object?
-
-        init(_ object: Object) {
-            self.object = object
-        }
-
-        func release() {
-            object = nil
-        }
-    }
-
     let caller: Caller
 
     @usableFromInline
     let store: AtomStore
 
     @usableFromInline
-    func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.Hook.Value {
+    func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value {
         store.watch(
             atom,
             belongTo: caller,
@@ -235,10 +223,19 @@ internal struct _AtomRelationContextBox<Caller: Atom>: _AnyAtomRelationContextBo
     func addTermination(_ termination: @MainActor @escaping () -> Void) {
         store.addTermination(caller, termination: termination)
     }
+}
+
+@usableFromInline
+internal final class ObjectRetainer<Object: AnyObject> {
+    private var object: Object?
 
     @usableFromInline
-    func keepUntilTermination<Object: AnyObject>(_ object: Object) {
-        let retainer = Retainer(object)
-        store.addTermination(caller, termination: retainer.release)
+    init(_ object: Object) {
+        self.object = object
+    }
+
+    @usableFromInline
+    func release() {
+        object = nil
     }
 }

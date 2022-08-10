@@ -106,7 +106,7 @@ final class StoreTests: XCTestCase {
         XCTAssertEqual(value, 0)
         XCTAssertEqual(observer.assignedAtomKeys, [atom.key])
         XCTAssertEqual(observer.unassignedAtomKeys, [atom.key])
-        XCTAssertEqual(observer.changedKeys, [atom.key])
+        XCTAssertEqual(observer.changedKeys, [atom.key, atom.key])
     }
 
     func testRefreshOverride() async {

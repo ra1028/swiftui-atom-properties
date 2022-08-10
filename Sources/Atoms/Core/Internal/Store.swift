@@ -25,53 +25,37 @@ internal struct Store: AtomStore {
         self.observers = parent.observers + observers
     }
 
-    func read<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
-        let coordinator = getCoordinator(of: atom) { coordinator in
-            let context = AtomHookContext(atom: atom, coordinator: coordinator, store: self)
-
-            // Ensure that the atom is setup to have an initial value when it is first created.
-            if let value = overrides?[atom] {
-                // Set the override value.
-                atom.hook.updateOverride(context: context, with: value)
-            }
-            else {
-                // Update the atom to have an initial value.
-                atom.hook.update(context: context)
-            }
-
-            // Notify the initial update to observers.
-            notifyObserversOfUpdate(of: atom, coordinator: coordinator)
-        }
-        let context = AtomHookContext(atom: atom, coordinator: coordinator, store: self)
-
-        return atom.hook.value(context: context)
+    func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
+        let state = getState(of: atom)
+        let context = AtomStateContext(atom: atom, store: self)
+        return state.value(context: context)
     }
 
-    func set<Node: Atom>(_ value: Node.Hook.Value, for atom: Node) where Node.Hook: AtomStateHook {
+    func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
         // Do nothing if the host is yet to be assigned.
-        guard let coordinator = existingHost(of: atom)?.coordinator else {
+        guard let state = getExistingHost(of: atom)?.state else {
             return
         }
 
-        let context = AtomHookContext(atom: atom, coordinator: coordinator, store: self)
-        let oldValue = atom.hook.value(context: context)
+        let context = AtomStateContext(atom: atom, store: self)
+        let oldValue = state.value(context: context)
 
-        atom.hook.willSet(newValue: value, oldValue: oldValue, context: context)
-        atom.hook.set(value: value, context: context)
-        atom.hook.didSet(newValue: value, oldValue: oldValue, context: context)
+        atom.willSet(newValue: value, oldValue: oldValue, context: context.atomContext)
+        state.set(value: value, context: context)
+        atom.didSet(newValue: value, oldValue: oldValue, context: context.atomContext)
     }
 
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.Hook.Value where Node.Hook: AtomRefreshableHook {
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
         // Terminate the value & the ongoing task, but keep assignment until finishing refresh.
-        await host(of: atom).withAsyncTermination { _ in
-            let coordinator = getCoordinator(of: atom)
-            let context = AtomHookContext(atom: atom, coordinator: coordinator, store: self)
+        await getHost(of: atom).withAsyncTermination { _ in
+            let state = getState(of: atom)
+            let context = AtomStateContext(atom: atom, store: self)
 
             if let value = overrides?[atom] {
-                return await atom.hook.refreshOverride(context: context, with: value)
+                return await state.refreshOverride(with: value, context: context)
             }
             else {
-                return await atom.hook.refresh(context: context)
+                return await state.refresh(context: context)
             }
         }
     }
@@ -79,7 +63,7 @@ internal struct Store: AtomStore {
     func reset<Node: Atom>(_ atom: Node) {
         // Terminate the value & the ongoing task, but keep assignment until finishing notify update.
         // Do nothing if the host is yet to be assigned.
-        existingHost(of: atom)?.withTermination {
+        getExistingHost(of: atom)?.withTermination {
             $0.notifyUpdate()
         }
     }
@@ -89,9 +73,9 @@ internal struct Store: AtomStore {
         relationship: Relationship,
         shouldNotifyAfterUpdates: Bool = false,
         notifyUpdate: @MainActor @escaping () -> Void
-    ) -> Node.Hook.Value {
+    ) -> Node.State.Value {
         // Assign the observation to the given relationship.
-        relationship[atom] = host(of: atom).observe {
+        relationship[atom] = getHost(of: atom).observe {
             if shouldNotifyAfterUpdates {
                 RunLoop.current.perform {
                     notifyUpdate()
@@ -108,12 +92,13 @@ internal struct Store: AtomStore {
         _ atom: Node,
         belongTo caller: Caller,
         shouldNotifyAfterUpdates: Bool = false
-    ) -> Node.Hook.Value {
-        watch(atom, relationship: host(of: caller).relationship, shouldNotifyAfterUpdates: shouldNotifyAfterUpdates) {
+    ) -> Node.State.Value {
+        let relationship = getHost(of: caller).relationship
+        return watch(atom, relationship: relationship, shouldNotifyAfterUpdates: shouldNotifyAfterUpdates) {
             let oldValue = read(caller)
 
             // Terminate the value & the ongoing task, but keep assignment until finishing notify update.
-            host(of: caller).withTermination { host in
+            getHost(of: caller).withTermination { host in
                 let newValue = read(caller)
                 let shouldNotify = caller.shouldNotifyUpdate(newValue: newValue, oldValue: oldValue)
 
@@ -126,12 +111,12 @@ internal struct Store: AtomStore {
 
     func notifyUpdate<Node: Atom>(_ atom: Node) {
         // Do nothing if the host is yet to be assigned.
-        existingHost(of: atom)?.notifyUpdate()
+        getExistingHost(of: atom)?.notifyUpdate()
     }
 
     func addTermination<Node: Atom>(_ atom: Node, termination: @MainActor @escaping () -> Void) {
         // Terminate immediately if the host is yet to be assigned.
-        guard let host = existingHost(of: atom) else {
+        guard let host = getExistingHost(of: atom) else {
             return termination()
         }
 
@@ -140,48 +125,48 @@ internal struct Store: AtomStore {
 
     func restore<Node: Atom>(snapshot: Snapshot<Node>) {
         // Do nothing if the host is yet to be assigned.
-        guard let host = existingHost(of: snapshot.atom), let coordinator = host.coordinator else {
+        guard let host = getExistingHost(of: snapshot.atom), let state = host.state else {
             return
         }
 
-        let context = AtomHookContext(
-            atom: snapshot.atom,
-            coordinator: coordinator,
-            store: self
-        )
-
-        snapshot.atom.hook.updateOverride(context: context, with: snapshot.value)
+        let context = AtomStateContext(atom: snapshot.atom, store: self)
+        state.override(with: snapshot.value, context: context)
         host.notifyUpdate()
     }
 }
 
 private extension Store {
-    func getCoordinator<Node: Atom>(
-        of atom: Node,
-        initialize: ((Node.Hook.Coordinator) -> Void)? = nil
-    ) -> Node.Hook.Coordinator {
-        let host = host(of: atom)
+    func getState<Node: Atom>(of atom: Node) -> Node.State {
+        let host = getHost(of: atom)
 
-        if let coordinator = host.coordinator {
-            return coordinator
+        if let state = host.state {
+            return state
         }
 
-        let coordinator = atom.hook.makeCoordinator()
-        host.coordinator = coordinator
-        initialize?(coordinator)
+        let state = atom.makeState()
+        host.state = state
 
-        return coordinator
+        if let value = overrides?[atom] {
+            // Set the override value.
+            let context = AtomStateContext(atom: atom, store: self)
+            state.override(with: value, context: context)
+        }
+
+        // Notify the initial update to observers.
+        notifyChangesToObservers(of: atom, state: state)
+
+        return state
     }
 
-    func host<Node: Atom>(of atom: Node) -> AtomHost<Node.Hook.Coordinator> {
+    func getHost<Node: Atom>(of atom: Node) -> AtomHost<Node.State> {
         let key = AtomKey(atom)
 
         // Check if the host already exists.
-        if let host = existingHost(of: atom) {
+        if let host = getExistingHost(of: atom) {
             return host
         }
 
-        let host = AtomHost<Node.Hook.Coordinator>()
+        let host = AtomHost<Node.State>()
 
         host.onDeinit = {
             // Cleanup the weak entry box.
@@ -193,9 +178,9 @@ private extension Store {
             }
         }
 
-        host.onUpdate = { coordinator in
+        host.onUpdate = { state in
             // Notify the update to observers.
-            notifyObserversOfUpdate(of: atom, coordinator: coordinator)
+            notifyChangesToObservers(of: atom, state: state)
         }
 
         guard let container = container else {
@@ -219,14 +204,14 @@ private extension Store {
         return host
     }
 
-    func existingHost<Node: Atom>(of atom: Node) -> AtomHost<Node.Hook.Coordinator>? {
+    func getExistingHost<Node: Atom>(of atom: Node) -> AtomHost<Node.State>? {
         let key = AtomKey(atom)
 
         guard let base = container?.entries[key]?.host else {
             return nil
         }
 
-        guard let host = base as? AtomHost<Node.Hook.Coordinator> else {
+        guard let host = base as? AtomHost<Node.State> else {
             assertionFailure(
                 """
                 The type of the given atom and the stored host did not match.
@@ -246,16 +231,17 @@ private extension Store {
         return host
     }
 
-    func notifyObserversOfUpdate<Node: Atom>(
+    func notifyChangesToObservers<Node: Atom>(
         of atom: Node,
-        coordinator: Node.Hook.Coordinator
+        state: Node.State
     ) {
         guard !observers.isEmpty else {
             return
         }
 
-        let context = AtomHookContext(atom: atom, coordinator: coordinator, store: self)
-        let snapshot = Snapshot(atom: atom, value: atom.hook.value(context: context), store: self)
+        let context = AtomStateContext(atom: atom, store: self)
+        let value = state.value(context: context)
+        let snapshot = Snapshot(atom: atom, value: value, store: self)
 
         for observer in observers {
             observer.atomChanged(snapshot: snapshot)

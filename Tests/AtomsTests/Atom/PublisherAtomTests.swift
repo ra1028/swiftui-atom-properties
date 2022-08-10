@@ -5,19 +5,149 @@ import XCTest
 
 @MainActor
 final class PublisherAtomTests: XCTestCase {
-    struct TestAtom: PublisherAtom, Hashable {
-        let value: Int
+    final class TestSubject<Output, Failure: Error>: Publisher, Subject {
+        private var internalSubject = PassthroughSubject<Output, Failure>()
 
-        func publisher(context: Context) -> Just<Int> {
-            Just(value)
+        func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
+            internalSubject.receive(subscriber: subscriber)
+        }
+
+        func send(_ value: Output) {
+            internalSubject.send(value)
+        }
+
+        func send(completion: Subscribers.Completion<Failure>) {
+            internalSubject.send(completion: completion)
+        }
+
+        func send(subscription: Subscription) {
+            internalSubject.send(subscription: subscription)
+        }
+
+        func reset() {
+            internalSubject = PassthroughSubject()
         }
     }
 
-    func test() async {
-        let atom = TestAtom(value: 100)
+    func testValue() async {
+        let subject = TestSubject<Int, URLError>()
+        let atom = TestPublisherAtom { subject }
         let context = AtomTestContext()
-        let value = await context.refresh(atom).value
 
-        XCTAssertEqual(value, 100)
+        do {
+            // Initial value
+            let phase = context.watch(atom)
+            XCTAssertEqual(phase, .suspending)
+        }
+
+        do {
+            // Value
+            subject.send(0)
+
+            await context.waitUntilNextUpdate()
+            XCTAssertEqual(context.watch(atom), .success(0))
+        }
+
+        do {
+            // Error
+            subject.send(completion: .failure(URLError(.badURL)))
+
+            await context.waitUntilNextUpdate()
+            XCTAssertEqual(context.watch(atom), .failure(URLError(.badURL)))
+        }
+
+        do {
+            // Send value after completion
+            subject.send(1)
+
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            XCTAssertFalse(didUpdate)
+        }
+
+        do {
+            // Send value after termination
+            context.unwatch(atom)
+            subject.send(0)
+
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            XCTAssertFalse(didUpdate)
+        }
+
+        do {
+            // Send error after termination
+            context.unwatch(atom)
+            subject.send(completion: .failure(URLError(.badURL)))
+
+            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            XCTAssertFalse(didUpdate)
+        }
+
+        do {
+            // Override
+            context.override(atom) { _ in .success(100) }
+
+            XCTAssertEqual(context.watch(atom), .success(100))
+        }
+    }
+
+    func testRefresh() async {
+        let subject = TestSubject<Int, URLError>()
+        let atom = TestPublisherAtom { subject }
+        let context = AtomTestContext()
+
+        do {
+            XCTAssertTrue(context.watch(atom).isSuspending)
+        }
+
+        do {
+            // Refresh
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+            subject.reset()
+
+            Task {
+                subject.send(0)
+                subject.send(completion: .finished)
+            }
+
+            let phase = await context.refresh(atom)
+
+            XCTAssertEqual(phase.value, 0)
+            XCTAssertEqual(updateCount, 1)
+        }
+
+        do {
+            // Cancellation
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+            subject.reset()
+
+            let refreshTask = Task {
+                await context.refresh(atom)
+            }
+
+            Task {
+                subject.send(1)
+                refreshTask.cancel()
+            }
+
+            let phase = await refreshTask.value
+
+            XCTAssertEqual(phase, .success(1))
+            XCTAssertEqual(updateCount, 1)
+        }
+
+        do {
+            // Override
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+            context.override(atom) { _ in .success(200) }
+
+            subject.reset()
+            let phase = await context.refresh(atom)
+
+            XCTAssertEqual(phase.value, 200)
+            XCTAssertEqual(updateCount, 1)
+        }
     }
 }

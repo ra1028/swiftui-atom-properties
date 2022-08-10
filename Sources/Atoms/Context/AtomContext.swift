@@ -19,7 +19,7 @@ public protocol AtomContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value associated with the given atom.
-    func read<Node: Atom>(_ atom: Node) -> Node.Hook.Value
+    func read<Node: Atom>(_ atom: Node) -> Node.State.Value
 
     /// Sets the new value for the given writable atom.
     ///
@@ -39,7 +39,7 @@ public protocol AtomContext {
     /// - Parameters
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
-    func set<Node: Atom>(_ value: Node.Hook.Value, for atom: Node) where Node.Hook: AtomStateHook
+    func set<Node: StateAtom>(_ value: Node.Value, for atom: Node)
 
     /// Refreshes and then return the value associated with the given refreshable atom.
     ///
@@ -59,7 +59,7 @@ public protocol AtomContext {
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.Hook.Value where Node.Hook: AtomRefreshableHook
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState
 
     /// Resets the value associated with the given atom, and then notify.
     ///
@@ -99,7 +99,7 @@ public extension AtomContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value associated with the given atom.
-    subscript<Node: Atom>(_ atom: Node) -> Node.Hook.Value where Node.Hook: AtomStateHook {
+    subscript<Node: StateAtom>(_ atom: Node) -> Node.Value {
         get { read(atom) }
         nonmutating set { set(newValue, for: atom) }
     }
@@ -129,7 +129,7 @@ public protocol AtomWatchableContext: AtomContext {
     ///
     /// - Returns: The value associated with the given atom.
     @discardableResult
-    func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value
+    func watch<Node: Atom>(_ atom: Node) -> Node.State.Value
 
     /// Accesses the observable object associated with the given atom for reading and initialing watch to
     /// receive its updates.
@@ -149,7 +149,7 @@ public protocol AtomWatchableContext: AtomContext {
     ///
     /// - Returns: The observable object associated with the given atom.
     @discardableResult
-    func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value where Node.Hook: AtomObservableObjectHook
+    func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.State.Value
 }
 
 public extension AtomWatchableContext {
@@ -174,7 +174,7 @@ public extension AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
-    func state<Node: Atom>(_ atom: Node) -> Binding<Node.Hook.Value> where Node.Hook: AtomStateHook {
+    func state<Node: StateAtom>(_ atom: Node) -> Binding<Node.State.Value> {
         Binding(
             get: { watch(atom) },
             set: { self[atom] = $0 }

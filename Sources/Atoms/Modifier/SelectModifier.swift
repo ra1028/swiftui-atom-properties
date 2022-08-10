@@ -26,8 +26,8 @@ public extension Atom {
     /// - Returns: An atom that provides the partial property of the original atom value.
     @MainActor
     func select<Selected: Equatable>(
-        _ keyPath: KeyPath<Hook.Value, Selected>
-    ) -> ModifiedAtom<Self, SelectModifier<Hook.Value, Selected>> {
+        _ keyPath: KeyPath<State.Value, Selected>
+    ) -> ModifiedAtom<Self, SelectModifier<State.Value, Selected>> {
         modifier(SelectModifier(keyPath: keyPath))
     }
 }
@@ -37,6 +37,9 @@ public extension Atom {
 ///
 /// Use ``Atom/select(_:)`` instead of using this modifier directly.
 public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
+    /// A type of modified value to provide.
+    public typealias ModifiedValue = Selected
+
     /// A type representing the stable identity of this modifier.
     public struct Key: Hashable {
         private let keyPath: KeyPath<Value, Selected>
@@ -44,11 +47,6 @@ public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
         fileprivate init(keyPath: KeyPath<Value, Selected>) {
             self.keyPath = keyPath
         }
-    }
-
-    /// A reference type object to manage internal state.
-    public final class Coordinator {
-        internal var selected: Selected?
     }
 
     private let keyPath: KeyPath<Value, Selected>
@@ -68,23 +66,9 @@ public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
         newValue != oldValue
     }
 
-    /// Creates a coordinator instance.
-    public func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
-
-    /// Gets the value with the given context.
-    public func get(context: Context) -> Selected? {
-        context.coordinator.selected
-    }
-
-    /// Sets a value with the given context.
-    public func set(value: Selected, context: Context) {
-        context.coordinator.selected = value
-    }
-
-    /// Update the current value by modifying the given value.
-    public func update(context: Context, with value: Value) {
-        set(value: value[keyPath: keyPath], context: context)
+    /// Returns a value with initiating the update process and caches the value for
+    /// the next access.
+    public func value(context: Context, with value: Value, setValue: SetValue) -> Selected {
+        value[keyPath: keyPath]
     }
 }

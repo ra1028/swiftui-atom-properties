@@ -4,19 +4,122 @@ import XCTest
 
 @MainActor
 final class ThrowingTaskAtomTests: XCTestCase {
-    struct TestAtom: ThrowingTaskAtom, Hashable {
-        let value: Int
+    func test() async throws {
+        var result = Result<Int, Error>.success(0)
+        let atom = TestThrowingTaskAtom { result }
+        let context = AtomTestContext()
 
-        func value(context: Context) async throws -> Int {
-            value
+        do {
+            // Initial value
+            let value = try await context.watch(atom).value
+            XCTAssertEqual(value, 0)
+        }
+
+        do {
+            // Error
+            do {
+                context.unwatch(atom)
+                result = .failure(URLError(.badURL))
+
+                _ = try await context.watch(atom).value
+
+                XCTFail("Accessing to value should throw an error")
+            }
+            catch {
+                XCTAssertEqual(error as? URLError, URLError(.badURL))
+            }
+        }
+
+        do {
+            // Termination
+            let task = context.watch(atom)
+            context.unwatch(atom)
+
+            XCTAssertTrue(task.isCancelled)
+        }
+
+        do {
+            // Override
+            context.override(atom) { _ in Task { 200 } }
+
+            let value = try await context.watch(atom).value
+            XCTAssertEqual(value, 200)
+
+            // Override termination
+
+            context.override(atom) { _ in Task { 300 } }
+
+            let task = context.watch(atom)
+            context.unwatch(atom)
+
+            XCTAssertTrue(task.isCancelled)
         }
     }
 
-    func test() async throws {
-        let atom = TestAtom(value: 100)
+    func testRefresh() async throws {
+        var result = Result<Int, Error>.success(0)
+        let atom = TestThrowingTaskAtom { result }
         let context = AtomTestContext()
-        let value = try await context.watch(atom).value
 
-        XCTAssertEqual(value, 100)
+        do {
+            // Refresh
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+            context.watch(atom)
+
+            let value0 = try await context.refresh(atom).value
+            XCTAssertEqual(value0, 0)
+            XCTAssertEqual(updateCount, 1)
+
+            result = .success(1)
+
+            let value1 = try await context.refresh(atom).value
+            XCTAssertEqual(value1, 1)
+            XCTAssertEqual(updateCount, 2)
+        }
+
+        do {
+            // Cancellation
+            var updateCount = 0
+            context.onUpdate = { updateCount += 1 }
+
+            let refreshTask = Task {
+                await context.refresh(atom)
+            }
+
+            Task {
+                refreshTask.cancel()
+            }
+
+            let task = await refreshTask.value
+
+            XCTAssertTrue(task.isCancelled)
+        }
+
+        do {
+            // Override
+            context.override(atom) { _ in Task { 300 } }
+
+            let value = try await context.refresh(atom).value
+            XCTAssertEqual(value, 300)
+        }
+
+        do {
+            // Override cancellation
+
+            context.override(atom) { _ in Task { 400 } }
+
+            let refreshTask1 = Task {
+                await context.refresh(atom)
+            }
+
+            Task {
+                refreshTask1.cancel()
+            }
+
+            let task1 = await refreshTask1.value
+
+            XCTAssertTrue(task1.isCancelled)
+        }
     }
 }

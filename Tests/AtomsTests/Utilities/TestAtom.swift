@@ -1,30 +1,96 @@
 import Atoms
-
-struct TestAtom<Key: Hashable, Hook: AtomHook>: Atom {
-    var key: Key
-    var hook: Hook
-}
+import Combine
 
 struct TestValueAtom<T: Hashable>: ValueAtom, Hashable {
-    let value: T
+    var value: T
 
     func value(context: Context) -> T {
         value
     }
 }
 
-struct TestStateAtom<T: Hashable>: StateAtom, Hashable {
-    let defaultValue: T
+struct TestStateAtom<T>: StateAtom {
+    var defaultValue: T
+    var willSet: ((T, T) -> Void)?
+    var didSet: ((T, T) -> Void)?
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
 
     func defaultValue(context: Context) -> T {
         defaultValue
     }
+
+    func willSet(newValue: T, oldValue: T, context: Context) {
+        willSet?(newValue, oldValue)
+    }
+
+    func didSet(newValue: T, oldValue: T, context: Context) {
+        didSet?(newValue, oldValue)
+    }
 }
 
-struct TestTaskAtom<T: Hashable>: TaskAtom, Hashable {
-    let value: T
+struct TestTaskAtom<T>: TaskAtom {
+    var getValue: () -> T
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
+
+    init(value: T) {
+        self.getValue = { value }
+    }
+
+    init(getValue: @escaping () -> T) {
+        self.getValue = getValue
+    }
 
     func value(context: Context) async -> T {
-        value
+        getValue()
+    }
+}
+
+struct TestThrowingTaskAtom<Success>: ThrowingTaskAtom {
+    var getResult: () -> Result<Success, Error>
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
+
+    init(result: Result<Success, Error>) {
+        self.getResult = { result }
+    }
+
+    init(getResult: @escaping () -> Result<Success, Error>) {
+        self.getResult = getResult
+    }
+
+    func value(context: Context) async throws -> Success {
+        try getResult().get()
+    }
+}
+
+struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom {
+    var makePublisher: () -> Publisher
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
+
+    func publisher(context: Context) -> Publisher {
+        makePublisher()
+    }
+}
+
+struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom {
+    var makeSequence: () -> Sequence
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
+
+    func sequence(context: Context) -> Sequence {
+        makeSequence()
     }
 }

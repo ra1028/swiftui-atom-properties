@@ -18,7 +18,7 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// It optionally provides the modifier ``AtomRoot/override(_:with:)-20r5z`` to replace the value of
+/// It optionally provides the modifier ``AtomRoot/override(_:with:)-32rse`` to replace the value of
 /// the specified atom, which is useful for dependency injection in testing.
 ///
 /// ```swift
@@ -78,7 +78,7 @@ public struct AtomRoot<Content: View>: View {
     ///   - value: A value that to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Hook.Value) -> Self {
+    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.State.Value) -> Self {
         mutating { $0.overrides.insert(atom, with: value) }
     }
 
@@ -94,7 +94,7 @@ public struct AtomRoot<Content: View>: View {
     ///   - value: A value that to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Hook.Value) -> Self {
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.State.Value) -> Self {
         mutating { $0.overrides.insert(atomType, with: value) }
     }
 

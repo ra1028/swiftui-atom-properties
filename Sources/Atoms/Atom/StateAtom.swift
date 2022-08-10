@@ -36,7 +36,7 @@
 /// }
 /// ```
 ///
-public protocol StateAtom: Atom where Hook == StateHook<Value> {
+public protocol StateAtom: Atom where State == StateAtomState<Value> {
     /// The type of state value that this atom produces.
     associatedtype Value
 
@@ -77,12 +77,8 @@ public protocol StateAtom: Atom where Hook == StateHook<Value> {
 
 public extension StateAtom {
     @MainActor
-    var hook: Hook {
-        Hook(
-            defaultValue: defaultValue,
-            willSet: willSet,
-            didSet: didSet
-        )
+    func makeState() -> State {
+        State(getDefaultValue: defaultValue)
     }
 
     @MainActor

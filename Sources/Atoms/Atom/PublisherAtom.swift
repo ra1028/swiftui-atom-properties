@@ -37,7 +37,7 @@ import Combine
 /// }
 /// ```
 ///
-public protocol PublisherAtom: Atom where Hook == PublisherHook<Publisher> {
+public protocol PublisherAtom: Atom where State == PublisherAtomState<Publisher> {
     /// The type of publisher that this atom manages.
     associatedtype Publisher: Combine.Publisher
 
@@ -57,7 +57,7 @@ public protocol PublisherAtom: Atom where Hook == PublisherHook<Publisher> {
 
 public extension PublisherAtom {
     @MainActor
-    var hook: Hook {
-        Hook(publisher: publisher)
+    func makeState() -> State {
+        State(makePublisher: publisher)
     }
 }

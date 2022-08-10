@@ -1,13 +1,13 @@
 import Combine
 
-internal final class AtomHost<Coordinator>: AtomHostBase {
+internal final class AtomHost<State: AtomState>: AtomHostBase {
     private let notifier = PassthroughSubject<Void, Never>()
     private var container = RelationshipContainer()
     private var terminations = Set<AnyCancellable>()
 
-    var coordinator: Coordinator?
+    var state: State?
     var onDeinit: (() -> Void)?
-    var onUpdate: ((Coordinator) -> Void)?
+    var onUpdate: ((State) -> Void)?
 
     deinit {
         onDeinit?()
@@ -25,8 +25,8 @@ internal final class AtomHost<Coordinator>: AtomHostBase {
     func notifyUpdate() {
         notifier.send()
 
-        if let coordinator = coordinator {
-            onUpdate?(coordinator)
+        if let state = state {
+            onUpdate?(state)
         }
     }
 
@@ -54,7 +54,7 @@ internal final class AtomHost<Coordinator>: AtomHostBase {
 
 private extension AtomHost {
     func terminate() {
-        coordinator = nil
+        state = nil
         container = RelationshipContainer()
         terminations.removeAll()
     }

@@ -1,19 +1,11 @@
-/// Internal use, a context structure that to interact with internal store.
+/// A type of the context structure that to interact with an atom store.
 @MainActor
-public struct AtomHookContext<Coordinator> {
+public struct AtomStateContext {
     @usableFromInline
-    internal let _box: _AnyAtomHookContextBox
+    internal let _box: _AnyAtomStateContextBox
 
-    @usableFromInline
-    internal let coordinator: Coordinator
-
-    internal init<Node: Atom>(
-        atom: Node,
-        coordinator: Coordinator,
-        store: AtomStore
-    ) {
-        self._box = _AtomHookContextBox(atom: atom, store: store)
-        self.coordinator = coordinator
+    internal init<Node: Atom>(atom: Node, store: AtomStore) {
+        _box = _AtomStateContextBox(atom: atom, store: store)
     }
 
     @inlinable
@@ -34,7 +26,7 @@ public struct AtomHookContext<Coordinator> {
 
 @usableFromInline
 @MainActor
-internal protocol _AnyAtomHookContextBox {
+internal protocol _AnyAtomStateContextBox {
     var atomContext: AtomRelationContext { get }
 
     func notifyUpdate()
@@ -42,7 +34,7 @@ internal protocol _AnyAtomHookContextBox {
 }
 
 @usableFromInline
-internal struct _AtomHookContextBox<Node: Atom>: _AnyAtomHookContextBox {
+internal struct _AtomStateContextBox<Node: Atom>: _AnyAtomStateContextBox {
     let atom: Node
     let store: AtomStore
 

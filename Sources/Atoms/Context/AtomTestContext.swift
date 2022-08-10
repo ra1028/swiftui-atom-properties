@@ -25,6 +25,21 @@ public struct AtomTestContext: AtomWatchableContext {
     /// Waits until any of atoms watched through this context is updated for up to
     /// the specified timeout, and then return a boolean value indicating whether an update is done.
     ///
+    /// ```swift
+    /// func testAsyncUpdate() async {
+    ///     let context = AtomTestContext()
+    ///
+    ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
+    ///     XCTAssertEqual(initialPhase, .suspending)
+    ///
+    ///     let didUpdate = await context.waitUntilNextUpdate()
+    ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
+    ///
+    ///     XCTAssertTure(didUpdate)
+    ///     XCTAssertEqual(currentPhase, .success(123))
+    /// }
+    /// ```
+    ///
     /// - Parameter interval: The maximum timeout interval that this function can wait until
     ///                      the next update. The default timeout interval is `60`.
     /// - Returns: A boolean value indicating whether an update is done.
@@ -88,7 +103,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value associated with the given atom.
-    public func read<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
+    public func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
         container.store.read(atom)
     }
 
@@ -110,7 +125,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
-    public func set<Node: Atom>(_ value: Node.Hook.Value, for atom: Node) where Node.Hook: AtomStateHook {
+    public func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
         container.store.set(value, for: atom)
     }
 
@@ -132,7 +147,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.Hook.Value where Node.Hook: AtomRefreshableHook {
+    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
         await container.store.refresh(atom)
     }
 
@@ -174,7 +189,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     @discardableResult
-    public func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value {
+    public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
         container.watch(atom, shouldNotifyAfterUpdates: false)
     }
 
@@ -196,7 +211,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: The observable object associated with the given atom.
     @discardableResult
-    public func watch<Node: Atom>(_ atom: Node) -> Node.Hook.Value where Node.Hook: AtomObservableObjectHook {
+    public func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.State.Value {
         container.watch(atom, shouldNotifyAfterUpdates: true)
     }
 
@@ -217,7 +232,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters:
     ///   - atom: An atom that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
-    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Hook.Value) {
+    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.State.Value) {
         container.overrides.insert(atom, with: value)
     }
 
@@ -231,7 +246,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters:
     ///   - atomType: An atom type that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
-    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Hook.Value) {
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.State.Value) {
         container.overrides.insert(atomType, with: value)
     }
 
@@ -275,7 +290,7 @@ private extension AtomTestContext {
             Relationship(container: relationshipContainer)
         }
 
-        func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.Hook.Value {
+        func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value {
             store.watch(
                 atom,
                 relationship: relationship,
