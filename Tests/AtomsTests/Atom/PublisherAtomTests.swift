@@ -20,7 +20,7 @@ final class PublisherAtomTests: XCTestCase {
             internalSubject.send(completion: completion)
         }
 
-        func send(subscription: Subscription) {
+        func send(subscription: Combine.Subscription) {
             internalSubject.send(subscription: subscription)
         }
 
