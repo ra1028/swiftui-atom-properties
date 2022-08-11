@@ -151,7 +151,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         let finalValue = refreshedValue ?? getValue(of: atom, peek: true)
 
         update(atom: atom, with: finalValue)
-        checkAndReleaseDependencies(of: key, oldDependencies: dependencies)
+        scheduleDependenciesRelease(of: key, dependencies: dependencies)
 
         return finalValue
     }
@@ -162,7 +162,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         let dependencies = release(for: key)
 
         notifyUpdate(for: key)
-        checkAndReleaseDependencies(of: key, oldDependencies: dependencies)
+        scheduleDependenciesRelease(of: key, dependencies: dependencies)
     }
 
     @usableFromInline
@@ -322,7 +322,7 @@ private extension RootAtomStoreInteractor {
                 let dependencies = release(for: node)
                 // TODO: Check shouldNotifyUpdate
                 notifyUpdate(for: node)
-                checkAndReleaseDependencies(of: node, oldDependencies: dependencies)
+                scheduleDependenciesRelease(of: node, dependencies: dependencies)
             }
         }
     }
@@ -350,7 +350,7 @@ private extension RootAtomStoreInteractor {
         }
 
         let dependencies = release(for: key)
-        checkAndReleaseDependencies(of: key, oldDependencies: dependencies)
+        scheduleDependenciesRelease(of: key, dependencies: dependencies)
     }
 
     /// Release an atom associated by the specified key and return its dependencies.
@@ -380,21 +380,28 @@ private extension RootAtomStoreInteractor {
         return store.graph.dependencies.removeValue(forKey: key) ?? []
     }
 
-    func checkAndReleaseDependencies(of key: AtomKey, oldDependencies: Set<AtomKey>) {
+    func scheduleDependenciesRelease(of key: AtomKey, dependencies: Set<AtomKey>) {
         guard let store = store else {
             return
         }
 
-        let dependencies = store.graph.dependencies[key] ?? []
-        let obsoleted = oldDependencies.subtracting(dependencies)
+        store.state.scheduledReleaseTasks[key]?.cancel()
+        store.state.scheduledReleaseTasks[key] = Task { [weak store] in
+            guard let store = store, !Task.isCancelled else {
+                return
+            }
 
-        // Recursively release dependencies.
-        for obsoleted in obsoleted {
-            // Remove this atom from the upstream atoms.
-            store.graph.nodes[obsoleted]?.remove(key)
+            let current = store.graph.dependencies[key] ?? []
+            let obsoleted = dependencies.subtracting(current)
 
-            // Release the upstream atoms as well.
-            checkAndRelease(for: obsoleted)
+            // Recursively release dependencies.
+            for obsoleted in obsoleted {
+                // Remove this atom from the upstream atoms.
+                store.graph.nodes[obsoleted]?.remove(key)
+
+                // Release the upstream atoms as well.
+                checkAndRelease(for: obsoleted)
+            }
         }
     }
 
