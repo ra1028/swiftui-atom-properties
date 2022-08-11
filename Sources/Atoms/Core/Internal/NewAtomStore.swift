@@ -147,9 +147,12 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
             store.state.values[key] = value
         }
 
+        let finalValue = refreshedValue ?? getValue(of: atom, peek: true)
+
+        update(atom: atom, with: finalValue)
         checkAndReleaseDependencies(of: key, oldDependencies: dependencies)
 
-        return refreshedValue ?? getValue(of: atom, peek: true)
+        return finalValue
     }
 
     @usableFromInline
@@ -399,7 +402,7 @@ private extension RootAtomStoreInteractor {
         }
 
         let snapshot = Snapshot(atom: atom, value: value) {
-            update(atom: atom, with: valu)
+            update(atom: atom, with: value)
         }
 
         for observer in observers {
