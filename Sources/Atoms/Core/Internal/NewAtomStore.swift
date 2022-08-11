@@ -310,7 +310,7 @@ private extension RootAtomStoreInteractor {
         }
 
         // Notifying update for view subscriptions takes precedence.
-        if let subscriptions = store.state.subscriptions[key] {
+        if let subscriptions = store.state.subscriptions.removeValue(forKey: key) {
             for subscription in subscriptions.values {
                 subscription.notifyUpdate()
             }
