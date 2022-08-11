@@ -399,9 +399,7 @@ private extension RootAtomStoreInteractor {
         }
 
         let snapshot = Snapshot(atom: atom, value: value) {
-            let key = AtomKey(atom)
-            store?.state.values[key] = value
-            notifyUpdate(for: key)
+            update(atom: atom, with: valu)
         }
 
         for observer in observers {
