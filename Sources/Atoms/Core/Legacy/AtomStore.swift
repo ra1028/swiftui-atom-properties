@@ -4,7 +4,7 @@ internal protocol AtomStore {
     var container: StoreContainer? { get }
 
     @MainActor
-    var overrides: AtomOverrides? { get }
+    var overrides: Overrides? { get }
 
     @MainActor
     var observers: [AtomObserver] { get }

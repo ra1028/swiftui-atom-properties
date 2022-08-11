@@ -36,7 +36,7 @@ final class StoreTests: XCTestCase {
 
     func testReadOverride() {
         let container = StoreContainer()
-        var overrides = AtomOverrides()
+        var overrides = Overrides()
         let atom = TestValueAtom(value: 0)
 
         overrides.insert(atom) { _ in 100 }
@@ -77,7 +77,7 @@ final class StoreTests: XCTestCase {
 
     func testSetOverride() {
         let container = StoreContainer()
-        var overrides = AtomOverrides()
+        var overrides = Overrides()
         let relationshipContainer = RelationshipContainer()
         let relationship = Relationship(container: relationshipContainer)
         let atom = TestStateAtom(defaultValue: 0)
@@ -111,7 +111,7 @@ final class StoreTests: XCTestCase {
 
     func testRefreshOverride() async {
         let container = StoreContainer()
-        var overrides = AtomOverrides()
+        var overrides = Overrides()
         let atom = TestTaskAtom(value: 0)
 
         overrides.insert(atom) { _ in Task { 100 } }
@@ -179,7 +179,7 @@ final class StoreTests: XCTestCase {
 
     func testWatchOverride() {
         let container = StoreContainer()
-        var overrides = AtomOverrides()
+        var overrides = Overrides()
         let relationshipContainer = RelationshipContainer()
         let relationship = Relationship(container: relationshipContainer)
         let atom = TestValueAtom(value: 0)
@@ -241,7 +241,7 @@ final class StoreTests: XCTestCase {
 
     func testWatchBelongToOverride() {
         let container = StoreContainer()
-        var overrides = AtomOverrides()
+        var overrides = Overrides()
         let relationshipContainer = RelationshipContainer()
         let relationship = Relationship(container: relationshipContainer)
         let atom = TestValueAtom(value: 0)

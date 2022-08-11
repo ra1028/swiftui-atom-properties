@@ -3,12 +3,12 @@ import Foundation
 @MainActor
 internal struct Store: AtomStore {
     private(set) weak var container: StoreContainer?
-    let overrides: AtomOverrides?
+    let overrides: Overrides?
     let observers: [AtomObserver]
 
     init(
         container: StoreContainer,
-        overrides: AtomOverrides? = nil,
+        overrides: Overrides? = nil,
         observers: [AtomObserver] = []
     ) {
         self.container = container

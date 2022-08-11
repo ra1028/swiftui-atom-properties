@@ -1,6 +1,6 @@
 @usableFromInline
 @MainActor
-internal struct AtomOverrides {
+internal struct Overrides {
     private var entries = [AtomKey: Override]()
 
     mutating func insert<Node: Atom>(

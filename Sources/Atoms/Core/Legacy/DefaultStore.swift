@@ -5,7 +5,7 @@ internal struct DefaultStore: AtomStore {
         fallbackContainer
     }
 
-    var overrides: AtomOverrides? {
+    var overrides: Overrides? {
         nil
     }
 

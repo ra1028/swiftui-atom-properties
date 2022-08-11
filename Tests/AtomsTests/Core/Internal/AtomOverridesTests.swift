@@ -3,9 +3,9 @@ import XCTest
 @testable import Atoms
 
 @MainActor
-final class AtomOverridesTests: XCTestCase {
+final class OverridesTests: XCTestCase {
     func testIndividualOverride() {
-        var overrides = AtomOverrides()
+        var overrides = Overrides()
         let atom = TestValueAtom(value: 0)
 
         XCTAssertNil(overrides[atom])
@@ -16,7 +16,7 @@ final class AtomOverridesTests: XCTestCase {
     }
 
     func testTypeOverride() {
-        var overrides = AtomOverrides()
+        var overrides = Overrides()
         let atom = TestValueAtom(value: 0)
 
         XCTAssertNil(overrides[atom])

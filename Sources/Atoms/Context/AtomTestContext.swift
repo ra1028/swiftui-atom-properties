@@ -270,12 +270,12 @@ private extension AtomTestContext {
         private let storeContainer = StoreContainer()
         private var relationshipContainer = RelationshipContainer()
         let notifier = PassthroughSubject<Void, Never>()
-        var overrides: AtomOverrides
+        var overrides: Overrides
         var observers = [AtomObserver]()
         var onUpdate: (() -> Void)?
 
         init() {
-            overrides = AtomOverrides()
+            overrides = Overrides()
         }
 
         var store: AtomStore {

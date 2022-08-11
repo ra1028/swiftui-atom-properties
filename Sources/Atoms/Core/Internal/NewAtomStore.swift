@@ -37,12 +37,12 @@ internal protocol AtomStoreInteractor {
 @usableFromInline
 internal struct RootAtomStoreInteractor: AtomStoreInteractor {
     private weak var store: NewAtomStore?
-    private let overrides: AtomOverrides?
+    private let overrides: Overrides?
     private let observers: [AtomObserver]
 
     init(
         store: NewAtomStore,
-        overrides: AtomOverrides? = nil,
+        overrides: Overrides? = nil,
         observers: [AtomObserver] = []
     ) {
         self.store = store
@@ -184,7 +184,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
 private extension RootAtomStoreInteractor {
     init(
         store: NewAtomStore?,
-        overrides: AtomOverrides? = nil,
+        overrides: Overrides? = nil,
         observers: [AtomObserver] = []
     ) {
         self.store = store
