@@ -45,6 +45,8 @@ public struct AsyncSequenceAtomValue<Sequence: AsyncSequence>: RefreshableAtomVa
                 catch {
                     continuation.yield(.failure(error))
                 }
+
+                continuation.finish()
             }
 
             continuation.onTermination = { termination in

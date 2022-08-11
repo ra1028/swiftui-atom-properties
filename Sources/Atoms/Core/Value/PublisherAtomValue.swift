@@ -34,6 +34,8 @@ public struct PublisherAtomValue<Publisher: Combine.Publisher>: RefreshableAtomV
                 for await result in results {
                     continuation.yield(AsyncPhase(result))
                 }
+
+                continuation.finish()
             }
 
             continuation.onTermination = { termination in
