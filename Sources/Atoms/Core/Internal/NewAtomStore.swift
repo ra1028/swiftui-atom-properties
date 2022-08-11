@@ -83,7 +83,12 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
 
         let key = AtomKey(atom)
         let subscriptionKey = container.key
-        let subscription = Subscription(notifyUpdate: notifyUpdate) { [weak store] in
+        let subscription = Subscription {
+            notifyUpdate()
+        } containerCleanup: {
+            // Remove the subscription from the container.
+            container.cleanup()
+        } unsubscribe: { [weak store] in
             // Remove subscription from the store.
             store?.state.subscriptions[key]?.removeValue(forKey: subscriptionKey)
             // Release the atom if it is no longer watched to.
@@ -312,6 +317,7 @@ private extension RootAtomStoreInteractor {
         // Notifying update for view subscriptions takes precedence.
         if let subscriptions = store.state.subscriptions.removeValue(forKey: key) {
             for subscription in subscriptions.values {
+                subscription.containerCleanup()
                 subscription.notifyUpdate()
             }
         }
