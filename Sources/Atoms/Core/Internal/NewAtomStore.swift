@@ -1,3 +1,4 @@
+import Foundation
 @usableFromInline
 internal final class NewAtomStore {
     var graph = Graph()
@@ -77,7 +78,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         notifyUpdate: @escaping () -> Void
     ) -> Node.State.Value {
         guard let store = store else {
-            return getValue(of: atom, peek: false)
+            return getValue(of: atom, peek: true)
         }
 
         let key = AtomKey(atom)
@@ -159,6 +160,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
     func reset<Node: Atom>(_ atom: Node) {
         let key = AtomKey(atom)
         let dependencies = release(for: key)
+
         notifyUpdate(for: key)
         checkAndReleaseDependencies(of: key, oldDependencies: dependencies)
     }
@@ -297,7 +299,7 @@ private extension RootAtomStoreInteractor {
         // Set new value.
         store.state.values[key] = value
         // Notify update to the downstream atoms or views.
-        notifyUpdate(of: atom)
+        notifyUpdate(for: key)
         // Notify new value.
         notifyChangesToObservers(of: atom, value: value)
     }
@@ -384,15 +386,15 @@ private extension RootAtomStoreInteractor {
         }
 
         let dependencies = store.graph.dependencies[key] ?? []
-        let oldDependencies = oldDependencies.subtracting(dependencies)
+        let obsoleted = oldDependencies.subtracting(dependencies)
 
         // Recursively release dependencies.
-        for oldDependency in oldDependencies {
+        for obsoleted in obsoleted {
             // Remove this atom from the upstream atoms.
-            store.graph.nodes[oldDependency]?.remove(key)
+            store.graph.nodes[obsoleted]?.remove(key)
 
             // Release the upstream atoms as well.
-            checkAndRelease(for: oldDependency)
+            checkAndRelease(for: obsoleted)
         }
     }
 
