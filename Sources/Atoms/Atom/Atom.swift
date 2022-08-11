@@ -9,8 +9,8 @@ public protocol Atom {
     /// A type representing the stable identity of this atom.
     associatedtype Key: Hashable
 
-    /// A type of state that is an actual implementation of this atom.
-    associatedtype State: AtomState
+    // TODO: Rename
+    associatedtype State: AtomValue
 
     /// A type of the context structure that to read, watch, and otherwise interacting
     /// with other atoms.
@@ -36,7 +36,7 @@ public protocol Atom {
     ///
     /// - Returns: A state object that handles internal process and a value.
     @MainActor
-    func makeState() -> State
+    var value: State { get }
 
     /// Returns a boolean value that determines whether it should notify the value update to
     /// watchers with comparing the given old value and the new value.

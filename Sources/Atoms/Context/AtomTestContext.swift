@@ -147,7 +147,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
+    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
         await container.store.refresh(atom)
     }
 
@@ -221,7 +221,8 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Parameter atom: An atom that associates the value.
     public func unwatch<Node: Atom>(_ atom: Node) {
-        container.relationship[atom] = nil
+        let key = AtomKey(atom)
+        container.container.unassign(for: key)
     }
 
     /// Overrides the atom value with the given value.
@@ -267,8 +268,9 @@ public struct AtomTestContext: AtomWatchableContext {
 private extension AtomTestContext {
     @MainActor
     final class Container {
-        private let storeContainer = StoreContainer()
-        private var relationshipContainer = RelationshipContainer()
+        private let _store = NewAtomStore()
+        private var _container: SubscriptionContainer
+
         let notifier = PassthroughSubject<Void, Never>()
         var overrides: Overrides
         var observers = [AtomObserver]()
@@ -276,26 +278,23 @@ private extension AtomTestContext {
 
         init() {
             overrides = Overrides()
+            _container = SubscriptionContainer()
         }
 
-        var store: AtomStore {
-            Store(
-                container: storeContainer,
+        var store: RootAtomStoreInteractor {
+            RootAtomStoreInteractor(
+                store: _store,
                 overrides: overrides,
                 observers: observers
             )
         }
 
-        var relationship: Relationship {
-            Relationship(container: relationshipContainer)
+        var container: SubscriptionContainer.Wrapper {
+            _container.wrapper
         }
 
         func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value {
-            store.watch(
-                atom,
-                relationship: relationship,
-                shouldNotifyAfterUpdates: shouldNotifyAfterUpdates
-            ) { [weak self] in
+            store.watch(atom, container: _container.wrapper) { [weak self] in
                 self?.onUpdate?()
                 self?.notifier.send()
             }

@@ -7,10 +7,6 @@ public struct AtomRelationContext: AtomWatchableContext {
     @usableFromInline
     internal let _box: _AnyAtomRelationContextBox
 
-    internal init<Node: Atom>(atom: Node, store: AtomStore) {
-        fatalError()
-    }
-
     internal init<Node: Atom>(atom: Node, store: AtomStoreInteractor) {
         _box = _AtomRelationContextBox(downstream: atom, store: store)
     }
@@ -76,7 +72,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     /// - Returns: The value which completed refreshing associated with the given atom.
     @inlinable
     @discardableResult
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
+    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
         await _box.store.refresh(atom)
     }
 

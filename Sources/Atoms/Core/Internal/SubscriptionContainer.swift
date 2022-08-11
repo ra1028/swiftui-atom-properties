@@ -30,5 +30,9 @@ internal extension SubscriptionContainer {
         func assign(subscription: Subscription, for key: AtomKey) {
             container?.subscriptions[key] = subscription
         }
+
+        func unassign(for key: AtomKey) {
+            container?.subscriptions.removeValue(forKey: key)
+        }
     }
 }

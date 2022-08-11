@@ -29,7 +29,7 @@ internal struct DefaultAtomStoreInteractor: AtomStoreInteractor {
         temporaryInteractor.watch(atom, container: container, notifyUpdate: notifyUpdate)
     }
 
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
         await temporaryInteractor.refresh(atom)
     }
 

@@ -36,7 +36,7 @@
 /// }
 /// ```
 ///
-public protocol ThrowingTaskAtom: Atom where State == ThrowingTaskState<Value> {
+public protocol ThrowingTaskAtom: Atom where State == AsyncAtomValue<Value, Error> {
     /// The type of value that this atom produces.
     associatedtype Value
 
@@ -57,7 +57,11 @@ public protocol ThrowingTaskAtom: Atom where State == ThrowingTaskState<Value> {
 
 public extension ThrowingTaskAtom {
     @MainActor
-    func makeState() -> State {
-        State(getValue: value)
+    var value: State {
+        State { context in
+            Task {
+                try await value(context: context)
+            }
+        }
     }
 }

@@ -1,64 +1,51 @@
 import Combine
 
-/// A state that is actual implementation of `PublisherAtom`.
-public final class PublisherAtomState<Publisher: Combine.Publisher>: RefreshableAtomState {
-    /// A type of value to provide.
+public struct PublisherAtomValue<Publisher: Combine.Publisher>: RefreshableAtomValue {
     public typealias Value = AsyncPhase<Publisher.Output, Publisher.Failure>
 
-    private var phase: Value?
     private let makePublisher: @MainActor (AtomRelationContext) -> Publisher
 
     internal init(makePublisher: @MainActor @escaping (AtomRelationContext) -> Publisher) {
         self.makePublisher = makePublisher
     }
 
-    /// Returns a value with initiating the update process and caches the value for the next access.
-    public func value(context: Context) -> Value {
-        if let phase = phase {
-            return phase
-        }
-
+    public func get(context: Context) -> Value {
         let results = makePublisher(context.atomContext).results
         let box = UnsafeUncheckedSendableBox(results)
         let task = Task {
             for await result in box.unboxed {
                 if !Task.isCancelled {
-                    phase = AsyncPhase(result)
-                    context.notifyUpdate()
+                    context.update(with: AsyncPhase(result))
                 }
             }
         }
+
         context.addTermination(task.cancel)
-
-        let initialPhase = Value.suspending
-        phase = initialPhase
-
-        return initialPhase
+        return .suspending
     }
 
-    /// Overrides the value with an arbitrary value.
-    public func override(with phase: Value, context: Context) {
-        self.phase = phase
-    }
-
-    /// Refreshes and awaits until the asynchronous value to be updated.
-    public func refresh(context: Context) async -> Value {
+    public func refresh(context: Context) -> AsyncStream<Value> {
         let results = makePublisher(context.atomContext).results
-        phase = .suspending
 
-        for await result in results {
-            phase = AsyncPhase(result)
+        return AsyncStream { continuation in
+            continuation.yield(.suspending)
+
+            let task = Task {
+                for await result in results {
+                    continuation.yield(AsyncPhase(result))
+                }
+            }
+
+            continuation.onTermination = { termination in
+                if case .cancelled = termination {
+                    task.cancel()
+                }
+            }
         }
-
-        context.notifyUpdate()
-        return phase ?? .suspending
     }
 
-    /// Overrides with the given value and awaits until the value to be updated.
-    public func refreshOverride(with phase: Value, context: Context) async -> Value {
-        self.phase = phase
-        context.notifyUpdate()
-        return phase
+    public func refresh(context: Context, with value: Value) -> AsyncStream<Value> {
+        AsyncStream { value }
     }
 }
 

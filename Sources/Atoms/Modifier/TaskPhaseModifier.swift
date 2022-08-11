@@ -1,4 +1,4 @@
-public extension Atom where State: AsyncAtomState {
+public extension Atom where State: TaskAtomValue {
     /// Converts the `Task` that the original atom provides into ``AsyncPhase`` that
     /// changes overtime.
     ///
@@ -52,20 +52,16 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
 
     /// Returns a value with initiating the update process and caches the value for
     /// the next access.
-    public func value(context: Context, with task: Task<Success, Failure>, setValue: @escaping SetValue) -> ModifiedValue {
+    public func value(context: Context, with task: Task<Success, Failure>) -> ModifiedValue {
         let task = Task {
             let phase = await AsyncPhase(task.result)
 
             if !Task.isCancelled {
-                setValue(phase)
-                context.notifyUpdate()
+                context.update(with: phase)
             }
         }
+
         context.addTermination(task.cancel)
-
-        let phase = ModifiedValue.suspending
-        setValue(phase)
-
-        return phase
+        return .suspending
     }
 }

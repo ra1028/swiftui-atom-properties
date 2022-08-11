@@ -44,7 +44,7 @@
 /// }
 /// ```
 ///
-public protocol AsyncSequenceAtom: Atom where State == AsyncSequenceAtomState<Sequence> {
+public protocol AsyncSequenceAtom: Atom where State == AsyncSequenceAtomValue<Sequence> {
     /// The type of asynchronous sequence that this atom manages.
     associatedtype Sequence: AsyncSequence
 
@@ -64,7 +64,7 @@ public protocol AsyncSequenceAtom: Atom where State == AsyncSequenceAtomState<Se
 
 public extension AsyncSequenceAtom {
     @MainActor
-    func makeState() -> State {
+    var value: State {
         State(makeSequence: sequence)
     }
 }

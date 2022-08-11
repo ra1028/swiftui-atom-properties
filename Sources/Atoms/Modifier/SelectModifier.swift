@@ -68,7 +68,7 @@ public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
 
     /// Returns a value with initiating the update process and caches the value for
     /// the next access.
-    public func value(context: Context, with value: Value, setValue: SetValue) -> Selected {
+    public func value(context: Context, with value: Value) -> Selected {
         value[keyPath: keyPath]
     }
 }

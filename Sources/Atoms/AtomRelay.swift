@@ -61,7 +61,7 @@ public struct AtomRelay<Content: View>: View {
     public var body: some View {
         content.environment(
             \.atomStoreInteractor,
-             (context?._store ?? inheritedStore).relay(observers: observers)
+            (context?._store ?? inheritedStore).relay(observers: observers)
         )
     }
 

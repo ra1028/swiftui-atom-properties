@@ -11,6 +11,7 @@ internal protocol AtomStoreInteractor {
 
     func set<Node: StateAtom>(_ value: Node.Value, for atom: Node)
 
+    // TODO: Ensure if shouldNotifyAfterUpdates is not needed anymore.
     func watch<Node: Atom, Downstream: Atom>(
         _ atom: Node,
         downstream: Downstream,
@@ -23,7 +24,7 @@ internal protocol AtomStoreInteractor {
         notifyUpdate: @escaping () -> Void
     ) -> Node.State.Value
 
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue
 
     func reset<Node: Atom>(_ atom: Node)
 
@@ -62,16 +63,11 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
             return
         }
 
-        let key = AtomKey(atom)
         let context = AtomRelationContext(atom: atom, store: self)
 
         atom.willSet(newValue: value, oldValue: oldValue, context: context)
-        store?.state.values[key] = value
-        notifyUpdate(of: atom)
+        update(atom: atom, with: value)
         atom.didSet(newValue: value, oldValue: oldValue, context: context)
-
-        // Notify new value.
-        notifyChangesToObservers(of: atom, value: value)
     }
 
     @usableFromInline
@@ -125,24 +121,35 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
     }
 
     @usableFromInline
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
+        guard let store = store else {
+            return getNewValue(of: atom)
+        }
+
         // Release the value & the ongoing task, but keep upstream atoms alive until finishing refresh.
         let key = AtomKey(atom)
         let dependencies = release(for: key)
-        let state = atom.makeState()
-        let context = AtomStateContext(atom: atom, store: self)
-        let value: Node.State.Value
+        let state = atom.value
+        let context = makeValueContext(for: atom)
+        let refresh: AsyncStream<Node.State.Value>
 
         if let overrideValue = overrides?[atom] {
-            value = await state.refreshOverride(with: overrideValue, context: context)
+            refresh = state.refresh(context: context, with: overrideValue)
         }
         else {
-            value = await state.refresh(context: context)
+            refresh = state.refresh(context: context)
+        }
+
+        var refreshedValue: Node.State.Value?
+
+        for await value in refresh {
+            refreshedValue = value
+            store.state.values[key] = value
         }
 
         checkAndReleaseDependencies(of: key, oldDependencies: dependencies)
 
-        return value
+        return refreshedValue ?? getValue(of: atom, peek: true)
     }
 
     @usableFromInline
@@ -192,6 +199,18 @@ private extension RootAtomStoreInteractor {
         self.observers = observers
     }
 
+    func makeValueContext<Node: Atom>(for atom: Node) -> AtomValueContext<Node.State.Value> {
+        AtomValueContext(
+            atomContext: AtomRelationContext(atom: atom, store: self),
+            update: { value in
+                update(atom: atom, with: value)
+            },
+            addTermination: { termination in
+                addTermination(for: atom, termination)
+            }
+        )
+    }
+
     func getValue<Node: Atom>(of atom: Node, peek: Bool) -> Node.State.Value {
         guard let store = store else {
             return getNewValue(of: atom)
@@ -215,9 +234,9 @@ private extension RootAtomStoreInteractor {
 
         // Notify the assignment to observers.
         // TODO: Reconsider when to call.
-//        for observer in observers {
-//            observer.atomAssigned(atom: atom)
-//        }
+        //        for observer in observers {
+        //            observer.atomAssigned(atom: atom)
+        //        }
 
         return value
     }
@@ -230,8 +249,8 @@ private extension RootAtomStoreInteractor {
             value = overrideValue
         }
         else {
-            let context = AtomStateContext(atom: atom, store: self)
-            value = atom.makeState().value(context: context)
+            let context = makeValueContext(for: atom)
+            value = atom.value.get(context: context)
         }
 
         return value
@@ -263,6 +282,21 @@ private extension RootAtomStoreInteractor {
         }
 
         return value
+    }
+
+    func update<Node: Atom>(atom: Node, with value: Node.State.Value) {
+        guard let store = store else {
+            return
+        }
+
+        let key = AtomKey(atom)
+
+        // Set new value.
+        store.state.values[key] = value
+        // Notify update to the downstream atoms or views.
+        notifyUpdate(of: atom)
+        // Notify new value.
+        notifyChangesToObservers(of: atom, value: value)
     }
 
     func notifyUpdate(for key: AtomKey) {
@@ -323,9 +357,9 @@ private extension RootAtomStoreInteractor {
         defer {
             // Notify the unassignment to observers.
             // TODO:
-    //        for observer in observers {
-    //            observer.atomUnassigned(atom: atom)
-    //        }
+            //        for observer in observers {
+            //            observer.atomUnassigned(atom: atom)
+            //        }
         }
 
         // Cleanup.

@@ -60,11 +60,11 @@ public struct AtomRoot<Content: View>: View {
     public var body: some View {
         content.environment(
             \.atomStoreInteractor,
-             RootAtomStoreInteractor(
+            RootAtomStoreInteractor(
                 store: state.store,
                 overrides: overrides,
                 observers: observers
-             )
+            )
         )
     }
 
