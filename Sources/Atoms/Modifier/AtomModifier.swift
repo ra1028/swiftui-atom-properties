@@ -10,6 +10,7 @@ public extension Atom {
 
 /// A modifier that you apply to an atom, producing a  different version
 /// of the original value.
+@MainActor
 public protocol AtomModifier {
     /// A type representing the stable identity of this modifier.
     associatedtype Key: Hashable
@@ -24,7 +25,7 @@ public protocol AtomModifier {
     typealias Context = AtomValueContext<ModifiedValue>
 
     /// A unique value used to identify the modifier internally.
-    var key: Key { get }
+    nonisolated var key: Key { get }
 
     /// Returns a boolean value that determines whether it should notify the value update to
     /// watchers with comparing the given old value and the new value.
@@ -35,7 +36,6 @@ public protocol AtomModifier {
     ///
     /// - Returns: A boolean value that determines whether it should notify the value update
     ///            to watchers.
-    @MainActor
     func shouldNotifyUpdate(newValue: ModifiedValue, oldValue: ModifiedValue) -> Bool
 
     /// Returns a value with initiating the update process and caches the value for
@@ -47,12 +47,10 @@ public protocol AtomModifier {
     ///   - setValue: The closure that to set a new value to the original atom's state.
     ///
     /// - Returns: A modified value.
-    @MainActor
     func value(context: Context, with value: Value) -> ModifiedValue
 }
 
 public extension AtomModifier {
-    @MainActor
     func shouldNotifyUpdate(newValue: ModifiedValue, oldValue: ModifiedValue) -> Bool {
         true
     }

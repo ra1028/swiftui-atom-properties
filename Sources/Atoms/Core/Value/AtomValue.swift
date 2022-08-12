@@ -7,10 +7,25 @@ public protocol AtomValue {
     func get(context: Context) -> Value
 
     func startUpdating(context: Context, with value: Value)
+
+    /// Returns a boolean value that determines whether it should notify the value update to
+    /// watchers with comparing the given old value and the new value.
+    ///
+    /// - Parameters:
+    ///   - newValue: The new value after update.
+    ///   - oldValue: The old value before update.
+    ///
+    /// - Returns: A boolean value that determines whether it should notify the value update
+    ///            to watchers.
+    func shouldNotifyUpdate(newValue: Value, oldValue: Value) -> Bool
 }
 
 public extension AtomValue {
     func startUpdating(context: Context, with value: Value) {}
+
+    func shouldNotifyUpdate(newValue: Value, oldValue: Value) -> Bool {
+        true
+    }
 }
 
 public protocol RefreshableAtomValue: AtomValue {

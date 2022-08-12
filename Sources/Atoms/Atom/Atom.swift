@@ -36,29 +36,9 @@ public protocol Atom {
     /// - Returns: A state object that handles internal process and a value.
     @MainActor
     var value: State { get }
-
-    /// Returns a boolean value that determines whether it should notify the value update to
-    /// watchers with comparing the given old value and the new value.
-    ///
-    /// - Parameters:
-    ///   - newValue: The new value after update.
-    ///   - oldValue: The old value before update.
-    ///
-    /// - Returns: A boolean value that determines whether it should notify the value update
-    ///            to watchers.
-    @MainActor
-    func shouldNotifyUpdate(newValue: State.Value, oldValue: State.Value) -> Bool
 }
 
 public extension Atom {
-    @MainActor
-    func shouldNotifyUpdate(newValue: State.Value, oldValue: State.Value) -> Bool {
-        true
-    }
-}
-
-public extension Atom {
-    @MainActor
     static var shouldKeepAlive: Bool {
         false
     }

@@ -249,7 +249,7 @@ private extension RootAtomStoreInteractor {
             return nil
         }
 
-        guard let state = baseState as? AtomState<Node>  else {
+        guard let state = baseState as? AtomState<Node> else {
             assertionFailure(
                 """
                 The type of the given atom's value and the cached value did not match.
@@ -274,6 +274,14 @@ private extension RootAtomStoreInteractor {
         let key = AtomKey(atom)
 
         guard let state = getCachedState(of: atom) else {
+            return
+        }
+
+        let oldValue = state.value
+        state.value = value
+
+        // Do not notify update if the value is equivalent to the old value.
+        if let oldValue = oldValue, !atom.value.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
             return
         }
 

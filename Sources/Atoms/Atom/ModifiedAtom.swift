@@ -32,10 +32,4 @@ public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.
     public var value: ModifiedAtomValue<Node, Modifier> {
         State(atom: atom, modifier: modifier)
     }
-
-    /// Returns a boolean value that determines whether it should notify the value update to
-    /// watchers with comparing the given old value and the new value.
-    public func shouldNotifyUpdate(newValue: Modifier.ModifiedValue, oldValue: Modifier.ModifiedValue) -> Bool {
-        modifier.shouldNotifyUpdate(newValue: newValue, oldValue: oldValue)
-    }
 }
