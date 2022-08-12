@@ -63,7 +63,8 @@ struct APIClient: APIClientProtocol {
         Future { fulfill in
             Task {
                 do {
-                    let response: PagedResponse<Movie> = try await get(
+                    let response = try await get(
+                        PagedResponse<Movie>.self,
                         path: "search/movie",
                         parameters: ["query": query]
                     )

@@ -116,11 +116,10 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
     @usableFromInline
     func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
         // Release the value & the ongoing task, but keep upstream atoms alive until finishing refresh.
-        let key = AtomKey(atom)
-        let dependencies = release(for: key)
-        let state = getCachedState(of: atom)  // TODO: Always nil.
+        let state = getCachedState(of: atom)
         let context = makeValueContext(for: atom)
         let refresh: AsyncStream<Node.State.Value>
+        var refreshedValue: Node.State.Value?
 
         if let overrideValue = overrides?[atom] {
             refresh = atom.value.refresh(context: context, with: overrideValue)
@@ -128,8 +127,6 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         else {
             refresh = atom.value.refresh(context: context)
         }
-
-        var refreshedValue: Node.State.Value?
 
         for await value in refresh {
             refreshedValue = value
@@ -139,7 +136,6 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         let finalValue = refreshedValue ?? getValue(of: atom)
 
         update(atom: atom, with: finalValue)
-        schduleDependenciesRelease(of: key, dependencies: dependencies)
 
         return finalValue
     }
