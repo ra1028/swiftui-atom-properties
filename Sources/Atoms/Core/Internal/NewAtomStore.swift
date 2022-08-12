@@ -120,7 +120,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         // Release the value & the ongoing task, but keep upstream atoms alive until finishing refresh.
         let key = AtomKey(atom)
         let dependencies = release(for: key)
-        let state = getCachedState(of: atom)
+        let state = getCachedState(of: atom)  // TODO: Always nil.
         let context = makeValueContext(for: atom)
         let refresh: AsyncStream<Node.State.Value>
 
@@ -213,9 +213,10 @@ private extension RootAtomStoreInteractor {
             return
         }
 
-        store.state.atomStates[key] = AtomState<Node>()
+        // Register new state.
+        store.state.atomStates[key] = AtomState(atom: atom)
 
-        // Notify the assignment to observers.
+        // Notify atom registration to observers.
         for observer in observers {
             observer.atomAssigned(atom: atom)
         }
@@ -350,14 +351,6 @@ private extension RootAtomStoreInteractor {
             return []
         }
 
-        defer {
-            // Notify the unassignment to observers.
-            // TODO:
-            //        for observer in observers {
-            //            observer.atomUnassigned(atom: atom)
-            //        }
-        }
-
         // Do not release atoms marked as `KeepAlive`.
         guard let state = store.state.atomStates[key], !state.shouldKeepAlive else {
             return []
@@ -366,12 +359,18 @@ private extension RootAtomStoreInteractor {
         // Cleanup.
         store.state.atomStates.removeValue(forKey: key)
 
+        // Remove dependencies.
+        let dependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
+
         // Terminate.
         for termination in state.terminations {
             termination()
         }
 
-        return store.graph.dependencies.removeValue(forKey: key) ?? []
+        // Notify atom release to observers.
+        state.notifyUnassigned(to: observers)
+
+        return dependencies
     }
 
     func schduleDependenciesRelease(of key: AtomKey, dependencies: Set<AtomKey>) {
