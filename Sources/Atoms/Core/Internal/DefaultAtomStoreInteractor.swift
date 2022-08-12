@@ -13,12 +13,8 @@ internal struct DefaultAtomStoreInteractor: AtomStoreInteractor {
         temporaryInteractor.set(value, for: atom)
     }
 
-    func watch<Node: Atom, Downstream: Atom>(
-        _ atom: Node,
-        downstream: Downstream,
-        shouldNotifyAfterUpdates: Bool
-    ) -> Node.State.Value {
-        temporaryInteractor.watch(atom, downstream: downstream, shouldNotifyAfterUpdates: shouldNotifyAfterUpdates)
+    func watch<Node: Atom, Downstream: Atom>(_ atom: Node, downstream: Downstream) -> Node.State.Value {
+        temporaryInteractor.watch(atom, downstream: downstream)
     }
 
     func watch<Node: Atom>(

@@ -1,6 +1,6 @@
 internal struct StoreState {
     /// Cached atom values.
-    var values = [AtomKey: Any]() // TODO: Stop using Any.
+    var values = [AtomKey: Any]()  // TODO: Stop using Any.
 
     /// Termination processes.
     var terminations = [AtomKey: ContiguousArray<Termination>]()

@@ -190,7 +190,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Returns: The value associated with the given atom.
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
-        container.watch(atom, shouldNotifyAfterUpdates: false)
+        container.watch(atom)
     }
 
     /// Accesses the observable object associated with the given atom for reading and initialing watch to
@@ -212,7 +212,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Returns: The observable object associated with the given atom.
     @discardableResult
     public func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.State.Value {
-        container.watch(atom, shouldNotifyAfterUpdates: true)
+        container.watch(atom)
     }
 
     /// Unwatches the given atom and do not receive any more updates of it.
@@ -293,7 +293,7 @@ private extension AtomTestContext {
             _container.wrapper
         }
 
-        func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value {
+        func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
             store.watch(atom, container: _container.wrapper) { [weak self] in
                 self?.onUpdate?()
                 self?.notifier.send()

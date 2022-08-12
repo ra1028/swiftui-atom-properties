@@ -117,7 +117,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     @inlinable
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
-        _box.watch(atom, shouldNotifyAfterUpdates: false)
+        _box.watch(atom)
     }
 
     /// Accesses the observable object associated with the given atom for reading and initialing watch to
@@ -140,7 +140,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     @inlinable
     @discardableResult
     public func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.State.Value {
-        _box.watch(atom, shouldNotifyAfterUpdates: true)
+        _box.watch(atom)
     }
 
     /// Add the termination action that will be performed when the atom will no longer be watched to
@@ -199,7 +199,7 @@ public struct AtomRelationContext: AtomWatchableContext {
 internal protocol _AnyAtomRelationContextBox {
     var store: AtomStoreInteractor { get }
 
-    func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value
+    func watch<Node: Atom>(_ atom: Node) -> Node.State.Value
     func addTermination(_ termination: @MainActor @escaping () -> Void)
 }
 
@@ -211,12 +211,8 @@ internal struct _AtomRelationContextBox<Downstream: Atom>: _AnyAtomRelationConte
     let store: AtomStoreInteractor
 
     @usableFromInline
-    func watch<Node: Atom>(_ atom: Node, shouldNotifyAfterUpdates: Bool) -> Node.State.Value {
-        store.watch(
-            atom,
-            downstream: downstream,
-            shouldNotifyAfterUpdates: shouldNotifyAfterUpdates
-        )
+    func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
+        store.watch(atom, downstream: downstream)
     }
 
     @usableFromInline

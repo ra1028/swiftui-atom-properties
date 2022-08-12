@@ -1,4 +1,5 @@
 import Foundation
+
 @usableFromInline
 internal final class NewAtomStore {
     var graph = Graph()
@@ -12,12 +13,7 @@ internal protocol AtomStoreInteractor {
 
     func set<Node: StateAtom>(_ value: Node.Value, for atom: Node)
 
-    // TODO: Ensure if shouldNotifyAfterUpdates is not needed anymore.
-    func watch<Node: Atom, Downstream: Atom>(
-        _ atom: Node,
-        downstream: Downstream,
-        shouldNotifyAfterUpdates: Bool
-    ) -> Node.State.Value
+    func watch<Node: Atom, Downstream: Atom>(_ atom: Node, downstream: Downstream) -> Node.State.Value
 
     func watch<Node: Atom>(
         _ atom: Node,
@@ -54,7 +50,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
 
     @usableFromInline
     func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
-        getValue(of: atom, peek: true)
+        getValue(of: atom, shouldCache: false)
     }
 
     @usableFromInline
@@ -78,7 +74,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         notifyUpdate: @escaping () -> Void
     ) -> Node.State.Value {
         guard let store = store else {
-            return getValue(of: atom, peek: true)
+            return getValue(of: atom, shouldCache: false)
         }
 
         let key = AtomKey(atom)
@@ -96,17 +92,13 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         // Assign subscription to the store.
         store.state.subscriptions[key, default: [:]][subscriptionKey] = subscription
 
-        return getValue(of: atom, peek: false)
+        return getValue(of: atom, shouldCache: true)
     }
 
     @usableFromInline
-    func watch<Node: Atom, Downstream: Atom>(
-        _ atom: Node,
-        downstream: Downstream,
-        shouldNotifyAfterUpdates: Bool
-    ) -> Node.State.Value {
+    func watch<Node: Atom, Downstream: Atom>(_ atom: Node, downstream: Downstream) -> Node.State.Value {
         guard let store = store else {
-            return getValue(of: atom, peek: true)
+            return getValue(of: atom, shouldCache: false)
         }
 
         let key = AtomKey(atom)
@@ -116,9 +108,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         store.graph.nodes[key, default: []].insert(downstreamKey)
         store.graph.dependencies[downstreamKey, default: []].insert(key)
 
-        // TODO: Check shouldNotifyAfterUpdates
-
-        return getValue(of: atom, peek: false)
+        return getValue(of: atom, shouldCache: true)
     }
 
     @usableFromInline
@@ -148,7 +138,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
             store.state.values[key] = value
         }
 
-        let finalValue = refreshedValue ?? getValue(of: atom, peek: true)
+        let finalValue = refreshedValue ?? getValue(of: atom, shouldCache: false)
 
         update(atom: atom, with: finalValue)
         releaseDependencies(of: key, dependencies: dependencies)
@@ -216,7 +206,7 @@ private extension RootAtomStoreInteractor {
         )
     }
 
-    func getValue<Node: Atom>(of atom: Node, peek: Bool) -> Node.State.Value {
+    func getValue<Node: Atom>(of atom: Node, shouldCache: Bool) -> Node.State.Value {
         guard let store = store else {
             return getNewValue(of: atom)
         }
@@ -231,7 +221,7 @@ private extension RootAtomStoreInteractor {
         // Notify value changes.
         notifyChangesToObservers(of: atom, value: value)
 
-        if !peek {
+        if shouldCache {
             store.state.values[key] = value
         }
 
