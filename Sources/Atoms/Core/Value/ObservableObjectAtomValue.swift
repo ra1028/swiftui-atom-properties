@@ -11,6 +11,11 @@ public struct ObservableObjectAtomValue<ObjectType: ObservableObject>: AtomValue
 
     public func get(context: Context) -> ObjectType {
         let object = makeObject(context.atomContext)
+        startUpdating(context: context, with: object)
+        return object
+    }
+
+    public func startUpdating(context: Context, with object: ObjectType) {
         let cancellable = object.objectWillChange.sink { [weak object] _ in
             guard let object = object else {
                 return
@@ -20,8 +25,5 @@ public struct ObservableObjectAtomValue<ObjectType: ObservableObject>: AtomValue
         }
 
         context.addTermination(cancellable.cancel)
-        return object
     }
-
-    // TODO: Override
 }

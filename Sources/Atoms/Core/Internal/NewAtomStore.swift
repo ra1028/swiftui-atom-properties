@@ -231,14 +231,15 @@ private extension RootAtomStoreInteractor {
     }
 
     func getNewValue<Node: Atom>(of atom: Node) -> Node.State.Value {
+        let context = makeValueContext(for: atom)
         let value: Node.State.Value
 
         if let overrideValue = overrides?[atom] {
             // Set the override value.
             value = overrideValue
+            atom.value.startUpdating(context: context, with: value)
         }
         else {
-            let context = makeValueContext(for: atom)
             value = atom.value.get(context: context)
         }
 

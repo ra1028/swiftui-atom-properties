@@ -6,7 +6,11 @@ public protocol AtomValue {
 
     func get(context: Context) -> Value
 
-    // TODO: Override
+    func startUpdating(context: Context, with value: Value)
+}
+
+public extension AtomValue {
+    func startUpdating(context: Context, with value: Value) {}
 }
 
 public protocol RefreshableAtomValue: AtomValue {
