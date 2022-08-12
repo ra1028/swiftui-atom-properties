@@ -12,6 +12,10 @@ internal final class AtomState<Node: Atom>: AtomStateBase {
         self.atom = atom
     }
 
+    func resetValue() {
+        value = nil
+    }
+
     func renewValue(with store: RootAtomStore) -> Bool {
         guard let oldValue = value else {
             return true
@@ -35,6 +39,8 @@ internal final class AtomState<Node: Atom>: AtomStateBase {
 internal protocol AtomStateBase: AnyObject {
     var shouldKeepAlive: Bool { get }
     var terminations: ContiguousArray<Termination> { get set }
+
+    func resetValue()
 
     /// Renews value and then returns a boolean value indicating
     /// whether it should notify update.

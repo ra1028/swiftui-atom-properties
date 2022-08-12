@@ -283,6 +283,7 @@ private extension RootAtomStore {
         state.terminations.removeAll()
 
         if forcesUpdate {
+            state.resetValue()
             notifyUpdate(for: key)
         }
         else {
