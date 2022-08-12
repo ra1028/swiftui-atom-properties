@@ -286,7 +286,7 @@ private extension RootAtomStore {
             notifyUpdate(for: key)
         }
         else {
-            let shouldNotifyUpdate = state.renew(with: self)
+            let shouldNotifyUpdate = state.renewValue(with: self)
 
             if shouldNotifyUpdate {
                 notifyUpdate(for: key)
