@@ -1,10 +1,9 @@
 internal struct StoreState {
-    /// Cached atom values.
-    var values = [AtomKey: Any]()  // TODO: Stop using Any.
-
-    /// Termination processes.
-    var terminations = [AtomKey: ContiguousArray<Termination>]()
-
-    /// Update subscriptions from view.
+    var atomStates = [AtomKey: AtomState]()
     var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
+}
+
+internal struct AtomState {
+    var value: Any?  // TODO: Stop using Any.
+    var terminations = ContiguousArray<Termination>()
 }

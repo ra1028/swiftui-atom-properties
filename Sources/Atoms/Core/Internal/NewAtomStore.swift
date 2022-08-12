@@ -50,7 +50,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
 
     @usableFromInline
     func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
-        getValue(of: atom, shouldCache: false)
+        getValue(of: atom)
     }
 
     @usableFromInline
@@ -74,7 +74,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         notifyUpdate: @escaping () -> Void
     ) -> Node.State.Value {
         guard let store = store else {
-            return getValue(of: atom, shouldCache: false)
+            return getNewValue(of: atom)
         }
 
         let key = AtomKey(atom)
@@ -86,29 +86,33 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
             checkAndRelease(for: key)
         }
 
+        register(for: key)
+
         // Assign subscription to the container so the caller side can unsubscribe.
         container.assign(subscription: subscription, for: key)
 
         // Assign subscription to the store.
         store.state.subscriptions[key, default: [:]][subscriptionKey] = subscription
 
-        return getValue(of: atom, shouldCache: true)
+        return getValue(of: atom)
     }
 
     @usableFromInline
     func watch<Node: Atom, Downstream: Atom>(_ atom: Node, downstream: Downstream) -> Node.State.Value {
         guard let store = store else {
-            return getValue(of: atom, shouldCache: false)
+            return getNewValue(of: atom)
         }
 
         let key = AtomKey(atom)
         let downstreamKey = AtomKey(downstream)
 
+        register(for: key)
+
         // Add an edge reference each other.
         store.graph.nodes[key, default: []].insert(downstreamKey)
         store.graph.dependencies[downstreamKey, default: []].insert(key)
 
-        return getValue(of: atom, shouldCache: true)
+        return getValue(of: atom)
     }
 
     @usableFromInline
@@ -135,10 +139,10 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
 
         for await value in refresh {
             refreshedValue = value
-            store.state.values[key] = value
+            store.state.atomStates[key]?.value = value
         }
 
-        let finalValue = refreshedValue ?? getValue(of: atom, shouldCache: false)
+        let finalValue = refreshedValue ?? getValue(of: atom)
 
         update(atom: atom, with: finalValue)
         releaseDependencies(of: key, dependencies: dependencies)
@@ -170,7 +174,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         let key = AtomKey(atom)
         let termination = Termination(termination)
 
-        store.state.terminations[key, default: []].append(termination)
+        store.state.atomStates[key]?.terminations.append(termination)
     }
 
     @usableFromInline
@@ -206,7 +210,15 @@ private extension RootAtomStoreInteractor {
         )
     }
 
-    func getValue<Node: Atom>(of atom: Node, shouldCache: Bool) -> Node.State.Value {
+    func register(for key: AtomKey) {
+        guard let store = store, store.state.atomStates[key] == nil else {
+            return
+        }
+
+        store.state.atomStates[key] = AtomState()
+    }
+
+    func getValue<Node: Atom>(of atom: Node) -> Node.State.Value {
         guard let store = store else {
             return getNewValue(of: atom)
         }
@@ -218,12 +230,11 @@ private extension RootAtomStoreInteractor {
         let key = AtomKey(atom)
         let value = getNewValue(of: atom)
 
+        // Cache value.
+        store.state.atomStates[key]?.value = value
+
         // Notify value changes.
         notifyChangesToObservers(of: atom, value: value)
-
-        if shouldCache {
-            store.state.values[key] = value
-        }
 
         // TODO: KeepAlive
 
@@ -254,7 +265,7 @@ private extension RootAtomStoreInteractor {
     func getCachedValue<Node: Atom>(of atom: Node) -> Node.State.Value? {
         let key = AtomKey(atom)
 
-        guard let anyValue = store?.state.values[key] else {
+        guard let anyValue = store?.state.atomStates[key]?.value else {
             return nil
         }
 
@@ -271,8 +282,9 @@ private extension RootAtomStoreInteractor {
                 """
             )
 
-            // Remove the invalid value.
-            store?.state.values.removeValue(forKey: key)
+            // Release invalid registration.
+            let dependencies = release(for: key)
+            releaseDependencies(of: key, dependencies: dependencies)
             return nil
         }
 
@@ -280,14 +292,14 @@ private extension RootAtomStoreInteractor {
     }
 
     func update<Node: Atom>(atom: Node, with value: Node.State.Value) {
+        let key = AtomKey(atom)
+
         guard let store = store else {
             return
         }
 
-        let key = AtomKey(atom)
-
         // Set new value.
-        store.state.values[key] = value
+        store.state.atomStates[key]?.value = value
         // Notify update to the downstream atoms or views.
         notifyUpdate(for: key)
         // Notify new value.
@@ -358,10 +370,10 @@ private extension RootAtomStoreInteractor {
         }
 
         // Cleanup.
-        store.state.values.removeValue(forKey: key)
+        let state = store.state.atomStates.removeValue(forKey: key)
 
         // Terminate.
-        if let terminations = store.state.terminations.removeValue(forKey: key) {
+        if let terminations = state?.terminations {
             for termination in terminations {
                 termination()
             }
