@@ -1,20 +1,20 @@
-internal struct DefaultAtomStoreInteractor: AtomStoreInteractor {
-    private let temporaryStore: NewAtomStore
+internal struct DefaultAtomStore: AtomStore {
+    private let temporaryStore: Store
 
     nonisolated init() {
-        temporaryStore = NewAtomStore()
+        temporaryStore = Store()
     }
 
     func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
-        temporaryInteractor.read(atom)
+        store.read(atom)
     }
 
     func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
-        temporaryInteractor.set(value, for: atom)
+        store.set(value, for: atom)
     }
 
     func watch<Node: Atom, Downstream: Atom>(_ atom: Node, downstream: Downstream) -> Node.State.Value {
-        temporaryInteractor.watch(atom, downstream: downstream)
+        store.watch(atom, downstream: downstream)
     }
 
     func watch<Node: Atom>(
@@ -22,29 +22,29 @@ internal struct DefaultAtomStoreInteractor: AtomStoreInteractor {
         container: SubscriptionContainer.Wrapper,
         notifyUpdate: @escaping () -> Void
     ) -> Node.State.Value {
-        temporaryInteractor.watch(atom, container: container, notifyUpdate: notifyUpdate)
+        store.watch(atom, container: container, notifyUpdate: notifyUpdate)
     }
 
     func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
-        await temporaryInteractor.refresh(atom)
+        await store.refresh(atom)
     }
 
     func reset<Node: Atom>(_ atom: Node) {
-        temporaryInteractor.reset(atom)
+        store.reset(atom)
     }
 
     func addTermination<Node: Atom>(for atom: Node, _ termination: @MainActor @escaping () -> Void) {
-        temporaryInteractor.addTermination(for: atom, termination)
+        store.addTermination(for: atom, termination)
     }
 
-    func relay(observers: [AtomObserver]) -> AtomStoreInteractor {
-        temporaryInteractor.relay(observers: observers)
+    func relay(observers: [AtomObserver]) -> AtomStore {
+        store.relay(observers: observers)
     }
 }
 
-private extension DefaultAtomStoreInteractor {
+private extension DefaultAtomStore {
     @MainActor
-    var temporaryInteractor: AtomStoreInteractor {
+    var store: AtomStore {
         assertionFailure(
             """
             [Atoms]
@@ -95,6 +95,6 @@ private extension DefaultAtomStoreInteractor {
             ```
             """
         )
-        return RootAtomStoreInteractor(store: temporaryStore)
+        return RootAtomStore(store: temporaryStore)
     }
 }

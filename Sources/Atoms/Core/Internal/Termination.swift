@@ -1,3 +1,4 @@
+@MainActor
 internal struct Termination {
     private let body: @MainActor () -> Void
 
@@ -5,7 +6,6 @@ internal struct Termination {
         self.body = body
     }
 
-    @MainActor
     func callAsFunction() {
         body()
     }

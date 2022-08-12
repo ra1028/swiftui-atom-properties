@@ -1,41 +1,11 @@
 @usableFromInline
-internal final class NewAtomStore {
-    var graph = Graph()
-    var state = StoreState()
-}
-
-@usableFromInline
-@MainActor
-internal protocol AtomStoreInteractor {
-    func read<Node: Atom>(_ atom: Node) -> Node.State.Value
-
-    func set<Node: StateAtom>(_ value: Node.Value, for atom: Node)
-
-    func watch<Node: Atom, Downstream: Atom>(_ atom: Node, downstream: Downstream) -> Node.State.Value
-
-    func watch<Node: Atom>(
-        _ atom: Node,
-        container: SubscriptionContainer.Wrapper,
-        notifyUpdate: @escaping () -> Void
-    ) -> Node.State.Value
-
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue
-
-    func reset<Node: Atom>(_ atom: Node)
-
-    func addTermination<Node: Atom>(for atom: Node, _ termination: @MainActor @escaping () -> Void)
-
-    func relay(observers: [AtomObserver]) -> AtomStoreInteractor
-}
-
-@usableFromInline
-internal struct RootAtomStoreInteractor: AtomStoreInteractor {
-    private weak var store: NewAtomStore?
+internal struct RootAtomStore: AtomStore {
+    private weak var store: Store?
     private let overrides: Overrides?
     private let observers: [AtomObserver]
 
     init(
-        store: NewAtomStore,
+        store: Store,
         overrides: Overrides? = nil,
         observers: [AtomObserver] = []
     ) {
@@ -147,7 +117,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
     }
 
     @usableFromInline
-    func relay(observers: [AtomObserver]) -> AtomStoreInteractor {
+    func relay(observers: [AtomObserver]) -> AtomStore {
         Self(
             store: store,
             overrides: overrides,
@@ -156,9 +126,9 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
     }
 }
 
-private extension RootAtomStoreInteractor {
+private extension RootAtomStore {
     init(
-        store: NewAtomStore?,
+        store: Store?,
         overrides: Overrides? = nil,
         observers: [AtomObserver] = []
     ) {

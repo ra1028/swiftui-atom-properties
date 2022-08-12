@@ -36,7 +36,7 @@ public struct ViewContext: DynamicProperty {
     @StateObject
     private var state: State
 
-    @Environment(\.atomStoreInteractor)
+    @Environment(\.atomStore)
     private var store
 
     /// Creates a view context.

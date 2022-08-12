@@ -39,7 +39,7 @@ public struct AtomRelay<Content: View>: View {
     private let content: Content
     private var observers = [AtomObserver]()
 
-    @Environment(\.atomStoreInteractor)
+    @Environment(\.atomStore)
     private var inheritedStore
 
     /// Creates an atom relay with the specified content that will be allowed to use atoms by
@@ -60,7 +60,7 @@ public struct AtomRelay<Content: View>: View {
     /// The content and behavior of the view.
     public var body: some View {
         content.environment(
-            \.atomStoreInteractor,
+            \.atomStore,
             (context?._store ?? inheritedStore).relay(observers: observers)
         )
     }

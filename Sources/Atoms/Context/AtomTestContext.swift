@@ -246,7 +246,7 @@ public struct AtomTestContext: AtomWatchableContext {
 private extension AtomTestContext {
     @MainActor
     final class Container {
-        private let _store = NewAtomStore()
+        private let _store = Store()
         private var _container: SubscriptionContainer
 
         let notifier = PassthroughSubject<Void, Never>()
@@ -259,8 +259,8 @@ private extension AtomTestContext {
             _container = SubscriptionContainer()
         }
 
-        var store: RootAtomStoreInteractor {
-            RootAtomStoreInteractor(
+        var store: RootAtomStore {
+            RootAtomStore(
                 store: _store,
                 overrides: overrides,
                 observers: observers

@@ -20,7 +20,7 @@ internal final class AtomState<Node: Atom>: AtomStateBase {
         self.atom = atom
     }
 
-    func renew(with store: RootAtomStoreInteractor) -> Bool {
+    func renew(with store: RootAtomStore) -> Bool {
         guard let oldValue = value else {
             return true
         }
@@ -45,7 +45,7 @@ internal protocol AtomStateBase: AnyObject {
     var terminations: ContiguousArray<Termination> { get set }
 
     /// Returns a boolean value indicating whether it should notify update.
-    func renew(with store: RootAtomStoreInteractor) -> Bool
+    func renew(with store: RootAtomStore) -> Bool
 
     func notifyUnassigned(to observers: [AtomObserver])
 }

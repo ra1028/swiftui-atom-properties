@@ -7,6 +7,8 @@ internal final class SubscriptionContainer {
         Wrapper(container: self, key: SubscriptionKey(self))
     }
 
+    nonisolated init() {}
+
     deinit {
         for subscription in subscriptions.values {
             subscription.unsubscribe()
