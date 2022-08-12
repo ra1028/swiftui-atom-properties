@@ -22,7 +22,6 @@ public protocol Atom {
     /// It's recommended to conform the ``KeepAlive`` to this atom, instead of overriding
     /// this property to return `true`.
     /// The default is `false`.
-    @MainActor
     static var shouldKeepAlive: Bool { get }
 
     /// A unique value used to identify the atom internally.

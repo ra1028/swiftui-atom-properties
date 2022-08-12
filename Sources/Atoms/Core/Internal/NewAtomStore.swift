@@ -56,7 +56,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
     @usableFromInline
     func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
         // Do nothing if the atom is not yet to be watched.
-        guard let oldValue = getCachedValue(of: atom) else {
+        guard let oldValue = getCachedState(of: atom)?.value else {
             return
         }
 
@@ -86,7 +86,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
             checkAndRelease(for: key)
         }
 
-        register(for: key)
+        register(atom: atom)
 
         // Assign subscription to the container so the caller side can unsubscribe.
         container.assign(subscription: subscription, for: key)
@@ -106,7 +106,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         let key = AtomKey(atom)
         let downstreamKey = AtomKey(downstream)
 
-        register(for: key)
+        register(atom: atom)
 
         // Add an edge reference each other.
         store.graph.nodes[key, default: []].insert(downstreamKey)
@@ -117,29 +117,25 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
 
     @usableFromInline
     func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
-        guard let store = store else {
-            return getNewValue(of: atom)
-        }
-
         // Release the value & the ongoing task, but keep upstream atoms alive until finishing refresh.
         let key = AtomKey(atom)
         let dependencies = release(for: key)
-        let state = atom.value
+        let state = getCachedState(of: atom)
         let context = makeValueContext(for: atom)
         let refresh: AsyncStream<Node.State.Value>
 
         if let overrideValue = overrides?[atom] {
-            refresh = state.refresh(context: context, with: overrideValue)
+            refresh = atom.value.refresh(context: context, with: overrideValue)
         }
         else {
-            refresh = state.refresh(context: context)
+            refresh = atom.value.refresh(context: context)
         }
 
         var refreshedValue: Node.State.Value?
 
         for await value in refresh {
             refreshedValue = value
-            store.state.atomStates[key]?.value = value
+            state?.value = value
         }
 
         let finalValue = refreshedValue ?? getValue(of: atom)
@@ -210,33 +206,28 @@ private extension RootAtomStoreInteractor {
         )
     }
 
-    func register(for key: AtomKey) {
+    func register<Node: Atom>(atom: Node) {
+        let key = AtomKey(atom)
+
         guard let store = store, store.state.atomStates[key] == nil else {
             return
         }
 
-        store.state.atomStates[key] = AtomState()
+        store.state.atomStates[key] = AtomState<Node>()
     }
 
     func getValue<Node: Atom>(of atom: Node) -> Node.State.Value {
-        guard let store = store else {
-            return getNewValue(of: atom)
-        }
-
-        if let value = getCachedValue(of: atom) {
+        if let value = getCachedState(of: atom)?.value {
             return value
         }
 
-        let key = AtomKey(atom)
         let value = getNewValue(of: atom)
+        let state = getCachedState(of: atom)
 
-        // Cache value.
-        store.state.atomStates[key]?.value = value
+        state?.value = value
 
         // Notify value changes.
         notifyChangesToObservers(of: atom, value: value)
-
-        // TODO: KeepAlive
 
         // Notify the assignment to observers.
         // TODO: Reconsider when to call.
@@ -262,14 +253,14 @@ private extension RootAtomStoreInteractor {
         return value
     }
 
-    func getCachedValue<Node: Atom>(of atom: Node) -> Node.State.Value? {
+    func getCachedState<Node: Atom>(of atom: Node) -> AtomState<Node>? {
         let key = AtomKey(atom)
 
-        guard let anyValue = store?.state.atomStates[key]?.value else {
+        guard let baseState = store?.state.atomStates[key] else {
             return nil
         }
 
-        guard let value = anyValue as? Node.State.Value else {
+        guard let state = baseState as? AtomState<Node>  else {
             assertionFailure(
                 """
                 The type of the given atom's value and the cached value did not match.
@@ -277,8 +268,7 @@ private extension RootAtomStoreInteractor {
 
                 Atom type: \(Node.self)
                 Key type: \(type(of: atom.key))
-                Expected value type: \(Node.State.Value.self)
-                Cached value type: \(type(of: anyValue))
+                Invalid state type: \(type(of: baseState))
                 """
             )
 
@@ -288,18 +278,18 @@ private extension RootAtomStoreInteractor {
             return nil
         }
 
-        return value
+        return state
     }
 
     func update<Node: Atom>(atom: Node, with value: Node.State.Value) {
         let key = AtomKey(atom)
 
-        guard let store = store else {
+        guard let state = getCachedState(of: atom) else {
             return
         }
 
         // Set new value.
-        store.state.atomStates[key]?.value = value
+        state.value = value
         // Notify update to the downstream atoms or views.
         notifyUpdate(for: key)
         // Notify new value.
@@ -369,25 +359,29 @@ private extension RootAtomStoreInteractor {
             //        }
         }
 
+        // Do not release atoms marked as `KeepAlive`.
+        guard let state = store.state.atomStates[key], !state.shouldKeepAlive else {
+            return []
+        }
+
         // Cleanup.
-        let state = store.state.atomStates.removeValue(forKey: key)
+        store.state.atomStates.removeValue(forKey: key)
 
         // Terminate.
-        if let terminations = state?.terminations {
-            for termination in terminations {
-                termination()
-            }
+        for termination in state.terminations {
+            termination()
         }
 
         return store.graph.dependencies.removeValue(forKey: key) ?? []
     }
 
     func schduleDependenciesRelease(of key: AtomKey, dependencies: Set<AtomKey>) {
-        guard let store = store else {
+        store?.state.scheduledReleaseTasks[key]?.cancel()
+
+        guard let store = store, !dependencies.isEmpty else {
             return
         }
 
-        store.state.scheduledReleaseTasks[key]?.cancel()
         store.state.scheduledReleaseTasks[key] = Task { [weak store] in
             guard let store = store, !Task.isCancelled else {
                 return
