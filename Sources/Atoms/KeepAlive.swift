@@ -14,7 +14,6 @@
 public protocol KeepAlive where Self: Atom {}
 
 public extension KeepAlive {
-    @MainActor
     static var shouldKeepAlive: Bool {
         true
     }

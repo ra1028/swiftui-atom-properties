@@ -9,8 +9,12 @@ public struct AsyncAtomValue<Success, Failure: Error>: TaskAtomValue {
 
     public func get(context: Context) -> Value {
         let task = getTask(context.atomContext)
-        context.addTermination(task.cancel)
+        startUpdating(context: context, with: task)
         return task
+    }
+
+    public func startUpdating(context: Context, with task: Value) {
+        context.addTermination(task.cancel)
     }
 
     public func refresh(context: Context) -> AsyncStream<Value> {

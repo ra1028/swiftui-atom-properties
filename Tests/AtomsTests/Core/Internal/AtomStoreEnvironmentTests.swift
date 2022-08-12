@@ -8,10 +8,10 @@ final class AtomStoreEnvironmentTests: XCTestCase {
     func testAtomStore() {
         var environmentValues = EnvironmentValues()
 
-        XCTAssertTrue(environmentValues.atomStore is DefaultStore)
+        XCTAssertTrue(environmentValues.atomStoreInteractor is DefaultAtomStoreInteractor)
 
-        environmentValues.atomStore = Store(container: StoreContainer())
+        environmentValues.atomStoreInteractor = RootAtomStoreInteractor(store: NewAtomStore())
 
-        XCTAssertTrue(environmentValues.atomStore is Store)
+        XCTAssertTrue(environmentValues.atomStoreInteractor is RootAtomStoreInteractor)
     }
 }
