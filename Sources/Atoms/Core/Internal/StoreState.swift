@@ -1,6 +1,7 @@
 internal struct StoreState {
     var atomStates = [AtomKey: AtomState]()
     var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
+    var scheduledReleaseTasks = [AtomKey: Task<Void, Never>]()
 }
 
 internal struct AtomState {
