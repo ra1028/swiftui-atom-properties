@@ -2,7 +2,6 @@
 internal struct StoreState {
     var atomStates = [AtomKey: AtomStateBase]()
     var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
-    var scheduledReleaseTasks = [AtomKey: Task<Void, Never>]()
 
     nonisolated init() {}
 }
@@ -21,6 +20,18 @@ internal final class AtomState<Node: Atom>: AtomStateBase {
         self.atom = atom
     }
 
+    func renew(with store: RootAtomStoreInteractor) -> Bool {
+        guard let oldValue = value else {
+            return true
+        }
+
+        value = nil
+        let newValue = store.read(atom)
+        value = newValue
+
+        return atom.value.shouldNotifyUpdate(newValue: newValue, oldValue: oldValue)
+    }
+
     func notifyUnassigned(to observers: [AtomObserver]) {
         for observer in observers {
             observer.atomUnassigned(atom: atom)
@@ -29,9 +40,12 @@ internal final class AtomState<Node: Atom>: AtomStateBase {
 }
 
 @MainActor
-internal protocol AtomStateBase {
+internal protocol AtomStateBase: AnyObject {
     var shouldKeepAlive: Bool { get }
     var terminations: ContiguousArray<Termination> { get set }
+
+    /// Returns a boolean value indicating whether it should notify update.
+    func renew(with store: RootAtomStoreInteractor) -> Bool
 
     func notifyUnassigned(to observers: [AtomObserver])
 }

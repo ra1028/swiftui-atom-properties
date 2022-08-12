@@ -1,5 +1,3 @@
-import Foundation
-
 @usableFromInline
 internal final class NewAtomStore {
     var graph = Graph()
@@ -133,10 +131,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
     @usableFromInline
     func reset<Node: Atom>(_ atom: Node) {
         let key = AtomKey(atom)
-        let dependencies = release(for: key)
-
-        notifyUpdate(for: key)
-        schduleDependenciesRelease(of: key, dependencies: dependencies)
+        renew(for: key, forcesUpdate: true)
     }
 
     @usableFromInline
@@ -252,8 +247,7 @@ private extension RootAtomStoreInteractor {
             )
 
             // Release invalid registration.
-            let dependencies = release(for: key)
-            schduleDependenciesRelease(of: key, dependencies: dependencies)
+            release(for: key)
             return nil
         }
 
@@ -297,16 +291,50 @@ private extension RootAtomStoreInteractor {
         // Notify update to downstream atoms.
         if let nodes = store.graph.nodes[key] {
             for node in nodes {
-                let dependencies = release(for: node)
-                // TODO: Check shouldNotifyUpdate
-                notifyUpdate(for: node)
-                schduleDependenciesRelease(of: node, dependencies: dependencies)
+                renew(for: node, forcesUpdate: false)
             }
         }
     }
 
+    func renew(for key: AtomKey, forcesUpdate: Bool) {
+        guard let store = store, let state = store.state.atomStates[key] else {
+            return
+        }
+
+        // Remove dependencies.
+        let dependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
+
+        // Terminate.
+        for termination in state.terminations {
+            termination()
+        }
+
+        // Remove terminations.
+        state.terminations.removeAll()
+
+        if forcesUpdate {
+            notifyUpdate(for: key)
+        }
+        else {
+            let shouldNotifyUpdate = state.renew(with: self)
+
+            if shouldNotifyUpdate {
+                notifyUpdate(for: key)
+            }
+        }
+
+        releaseDependencies(of: key, dependencies: dependencies)
+    }
+
     func checkAndRelease(for key: AtomKey) {
-        guard let store = store else {
+        guard let store = store  else {
+            return
+        }
+
+        // Do not release atoms marked as `KeepAlive`.
+        let shouldKeepAlive = store.state.atomStates[key]?.shouldKeepAlive ?? false
+
+        guard !shouldKeepAlive else {
             return
         }
 
@@ -327,23 +355,19 @@ private extension RootAtomStoreInteractor {
             return
         }
 
-        let dependencies = release(for: key)
-        schduleDependenciesRelease(of: key, dependencies: dependencies)
+        release(for: key)
     }
 
     /// Release an atom associated by the specified key and return its dependencies.
-    func release(for key: AtomKey) -> Set<AtomKey> {
-        // Do not release atoms marked as `KeepAlive`.
-        guard
-            let store = store,
-            let state = store.state.atomStates[key],
-            !state.shouldKeepAlive
-        else {
-            return []
+    func release(for key: AtomKey) {
+        guard let store = store else {
+            return
         }
 
         // Cleanup.
-        store.state.atomStates.removeValue(forKey: key)
+        guard let state = store.state.atomStates.removeValue(forKey: key) else {
+            return
+        }
 
         // Remove dependencies.
         let dependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
@@ -356,32 +380,25 @@ private extension RootAtomStoreInteractor {
         // Notify atom release to observers.
         state.notifyUnassigned(to: observers)
 
-        return dependencies
+        // Recursively, release upstream atoms.
+        releaseDependencies(of: key, dependencies: dependencies)
     }
 
-    func schduleDependenciesRelease(of key: AtomKey, dependencies: Set<AtomKey>) {
-        store?.state.scheduledReleaseTasks[key]?.cancel()
-
+    func releaseDependencies(of key: AtomKey, dependencies: Set<AtomKey>) {
         guard let store = store, !dependencies.isEmpty else {
             return
         }
 
-        store.state.scheduledReleaseTasks[key] = Task { [weak store] in
-            guard let store = store, !Task.isCancelled else {
-                return
-            }
+        let current = store.graph.dependencies[key] ?? []
+        let obsoleted = dependencies.subtracting(current)
 
-            let current = store.graph.dependencies[key] ?? []
-            let obsoleted = dependencies.subtracting(current)
+        // Recursively release dependencies.
+        for obsoleted in obsoleted {
+            // Remove this atom from the upstream atoms.
+            store.graph.nodes[obsoleted]?.remove(key)
 
-            // Recursively release dependencies.
-            for obsoleted in obsoleted {
-                // Remove this atom from the upstream atoms.
-                store.graph.nodes[obsoleted]?.remove(key)
-
-                // Release the upstream atoms as well.
-                checkAndRelease(for: obsoleted)
-            }
+            // Release the upstream atoms as well.
+            checkAndRelease(for: obsoleted)
         }
     }
 
