@@ -1,4 +1,5 @@
 import Combine
+import Foundation
 
 public struct ObservableObjectAtomValue<ObjectType: ObservableObject>: AtomValue {
     public typealias Value = ObjectType
@@ -21,7 +22,14 @@ public struct ObservableObjectAtomValue<ObjectType: ObservableObject>: AtomValue
                 return
             }
 
-            context.update(with: object)
+            // At the timing when `ObservableObject/objectWillChange` emits,
+            // its properties have not yet been updated and is old when
+            // the downstream atom reads it.
+            // As a workaround, the update is executed in the next run loop
+            // so that the downstream atoms can receive the updated value.
+            RunLoop.current.perform {
+                context.update(with: object)
+            }
         }
 
         context.addTermination(cancellable.cancel)

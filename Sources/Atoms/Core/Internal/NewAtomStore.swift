@@ -327,7 +327,7 @@ private extension RootAtomStoreInteractor {
     }
 
     func checkAndRelease(for key: AtomKey) {
-        guard let store = store  else {
+        guard let store = store else {
             return
         }
 

@@ -130,26 +130,6 @@ public protocol AtomWatchableContext: AtomContext {
     /// - Returns: The value associated with the given atom.
     @discardableResult
     func watch<Node: Atom>(_ atom: Node) -> Node.State.Value
-
-    /// Accesses the observable object associated with the given atom for reading and initialing watch to
-    /// receive its updates.
-    ///
-    /// This method returns an observable object for the given atom and initiate watching the atom so that
-    /// the current context to get updated when the atom notifies updates.
-    /// The observable object associated with the atom is cached until it is no longer watched to or until
-    /// it is updated.
-    ///
-    /// ```swift
-    /// let context = ...
-    /// let store = context.watch(AccountStoreAtom())
-    /// print(store.currentUser) // Prints the user value after update.
-    /// ```
-    ///
-    /// - Parameter atom: An atom that associates the observable object.
-    ///
-    /// - Returns: The observable object associated with the given atom.
-    @discardableResult
-    func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.State.Value
 }
 
 public extension AtomWatchableContext {

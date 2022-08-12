@@ -44,7 +44,7 @@ final class ModifiedAtomTests: XCTestCase {
             context.override(atom) { _ in
                 100
             }
-            
+
             XCTAssertEqual(context.watch(atom), 100)
         }
     }
