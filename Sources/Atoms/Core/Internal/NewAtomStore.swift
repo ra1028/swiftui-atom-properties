@@ -25,8 +25,6 @@ internal protocol AtomStoreInteractor {
 
     func reset<Node: Atom>(_ atom: Node)
 
-    func notifyUpdate<Node: Atom>(of atom: Node)
-
     func addTermination<Node: Atom>(for atom: Node, _ termination: @MainActor @escaping () -> Void)
 
     func relay(observers: [AtomObserver]) -> AtomStoreInteractor
@@ -153,12 +151,6 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
 
         notifyUpdate(for: key)
         schduleDependenciesRelease(of: key, dependencies: dependencies)
-    }
-
-    @usableFromInline
-    func notifyUpdate<Node: Atom>(of atom: Node) {
-        let key = AtomKey(atom)
-        notifyUpdate(for: key)
     }
 
     @usableFromInline

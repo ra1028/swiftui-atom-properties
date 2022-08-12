@@ -33,10 +33,6 @@ internal struct DefaultAtomStoreInteractor: AtomStoreInteractor {
         temporaryInteractor.reset(atom)
     }
 
-    func notifyUpdate<Node: Atom>(of atom: Node) {
-        temporaryInteractor.notifyUpdate(of: atom)
-    }
-
     func addTermination<Node: Atom>(for atom: Node, _ termination: @MainActor @escaping () -> Void) {
         temporaryInteractor.addTermination(for: atom, termination)
     }
