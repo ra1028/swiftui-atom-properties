@@ -69,8 +69,11 @@ struct MoviesScreen: View {
         .task(id: loader.filter) {
             await loader.refresh()
         }
-        .refreshable { [loader] in
-            await loader.refresh()
+        .refreshable { [context] in
+            // NB: Implicitly capturing `self` causes memory leak with `refreshable`,
+            // and also capturing `loader` makes refresh doesn't work, so here reads
+            // `MovieLoader` via context.
+            await context.read(MovieLoaderAtom()).refresh()
         }
         .background {
             NavigationLink(
