@@ -233,7 +233,7 @@ private extension RootAtomStoreInteractor {
         if let overrideValue = overrides?[atom] {
             // Set the override value.
             value = overrideValue
-            atom.value.startUpdating(context: context, with: value)
+            atom.value.handleUpdates(context: context, with: value)
         }
         else {
             value = atom.value.get(context: context)
