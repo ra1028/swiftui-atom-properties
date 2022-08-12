@@ -83,12 +83,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
 
         let key = AtomKey(atom)
         let subscriptionKey = container.key
-        let subscription = Subscription {
-            notifyUpdate()
-        } containerCleanup: {
-            // Remove the subscription from the container.
-            container.cleanup()
-        } unsubscribe: { [weak store] in
+        let subscription = Subscription(notifyUpdate: notifyUpdate) { [weak store] in
             // Remove subscription from the store.
             store?.state.subscriptions[key]?.removeValue(forKey: subscriptionKey)
             // Release the atom if it is no longer watched to.
@@ -111,7 +106,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         shouldNotifyAfterUpdates: Bool
     ) -> Node.State.Value {
         guard let store = store else {
-            return getValue(of: atom, peek: false)
+            return getValue(of: atom, peek: true)
         }
 
         let key = AtomKey(atom)
@@ -156,7 +151,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         let finalValue = refreshedValue ?? getValue(of: atom, peek: true)
 
         update(atom: atom, with: finalValue)
-        scheduleDependenciesRelease(of: key, dependencies: dependencies)
+        releaseDependencies(of: key, dependencies: dependencies)
 
         return finalValue
     }
@@ -167,7 +162,7 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
         let dependencies = release(for: key)
 
         notifyUpdate(for: key)
-        scheduleDependenciesRelease(of: key, dependencies: dependencies)
+        releaseDependencies(of: key, dependencies: dependencies)
     }
 
     @usableFromInline
@@ -315,9 +310,8 @@ private extension RootAtomStoreInteractor {
         }
 
         // Notifying update for view subscriptions takes precedence.
-        if let subscriptions = store.state.subscriptions.removeValue(forKey: key) {
+        if let subscriptions = store.state.subscriptions[key] {
             for subscription in subscriptions.values {
-                subscription.containerCleanup()
                 subscription.notifyUpdate()
             }
         }
@@ -328,7 +322,7 @@ private extension RootAtomStoreInteractor {
                 let dependencies = release(for: node)
                 // TODO: Check shouldNotifyUpdate
                 notifyUpdate(for: node)
-                scheduleDependenciesRelease(of: node, dependencies: dependencies)
+                releaseDependencies(of: node, dependencies: dependencies)
             }
         }
     }
@@ -356,7 +350,7 @@ private extension RootAtomStoreInteractor {
         }
 
         let dependencies = release(for: key)
-        scheduleDependenciesRelease(of: key, dependencies: dependencies)
+        releaseDependencies(of: key, dependencies: dependencies)
     }
 
     /// Release an atom associated by the specified key and return its dependencies.
@@ -386,28 +380,21 @@ private extension RootAtomStoreInteractor {
         return store.graph.dependencies.removeValue(forKey: key) ?? []
     }
 
-    func scheduleDependenciesRelease(of key: AtomKey, dependencies: Set<AtomKey>) {
+    func releaseDependencies(of key: AtomKey, dependencies: Set<AtomKey>) {
         guard let store = store else {
             return
         }
 
-        store.state.scheduledReleaseTasks[key]?.cancel()
-        store.state.scheduledReleaseTasks[key] = Task { [weak store] in
-            guard let store = store, !Task.isCancelled else {
-                return
-            }
+        let current = store.graph.dependencies[key] ?? []
+        let obsoleted = dependencies.subtracting(current)
 
-            let current = store.graph.dependencies[key] ?? []
-            let obsoleted = dependencies.subtracting(current)
+        // Recursively release dependencies.
+        for obsoleted in obsoleted {
+            // Remove this atom from the upstream atoms.
+            store.graph.nodes[obsoleted]?.remove(key)
 
-            // Recursively release dependencies.
-            for obsoleted in obsoleted {
-                // Remove this atom from the upstream atoms.
-                store.graph.nodes[obsoleted]?.remove(key)
-
-                // Release the upstream atoms as well.
-                checkAndRelease(for: obsoleted)
-            }
+            // Release the upstream atoms as well.
+            checkAndRelease(for: obsoleted)
         }
     }
 

@@ -7,7 +7,4 @@ internal struct StoreState {
 
     /// Update subscriptions from view.
     var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
-
-    /// Scheduled release tasks of atom dependencies.
-    var scheduledReleaseTasks = [AtomKey: Task<Void, Never>]()
 }
