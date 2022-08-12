@@ -29,35 +29,24 @@ public struct AsyncSequenceAtomValue<Sequence: AsyncSequence>: RefreshableAtomVa
         return .suspending
     }
 
-    public func refresh(context: Context) -> AsyncStream<Value> {
+    public func refresh(context: Context) async -> Value {
         let sequence = makeSequence(context.atomContext)
         let box = UnsafeUncheckedSendableBox(sequence)
+        var phase = Value.suspending
 
-        return AsyncStream { continuation in
-            continuation.yield(.suspending)
-
-            let task = Task {
-                do {
-                    for try await element in box.unboxed {
-                        continuation.yield(.success(element))
-                    }
-                }
-                catch {
-                    continuation.yield(.failure(error))
-                }
-
-                continuation.finish()
-            }
-
-            continuation.onTermination = { termination in
-                if case .cancelled = termination {
-                    task.cancel()
-                }
+        do {
+            for try await element in box.unboxed {
+                phase = .success(element)
             }
         }
+        catch {
+            phase = .failure(error)
+        }
+
+        return phase
     }
 
-    public func refresh(context: Context, with value: Value) -> AsyncStream<Value> {
-        AsyncStream { value }
+    public func refresh(context: Context, with value: Value) async -> Value {
+        value
     }
 }

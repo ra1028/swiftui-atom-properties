@@ -24,30 +24,19 @@ public struct PublisherAtomValue<Publisher: Combine.Publisher>: RefreshableAtomV
         return .suspending
     }
 
-    public func refresh(context: Context) -> AsyncStream<Value> {
+    public func refresh(context: Context) async -> Value {
         let results = makePublisher(context.atomContext).results
+        var phase = Value.suspending
 
-        return AsyncStream { continuation in
-            continuation.yield(.suspending)
-
-            let task = Task {
-                for await result in results {
-                    continuation.yield(AsyncPhase(result))
-                }
-
-                continuation.finish()
-            }
-
-            continuation.onTermination = { termination in
-                if case .cancelled = termination {
-                    task.cancel()
-                }
-            }
+        for await result in results {
+            phase = AsyncPhase(result)
         }
+
+        return phase
     }
 
-    public func refresh(context: Context, with value: Value) -> AsyncStream<Value> {
-        AsyncStream { value }
+    public func refresh(context: Context, with value: Value) async -> Value {
+        value
     }
 }
 

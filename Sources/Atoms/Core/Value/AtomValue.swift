@@ -29,9 +29,9 @@ public extension AtomValue {
 }
 
 public protocol RefreshableAtomValue: AtomValue {
-    func refresh(context: Context) -> AsyncStream<Value>
+    func refresh(context: Context) async -> Value
 
-    func refresh(context: Context, with value: Value) -> AsyncStream<Value>
+    func refresh(context: Context, with value: Value) async -> Value
 }
 
 public protocol TaskAtomValue: RefreshableAtomValue where Value == Task<Success, Failure> {

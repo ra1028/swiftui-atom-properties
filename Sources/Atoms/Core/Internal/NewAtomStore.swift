@@ -116,28 +116,18 @@ internal struct RootAtomStoreInteractor: AtomStoreInteractor {
     @usableFromInline
     func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
         // Release the value & the ongoing task, but keep upstream atoms alive until finishing refresh.
-        let state = getCachedState(of: atom)
         let context = makeValueContext(for: atom)
-        let refresh: AsyncStream<Node.State.Value>
-        var refreshedValue: Node.State.Value?
+        let value: Node.State.Value
 
         if let overrideValue = overrides?[atom] {
-            refresh = atom.value.refresh(context: context, with: overrideValue)
+            value = await atom.value.refresh(context: context, with: overrideValue)
         }
         else {
-            refresh = atom.value.refresh(context: context)
+            value = await atom.value.refresh(context: context)
         }
 
-        for await value in refresh {
-            refreshedValue = value
-            state?.value = value
-        }
-
-        let finalValue = refreshedValue ?? getValue(of: atom)
-
-        update(atom: atom, with: finalValue)
-
-        return finalValue
+        update(atom: atom, with: value)
+        return value
     }
 
     @usableFromInline
@@ -271,8 +261,6 @@ private extension RootAtomStoreInteractor {
     }
 
     func update<Node: Atom>(atom: Node, with value: Node.State.Value) {
-        let key = AtomKey(atom)
-
         guard let state = getCachedState(of: atom) else {
             return
         }
@@ -285,10 +273,11 @@ private extension RootAtomStoreInteractor {
             return
         }
 
-        // Set new value.
-        state.value = value
+        let key = AtomKey(atom)
+
         // Notify update to the downstream atoms or views.
         notifyUpdate(for: key)
+
         // Notify new value.
         notifyChangesToObservers(of: atom, value: value)
     }
@@ -344,12 +333,12 @@ private extension RootAtomStoreInteractor {
 
     /// Release an atom associated by the specified key and return its dependencies.
     func release(for key: AtomKey) -> Set<AtomKey> {
-        guard let store = store else {
-            return []
-        }
-
         // Do not release atoms marked as `KeepAlive`.
-        guard let state = store.state.atomStates[key], !state.shouldKeepAlive else {
+        guard
+            let store = store,
+            let state = store.state.atomStates[key],
+            !state.shouldKeepAlive
+        else {
             return []
         }
 

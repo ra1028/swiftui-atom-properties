@@ -17,20 +17,17 @@ public struct AsyncAtomValue<Success, Failure: Error>: TaskAtomValue {
         context.addTermination(task.cancel)
     }
 
-    public func refresh(context: Context) -> AsyncStream<Value> {
+    public func refresh(context: Context) async -> Value {
         let task = getTask(context.atomContext)
-        return refresh(context: context, with: task)
+        return await refresh(context: context, with: task)
     }
 
-    public func refresh(context: Context, with task: Value) -> AsyncStream<Value> {
-        AsyncStream(
-            unfolding: {
-                _ = await task.result
-                return task
-            },
-            onCancel: {
-                task.cancel()
-            }
-        )
+    public func refresh(context: Context, with task: Value) async -> Value {
+        await withTaskCancellationHandler {
+            _ = await task.result
+            return task
+        } onCancel: {
+            task.cancel()
+        }
     }
 }
