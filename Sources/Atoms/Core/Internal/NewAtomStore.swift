@@ -214,6 +214,11 @@ private extension RootAtomStoreInteractor {
         }
 
         store.state.atomStates[key] = AtomState<Node>()
+
+        // Notify the assignment to observers.
+        for observer in observers {
+            observer.atomAssigned(atom: atom)
+        }
     }
 
     func getValue<Node: Atom>(of atom: Node) -> Node.State.Value {
@@ -228,12 +233,6 @@ private extension RootAtomStoreInteractor {
 
         // Notify value changes.
         notifyChangesToObservers(of: atom, value: value)
-
-        // Notify the assignment to observers.
-        // TODO: Reconsider when to call.
-        //        for observer in observers {
-        //            observer.atomAssigned(atom: atom)
-        //        }
 
         return value
     }
