@@ -7,7 +7,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     @usableFromInline
     internal let _box: _AnyAtomRelationContextBox
 
-    internal init<Node: Atom>(atom: Node, store: AtomStore) {
+    internal init<Node: Atom>(atom: Node, store: RootAtomStore) {
         _box = _AtomRelationContextBox(dependent: atom, store: store)
     }
 
@@ -174,7 +174,7 @@ public struct AtomRelationContext: AtomWatchableContext {
 @usableFromInline
 @MainActor
 internal protocol _AnyAtomRelationContextBox {
-    var store: AtomStore { get }
+    var store: RootAtomStore { get }
 
     func watch<Node: Atom>(_ atom: Node) -> Node.State.Value
     func addTermination(_ termination: @MainActor @escaping () -> Void)
@@ -185,7 +185,7 @@ internal struct _AtomRelationContextBox<Dependent: Atom>: _AnyAtomRelationContex
     let dependent: Dependent
 
     @usableFromInline
-    let store: AtomStore
+    let store: RootAtomStore
 
     @usableFromInline
     func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {

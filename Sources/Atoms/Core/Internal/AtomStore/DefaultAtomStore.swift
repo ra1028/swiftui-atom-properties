@@ -33,10 +33,6 @@ internal struct DefaultAtomStore: AtomStore {
         store.reset(atom)
     }
 
-    func addTermination<Node: Atom>(for atom: Node, _ termination: @MainActor @escaping () -> Void) {
-        store.addTermination(for: atom, termination)
-    }
-
     func relay(observers: [AtomObserver]) -> AtomStore {
         store.relay(observers: observers)
     }

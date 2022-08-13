@@ -17,7 +17,5 @@ internal protocol AtomStore {
 
     func reset<Node: Atom>(_ atom: Node)
 
-    func addTermination<Node: Atom>(for atom: Node, _ termination: @MainActor @escaping () -> Void)
-
     func relay(observers: [AtomObserver]) -> AtomStore
 }

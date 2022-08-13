@@ -1,7 +1,8 @@
 import Foundation
 
 @usableFromInline
-internal struct RootAtomStore: AtomStore {
+@MainActor
+internal struct RootAtomStore {
     private weak var store: Store?
     private let overrides: Overrides?
     private let observers: [AtomObserver]
@@ -15,7 +16,9 @@ internal struct RootAtomStore: AtomStore {
         self.overrides = overrides
         self.observers = observers
     }
+}
 
+extension RootAtomStore: AtomStore {
     @usableFromInline
     func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
         getValue(of: atom)
@@ -104,14 +107,29 @@ internal struct RootAtomStore: AtomStore {
 
     @usableFromInline
     func reset<Node: Atom>(_ atom: Node) {
+        guard let state = getCachedState(of: atom) else {
+            return
+        }
+
         let key = AtomKey(atom)
         let dependencies = terminate(for: key)
 
-        store?.state.atomStates[key]?.resetValue()
+        state.value = nil
         notifyUpdate(for: key)
         releaseDependencies(of: key, dependencies: dependencies)
     }
 
+    @usableFromInline
+    func relay(observers: [AtomObserver]) -> AtomStore {
+        Self(
+            store: store,
+            overrides: overrides,
+            observers: self.observers + observers
+        )
+    }
+}
+
+internal extension RootAtomStore {
     @usableFromInline
     func addTermination<Node: Atom>(for atom: Node, _ termination: @MainActor @escaping () -> Void) {
         guard let store = store else {
@@ -125,12 +143,9 @@ internal struct RootAtomStore: AtomStore {
     }
 
     @usableFromInline
-    func relay(observers: [AtomObserver]) -> AtomStore {
-        Self(
-            store: store,
-            overrides: overrides,
-            observers: self.observers + observers
-        )
+    func renew<Node: Atom>(atom: Node) {
+        let value = getNewValue(of: atom)
+        update(atom: atom, with: value)
     }
 }
 
@@ -235,6 +250,39 @@ private extension RootAtomStore {
         return state
     }
 
+    func notifyUpdate(for key: AtomKey, updatesDependentsOnNextRunLoop: Bool = false) {
+        guard let store = store else {
+            return
+        }
+
+        // Notifying update for view subscriptions takes precedence.
+        if let subscriptions = store.state.subscriptions[key] {
+            for subscription in subscriptions.values {
+                subscription.notifyUpdate()
+            }
+        }
+
+        // Notify update to downstream atoms.
+        func notifyUpdateToDependents() {
+            if let nodes = store.graph.nodes[key] {
+                for node in nodes {
+                    let dependencies = terminate(for: node)
+                    store.state.atomStates[node]?.renew(with: self)
+                    releaseDependencies(of: node, dependencies: dependencies)
+                }
+            }
+        }
+
+        if updatesDependentsOnNextRunLoop {
+            RunLoop.current.perform {
+                notifyUpdateToDependents()
+            }
+        }
+        else {
+            notifyUpdateToDependents()
+        }
+    }
+
     func update<Node: Atom>(
         atom: Node,
         with value: Node.State.Value,
@@ -259,44 +307,6 @@ private extension RootAtomStore {
 
         // Notify new value.
         notifyChangesToObservers(of: atom, value: value)
-    }
-
-    func notifyUpdate(for key: AtomKey, updatesDependentsOnNextRunLoop: Bool = false) {
-        guard let store = store else {
-            return
-        }
-
-        // Notifying update for view subscriptions takes precedence.
-        if let subscriptions = store.state.subscriptions[key] {
-            for subscription in subscriptions.values {
-                subscription.notifyUpdate()
-            }
-        }
-
-        // Notify update to downstream atoms.
-        func notifyUpdateToDependents() {
-            if let nodes = store.graph.nodes[key] {
-                for node in nodes {
-                    let dependencies = terminate(for: node)
-                    let shouldNotifyUpdate = store.state.atomStates[node]?.renewValue(with: self) ?? false
-
-                    if shouldNotifyUpdate {
-                        notifyUpdate(for: node)
-                    }
-
-                    releaseDependencies(of: node, dependencies: dependencies)
-                }
-            }
-        }
-
-        if updatesDependentsOnNextRunLoop {
-            RunLoop.current.perform {
-                notifyUpdateToDependents()
-            }
-        }
-        else {
-            notifyUpdateToDependents()
-        }
     }
 
     func terminate(for key: AtomKey) -> Set<AtomKey> {
