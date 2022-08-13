@@ -83,7 +83,6 @@ internal struct RootAtomStore: AtomStore {
 
     @usableFromInline
     func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
-        // Release the value & the ongoing task, but keep upstream atoms alive until finishing refresh.
         let context = makeValueContext(for: atom)
         let value: Node.State.Value
 
@@ -166,13 +165,13 @@ private extension RootAtomStore {
     }
 
     func getValue<Node: Atom>(of atom: Node) -> Node.State.Value {
-        if let value = getCachedState(of: atom)?.value {
+        let state = getCachedState(of: atom)
+
+        if let value = state?.value {
             return value
         }
 
         let value = getNewValue(of: atom)
-        let state = getCachedState(of: atom)
-
         state?.value = value
 
         // Notify value changes.

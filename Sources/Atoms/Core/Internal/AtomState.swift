@@ -1,6 +1,6 @@
 @MainActor
 internal final class AtomState<Node: Atom>: AtomStateBase {
-    var atom: Node
+    let atom: Node
     var value: Node.State.Value?
     var terminations = ContiguousArray<Termination>()
 
