@@ -29,6 +29,12 @@ struct MoviesScreen: View {
                 FilterPicker()
 
                 switch loader.pages {
+                case .suspending:
+                    ProgressRow()
+
+                case .failure:
+                    CaveatRow(text: "Failed to get the data.")
+
                 case .success(let pages):
                     ForEach(pages, id: \.page) { response in
                         pageIndex(current: response.page, total: response.totalPages)
@@ -43,12 +49,6 @@ struct MoviesScreen: View {
                             await loader.loadNext()
                         }
                     }
-
-                case .failure:
-                    CaveatRow(text: "Failed to get the data.")
-
-                case .suspending:
-                    ProgressRow()
                 }
             }
         }

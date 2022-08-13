@@ -12,7 +12,14 @@ protocol APIClientProtocol {
 }
 
 struct APIClient: APIClientProtocol {
-    private let session = URLSession.shared
+    private let session: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        let session = URLSession(configuration: configuration)
+        configuration.timeoutIntervalForRequest = 10
+        configuration.timeoutIntervalForResource = 10
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return session
+    }()
     private let baseURL = URL(string: "https://api.themoviedb.org/3")!
     private let imageBaseURL = URL(string: "https://image.tmdb.org/t/p")!
     private let apiKey = "3de15b0402484d3d089399ea0b8d98f1"

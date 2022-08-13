@@ -83,6 +83,8 @@ internal struct RootAtomStore: AtomStore {
 
     @usableFromInline
     func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
+        let key = AtomKey(atom)
+        let dependencies = terminate(for: key)
         let context = makeValueContext(for: atom)
         let value: Node.State.Value
 
@@ -94,13 +96,18 @@ internal struct RootAtomStore: AtomStore {
         }
 
         update(atom: atom, with: value)
+        releaseDependencies(of: key, dependencies: dependencies)
         return value
     }
 
     @usableFromInline
     func reset<Node: Atom>(_ atom: Node) {
         let key = AtomKey(atom)
-        renew(for: key, forcesUpdate: true)
+        let dependencies = terminate(for: key)
+
+        store?.state.atomStates[key]?.resetValue()
+        notifyUpdate(for: key)
+        releaseDependencies(of: key, dependencies: dependencies)
     }
 
     @usableFromInline
@@ -259,40 +266,34 @@ private extension RootAtomStore {
         // Notify update to downstream atoms.
         if let nodes = store.graph.nodes[key] {
             for node in nodes {
-                renew(for: node, forcesUpdate: false)
+                let dependencies = terminate(for: node)
+                let shouldNotifyUpdate = store.state.atomStates[node]?.renewValue(with: self) ?? false
+
+                if shouldNotifyUpdate {
+                    notifyUpdate(for: node)
+                }
+
+                releaseDependencies(of: node, dependencies: dependencies)
             }
         }
     }
 
-    func renew(for key: AtomKey, forcesUpdate: Bool) {
-        guard let store = store, let state = store.state.atomStates[key] else {
-            return
+    func terminate(for key: AtomKey) -> Set<AtomKey> {
+        guard let store = store else {
+            return []
         }
 
-        // Remove dependencies.
+        let state = store.state.atomStates[key]
+        let terminations = state?.terminations ?? []
         let dependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
 
-        // Terminate.
-        for termination in state.terminations {
+        state?.terminations.removeAll()
+
+        for termination in terminations {
             termination()
         }
 
-        // Remove terminations.
-        state.terminations.removeAll()
-
-        if forcesUpdate {
-            state.resetValue()
-            notifyUpdate(for: key)
-        }
-        else {
-            let shouldNotifyUpdate = state.renewValue(with: self)
-
-            if shouldNotifyUpdate {
-                notifyUpdate(for: key)
-            }
-        }
-
-        releaseDependencies(of: key, dependencies: dependencies)
+        return dependencies
     }
 
     func checkAndRelease(for key: AtomKey) {
@@ -333,17 +334,11 @@ private extension RootAtomStore {
             return
         }
 
+        let dependencies = terminate(for: key)
+
         // Cleanup.
         guard let state = store.state.atomStates.removeValue(forKey: key) else {
             return
-        }
-
-        // Remove dependencies.
-        let dependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
-
-        // Terminate.
-        for termination in state.terminations {
-            termination()
         }
 
         // Notify atom release to observers.
