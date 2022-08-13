@@ -13,8 +13,8 @@ internal struct DefaultAtomStore: AtomStore {
         store.set(value, for: atom)
     }
 
-    func watch<Node: Atom, Downstream: Atom>(_ atom: Node, downstream: Downstream) -> Node.State.Value {
-        store.watch(atom, downstream: downstream)
+    func watch<Node: Atom, Dependent: Atom>(_ atom: Node, dependent: Dependent) -> Node.State.Value {
+        store.watch(atom, dependent: dependent)
     }
 
     func watch<Node: Atom>(

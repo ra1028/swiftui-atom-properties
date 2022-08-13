@@ -5,7 +5,7 @@ internal protocol AtomStore {
 
     func set<Node: StateAtom>(_ value: Node.Value, for atom: Node)
 
-    func watch<Node: Atom, Downstream: Atom>(_ atom: Node, downstream: Downstream) -> Node.State.Value
+    func watch<Node: Atom, Dependent: Atom>(_ atom: Node, dependent: Dependent) -> Node.State.Value
 
     func watch<Node: Atom>(
         _ atom: Node,

@@ -1,16 +1,21 @@
 @MainActor
 public struct AtomValueContext<Value> {
     @usableFromInline
+    internal typealias _Update = @MainActor (_ value: Value, _ updatesDependentsOnNextRunLoop: Bool) -> Void
+    @usableFromInline
+    internal typealias _AddTermination = @MainActor (_ termination: @MainActor @escaping () -> Void) -> Void
+
+    @usableFromInline
     internal let atomContext: AtomRelationContext
     @usableFromInline
-    internal let _update: (Value) -> Void
+    internal let _update: _Update
     @usableFromInline
-    internal let _addTermination: (_ termination: @MainActor @escaping () -> Void) -> Void
+    internal let _addTermination: _AddTermination
 
-    init(
+    internal init(
         atomContext: AtomRelationContext,
-        update: @escaping (Value) -> Void,
-        addTermination: @escaping (_ termination: @MainActor @escaping () -> Void) -> Void
+        update: @escaping _Update,
+        addTermination: @escaping _AddTermination
     ) {
         self.atomContext = atomContext
         self._update = update
@@ -18,8 +23,8 @@ public struct AtomValueContext<Value> {
     }
 
     @inlinable
-    internal func update(with value: Value) {
-        _update(value)
+    internal func update(with value: Value, updatesDependentsOnNextRunLoop: Bool = false) {
+        _update(value, updatesDependentsOnNextRunLoop)
     }
 
     @inlinable

@@ -26,9 +26,7 @@ public struct ObservableObjectAtomValue<ObjectType: ObservableObject>: AtomValue
             // the downstream atom reads it.
             // As a workaround, the update is executed in the next run loop
             // so that the downstream atoms can receive the updated value.
-            RunLoop.current.perform {
-                context.update(with: object)
-            }
+            context.update(with: object, updatesDependentsOnNextRunLoop: true)
         }
 
         context.addTermination(cancellable.cancel)

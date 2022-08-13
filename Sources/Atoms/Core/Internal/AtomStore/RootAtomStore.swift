@@ -1,3 +1,5 @@
+import Foundation
+
 @usableFromInline
 internal struct RootAtomStore: AtomStore {
     private weak var store: Store?
@@ -64,19 +66,19 @@ internal struct RootAtomStore: AtomStore {
     }
 
     @usableFromInline
-    func watch<Node: Atom, Downstream: Atom>(_ atom: Node, downstream: Downstream) -> Node.State.Value {
+    func watch<Node: Atom, Dependent: Atom>(_ atom: Node, dependent: Dependent) -> Node.State.Value {
         guard let store = store else {
             return getNewValue(of: atom)
         }
 
         let key = AtomKey(atom)
-        let downstreamKey = AtomKey(downstream)
+        let dependentKey = AtomKey(dependent)
 
         register(atom: atom)
 
         // Add an edge reference each other.
-        store.graph.nodes[key, default: []].insert(downstreamKey)
-        store.graph.dependencies[downstreamKey, default: []].insert(key)
+        store.graph.nodes[key, default: []].insert(dependentKey)
+        store.graph.dependencies[dependentKey, default: []].insert(key)
 
         return getValue(of: atom)
     }
@@ -146,8 +148,12 @@ private extension RootAtomStore {
     func makeValueContext<Node: Atom>(for atom: Node) -> AtomValueContext<Node.State.Value> {
         AtomValueContext(
             atomContext: AtomRelationContext(atom: atom, store: self),
-            update: { value in
-                update(atom: atom, with: value)
+            update: { value, updatesDependentsOnNextRunLoop in
+                update(
+                    atom: atom,
+                    with: value,
+                    updatesDependentsOnNextRunLoop: updatesDependentsOnNextRunLoop
+                )
             },
             addTermination: { termination in
                 addTermination(for: atom, termination)
@@ -229,7 +235,11 @@ private extension RootAtomStore {
         return state
     }
 
-    func update<Node: Atom>(atom: Node, with value: Node.State.Value) {
+    func update<Node: Atom>(
+        atom: Node,
+        with value: Node.State.Value,
+        updatesDependentsOnNextRunLoop: Bool = false
+    ) {
         guard let state = getCachedState(of: atom) else {
             return
         }
@@ -245,13 +255,13 @@ private extension RootAtomStore {
         let key = AtomKey(atom)
 
         // Notify update to the downstream atoms or views.
-        notifyUpdate(for: key)
+        notifyUpdate(for: key, updatesDependentsOnNextRunLoop: updatesDependentsOnNextRunLoop)
 
         // Notify new value.
         notifyChangesToObservers(of: atom, value: value)
     }
 
-    func notifyUpdate(for key: AtomKey) {
+    func notifyUpdate(for key: AtomKey, updatesDependentsOnNextRunLoop: Bool = false) {
         guard let store = store else {
             return
         }
@@ -264,17 +274,28 @@ private extension RootAtomStore {
         }
 
         // Notify update to downstream atoms.
-        if let nodes = store.graph.nodes[key] {
-            for node in nodes {
-                let dependencies = terminate(for: node)
-                let shouldNotifyUpdate = store.state.atomStates[node]?.renewValue(with: self) ?? false
+        func notifyUpdateToDependents() {
+            if let nodes = store.graph.nodes[key] {
+                for node in nodes {
+                    let dependencies = terminate(for: node)
+                    let shouldNotifyUpdate = store.state.atomStates[node]?.renewValue(with: self) ?? false
 
-                if shouldNotifyUpdate {
-                    notifyUpdate(for: node)
+                    if shouldNotifyUpdate {
+                        notifyUpdate(for: node)
+                    }
+
+                    releaseDependencies(of: node, dependencies: dependencies)
                 }
-
-                releaseDependencies(of: node, dependencies: dependencies)
             }
+        }
+
+        if updatesDependentsOnNextRunLoop {
+            RunLoop.current.perform {
+                notifyUpdateToDependents()
+            }
+        }
+        else {
+            notifyUpdateToDependents()
         }
     }
 
