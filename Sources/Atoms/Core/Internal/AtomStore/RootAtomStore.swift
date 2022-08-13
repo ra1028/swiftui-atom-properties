@@ -80,7 +80,7 @@ extension RootAtomStore: AtomStore {
         register(atom: atom)
 
         // Add an edge reference each other.
-        store.graph.nodes[key, default: []].insert(dependentKey)
+        store.graph.dependents[key, default: []].insert(dependentKey)
         store.graph.dependencies[dependentKey, default: []].insert(key)
 
         return getValue(of: atom)
@@ -264,11 +264,11 @@ private extension RootAtomStore {
 
         // Notify update to downstream atoms.
         func notifyUpdateToDependents() {
-            if let nodes = store.graph.nodes[key] {
-                for node in nodes {
-                    let dependencies = terminate(for: node)
-                    store.state.atomStates[node]?.renew(with: self)
-                    releaseDependencies(of: node, dependencies: dependencies)
+            if let dependents = store.graph.dependents[key] {
+                for dependent in dependents {
+                    let dependencies = terminate(for: dependent)
+                    store.state.atomStates[dependent]?.renew(with: self)
+                    releaseDependencies(of: dependent, dependencies: dependencies)
                 }
             }
         }
@@ -340,17 +340,9 @@ private extension RootAtomStore {
         }
 
         /// `true` if the atom has no downstream atoms.
-        let hasNoDependents = store.graph.nodes[key]?.isEmpty ?? true
+        let hasNoDependents = store.graph.dependents[key]?.isEmpty ?? true
         /// `true` if the atom is not subscribed by views.
         let hasNoSubscriptions = store.state.subscriptions[key]?.isEmpty ?? true
-
-        if hasNoDependents {
-            store.graph.nodes.removeValue(forKey: key)
-        }
-
-        if hasNoSubscriptions {
-            store.state.subscriptions.removeValue(forKey: key)
-        }
 
         guard hasNoDependents && hasNoSubscriptions else {
             return
@@ -359,11 +351,13 @@ private extension RootAtomStore {
         release(for: key)
     }
 
-    /// Release an atom associated by the specified key and return its dependencies.
     func release(for key: AtomKey) {
         guard let store = store else {
             return
         }
+
+        store.graph.dependents.removeValue(forKey: key)
+        store.state.subscriptions.removeValue(forKey: key)
 
         let dependencies = terminate(for: key)
 
@@ -390,7 +384,7 @@ private extension RootAtomStore {
         // Recursively release dependencies.
         for obsoleted in obsoleted {
             // Remove this atom from the upstream atoms.
-            store.graph.nodes[obsoleted]?.remove(key)
+            store.graph.dependents[obsoleted]?.remove(key)
 
             // Release the upstream atoms as well.
             checkAndRelease(for: obsoleted)
