@@ -9,12 +9,12 @@ public struct AsyncAtomValue<Success, Failure: Error>: TaskAtomValue {
 
     public func get(context: Context) -> Value {
         let task = getTask(context.atomContext)
-        handleUpdates(context: context, with: task)
-        return task
+        return lookup(context: context, with: task)
     }
 
-    public func handleUpdates(context: Context, with task: Value) {
+    public func lookup(context: Context, with task: Value) -> Value {
         context.addTermination(task.cancel)
+        return task
     }
 
     public func refresh(context: Context) async -> Value {

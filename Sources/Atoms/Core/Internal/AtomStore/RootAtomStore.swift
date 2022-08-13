@@ -187,8 +187,7 @@ private extension RootAtomStore {
 
         if let overrideValue = overrides?[atom] {
             // Set the override value.
-            value = overrideValue
-            atom.value.handleUpdates(context: context, with: value)
+            value = atom.value.lookup(context: context, with: overrideValue)
         }
         else {
             value = atom.value.get(context: context)

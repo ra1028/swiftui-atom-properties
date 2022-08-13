@@ -64,4 +64,8 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
         context.addTermination(task.cancel)
         return .suspending
     }
+
+    public func lookup(context: Context, with value: ModifiedValue) -> ModifiedValue {
+        value
+    }
 }

@@ -24,6 +24,10 @@ public struct PublisherAtomValue<Publisher: Combine.Publisher>: RefreshableAtomV
         return .suspending
     }
 
+    public func lookup(context: Context, with value: Value) -> Value {
+        value
+    }
+
     public func refresh(context: Context) async -> Value {
         let results = makePublisher(context.atomContext).results
         var phase = Value.suspending

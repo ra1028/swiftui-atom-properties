@@ -14,6 +14,10 @@ public struct ModifiedAtomValue<Node: Atom, Modifier: AtomModifier>: AtomValue w
         return modifier.value(context: context, with: value)
     }
 
+    public func lookup(context: Context, with value: Modifier.ModifiedValue) -> Modifier.ModifiedValue {
+        modifier.lookup(context: context, with: value)
+    }
+
     /// Returns a boolean value that determines whether it should notify the value update to
     /// watchers with comparing the given old value and the new value.
     public func shouldNotifyUpdate(newValue: Modifier.ModifiedValue, oldValue: Modifier.ModifiedValue) -> Bool {

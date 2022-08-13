@@ -71,4 +71,8 @@ public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
     public func value(context: Context, with value: Value) -> Selected {
         value[keyPath: keyPath]
     }
+
+    public func lookup(context: Context, with value: Selected) -> Selected {
+        value
+    }
 }

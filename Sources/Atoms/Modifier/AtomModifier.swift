@@ -48,6 +48,8 @@ public protocol AtomModifier {
     ///
     /// - Returns: A modified value.
     func value(context: Context, with value: Value) -> ModifiedValue
+
+    func lookup(context: Context, with value: ModifiedValue) -> ModifiedValue
 }
 
 public extension AtomModifier {

@@ -29,6 +29,10 @@ public struct AsyncSequenceAtomValue<Sequence: AsyncSequence>: RefreshableAtomVa
         return .suspending
     }
 
+    public func lookup(context: Context, with value: Value) -> Value {
+        value
+    }
+
     public func refresh(context: Context) async -> Value {
         let sequence = makeSequence(context.atomContext)
         let box = UnsafeUncheckedSendableBox(sequence)

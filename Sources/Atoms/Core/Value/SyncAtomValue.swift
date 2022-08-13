@@ -10,4 +10,8 @@ public struct SyncAtomValue<T>: AtomValue {
     public func get(context: Context) -> T {
         getValue(context.atomContext)
     }
+
+    public func lookup(context: Context, with value: T) -> T {
+        value
+    }
 }

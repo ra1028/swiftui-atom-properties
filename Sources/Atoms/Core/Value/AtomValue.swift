@@ -6,7 +6,7 @@ public protocol AtomValue {
 
     func get(context: Context) -> Value
 
-    func handleUpdates(context: Context, with value: Value)
+    func lookup(context: Context, with value: Value) -> Value
 
     /// Returns a boolean value that determines whether it should notify the value update to
     /// watchers with comparing the given old value and the new value.
@@ -21,8 +21,6 @@ public protocol AtomValue {
 }
 
 public extension AtomValue {
-    func handleUpdates(context: Context, with value: Value) {}
-
     func shouldNotifyUpdate(newValue: Value, oldValue: Value) -> Bool {
         true
     }
