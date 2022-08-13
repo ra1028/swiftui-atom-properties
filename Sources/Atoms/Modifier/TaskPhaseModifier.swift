@@ -28,7 +28,6 @@ public extension Atom where State: TaskAtomValue {
     ///
     /// This modifier converts the `Task` that the original atom provides into ``AsyncPhase``
     /// and notifies its changes to downstream atoms and views.
-    @MainActor
     var phase: ModifiedAtom<Self, TaskPhaseModifier<State.Success, State.Failure>> {
         modifier(TaskPhaseModifier())
     }

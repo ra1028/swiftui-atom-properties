@@ -9,17 +9,17 @@ import Foundation
 /// by this itself.
 @MainActor
 public struct AtomTestContext: AtomWatchableContext {
-    private let container: Container
+    private let state: State
 
     /// Creates a new test context instance with fresh internal state.
     public init() {
-        container = Container()
+        state = State()
     }
 
     /// A callback to perform when any of atoms watched by this context is updated.
     public var onUpdate: (() -> Void)? {
-        get { container.onUpdate }
-        nonmutating set { container.onUpdate = newValue }
+        get { state.onUpdate }
+        nonmutating set { state.onUpdate = newValue }
     }
 
     /// Waits until any of atoms watched through this context is updated for up to
@@ -46,7 +46,7 @@ public struct AtomTestContext: AtomWatchableContext {
     @discardableResult
     public func waitUntilNextUpdate(timeout interval: TimeInterval = 60) async -> Bool {
         let updates = AsyncStream<Void> { continuation in
-            let cancellable = container.notifier.sink(
+            let cancellable = state.notifier.sink(
                 receiveCompletion: { completion in
                     continuation.finish()
                 },
@@ -104,7 +104,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     public func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
-        container.store.read(atom)
+        state.store.read(atom)
     }
 
     /// Sets the new value for the given writable atom.
@@ -126,7 +126,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
     public func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
-        container.store.set(value, for: atom)
+        state.store.set(value, for: atom)
     }
 
     /// Refreshes and then return the value associated with the given refreshable atom.
@@ -148,7 +148,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
     public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
-        await container.store.refresh(atom)
+        await state.store.refresh(atom)
     }
 
     /// Resets the value associated with the given atom, and then notify.
@@ -168,7 +168,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Parameter atom: An atom that associates the value.
     public func reset<Node: Atom>(_ atom: Node) {
-        container.store.reset(atom)
+        state.store.reset(atom)
     }
 
     /// Accesses the value associated with the given atom for reading and initialing watch to
@@ -190,7 +190,36 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Returns: The value associated with the given atom.
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
-        container.watch(atom)
+        state.store.watch(atom, container: state.container) { [weak state] in
+            state?.notifyUpdate()
+        }
+    }
+
+    /// Accesses the observable object associated with the given atom for reading and initialing watch to
+    /// receive its updates.
+    ///
+    /// This method returns an observable object for the given atom and initiate watching the atom so that
+    /// the current context to get updated when the atom notifies updates.
+    /// The observable object associated with the atom is cached until it is no longer watched to or until
+    /// it is updated.
+    ///
+    /// ```swift
+    /// let context = ...
+    /// let store = context.watch(AccountStoreAtom())
+    /// print(store.currentUser) // Prints the user value after update.
+    /// ```
+    ///
+    /// - Parameter atom: An atom that associates the observable object.
+    ///
+    /// - Returns: The observable object associated with the given atom.
+    @discardableResult
+    public func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.State.Value {
+        state.store.watch(atom, container: state.container) { [weak state] in
+            // Ensures that the observable object is updated before notifying updates.
+            RunLoop.current.perform {
+                state?.notifyUpdate()
+            }
+        }
     }
 
     /// Unwatches the given atom and do not receive any more updates of it.
@@ -200,7 +229,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     public func unwatch<Node: Atom>(_ atom: Node) {
         let key = AtomKey(atom)
-        container.container.unassign(for: key)?.unsubscribe()
+        state.container.unassign(for: key)?.unsubscribe()
     }
 
     /// Overrides the atom value with the given value.
@@ -212,7 +241,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atom: An atom that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.State.Value) {
-        container.overrides.insert(atom, with: value)
+        state.overrides.insert(atom, with: value)
     }
 
     /// Overrides the atom value with the given value.
@@ -226,7 +255,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atomType: An atom type that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.State.Value) {
-        container.overrides.insert(atomType, with: value)
+        state.overrides.insert(atomType, with: value)
     }
 
     /// Observes changes of any atom values and its lifecycles.
@@ -239,19 +268,19 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Parameter observer: A observer value to observe atom changes.
     public func observe<Observer: AtomObserver>(_ observer: Observer) {
-        container.observers.append(observer)
+        state.observers.append(observer)
     }
 }
 
 private extension AtomTestContext {
     @MainActor
-    final class Container {
+    final class State {
         private let _store = Store()
         private var _container: SubscriptionContainer
 
-        let notifier = PassthroughSubject<Void, Never>()
         var overrides: Overrides
         var observers = [AtomObserver]()
+        let notifier = PassthroughSubject<Void, Never>()
         var onUpdate: (() -> Void)?
 
         init() {
@@ -271,11 +300,9 @@ private extension AtomTestContext {
             _container.wrapper
         }
 
-        func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
-            store.watch(atom, container: _container.wrapper) { [weak self] in
-                self?.onUpdate?()
-                self?.notifier.send()
-            }
+        func notifyUpdate() {
+            onUpdate?()
+            notifier.send()
         }
     }
 }

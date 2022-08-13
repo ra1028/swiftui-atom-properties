@@ -23,7 +23,7 @@ public struct ObservableObjectAtomValue<ObjectType: ObservableObject>: AtomValue
 
             // At the timing when `ObservableObject/objectWillChange` emits,
             // its properties have not yet been updated and is old when
-            // the downstream atom reads it.
+            // the dependent atom reads it.
             // As a workaround, the update is executed in the next run loop
             // so that the downstream atoms can receive the updated value.
             context.update(with: object, updatesDependentsOnNextRunLoop: true)

@@ -24,7 +24,6 @@ public extension Atom {
     /// - Parameter keyPath: A key path for the property of the original atom value.
     ///
     /// - Returns: An atom that provides the partial property of the original atom value.
-    @MainActor
     func select<Selected: Equatable>(
         _ keyPath: KeyPath<State.Value, Selected>
     ) -> ModifiedAtom<Self, SelectModifier<State.Value, Selected>> {
