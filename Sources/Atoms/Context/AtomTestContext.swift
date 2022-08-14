@@ -229,7 +229,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     public func unwatch<Node: Atom>(_ atom: Node) {
         let key = AtomKey(atom)
-        state.container.unassign(for: key)?.unsubscribe()
+        state.container.removeSubscription(for: key)?.unsubscribe()
     }
 
     /// Overrides the atom value with the given value.

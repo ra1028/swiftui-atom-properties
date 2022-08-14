@@ -28,7 +28,7 @@ internal struct StoreState {
         }
     }
 
-    mutating func updateSubscription(_ subscription: Subscription, for subscriptionKey: SubscriptionKey, subscribeFor key: AtomKey) {
+    mutating func insert(subscription: Subscription, for subscriptionKey: SubscriptionKey, subscribeFor key: AtomKey) {
         subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriptionKey)
     }
 
@@ -40,6 +40,7 @@ internal struct StoreState {
         subscriptions.removeValue(forKey: key)
     }
 
+    @discardableResult
     mutating func removeAtomState(for key: AtomKey) -> AtomState? {
         atomStates.removeValue(forKey: key)
     }

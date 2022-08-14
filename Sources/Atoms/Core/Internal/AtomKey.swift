@@ -1,15 +1,13 @@
 @usableFromInline
 internal struct AtomKey: Hashable {
-    private let typeIdentifier: ObjectIdentifier
+    @usableFromInline
+    let typeKey: AtomTypeKey
+
     private let instance: AnyHashable
 
+    @usableFromInline
     init<Node: Atom>(_ atom: Node) {
-        typeIdentifier = ObjectIdentifier(Node.self)
+        typeKey = AtomTypeKey(Node.self)
         instance = AnyHashable(atom.key)
-    }
-
-    init<Node: Atom>(_: Node.Type) {
-        typeIdentifier = ObjectIdentifier(Node.self)
-        instance = AnyHashable(typeIdentifier)
     }
 }

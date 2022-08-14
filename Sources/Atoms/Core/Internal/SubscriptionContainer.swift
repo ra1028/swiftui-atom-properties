@@ -27,12 +27,12 @@ internal extension SubscriptionContainer {
             self.key = key
         }
 
-        func assign(subscription: Subscription, for key: AtomKey) {
+        func insert(subscription: Subscription, for key: AtomKey) {
             container?.subscriptions[key] = subscription
         }
 
         @discardableResult
-        func unassign(for key: AtomKey) -> Subscription? {
+        func removeSubscription(for key: AtomKey) -> Subscription? {
             container?.subscriptions.removeValue(forKey: key)
         }
     }

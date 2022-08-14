@@ -54,16 +54,16 @@ extension RootAtomStore: AtomStore {
             // Remove subscription from the store.
             store?.state.removeSubscription(for: subscriptionKey, subscribedFor: key)
             // Release the atom if it is no longer watched to.
-            checkAndRelease(for: key)
+            checkForRelease(for: key)
         }
 
         register(atom: atom)
 
         // Assign subscription to the container so the caller side can unsubscribe.
-        container.assign(subscription: subscription, for: key)
+        container.insert(subscription: subscription, for: key)
 
         // Assign subscription to the store.
-        store.state.updateSubscription(subscription, for: subscriptionKey, subscribeFor: key)
+        store.state.insert(subscription: subscription, for: subscriptionKey, subscribeFor: key)
 
         return getValue(of: atom)
     }
@@ -90,7 +90,7 @@ extension RootAtomStore: AtomStore {
         let context = makeValueContext(for: atom)
         let value: Node.State.Value
 
-        if let overrideValue = overrides?[atom] {
+        if let overrideValue = overrides?.value(for: atom) {
             value = await atom.value.refresh(context: context, with: overrideValue)
         }
         else {
@@ -211,7 +211,7 @@ private extension RootAtomStore {
         let context = makeValueContext(for: atom)
         let value: Node.State.Value
 
-        if let overrideValue = overrides?[atom] {
+        if let overrideValue = overrides?.value(for: atom) {
             // Set the override value.
             value = atom.value.lookup(context: context, with: overrideValue)
         }
@@ -322,7 +322,7 @@ private extension RootAtomStore {
         return dependencies
     }
 
-    func checkAndRelease(for key: AtomKey) {
+    func checkForRelease(for key: AtomKey) {
         guard let store = store else {
             return
         }
@@ -377,7 +377,7 @@ private extension RootAtomStore {
             store.graph.remove(child: key, for: obsoleted)
 
             // Release the upstream atoms as well.
-            checkAndRelease(for: obsoleted)
+            checkForRelease(for: obsoleted)
         }
     }
 

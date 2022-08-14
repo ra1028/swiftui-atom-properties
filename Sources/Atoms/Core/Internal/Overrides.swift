@@ -1,38 +1,40 @@
 @usableFromInline
 @MainActor
 internal struct Overrides {
-    private var entries = [AtomKey: Override]()
+    @usableFromInline
+    internal var _entriesForNode = [AtomKey: _Override]()
 
+    @usableFromInline
+    internal var _entriesForType = [AtomTypeKey: _Override]()
+
+    @inlinable
     mutating func insert<Node: Atom>(
         _ atom: Node,
         with value: @escaping (Node) -> Node.State.Value
     ) {
         let key = AtomKey(atom)
-        entries[key] = OverrideValue(value)
+        _entriesForNode[key] = _ConcreteOverride(value)
     }
 
+    @inlinable
     mutating func insert<Node: Atom>(
         _ atomType: Node.Type,
         with value: @escaping (Node) -> Node.State.Value
     ) {
-        let key = AtomKey(atomType)
-        entries[key] = OverrideValue(value)
+        let key = AtomTypeKey(atomType)
+        _entriesForType[key] = _ConcreteOverride(value)
     }
 
-    subscript<Node: Atom>(atom: Node) -> Node.State.Value? {
-        // Individual atom override takes precedence.
-        let override = entries[AtomKey(atom)] ?? entries[AtomKey(Node.self)]
-        return override?.value(of: atom)
-    }
-}
+    @inlinable
+    func value<Node: Atom>(for atom: Node) -> Node.State.Value? {
+        let baseOverride = _entriesForNode[AtomKey(atom)] ?? _entriesForType[AtomTypeKey(Node.self)]
 
-@MainActor
-private protocol Override {}
+        guard let baseOverride = baseOverride else {
+            return nil
+        }
 
-private extension Override {
-    func value<Node: Atom>(of atom: Node) -> Node.State.Value {
-        guard let value = self as? OverrideValue<Node> else {
-            fatalError(
+        guard let override = baseOverride as? _ConcreteOverride<Node> else {
+            assertionFailure(
                 """
                 Detected an illegal override.
                 There might be duplicate keys or logic failure.
@@ -40,20 +42,29 @@ private extension Override {
                 Expected: OverrideValue<\(Node.self)>
                 """
             )
+
+            return nil
         }
 
-        return value(of: atom)
+        return override.value(for: atom)
     }
 }
 
-private struct OverrideValue<Node: Atom>: Override {
+@usableFromInline
+@MainActor
+internal protocol _Override {}
+
+@usableFromInline
+internal struct _ConcreteOverride<Node: Atom>: _Override {
     private let value: (Node) -> Node.State.Value
 
+    @usableFromInline
     init(_ value: @escaping (Node) -> Node.State.Value) {
         self.value = value
     }
 
-    func callAsFunction(of atom: Node) -> Node.State.Value {
+    @usableFromInline
+    func value(for atom: Node) -> Node.State.Value {
         value(atom)
     }
 }
