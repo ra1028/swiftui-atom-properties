@@ -1,5 +1,14 @@
 @MainActor
-internal final class AtomState<Node: Atom>: AtomStateBase {
+internal protocol AtomState: AnyObject {
+    var shouldKeepAlive: Bool { get }
+    var terminations: ContiguousArray<Termination> { get set }
+
+    func renew(with store: RootAtomStore)
+    func notifyUnassigned(to observers: [AtomObserver])
+}
+
+@MainActor
+internal final class ConcreteAtomState<Node: Atom>: AtomState {
     let atom: Node
     var value: Node.State.Value?
     var terminations = ContiguousArray<Termination>()
@@ -21,13 +30,4 @@ internal final class AtomState<Node: Atom>: AtomStateBase {
             observer.atomUnassigned(atom: atom)
         }
     }
-}
-
-@MainActor
-internal protocol AtomStateBase: AnyObject {
-    var shouldKeepAlive: Bool { get }
-    var terminations: ContiguousArray<Termination> { get set }
-
-    func renew(with store: RootAtomStore)
-    func notifyUnassigned(to observers: [AtomObserver])
 }

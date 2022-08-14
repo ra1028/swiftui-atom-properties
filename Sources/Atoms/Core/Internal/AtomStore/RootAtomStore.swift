@@ -52,7 +52,7 @@ extension RootAtomStore: AtomStore {
         let subscriptionKey = container.key
         let subscription = Subscription(notifyUpdate: notifyUpdate) { [weak store] in
             // Remove subscription from the store.
-            store?.state.subscriptions[key]?.removeValue(forKey: subscriptionKey)
+            store?.state.removeSubscription(for: subscriptionKey, subscribedFor: key)
             // Release the atom if it is no longer watched to.
             checkAndRelease(for: key)
         }
@@ -63,7 +63,7 @@ extension RootAtomStore: AtomStore {
         container.assign(subscription: subscription, for: key)
 
         // Assign subscription to the store.
-        store.state.subscriptions[key, default: [:]][subscriptionKey] = subscription
+        store.state.updateSubscription(subscription, for: subscriptionKey, subscribeFor: key)
 
         return getValue(of: atom)
     }
@@ -129,14 +129,14 @@ extension RootAtomStore: AtomStore {
 internal extension RootAtomStore {
     @usableFromInline
     func addTermination<Node: Atom>(for atom: Node, _ termination: @MainActor @escaping () -> Void) {
-        guard let store = store else {
+        let key = AtomKey(atom)
+
+        guard let state = store?.state.atomState(for: key) else {
             return termination()
         }
 
-        let key = AtomKey(atom)
         let termination = Termination(termination)
-
-        store.state.atomStates[key]?.terminations.append(termination)
+        state.terminations.append(termination)
     }
 
     @usableFromInline
@@ -174,18 +174,20 @@ private extension RootAtomStore {
     }
 
     func register<Node: Atom>(atom: Node) {
-        let key = AtomKey(atom)
-
-        guard let store = store, store.state.atomStates[key] == nil else {
+        guard let store = store else {
             return
         }
 
-        // Register new state.
-        store.state.atomStates[key] = AtomState(atom: atom)
+        let key = AtomKey(atom)
+        let isNewlyRegistered = store.state.addAtomStateIfNotPresent(for: key) {
+            ConcreteAtomState(atom: atom)
+        }
 
-        // Notify atom registration to observers.
-        for observer in observers {
-            observer.atomAssigned(atom: atom)
+        if isNewlyRegistered {
+            // Notify atom registration to observers.
+            for observer in observers {
+                observer.atomAssigned(atom: atom)
+            }
         }
     }
 
@@ -220,14 +222,14 @@ private extension RootAtomStore {
         return value
     }
 
-    func getCachedState<Node: Atom>(of atom: Node) -> AtomState<Node>? {
+    func getCachedState<Node: Atom>(of atom: Node) -> ConcreteAtomState<Node>? {
         let key = AtomKey(atom)
 
-        guard let baseState = store?.state.atomStates[key] else {
+        guard let baseState = store?.state.atomState(for: key) else {
             return nil
         }
 
-        guard let state = baseState as? AtomState<Node> else {
+        guard let state = baseState as? ConcreteAtomState<Node> else {
             assertionFailure(
                 """
                 The type of the given atom's value and the cached value did not match.
@@ -253,17 +255,15 @@ private extension RootAtomStore {
         }
 
         // Notifying update for view subscriptions takes precedence.
-        if let subscriptions = store.state.subscriptions[key] {
-            for subscription in subscriptions.values {
-                subscription.notifyUpdate()
-            }
+        for subscription in store.state.subscriptions(for: key) {
+            subscription.notifyUpdate()
         }
 
         // Notify update to downstream atoms.
         func notifyUpdateToDependents() {
             for child in store.graph.children(for: key) {
                 let dependencies = terminate(for: child)
-                store.state.atomStates[child]?.renew(with: self)
+                store.state.atomState(for: child)?.renew(with: self)
                 releaseDependencies(of: child, dependencies: dependencies)
             }
         }
@@ -309,7 +309,7 @@ private extension RootAtomStore {
             return []
         }
 
-        let state = store.state.atomStates[key]
+        let state = store.state.atomState(for: key)
         let terminations = state?.terminations ?? []
         let dependencies = store.graph.removeDependencies(for: key)
 
@@ -328,16 +328,13 @@ private extension RootAtomStore {
         }
 
         // Do not release atoms marked as `KeepAlive`.
-        let shouldKeepAlive = store.state.atomStates[key]?.shouldKeepAlive ?? false
+        let shouldKeepAlive = store.state.atomState(for: key)?.shouldKeepAlive ?? false
 
         guard !shouldKeepAlive else {
             return
         }
 
-        let hasChildren = store.graph.hasChildren(for: key)
-        let hasSubscriptions = store.state.subscriptions[key].map { !$0.isEmpty } ?? false
-
-        guard !hasChildren && !hasSubscriptions else {
+        guard !store.graph.hasChildren(for: key) && !store.state.hasSubscriptions(for: key) else {
             return
         }
 
@@ -352,10 +349,10 @@ private extension RootAtomStore {
         let dependencies = terminate(for: key)
 
         store.graph.removeChildren(for: key)
-        store.state.subscriptions.removeValue(forKey: key)
+        store.state.removeSubscriptions(for: key)
 
         // Cleanup.
-        guard let state = store.state.atomStates.removeValue(forKey: key) else {
+        guard let state = store.state.removeAtomState(for: key) else {
             return
         }
 
