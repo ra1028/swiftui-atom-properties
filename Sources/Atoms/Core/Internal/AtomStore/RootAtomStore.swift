@@ -78,10 +78,7 @@ extension RootAtomStore: AtomStore {
         let dependentKey = AtomKey(dependent)
 
         register(atom: atom)
-
-        // Add an edge reference each other.
-        store.graph.children[key, default: []].insert(dependentKey)
-        store.graph.dependencies[dependentKey, default: []].insert(key)
+        store.graph.addEdge(for: key, to: dependentKey)
 
         return getValue(of: atom)
     }
@@ -264,12 +261,10 @@ private extension RootAtomStore {
 
         // Notify update to downstream atoms.
         func notifyUpdateToDependents() {
-            if let children = store.graph.children[key] {
-                for child in children {
-                    let dependencies = terminate(for: child)
-                    store.state.atomStates[child]?.renew(with: self)
-                    releaseDependencies(of: child, dependencies: dependencies)
-                }
+            for child in store.graph.children(for: key) {
+                let dependencies = terminate(for: child)
+                store.state.atomStates[child]?.renew(with: self)
+                releaseDependencies(of: child, dependencies: dependencies)
             }
         }
 
@@ -316,7 +311,7 @@ private extension RootAtomStore {
 
         let state = store.state.atomStates[key]
         let terminations = state?.terminations ?? []
-        let dependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
+        let dependencies = store.graph.removeDependencies(for: key)
 
         state?.terminations.removeAll()
 
@@ -339,12 +334,10 @@ private extension RootAtomStore {
             return
         }
 
-        /// `true` if the atom has no downstream atoms.
-        let hasNoChildren = store.graph.children[key]?.isEmpty ?? true
-        /// `true` if the atom is not subscribed by any views.
-        let hasNoSubscriptions = store.state.subscriptions[key]?.isEmpty ?? true
+        let hasChildren = store.graph.hasChildren(for: key)
+        let hasSubscriptions = store.state.subscriptions[key].map { !$0.isEmpty } ?? false
 
-        guard hasNoChildren && hasNoSubscriptions else {
+        guard !hasChildren && !hasSubscriptions else {
             return
         }
 
@@ -358,7 +351,7 @@ private extension RootAtomStore {
 
         let dependencies = terminate(for: key)
 
-        store.graph.children.removeValue(forKey: key)
+        store.graph.removeChildren(for: key)
         store.state.subscriptions.removeValue(forKey: key)
 
         // Cleanup.
@@ -378,13 +371,13 @@ private extension RootAtomStore {
             return
         }
 
-        let current = store.graph.dependencies[key] ?? []
+        let current = store.graph.dependencies(for: key)
         let obsoleted = dependencies.subtracting(current)
 
         // Recursively release dependencies.
         for obsoleted in obsoleted {
             // Unlink this atom from the upstream atoms.
-            store.graph.children[obsoleted]?.remove(key)
+            store.graph.remove(child: key, for: obsoleted)
 
             // Release the upstream atoms as well.
             checkAndRelease(for: obsoleted)
