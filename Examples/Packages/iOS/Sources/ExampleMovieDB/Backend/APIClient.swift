@@ -12,14 +12,7 @@ protocol APIClientProtocol {
 }
 
 struct APIClient: APIClientProtocol {
-    private let session: URLSession = {
-        let configuration = URLSessionConfiguration.default
-        let session = URLSession(configuration: configuration)
-        configuration.timeoutIntervalForRequest = 10
-        configuration.timeoutIntervalForResource = 10
-        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return session
-    }()
+    private let session: URLSession = URLSession(configuration: .ephemeral)
     private let baseURL = URL(string: "https://api.themoviedb.org/3")!
     private let imageBaseURL = URL(string: "https://image.tmdb.org/t/p")!
     private let apiKey = "3de15b0402484d3d089399ea0b8d98f1"
@@ -37,8 +30,8 @@ struct APIClient: APIClientProtocol {
             imageBaseURL
             .appendingPathComponent(size.rawValue)
             .appendingPathComponent(path)
-
-        let (data, _) = try await session.data(from: url)
+        let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad, timeoutInterval: 10)
+        let (data, _) = try await session.data(for: request)
         return UIImage(data: data) ?? UIImage()
     }
 
@@ -101,7 +94,7 @@ private extension APIClient {
 
         urlComponents.queryItems = queryItems
 
-        var urlRequest = URLRequest(url: urlComponents.url!)
+        var urlRequest = URLRequest(url: urlComponents.url!, cachePolicy: .reloadRevalidatingCacheData, timeoutInterval: 10)
         urlRequest.httpMethod = "GET"
 
         do {
