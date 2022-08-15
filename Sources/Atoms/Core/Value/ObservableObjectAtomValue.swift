@@ -11,7 +11,7 @@ public struct ObservableObjectAtomValue<ObjectType: ObservableObject>: AtomValue
     }
 
     public func get(context: Context) -> ObjectType {
-        let object = makeObject(context.atomContext)
+        let object = context.withAtomContext(makeObject)
         return lookup(context: context, with: object)
     }
 

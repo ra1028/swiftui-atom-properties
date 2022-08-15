@@ -8,7 +8,7 @@ public struct AsyncSequenceAtomValue<Sequence: AsyncSequence>: RefreshableAtomVa
     }
 
     public func get(context: Context) -> Value {
-        let sequence = makeSequence(context.atomContext)
+        let sequence = context.withAtomContext(makeSequence)
         let box = UnsafeUncheckedSendableBox(sequence)
         let task = Task {
             do {
@@ -34,7 +34,7 @@ public struct AsyncSequenceAtomValue<Sequence: AsyncSequence>: RefreshableAtomVa
     }
 
     public func refresh(context: Context) async -> Value {
-        let sequence = makeSequence(context.atomContext)
+        let sequence = context.withAtomContext(makeSequence)
         let box = UnsafeUncheckedSendableBox(sequence)
         var phase = Value.suspending
 

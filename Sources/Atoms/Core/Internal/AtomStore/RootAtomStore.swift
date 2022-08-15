@@ -57,7 +57,7 @@ extension RootAtomStore: AtomStore {
             checkForRelease(for: key)
         }
 
-        register(atom: atom)
+        registerIfAbsent(atom: atom)
 
         // Assign subscription to the container so the caller side can unsubscribe.
         container.insert(subscription: subscription, for: key)
@@ -69,7 +69,10 @@ extension RootAtomStore: AtomStore {
     }
 
     @usableFromInline
-    func watch<Node: Atom, Dependent: Atom>(_ atom: Node, dependent: Dependent) -> Node.State.Value {
+    func watch<Node: Atom, Dependent: Atom>(
+        _ atom: Node,
+        dependent: Dependent
+    ) -> Node.State.Value {
         guard let store = store else {
             return getNewValue(of: atom)
         }
@@ -77,8 +80,8 @@ extension RootAtomStore: AtomStore {
         let key = AtomKey(atom)
         let dependentKey = AtomKey(dependent)
 
-        register(atom: atom)
-        store.graph.addEdge(for: key, to: dependentKey)
+        registerIfAbsent(atom: atom)
+        store.state.insert(pendingDependency: key, for: dependentKey)
 
         return getValue(of: atom)
     }
@@ -86,9 +89,12 @@ extension RootAtomStore: AtomStore {
     @usableFromInline
     func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
         let key = AtomKey(atom)
-        let dependencies = terminate(for: key)
         let context = makeValueContext(for: atom)
         let value: Node.State.Value
+
+        if let state = store?.state.atomState(for: key) {
+            state.terminate()
+        }
 
         if let overrideValue = overrides?.value(for: atom) {
             value = await atom.value.refresh(context: context, with: overrideValue)
@@ -98,7 +104,6 @@ extension RootAtomStore: AtomStore {
         }
 
         update(atom: atom, with: value)
-        releaseDependencies(of: key, dependencies: dependencies)
         return value
     }
 
@@ -109,11 +114,10 @@ extension RootAtomStore: AtomStore {
         }
 
         let key = AtomKey(atom)
-        let dependencies = terminate(for: key)
 
         state.value = nil
+        state.terminate()
         notifyUpdate(for: key)
-        releaseDependencies(of: key, dependencies: dependencies)
     }
 
     @usableFromInline
@@ -135,8 +139,7 @@ internal extension RootAtomStore {
             return termination()
         }
 
-        let termination = Termination(termination)
-        state.terminations.append(termination)
+        state.addTermination(termination)
     }
 
     @usableFromInline
@@ -160,6 +163,9 @@ private extension RootAtomStore {
     func makeValueContext<Node: Atom>(for atom: Node) -> AtomValueContext<Node.State.Value> {
         AtomValueContext(
             atomContext: AtomRelationContext(atom: atom, store: self),
+            commitPendingDependencies: {
+                commitPendingDependencies(for: atom)
+            },
             update: { value, updatesDependentsOnNextRunLoop in
                 update(
                     atom: atom,
@@ -173,13 +179,13 @@ private extension RootAtomStore {
         )
     }
 
-    func register<Node: Atom>(atom: Node) {
+    func registerIfAbsent<Node: Atom>(atom: Node) {
         guard let store = store else {
             return
         }
 
         let key = AtomKey(atom)
-        let isNewlyRegistered = store.state.addAtomStateIfNotPresent(for: key) {
+        let isNewlyRegistered = store.state.addAtomStateIfAbsent(for: key) {
             ConcreteAtomState(atom: atom)
         }
 
@@ -188,6 +194,30 @@ private extension RootAtomStore {
             for observer in observers {
                 observer.atomAssigned(atom: atom)
             }
+        }
+    }
+
+    func commitPendingDependencies<Node: Atom>(for atom: Node) {
+        guard let store = store else {
+            return
+        }
+
+        let key = AtomKey(atom)
+        let dependencies = store.state.removePendingDependencies(for: key)
+        let oldDependencies = store.graph.removeDependencies(for: key)
+        let obsoletedDependencies = oldDependencies.subtracting(dependencies)
+
+        for dependency in dependencies {
+            store.graph.addEdge(for: dependency, to: key)
+        }
+
+        // Recursively release dependencies.
+        for dependency in obsoletedDependencies {
+            // Unlink this atom from the upstream atoms.
+            store.graph.remove(child: key, for: dependency)
+
+            // Release the upstream atoms as well.
+            checkForRelease(for: dependency)
         }
     }
 
@@ -262,9 +292,10 @@ private extension RootAtomStore {
         // Notify update to downstream atoms.
         func notifyUpdateToDependents() {
             for child in store.graph.children(for: key) {
-                let dependencies = terminate(for: child)
-                store.state.atomState(for: child)?.renew(with: self)
-                releaseDependencies(of: child, dependencies: dependencies)
+                if let state = store.state.atomState(for: child) {
+                    state.terminate()
+                    state.renew(with: self)
+                }
             }
         }
 
@@ -304,24 +335,6 @@ private extension RootAtomStore {
         notifyChangesToObservers(of: atom, value: value)
     }
 
-    func terminate(for key: AtomKey) -> Set<AtomKey> {
-        guard let store = store else {
-            return []
-        }
-
-        let state = store.state.atomState(for: key)
-        let terminations = state?.terminations ?? []
-        let dependencies = store.graph.removeDependencies(for: key)
-
-        state?.terminations.removeAll()
-
-        for termination in terminations {
-            termination()
-        }
-
-        return dependencies
-    }
-
     func checkForRelease(for key: AtomKey) {
         guard let store = store else {
             return
@@ -329,12 +342,12 @@ private extension RootAtomStore {
 
         // Do not release atoms marked as `KeepAlive`.
         let shouldKeepAlive = store.state.atomState(for: key)?.shouldKeepAlive ?? false
+        let shouldRelease =
+            !shouldKeepAlive
+            && !store.graph.hasChildren(for: key)
+            && !store.state.hasSubscriptions(for: key)
 
-        guard !shouldKeepAlive else {
-            return
-        }
-
-        guard !store.graph.hasChildren(for: key) && !store.state.hasSubscriptions(for: key) else {
+        guard shouldRelease else {
             return
         }
 
@@ -346,38 +359,24 @@ private extension RootAtomStore {
             return
         }
 
-        let dependencies = terminate(for: key)
+        if let state = store.state.removeAtomState(for: key) {
+            state.terminate()
+            state.notifyUnassigned(to: observers)
+        }
 
         store.graph.removeChildren(for: key)
         store.state.removeSubscriptions(for: key)
 
-        // Cleanup.
-        guard let state = store.state.removeAtomState(for: key) else {
-            return
-        }
-
-        // Notify atom release to observers.
-        state.notifyUnassigned(to: observers)
-
-        // Recursively, release upstream atoms.
-        releaseDependencies(of: key, dependencies: dependencies)
-    }
-
-    func releaseDependencies(of key: AtomKey, dependencies: Set<AtomKey>) {
-        guard let store = store, !dependencies.isEmpty else {
-            return
-        }
-
-        let current = store.graph.dependencies(for: key)
-        let obsoleted = dependencies.subtracting(current)
+        let dependencies = store.graph.removeDependencies(for: key)
+        let pendeingDependencies = store.state.removePendingDependencies(for: key)
 
         // Recursively release dependencies.
-        for obsoleted in obsoleted {
+        for dependency in dependencies.union(pendeingDependencies) {
             // Unlink this atom from the upstream atoms.
-            store.graph.remove(child: key, for: obsoleted)
+            store.graph.remove(child: key, for: dependency)
 
             // Release the upstream atoms as well.
-            checkForRelease(for: obsoleted)
+            checkForRelease(for: dependency)
         }
     }
 

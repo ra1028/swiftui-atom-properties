@@ -56,7 +56,7 @@ public extension TaskAtom {
     var value: State {
         State { context in
             Task {
-                await value(context: context)
+                await context.withAtomContext(value)
             }
         }
     }

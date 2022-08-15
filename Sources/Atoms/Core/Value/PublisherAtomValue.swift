@@ -10,7 +10,7 @@ public struct PublisherAtomValue<Publisher: Combine.Publisher>: RefreshableAtomV
     }
 
     public func get(context: Context) -> Value {
-        let results = makePublisher(context.atomContext).results
+        let results = context.withAtomContext(makePublisher).results
         let box = UnsafeUncheckedSendableBox(results)
         let task = Task {
             for await result in box.unboxed {
@@ -29,7 +29,7 @@ public struct PublisherAtomValue<Publisher: Combine.Publisher>: RefreshableAtomV
     }
 
     public func refresh(context: Context) async -> Value {
-        let results = makePublisher(context.atomContext).results
+        let results = context.withAtomContext(makePublisher).results
         var phase = Value.suspending
 
         for await result in results {

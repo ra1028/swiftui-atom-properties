@@ -4,28 +4,6 @@ import XCTest
 
 @MainActor
 final class AsyncSequenceAtomTests: XCTestCase {
-    final class AsyncThrowingStreamPipe<Element> {
-        var stream: AsyncThrowingStream<Element, Error>
-        var continuation: AsyncThrowingStream<Element, Error>.Continuation!
-
-        init() {
-            (stream, continuation) = Self.pipe()
-        }
-
-        func reset() {
-            (stream, continuation) = Self.pipe()
-        }
-
-        static func pipe() -> (
-            AsyncThrowingStream<Element, Error>,
-            AsyncThrowingStream<Element, Error>.Continuation
-        ) {
-            var continuation: AsyncThrowingStream<Element, Error>.Continuation!
-            let stream = AsyncThrowingStream { continuation = $0 }
-            return (stream, continuation)
-        }
-    }
-
     func testValue() async {
         let pipe = AsyncThrowingStreamPipe<Int>()
         let atom = TestAsyncSequenceAtom { pipe.stream }

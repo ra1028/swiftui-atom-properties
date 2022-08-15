@@ -8,7 +8,7 @@ public struct SyncAtomValue<T>: AtomValue {
     }
 
     public func get(context: Context) -> T {
-        getValue(context.atomContext)
+        context.withAtomContext(getValue)
     }
 
     public func lookup(context: Context, with value: T) -> T {

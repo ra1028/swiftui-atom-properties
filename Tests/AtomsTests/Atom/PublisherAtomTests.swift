@@ -5,32 +5,8 @@ import XCTest
 
 @MainActor
 final class PublisherAtomTests: XCTestCase {
-    final class TestSubject<Output, Failure: Error>: Publisher, Subject {
-        private var internalSubject = PassthroughSubject<Output, Failure>()
-
-        func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
-            internalSubject.receive(subscriber: subscriber)
-        }
-
-        func send(_ value: Output) {
-            internalSubject.send(value)
-        }
-
-        func send(completion: Subscribers.Completion<Failure>) {
-            internalSubject.send(completion: completion)
-        }
-
-        func send(subscription: Combine.Subscription) {
-            internalSubject.send(subscription: subscription)
-        }
-
-        func reset() {
-            internalSubject = PassthroughSubject()
-        }
-    }
-
     func testValue() async {
-        let subject = TestSubject<Int, URLError>()
+        let subject = ResettableSubject<Int, URLError>()
         let atom = TestPublisherAtom { subject }
         let context = AtomTestContext()
 
@@ -91,7 +67,7 @@ final class PublisherAtomTests: XCTestCase {
     }
 
     func testRefresh() async {
-        let subject = TestSubject<Int, URLError>()
+        let subject = ResettableSubject<Int, URLError>()
         let atom = TestPublisherAtom { subject }
         let context = AtomTestContext()
 

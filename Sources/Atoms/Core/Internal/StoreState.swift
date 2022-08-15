@@ -2,6 +2,7 @@
 internal struct StoreState {
     private var atomStates = [AtomKey: AtomState]()
     private var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
+    private var pendingDependencies = [AtomKey: Set<AtomKey>]()
 
     nonisolated init() {}
 
@@ -17,7 +18,7 @@ internal struct StoreState {
         atomStates[key]
     }
 
-    mutating func addAtomStateIfNotPresent(for key: AtomKey, _ makeAtomState: () -> AtomState) -> Bool {
+    mutating func addAtomStateIfAbsent(for key: AtomKey, _ makeAtomState: () -> AtomState) -> Bool {
         withUnsafeMutablePointer(to: &atomStates[key]) { pointer in
             guard pointer.pointee == nil else {
                 return false
@@ -32,12 +33,21 @@ internal struct StoreState {
         subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriptionKey)
     }
 
+    mutating func insert(pendingDependency dependency: AtomKey, for key: AtomKey) {
+        pendingDependencies[key, default: []].insert(dependency)
+    }
+
     mutating func removeSubscription(for subscriptionKey: SubscriptionKey, subscribedFor key: AtomKey) {
         subscriptions[key]?.removeValue(forKey: subscriptionKey)
     }
 
     mutating func removeSubscriptions(for key: AtomKey) {
         subscriptions.removeValue(forKey: key)
+    }
+
+    @discardableResult
+    mutating func removePendingDependencies(for key: AtomKey) -> Set<AtomKey> {
+        pendingDependencies.removeValue(forKey: key) ?? []
     }
 
     @discardableResult

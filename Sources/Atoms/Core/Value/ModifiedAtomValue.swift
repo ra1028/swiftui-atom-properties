@@ -10,7 +10,7 @@ public struct ModifiedAtomValue<Node: Atom, Modifier: AtomModifier>: AtomValue w
     }
 
     public func get(context: Context) -> Value {
-        let value = context.atomContext.watch(atom)
+        let value = context.withAtomContext { $0.watch(atom) }
         return modifier.value(context: context, with: value)
     }
 

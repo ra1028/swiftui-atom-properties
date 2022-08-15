@@ -60,7 +60,7 @@ public extension ThrowingTaskAtom {
     var value: State {
         State { context in
             Task {
-                try await value(context: context)
+                try await context.withAtomContext(value)
             }
         }
     }

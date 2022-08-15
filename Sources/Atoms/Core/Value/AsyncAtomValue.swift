@@ -1,14 +1,14 @@
 public struct AsyncAtomValue<Success, Failure: Error>: TaskAtomValue {
     public typealias Value = Task<Success, Failure>
 
-    private let getTask: @MainActor (AtomRelationContext) -> Value
+    private let getTask: @MainActor (Context) -> Value
 
-    internal init(getTask: @MainActor @escaping (AtomRelationContext) -> Value) {
+    internal init(getTask: @MainActor @escaping (Context) -> Value) {
         self.getTask = getTask
     }
 
     public func get(context: Context) -> Value {
-        let task = getTask(context.atomContext)
+        let task = getTask(context)
         return lookup(context: context, with: task)
     }
 
@@ -18,7 +18,7 @@ public struct AsyncAtomValue<Success, Failure: Error>: TaskAtomValue {
     }
 
     public func refresh(context: Context) async -> Value {
-        let task = getTask(context.atomContext)
+        let task = getTask(context)
         return await refresh(context: context, with: task)
     }
 

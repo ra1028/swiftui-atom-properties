@@ -149,5 +149,11 @@ final class ThrowingTaskAtomTests: XCTestCase {
 
         // Dependencies should not be released until task value is returned.
         XCTAssertEqual(value1, 100)
+
+        context.unwatch(TestAtom())
+
+        let dependencyValue = context.read(DependencyAtom())
+
+        XCTAssertEqual(dependencyValue, 0)
     }
 }
