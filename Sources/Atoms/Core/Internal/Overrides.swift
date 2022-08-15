@@ -2,38 +2,38 @@
 @MainActor
 internal struct Overrides {
     @usableFromInline
-    internal var _entriesForNode = [AtomKey: _Override]()
+    internal var _entriesForNode = [AtomKey: Override]()
 
     @usableFromInline
-    internal var _entriesForType = [AtomTypeKey: _Override]()
+    internal var _entriesForType = [AtomTypeKey: Override]()
 
     @inlinable
     mutating func insert<Node: Atom>(
         _ atom: Node,
-        with value: @escaping (Node) -> Node.State.Value
+        with value: @escaping (Node) -> Node.Loader.Value
     ) {
         let key = AtomKey(atom)
-        _entriesForNode[key] = _ConcreteOverride(value)
+        _entriesForNode[key] = ConcreteOverride(value)
     }
 
     @inlinable
     mutating func insert<Node: Atom>(
         _ atomType: Node.Type,
-        with value: @escaping (Node) -> Node.State.Value
+        with value: @escaping (Node) -> Node.Loader.Value
     ) {
         let key = AtomTypeKey(atomType)
-        _entriesForType[key] = _ConcreteOverride(value)
+        _entriesForType[key] = ConcreteOverride(value)
     }
 
     @inlinable
-    func value<Node: Atom>(for atom: Node) -> Node.State.Value? {
+    func value<Node: Atom>(for atom: Node) -> Node.Loader.Value? {
         let baseOverride = _entriesForNode[AtomKey(atom)] ?? _entriesForType[AtomTypeKey(Node.self)]
 
         guard let baseOverride = baseOverride else {
             return nil
         }
 
-        guard let override = baseOverride as? _ConcreteOverride<Node> else {
+        guard let override = baseOverride as? ConcreteOverride<Node> else {
             assertionFailure(
                 """
                 Detected an illegal override.
@@ -52,19 +52,19 @@ internal struct Overrides {
 
 @usableFromInline
 @MainActor
-internal protocol _Override {}
+internal protocol Override {}
 
 @usableFromInline
-internal struct _ConcreteOverride<Node: Atom>: _Override {
-    private let value: (Node) -> Node.State.Value
+internal struct ConcreteOverride<Node: Atom>: Override {
+    private let value: (Node) -> Node.Loader.Value
 
     @usableFromInline
-    init(_ value: @escaping (Node) -> Node.State.Value) {
+    init(_ value: @escaping (Node) -> Node.Loader.Value) {
         self.value = value
     }
 
     @usableFromInline
-    func value(for atom: Node) -> Node.State.Value {
+    func value(for atom: Node) -> Node.Loader.Value {
         value(atom)
     }
 }

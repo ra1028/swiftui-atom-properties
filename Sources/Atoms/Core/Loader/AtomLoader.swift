@@ -1,12 +1,12 @@
 @MainActor
-public protocol AtomValue {
+public protocol AtomLoader {
     associatedtype Value
 
-    typealias Context = AtomValueContext<Value>
+    typealias Context = AtomLoaderContext<Value>
 
     func get(context: Context) -> Value
 
-    func lookup(context: Context, with value: Value) -> Value
+    func handle(context: Context, with value: Value) -> Value
 
     /// Returns a boolean value that determines whether it should notify the value update to
     /// watchers with comparing the given old value and the new value.
@@ -20,19 +20,19 @@ public protocol AtomValue {
     func shouldNotifyUpdate(newValue: Value, oldValue: Value) -> Bool
 }
 
-public extension AtomValue {
+public extension AtomLoader {
     func shouldNotifyUpdate(newValue: Value, oldValue: Value) -> Bool {
         true
     }
 }
 
-public protocol RefreshableAtomValue: AtomValue {
+public protocol RefreshableAtomLoader: AtomLoader {
     func refresh(context: Context) async -> Value
 
     func refresh(context: Context, with value: Value) async -> Value
 }
 
-public protocol TaskAtomValue: RefreshableAtomValue where Value == Task<Success, Failure> {
+public protocol AsyncAtomLoader: RefreshableAtomLoader where Value == Task<Success, Failure> {
     associatedtype Success
     associatedtype Failure: Error
 }

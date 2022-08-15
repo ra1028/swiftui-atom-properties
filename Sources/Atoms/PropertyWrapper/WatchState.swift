@@ -49,7 +49,7 @@ public struct WatchState<Node: StateAtom>: DynamicProperty {
     /// with the `@WatchState` attribute.
     /// Accessing to the getter of this property starts watching to the atom, but doesn't
     /// by setting a new value.
-    public var wrappedValue: Node.State.Value {
+    public var wrappedValue: Node.Loader.Value {
         get { context.watch(atom) }
         nonmutating set { context.set(newValue, for: atom) }
     }
@@ -60,7 +60,7 @@ public struct WatchState<Node: StateAtom>: DynamicProperty {
     /// To get the ``projectedValue``, prefix the property variable with `$`.
     /// Accessing to this property itself doesn't starts watching to the atom, but does when
     /// the view accesses to the getter of the binding.
-    public var projectedValue: Binding<Node.State.Value> {
+    public var projectedValue: Binding<Node.Loader.Value> {
         context.state(atom)
     }
 }

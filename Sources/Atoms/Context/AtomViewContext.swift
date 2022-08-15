@@ -36,7 +36,7 @@ public struct AtomViewContext: AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
-    public func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    public func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         _store.read(atom)
     }
 
@@ -82,7 +82,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
     @inlinable
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
+    public func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         await _store.refresh(atom)
     }
 
@@ -126,7 +126,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// - Returns: The value associated with the given atom.
     @discardableResult
     @inlinable
-    public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         _store.watch(
             atom,
             container: _container,

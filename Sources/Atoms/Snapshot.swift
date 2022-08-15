@@ -16,13 +16,13 @@ public struct Snapshot<Node: Atom>: AtomHistory {
     public let atom: Node
 
     /// The snapshot value of the``atom``.
-    public let value: Node.State.Value
+    public let value: Node.Loader.Value
 
     private let _restore: @MainActor () -> Void
 
     internal init(
         atom: Node,
-        value: Node.State.Value,
+        value: Node.Loader.Value,
         restore: @MainActor @escaping () -> Void
     ) {
         self.atom = atom

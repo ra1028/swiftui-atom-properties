@@ -1,12 +1,12 @@
 @MainActor
-public struct AtomValueContext<Value> {
+public struct AtomLoaderContext<Value> {
     @usableFromInline
     internal typealias _Update = @MainActor (_ value: Value, _ updatesDependentsOnNextRunLoop: Bool) -> Void
     @usableFromInline
     internal typealias _AddTermination = @MainActor (_ termination: @MainActor @escaping () -> Void) -> Void
 
     @usableFromInline
-    internal let _atomContext: AtomRelationContext
+    internal let _atomContext: AtomNodeContext
     @usableFromInline
     internal let _update: _Update
     @usableFromInline
@@ -15,7 +15,7 @@ public struct AtomValueContext<Value> {
     internal let _commitPendingDependencies: () -> Void
 
     internal init(
-        atomContext: AtomRelationContext,
+        atomContext: AtomNodeContext,
         commitPendingDependencies: @escaping () -> Void,
         update: @escaping _Update,
         addTermination: @escaping _AddTermination
@@ -37,13 +37,13 @@ public struct AtomValueContext<Value> {
     }
 
     @inlinable
-    internal func withAtomContext<T>(_ body: @MainActor (AtomRelationContext) -> T) -> T {
+    internal func transaction<T>(_ body: @MainActor (AtomNodeContext) -> T) -> T {
         defer { _commitPendingDependencies() }
         return body(_atomContext)
     }
 
     @inlinable
-    internal func withAtomContext<T>(_ body: @MainActor (AtomRelationContext) async throws -> T) async rethrows -> T {
+    internal func transaction<T>(_ body: @MainActor (AtomNodeContext) async throws -> T) async rethrows -> T {
         defer { _commitPendingDependencies() }
         return try await body(_atomContext)
     }

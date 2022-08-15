@@ -13,7 +13,7 @@ internal final class ConcreteAtomState<Node: Atom>: AtomState {
     private let atom: Node
     private var terminations = ContiguousArray<Termination>()
 
-    var value: Node.State.Value?
+    var value: Node.Loader.Value?
 
     var shouldKeepAlive: Bool {
         Node.shouldKeepAlive

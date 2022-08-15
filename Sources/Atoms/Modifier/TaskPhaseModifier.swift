@@ -1,4 +1,4 @@
-public extension Atom where State: TaskAtomValue {
+public extension Atom where Loader: AsyncAtomLoader {
     /// Converts the `Task` that the original atom provides into ``AsyncPhase`` that
     /// changes overtime.
     ///
@@ -28,7 +28,7 @@ public extension Atom where State: TaskAtomValue {
     ///
     /// This modifier converts the `Task` that the original atom provides into ``AsyncPhase``
     /// and notifies its changes to downstream atoms and views.
-    var phase: ModifiedAtom<Self, TaskPhaseModifier<State.Success, State.Failure>> {
+    var phase: ModifiedAtom<Self, TaskPhaseModifier<Loader.Success, Loader.Failure>> {
         modifier(TaskPhaseModifier())
     }
 }
@@ -64,7 +64,7 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
         return .suspending
     }
 
-    public func lookup(context: Context, with value: ModifiedValue) -> ModifiedValue {
+    public func handle(context: Context, with value: ModifiedValue) -> ModifiedValue {
         value
     }
 }

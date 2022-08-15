@@ -5,7 +5,7 @@ internal struct DefaultAtomStore: AtomStore {
         temporaryStore = Store()
     }
 
-    func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         store.read(atom)
     }
 
@@ -13,7 +13,7 @@ internal struct DefaultAtomStore: AtomStore {
         store.set(value, for: atom)
     }
 
-    func watch<Node: Atom, Dependent: Atom>(_ atom: Node, dependent: Dependent) -> Node.State.Value {
+    func watch<Node: Atom, Dependent: Atom>(_ atom: Node, dependent: Dependent) -> Node.Loader.Value {
         store.watch(atom, dependent: dependent)
     }
 
@@ -21,11 +21,11 @@ internal struct DefaultAtomStore: AtomStore {
         _ atom: Node,
         container: SubscriptionContainer.Wrapper,
         notifyUpdate: @escaping () -> Void
-    ) -> Node.State.Value {
+    ) -> Node.Loader.Value {
         store.watch(atom, container: container, notifyUpdate: notifyUpdate)
     }
 
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         await store.refresh(atom)
     }
 

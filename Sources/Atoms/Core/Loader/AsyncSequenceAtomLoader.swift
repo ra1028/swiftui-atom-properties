@@ -1,18 +1,17 @@
-public struct AsyncSequenceAtomValue<Sequence: AsyncSequence>: RefreshableAtomValue {
+public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomLoader {
     public typealias Value = AsyncPhase<Sequence.Element, Error>
 
-    private let makeSequence: @MainActor (AtomRelationContext) -> Sequence
+    private let makeSequence: @MainActor (AtomNodeContext) -> Sequence
 
-    internal init(makeSequence: @MainActor @escaping (AtomRelationContext) -> Sequence) {
+    internal init(makeSequence: @MainActor @escaping (AtomNodeContext) -> Sequence) {
         self.makeSequence = makeSequence
     }
 
     public func get(context: Context) -> Value {
-        let sequence = context.withAtomContext(makeSequence)
-        let box = UnsafeUncheckedSendableBox(sequence)
+        let sequence = context.transaction(makeSequence)
         let task = Task {
             do {
-                for try await element in box.unboxed {
+                for try await element in sequence {
                     if !Task.isCancelled {
                         context.update(with: .success(element))
                     }
@@ -29,17 +28,16 @@ public struct AsyncSequenceAtomValue<Sequence: AsyncSequence>: RefreshableAtomVa
         return .suspending
     }
 
-    public func lookup(context: Context, with value: Value) -> Value {
+    public func handle(context: Context, with value: Value) -> Value {
         value
     }
 
     public func refresh(context: Context) async -> Value {
-        let sequence = context.withAtomContext(makeSequence)
-        let box = UnsafeUncheckedSendableBox(sequence)
+        let sequence = context.transaction(makeSequence)
         var phase = Value.suspending
 
         do {
-            for try await element in box.unboxed {
+            for try await element in sequence {
                 phase = .success(element)
             }
         }

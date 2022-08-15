@@ -36,7 +36,7 @@
 /// }
 /// ```
 ///
-public protocol ThrowingTaskAtom: Atom where State == AsyncAtomValue<Value, Error> {
+public protocol ThrowingTaskAtom: Atom where Loader == ThrowingTaskAtomLoader<Value> {
     /// The type of value that this atom produces.
     associatedtype Value
 
@@ -57,11 +57,7 @@ public protocol ThrowingTaskAtom: Atom where State == AsyncAtomValue<Value, Erro
 
 public extension ThrowingTaskAtom {
     @MainActor
-    var value: State {
-        State { context in
-            Task {
-                try await context.withAtomContext(value)
-            }
-        }
+    var _loader: Loader {
+        Loader(getValue: value)
     }
 }

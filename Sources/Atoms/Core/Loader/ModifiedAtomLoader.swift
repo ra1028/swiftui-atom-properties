@@ -1,4 +1,4 @@
-public struct ModifiedAtomValue<Node: Atom, Modifier: AtomModifier>: AtomValue where Node.State.Value == Modifier.Value {
+public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader where Node.Loader.Value == Modifier.Value {
     public typealias Value = Modifier.ModifiedValue
 
     private let atom: Node
@@ -10,12 +10,12 @@ public struct ModifiedAtomValue<Node: Atom, Modifier: AtomModifier>: AtomValue w
     }
 
     public func get(context: Context) -> Value {
-        let value = context.withAtomContext { $0.watch(atom) }
+        let value = context.transaction { $0.watch(atom) }
         return modifier.value(context: context, with: value)
     }
 
-    public func lookup(context: Context, with value: Modifier.ModifiedValue) -> Modifier.ModifiedValue {
-        modifier.lookup(context: context, with: value)
+    public func handle(context: Context, with value: Modifier.ModifiedValue) -> Modifier.ModifiedValue {
+        modifier.handle(context: context, with: value)
     }
 
     /// Returns a boolean value that determines whether it should notify the value update to

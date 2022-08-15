@@ -20,7 +20,7 @@ internal struct RootAtomStore {
 
 extension RootAtomStore: AtomStore {
     @usableFromInline
-    func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         getValue(of: atom)
     }
 
@@ -31,7 +31,7 @@ extension RootAtomStore: AtomStore {
             return
         }
 
-        let context = AtomRelationContext(atom: atom, store: self)
+        let context = AtomNodeContext(atom: atom, store: self)
 
         atom.willSet(newValue: value, oldValue: oldValue, context: context)
         update(atom: atom, with: value)
@@ -43,7 +43,7 @@ extension RootAtomStore: AtomStore {
         _ atom: Node,
         container: SubscriptionContainer.Wrapper,
         notifyUpdate: @escaping () -> Void
-    ) -> Node.State.Value {
+    ) -> Node.Loader.Value {
         guard let store = store else {
             return getNewValue(of: atom)
         }
@@ -72,7 +72,7 @@ extension RootAtomStore: AtomStore {
     func watch<Node: Atom, Dependent: Atom>(
         _ atom: Node,
         dependent: Dependent
-    ) -> Node.State.Value {
+    ) -> Node.Loader.Value {
         guard let store = store else {
             return getNewValue(of: atom)
         }
@@ -87,20 +87,20 @@ extension RootAtomStore: AtomStore {
     }
 
     @usableFromInline
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         let key = AtomKey(atom)
-        let context = makeValueContext(for: atom)
-        let value: Node.State.Value
+        let context = makeLoaderContext(for: atom)
+        let value: Node.Loader.Value
 
         if let state = store?.state.atomState(for: key) {
             state.terminate()
         }
 
         if let overrideValue = overrides?.value(for: atom) {
-            value = await atom.value.refresh(context: context, with: overrideValue)
+            value = await atom._loader.refresh(context: context, with: overrideValue)
         }
         else {
-            value = await atom.value.refresh(context: context)
+            value = await atom._loader.refresh(context: context)
         }
 
         update(atom: atom, with: value)
@@ -160,9 +160,9 @@ private extension RootAtomStore {
         self.observers = observers
     }
 
-    func makeValueContext<Node: Atom>(for atom: Node) -> AtomValueContext<Node.State.Value> {
-        AtomValueContext(
-            atomContext: AtomRelationContext(atom: atom, store: self),
+    func makeLoaderContext<Node: Atom>(for atom: Node) -> AtomLoaderContext<Node.Loader.Value> {
+        AtomLoaderContext(
+            atomContext: AtomNodeContext(atom: atom, store: self),
             commitPendingDependencies: {
                 commitPendingDependencies(for: atom)
             },
@@ -221,7 +221,7 @@ private extension RootAtomStore {
         }
     }
 
-    func getValue<Node: Atom>(of atom: Node) -> Node.State.Value {
+    func getValue<Node: Atom>(of atom: Node) -> Node.Loader.Value {
         let state = getCachedState(of: atom)
 
         if let value = state?.value {
@@ -237,16 +237,16 @@ private extension RootAtomStore {
         return value
     }
 
-    func getNewValue<Node: Atom>(of atom: Node) -> Node.State.Value {
-        let context = makeValueContext(for: atom)
-        let value: Node.State.Value
+    func getNewValue<Node: Atom>(of atom: Node) -> Node.Loader.Value {
+        let context = makeLoaderContext(for: atom)
+        let value: Node.Loader.Value
 
         if let overrideValue = overrides?.value(for: atom) {
             // Set the override value.
-            value = atom.value.lookup(context: context, with: overrideValue)
+            value = atom._loader.handle(context: context, with: overrideValue)
         }
         else {
-            value = atom.value.get(context: context)
+            value = atom._loader.get(context: context)
         }
 
         return value
@@ -311,7 +311,7 @@ private extension RootAtomStore {
 
     func update<Node: Atom>(
         atom: Node,
-        with value: Node.State.Value,
+        with value: Node.Loader.Value,
         updatesDependentsOnNextRunLoop: Bool = false
     ) {
         guard let state = getCachedState(of: atom) else {
@@ -322,7 +322,7 @@ private extension RootAtomStore {
         state.value = value
 
         // Do not notify update if the value is equivalent to the old value.
-        if let oldValue = oldValue, !atom.value.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
+        if let oldValue = oldValue, !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
             return
         }
 
@@ -380,7 +380,7 @@ private extension RootAtomStore {
         }
     }
 
-    func notifyChangesToObservers<Node: Atom>(of atom: Node, value: Node.State.Value) {
+    func notifyChangesToObservers<Node: Atom>(of atom: Node, value: Node.Loader.Value) {
         guard !observers.isEmpty else {
             return
         }

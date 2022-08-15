@@ -25,8 +25,8 @@ public extension Atom {
     ///
     /// - Returns: An atom that provides the partial property of the original atom value.
     func select<Selected: Equatable>(
-        _ keyPath: KeyPath<State.Value, Selected>
-    ) -> ModifiedAtom<Self, SelectModifier<State.Value, Selected>> {
+        _ keyPath: KeyPath<Loader.Value, Selected>
+    ) -> ModifiedAtom<Self, SelectModifier<Loader.Value, Selected>> {
         modifier(SelectModifier(keyPath: keyPath))
     }
 }
@@ -71,7 +71,7 @@ public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
         value[keyPath: keyPath]
     }
 
-    public func lookup(context: Context, with value: Selected) -> Selected {
+    public func handle(context: Context, with value: Selected) -> Selected {
         value
     }
 }

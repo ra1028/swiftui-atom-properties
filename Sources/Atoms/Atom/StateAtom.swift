@@ -36,7 +36,7 @@
 /// }
 /// ```
 ///
-public protocol StateAtom: Atom where State == SyncAtomValue<Value> {
+public protocol StateAtom: Atom where Loader == ValueAtomLoader<Value> {
     /// The type of state value that this atom produces.
     associatedtype Value
 
@@ -77,8 +77,8 @@ public protocol StateAtom: Atom where State == SyncAtomValue<Value> {
 
 public extension StateAtom {
     @MainActor
-    var value: State {
-        State(getValue: defaultValue)
+    var _loader: Loader {
+        Loader(getValue: defaultValue)
     }
 
     @MainActor

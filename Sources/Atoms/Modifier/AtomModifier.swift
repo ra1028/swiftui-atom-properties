@@ -21,7 +21,7 @@ public protocol AtomModifier {
     associatedtype ModifiedValue
 
     /// A type of the context structure that to interact with an atom store.
-    typealias Context = AtomValueContext<ModifiedValue>
+    typealias Context = AtomLoaderContext<ModifiedValue>
 
     /// A unique value used to identify the modifier internally.
     var key: Key { get }
@@ -51,7 +51,7 @@ public protocol AtomModifier {
     func value(context: Context, with value: Value) -> ModifiedValue
 
     @MainActor
-    func lookup(context: Context, with value: ModifiedValue) -> ModifiedValue
+    func handle(context: Context, with value: ModifiedValue) -> ModifiedValue
 }
 
 public extension AtomModifier {

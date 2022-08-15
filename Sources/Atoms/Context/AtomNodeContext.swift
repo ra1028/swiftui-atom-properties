@@ -3,12 +3,12 @@
 /// Through this context, watching of an atom is initiated, and when that atom is updated,
 /// the value of the atom to which this context is provided will be updated transitively.
 @MainActor
-public struct AtomRelationContext: AtomWatchableContext {
+public struct AtomNodeContext: AtomWatchableContext {
     @usableFromInline
-    internal let _box: _AnyAtomRelationContextBox
+    internal let _box: _AnyAtomNodeContextBox
 
     internal init<Node: Atom>(atom: Node, store: RootAtomStore) {
-        _box = _AtomRelationContextBox(dependent: atom, store: store)
+        _box = _AtomNodeContextBox(dependent: atom, store: store)
     }
 
     /// Accesses the value associated with the given atom without watching to it.
@@ -26,7 +26,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
-    public func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    public func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         _box.store.read(atom)
     }
 
@@ -36,7 +36,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     /// and assign a new value for the atom.
     /// When you assign a new value, it notifies update immediately to downstream atoms or views.
     ///
-    /// - SeeAlso: ``AtomRelationContext/subscript``
+    /// - SeeAlso: ``AtomNodeContext/subscript``
     ///
     /// ```swift
     /// let context = ...
@@ -72,7 +72,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     /// - Returns: The value which completed refreshing associated with the given atom.
     @inlinable
     @discardableResult
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
+    public func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         await _box.store.refresh(atom)
     }
 
@@ -116,7 +116,7 @@ public struct AtomRelationContext: AtomWatchableContext {
     /// - Returns: The value associated with the given atom.
     @inlinable
     @discardableResult
-    public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         _box.watch(atom)
     }
 
@@ -173,22 +173,22 @@ public struct AtomRelationContext: AtomWatchableContext {
 
 @usableFromInline
 @MainActor
-internal protocol _AnyAtomRelationContextBox {
+internal protocol _AnyAtomNodeContextBox {
     var store: RootAtomStore { get }
 
-    func watch<Node: Atom>(_ atom: Node) -> Node.State.Value
+    func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value
     func addTermination(_ termination: @MainActor @escaping () -> Void)
 }
 
 @usableFromInline
-internal struct _AtomRelationContextBox<Dependent: Atom>: _AnyAtomRelationContextBox {
+internal struct _AtomNodeContextBox<Dependent: Atom>: _AnyAtomNodeContextBox {
     let dependent: Dependent
 
     @usableFromInline
     let store: RootAtomStore
 
     @usableFromInline
-    func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         store.watch(atom, dependent: dependent)
     }
 

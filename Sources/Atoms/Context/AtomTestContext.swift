@@ -55,11 +55,10 @@ public struct AtomTestContext: AtomWatchableContext {
                 }
             )
 
-            let box = UnsafeUncheckedSendableBox(cancellable)
             continuation.onTermination = { termination in
                 switch termination {
                 case .cancelled:
-                    box.unboxed.cancel()
+                    cancellable.cancel()
 
                 case .finished:
                     break
@@ -103,7 +102,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value associated with the given atom.
-    public func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    public func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         state.store.read(atom)
     }
 
@@ -147,7 +146,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomValue {
+    public func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         await state.store.refresh(atom)
     }
 
@@ -189,7 +188,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     @discardableResult
-    public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         state.store.watch(atom, container: state.container) { [weak state] in
             state?.notifyUpdate()
         }
@@ -213,7 +212,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: The observable object associated with the given atom.
     @discardableResult
-    public func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.State.Value {
+    public func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.Loader.Value {
         state.store.watch(atom, container: state.container) { [weak state] in
             // Ensures that the observable object is updated before notifying updates.
             RunLoop.current.perform {
@@ -240,7 +239,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters:
     ///   - atom: An atom that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
-    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.State.Value) {
+    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) {
         state.overrides.insert(atom, with: value)
     }
 
@@ -254,7 +253,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters:
     ///   - atomType: An atom type that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
-    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.State.Value) {
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) {
         state.overrides.insert(atomType, with: value)
     }
 

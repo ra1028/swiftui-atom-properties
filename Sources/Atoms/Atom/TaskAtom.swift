@@ -34,7 +34,7 @@
 /// }
 /// ```
 ///
-public protocol TaskAtom: Atom where State == AsyncAtomValue<Value, Never> {
+public protocol TaskAtom: Atom where Loader == TaskAtomLoader<Value> {
     /// The type of value that this atom produces.
     associatedtype Value
 
@@ -53,11 +53,7 @@ public protocol TaskAtom: Atom where State == AsyncAtomValue<Value, Never> {
 
 public extension TaskAtom {
     @MainActor
-    var value: State {
-        State { context in
-            Task {
-                await context.withAtomContext(value)
-            }
-        }
+    var _loader: Loader {
+        Loader(getValue: value)
     }
 }
