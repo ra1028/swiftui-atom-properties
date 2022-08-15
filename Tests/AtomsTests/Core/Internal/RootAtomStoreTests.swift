@@ -4,7 +4,19 @@ import XCTest
 
 @MainActor
 final class RootAtomStoreTests: XCTestCase {
-    func testAtomStore() async {
+    func testComplexDependencies() async {
+        enum Phase {
+            case first
+            case second
+            case third
+        }
+
+        struct PhaseAtom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Phase {
+                .first
+            }
+        }
+
         struct AAtom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
                 0
@@ -29,45 +41,49 @@ final class RootAtomStoreTests: XCTestCase {
             }
         }
 
-        struct FlagAtom: StateAtom, Hashable {
-            func defaultValue(context: Context) -> Bool {
-                false
-            }
-        }
-
         struct TestAtom: TaskAtom {
-            let suspension: AsyncThrowingStreamPipe<Void>
-            let callback: AsyncThrowingStreamPipe<Void>
+            let pipe: AsyncThrowingStreamPipe<Void>
 
             var key: UniqueKey {
                 UniqueKey()
             }
 
             func value(context: Context) async -> Int {
-                let flag = context.watch(FlagAtom())
+                let phase = context.watch(PhaseAtom())
                 // - Dependencies (`|` means a suspention point)
-                //   - Before: [A, B, C |]
-                //   - After:  [A, D | B]
-                if !flag {
-                    let a = context.watch(AAtom())
-                    let b = context.watch(BAtom())
-                    let c = context.watch(CAtom())
+                //   - first:  [A, B, C |]
+                //   - second: [A, D | B]
+                //   - third:  [B | C, D]
+                switch phase {
+                    case .first:
+                        let a = context.watch(AAtom())
+                        let b = context.watch(BAtom())
+                        let c = context.watch(CAtom())
 
-                    callback.continuation.finish()
-                    await suspension.stream.next()
+                        pipe.continuation.yield()
+                        await pipe.stream.next()
 
-                    return a + b + c
-                }
-                else {
-                    let a = context.watch(AAtom())
-                    let d = context.watch(DAtom())
+                        return a + b + c
 
-                    callback.continuation.finish()
-                    await suspension.stream.next()
+                    case .second:
+                        let a = context.watch(AAtom())
+                        let d = context.watch(DAtom())
 
-                    let b = context.watch(BAtom())
-                    print("B value:", b)
-                    return a + d + b
+                        pipe.continuation.yield()
+                        await pipe.stream.next()
+
+                        let b = context.watch(BAtom())
+                        return a + d + b
+
+                    case .third:
+                        let b = context.watch(BAtom())
+
+                        pipe.continuation.yield()
+                        await pipe.stream.next()
+
+                        let c = context.watch(CAtom())
+                        let d = context.watch(DAtom())
+                        return b + c + d
                 }
             }
         }
@@ -75,50 +91,75 @@ final class RootAtomStoreTests: XCTestCase {
         let store = Store()
         let atomStore = RootAtomStore(store: store)
         let container = SubscriptionContainer()
-        let suspension = AsyncThrowingStreamPipe<Void>()
-        let callback = AsyncThrowingStreamPipe<Void>()
-        let atom = TestAtom(suspension: suspension, callback: callback)
+        let pipe = AsyncThrowingStreamPipe<Void>()
+        let atom = TestAtom(pipe: pipe)
         let a = AAtom()
         let b = BAtom()
         let c = CAtom()
         let d = DAtom()
-        let flag = FlagAtom()
+        let phase = PhaseAtom()
 
         func watch() async -> Int {
             await atomStore.watch(atom, container: container.wrapper, notifyUpdate: {}).value
         }
 
-        Task {
-            await callback.stream.next()
-            suspension.continuation.yield()
+        do {
+            // first
+
+            Task {
+                await pipe.stream.next()
+                pipe.continuation.yield()
+            }
+
+            let firstValue = await watch()
+
+            XCTAssertEqual(firstValue, 0)
+            XCTAssertFalse(store.graph.hasChildren(for: AtomKey(d)))
+            XCTAssertEqual(
+                store.graph.dependencies(for: AtomKey(atom)),
+                [AtomKey(phase), AtomKey(a), AtomKey(b), AtomKey(c)]
+            )
         }
 
-        let valueBefore = await watch()
+        do {
+            // second
 
-        XCTAssertEqual(valueBefore, 0)
-        XCTAssertEqual(
-            store.graph.dependencies(for: AtomKey(atom)),
-            [AtomKey(flag), AtomKey(a), AtomKey(b), AtomKey(c)]
-        )
-        XCTAssertFalse(store.graph.hasChildren(for: AtomKey(d)))
+            Task {
+                await pipe.stream.next()
+                atomStore.set(1, for: b)
+                pipe.continuation.yield()
+            }
 
-        Task {
-            await callback.stream.next()
-            atomStore.set(1, for: b)
-            suspension.continuation.yield()
+            atomStore.set(.second, for: phase)
+            let secondValue = await watch()
+
+            XCTAssertEqual(secondValue, 1)
+            XCTAssertFalse(store.graph.hasChildren(for: AtomKey(c)))
+            XCTAssertEqual(
+                store.graph.dependencies(for: AtomKey(atom)),
+                [AtomKey(phase), AtomKey(a), AtomKey(d), AtomKey(b)]
+            )
         }
 
-        suspension.reset()
-        callback.reset()
-        atomStore.set(true, for: flag)
-        let valueAfter = await watch()
+        do {
+            // third
 
-        XCTAssertEqual(valueAfter, 1)
-        XCTAssertEqual(
-            store.graph.dependencies(for: AtomKey(atom)),
-            [AtomKey(flag), AtomKey(a), AtomKey(d), AtomKey(b)]
-        )
-        XCTAssertFalse(store.graph.hasChildren(for: AtomKey(c)))
+            Task {
+                await pipe.stream.next()
+                atomStore.set(2, for: d)
+                pipe.continuation.yield()
+            }
+
+            atomStore.set(.third, for: phase)
+            let thirdValue = await watch()
+
+            XCTAssertEqual(thirdValue, 3)
+            XCTAssertFalse(store.graph.hasChildren(for: AtomKey(a)))
+            XCTAssertEqual(
+                store.graph.dependencies(for: AtomKey(atom)),
+                [AtomKey(phase), AtomKey(b), AtomKey(c), AtomKey(d)]
+            )
+        }
     }
 }
 
