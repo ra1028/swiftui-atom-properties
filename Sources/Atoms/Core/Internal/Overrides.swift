@@ -7,7 +7,6 @@ internal struct Overrides {
     @usableFromInline
     internal var _entriesForType = [AtomTypeKey: Override]()
 
-    @inlinable
     mutating func insert<Node: Atom>(
         _ atom: Node,
         with value: @escaping (Node) -> Node.Loader.Value
@@ -16,7 +15,6 @@ internal struct Overrides {
         _entriesForNode[key] = ConcreteOverride(value)
     }
 
-    @inlinable
     mutating func insert<Node: Atom>(
         _ atomType: Node.Type,
         with value: @escaping (Node) -> Node.Loader.Value
@@ -25,7 +23,6 @@ internal struct Overrides {
         _entriesForType[key] = ConcreteOverride(value)
     }
 
-    @inlinable
     func value<Node: Atom>(for atom: Node) -> Node.Loader.Value? {
         let baseOverride = _entriesForNode[AtomKey(atom)] ?? _entriesForType[AtomTypeKey(Node.self)]
 

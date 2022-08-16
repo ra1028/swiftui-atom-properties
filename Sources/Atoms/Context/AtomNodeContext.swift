@@ -5,10 +5,13 @@
 @MainActor
 public struct AtomNodeContext: AtomWatchableContext {
     @usableFromInline
-    internal let _box: _AnyAtomNodeContextBox
+    internal let _store: RootAtomStore
+    @usableFromInline
+    internal let _transaction: Transaction
 
-    internal init<Node: Atom>(atom: Node, store: RootAtomStore) {
-        _box = _AtomNodeContextBox(dependent: atom, store: store)
+    internal init(store: RootAtomStore, transaction: Transaction) {
+        _store = store
+        _transaction = transaction
     }
 
     /// Accesses the value associated with the given atom without watching to it.
@@ -27,7 +30,7 @@ public struct AtomNodeContext: AtomWatchableContext {
     /// - Returns: The value associated with the given atom.
     @inlinable
     public func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        _box.store.read(atom)
+        _store.read(atom)
     }
 
     /// Sets the new value for the given writable atom.
@@ -50,7 +53,7 @@ public struct AtomNodeContext: AtomWatchableContext {
     ///   - atom: An atom that associates the value.
     @inlinable
     public func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
-        _box.store.set(value, for: atom)
+        _store.set(value, for: atom)
     }
 
     /// Refreshes and then return the value associated with the given refreshable atom.
@@ -73,7 +76,7 @@ public struct AtomNodeContext: AtomWatchableContext {
     @inlinable
     @discardableResult
     public func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
-        await _box.store.refresh(atom)
+        await _store.refresh(atom)
     }
 
     /// Resets the value associated with the given atom, and then notify.
@@ -94,7 +97,7 @@ public struct AtomNodeContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     @inlinable
     public func reset<Node: Atom>(_ atom: Node) {
-        _box.store.reset(atom)
+        _store.reset(atom)
     }
 
     /// Accesses the value associated with the given atom for reading and initialing watch to
@@ -117,7 +120,7 @@ public struct AtomNodeContext: AtomWatchableContext {
     @inlinable
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        _box.watch(atom)
+        _store.watch(atom, in: _transaction)
     }
 
     /// Add the termination action that will be performed when the atom will no longer be watched to
@@ -142,7 +145,7 @@ public struct AtomNodeContext: AtomWatchableContext {
     /// - Parameter termination: A termination action.
     @inlinable
     public func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        _box.addTermination(termination)
+        _transaction.terminations.append(Termination(termination))
     }
 
     /// Add the given object to the storage that to be retained until the atom will no longer be watched
@@ -168,32 +171,5 @@ public struct AtomNodeContext: AtomWatchableContext {
     public func keepUntilTermination<Object: AnyObject>(_ object: Object) {
         let retainer = ObjectRetainer(object)
         addTermination(retainer.release)
-    }
-}
-
-@usableFromInline
-@MainActor
-internal protocol _AnyAtomNodeContextBox {
-    var store: RootAtomStore { get }
-
-    func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value
-    func addTermination(_ termination: @MainActor @escaping () -> Void)
-}
-
-@usableFromInline
-internal struct _AtomNodeContextBox<Dependent: Atom>: _AnyAtomNodeContextBox {
-    let dependent: Dependent
-
-    @usableFromInline
-    let store: RootAtomStore
-
-    @usableFromInline
-    func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        store.watch(atom, dependent: dependent)
-    }
-
-    @usableFromInline
-    func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        store.addTermination(for: dependent, termination)
     }
 }

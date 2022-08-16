@@ -1,50 +1,43 @@
 @MainActor
 public struct AtomLoaderContext<Value> {
     @usableFromInline
-    internal typealias _Update = @MainActor (_ value: Value, _ updatesDependentsOnNextRunLoop: Bool) -> Void
+    internal let _store: RootAtomStore
     @usableFromInline
-    internal typealias _AddTermination = @MainActor (_ termination: @MainActor @escaping () -> Void) -> Void
-
+    internal let _transaction: Transaction
     @usableFromInline
-    internal let _atomContext: AtomNodeContext
+    internal let _update: @MainActor (Value, Bool) -> Void
     @usableFromInline
-    internal let _update: _Update
-    @usableFromInline
-    internal let _addTermination: _AddTermination
-    @usableFromInline
-    internal let _commitPendingDependencies: () -> Void
+    internal let _commitTransaction: @MainActor (Transaction) -> Void
 
     internal init(
-        atomContext: AtomNodeContext,
-        commitPendingDependencies: @escaping () -> Void,
-        update: @escaping _Update,
-        addTermination: @escaping _AddTermination
+        store: RootAtomStore,
+        transaction: Transaction,
+        update: @escaping @MainActor (Value, Bool) -> Void,
+        commitTransaction: @escaping @MainActor (Transaction) -> Void
     ) {
-        _atomContext = atomContext
-        _commitPendingDependencies = commitPendingDependencies
+        _store = store
+        _transaction = transaction
         _update = update
-        _addTermination = addTermination
+        _commitTransaction = commitTransaction
     }
 
-    @inlinable
     internal func update(with value: Value, updatesDependentsOnNextRunLoop: Bool = false) {
         _update(value, updatesDependentsOnNextRunLoop)
     }
 
-    @inlinable
     internal func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        _addTermination(termination)
+        _transaction.terminations.append(Termination(termination))
     }
 
-    @inlinable
     internal func transaction<T>(_ body: @MainActor (AtomNodeContext) -> T) -> T {
-        defer { _commitPendingDependencies() }
-        return body(_atomContext)
+        let context = AtomNodeContext(store: _store, transaction: _transaction)
+        defer { _commitTransaction(_transaction) }
+        return body(context)
     }
 
-    @inlinable
     internal func transaction<T>(_ body: @MainActor (AtomNodeContext) async throws -> T) async rethrows -> T {
-        defer { _commitPendingDependencies() }
-        return try await body(_atomContext)
+        let context = AtomNodeContext(store: _store, transaction: _transaction)
+        defer { _commitTransaction(_transaction) }
+        return try await body(context)
     }
 }

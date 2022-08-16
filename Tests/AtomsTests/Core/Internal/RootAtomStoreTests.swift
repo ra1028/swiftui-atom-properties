@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class RootAtomStoreTests: XCTestCase {
-    func testComplexDependencies() async {
+    func testComplexDependencies() async throws {
         enum Phase {
             case first
             case second
@@ -55,35 +55,39 @@ final class RootAtomStoreTests: XCTestCase {
                 //   - second: [A, D | B]
                 //   - third:  [B | C, D]
                 switch phase {
-                    case .first:
-                        let a = context.watch(AAtom())
-                        let b = context.watch(BAtom())
-                        let c = context.watch(CAtom())
+                case .first:
+                    let a = context.watch(AAtom())
+                    let b = context.watch(BAtom())
+                    let c = context.watch(CAtom())
 
-                        pipe.continuation.yield()
-                        await pipe.stream.next()
+                    context.addTermination {}
 
-                        return a + b + c
+                    pipe.continuation.yield()
+                    await pipe.stream.next()
 
-                    case .second:
-                        let a = context.watch(AAtom())
-                        let d = context.watch(DAtom())
+                    return a + b + c
 
-                        pipe.continuation.yield()
-                        await pipe.stream.next()
+                case .second:
+                    let a = context.watch(AAtom())
+                    let d = context.watch(DAtom())
 
-                        let b = context.watch(BAtom())
-                        return a + d + b
+                    pipe.continuation.yield()
+                    await pipe.stream.next()
 
-                    case .third:
-                        let b = context.watch(BAtom())
+                    context.addTermination {}
 
-                        pipe.continuation.yield()
-                        await pipe.stream.next()
+                    let b = context.watch(BAtom())
+                    return a + d + b
 
-                        let c = context.watch(CAtom())
-                        let d = context.watch(DAtom())
-                        return b + c + d
+                case .third:
+                    let b = context.watch(BAtom())
+
+                    pipe.continuation.yield()
+                    await pipe.stream.next()
+
+                    let c = context.watch(CAtom())
+                    let d = context.watch(DAtom())
+                    return b + c + d
                 }
             }
         }
@@ -119,6 +123,9 @@ final class RootAtomStoreTests: XCTestCase {
                 store.graph.dependencies(for: AtomKey(atom)),
                 [AtomKey(phase), AtomKey(a), AtomKey(b), AtomKey(c)]
             )
+
+            // Should be 1 (TestAtom's Task cancellation + first phase)
+            XCTAssertEqual(store.state.terminations[AtomKey(atom)]?.count, 2)
         }
 
         do {
@@ -139,6 +146,9 @@ final class RootAtomStoreTests: XCTestCase {
                 store.graph.dependencies(for: AtomKey(atom)),
                 [AtomKey(phase), AtomKey(a), AtomKey(d), AtomKey(b)]
             )
+
+            // Should be 1 (TestAtom's Task cancellation + second phase)
+            XCTAssertEqual(store.state.terminations[AtomKey(atom)]?.count, 2)
         }
 
         do {
@@ -159,6 +169,9 @@ final class RootAtomStoreTests: XCTestCase {
                 store.graph.dependencies(for: AtomKey(atom)),
                 [AtomKey(phase), AtomKey(b), AtomKey(c), AtomKey(d)]
             )
+
+            // Should be 1 (TestAtom's Task cancellation)
+            XCTAssertEqual(store.state.terminations[AtomKey(atom)]?.count, 1)
         }
     }
 }

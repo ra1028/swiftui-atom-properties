@@ -31,11 +31,13 @@ extension RootAtomStore: AtomStore {
             return
         }
 
-        let context = AtomNodeContext(atom: atom, store: self)
+        let context = prepareTransaction(for: atom)
 
-        atom.willSet(newValue: value, oldValue: oldValue, context: context)
-        update(atom: atom, with: value)
-        atom.didSet(newValue: value, oldValue: oldValue, context: context)
+        context.transaction { context in
+            atom.willSet(newValue: value, oldValue: oldValue, context: context)
+            update(atom: atom, with: value)
+            atom.didSet(newValue: value, oldValue: oldValue, context: context)
+        }
     }
 
     @usableFromInline
@@ -54,7 +56,7 @@ extension RootAtomStore: AtomStore {
             // Remove subscription from the store.
             store?.state.removeSubscription(for: subscriptionKey, subscribedFor: key)
             // Release the atom if it is no longer watched to.
-            checkForRelease(for: key)
+            checkRelease(for: key)
         }
 
         registerIfAbsent(atom: atom)
@@ -69,32 +71,21 @@ extension RootAtomStore: AtomStore {
     }
 
     @usableFromInline
-    func watch<Node: Atom, Dependent: Atom>(
-        _ atom: Node,
-        dependent: Dependent
-    ) -> Node.Loader.Value {
-        guard let store = store else {
-            return getNewValue(of: atom)
-        }
-
+    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
         let key = AtomKey(atom)
-        let dependentKey = AtomKey(dependent)
 
         registerIfAbsent(atom: atom)
-        store.state.insert(pendingDependency: key, for: dependentKey)
-
+        transaction.dependencies.insert(key)
         return getValue(of: atom)
     }
 
     @usableFromInline
     func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         let key = AtomKey(atom)
-        let context = makeLoaderContext(for: atom)
+        let context = prepareTransaction(for: atom)
         let value: Node.Loader.Value
 
-        if let state = store?.state.atomState(for: key) {
-            state.terminate()
-        }
+        terminate(for: key)
 
         if let overrideValue = overrides?.value(for: atom) {
             value = await atom._loader.refresh(context: context, with: overrideValue)
@@ -116,7 +107,7 @@ extension RootAtomStore: AtomStore {
         let key = AtomKey(atom)
 
         state.value = nil
-        state.terminate()
+        terminate(for: key)
         notifyUpdate(for: key)
     }
 
@@ -131,17 +122,6 @@ extension RootAtomStore: AtomStore {
 }
 
 internal extension RootAtomStore {
-    @usableFromInline
-    func addTermination<Node: Atom>(for atom: Node, _ termination: @MainActor @escaping () -> Void) {
-        let key = AtomKey(atom)
-
-        guard let state = store?.state.atomState(for: key) else {
-            return termination()
-        }
-
-        state.addTermination(termination)
-    }
-
     @usableFromInline
     func renew<Node: Atom>(atom: Node) {
         let value = getNewValue(of: atom)
@@ -160,12 +140,15 @@ private extension RootAtomStore {
         self.observers = observers
     }
 
-    func makeLoaderContext<Node: Atom>(for atom: Node) -> AtomLoaderContext<Node.Loader.Value> {
-        AtomLoaderContext(
-            atomContext: AtomNodeContext(atom: atom, store: self),
-            commitPendingDependencies: {
-                commitPendingDependencies(for: atom)
-            },
+    func prepareTransaction<Node: Atom>(for atom: Node) -> AtomLoaderContext<Node.Loader.Value> {
+        let key = AtomKey(atom)
+        let transaction = Transaction()
+
+        store?.state.currentTransaction[key] = transaction
+
+        return AtomLoaderContext(
+            store: self,
+            transaction: transaction,
             update: { value, updatesDependentsOnNextRunLoop in
                 update(
                     atom: atom,
@@ -173,8 +156,8 @@ private extension RootAtomStore {
                     updatesDependentsOnNextRunLoop: updatesDependentsOnNextRunLoop
                 )
             },
-            addTermination: { termination in
-                addTermination(for: atom, termination)
+            commitTransaction: { transaction in
+                commitTransaction(transaction, for: atom)
             }
         )
     }
@@ -197,15 +180,17 @@ private extension RootAtomStore {
         }
     }
 
-    func commitPendingDependencies<Node: Atom>(for atom: Node) {
-        guard let store = store else {
+    func commitTransaction<Node: Atom>(_ transaction: Transaction, for atom: Node) {
+        guard let store = store, !transaction.isClosed else {
             return
         }
 
         let key = AtomKey(atom)
-        let dependencies = store.state.removePendingDependencies(for: key)
+        let dependencies = transaction.dependencies
         let oldDependencies = store.graph.removeDependencies(for: key)
         let obsoletedDependencies = oldDependencies.subtracting(dependencies)
+
+        store.state.terminations[key, default: []].append(contentsOf: transaction.terminations)
 
         for dependency in dependencies {
             store.graph.addEdge(for: dependency, to: key)
@@ -217,7 +202,7 @@ private extension RootAtomStore {
             store.graph.remove(child: key, for: dependency)
 
             // Release the upstream atoms as well.
-            checkForRelease(for: dependency)
+            checkRelease(for: dependency)
         }
     }
 
@@ -238,7 +223,7 @@ private extension RootAtomStore {
     }
 
     func getNewValue<Node: Atom>(of atom: Node) -> Node.Loader.Value {
-        let context = makeLoaderContext(for: atom)
+        let context = prepareTransaction(for: atom)
         let value: Node.Loader.Value
 
         if let overrideValue = overrides?.value(for: atom) {
@@ -293,7 +278,7 @@ private extension RootAtomStore {
         func notifyUpdateToDependents() {
             for child in store.graph.children(for: key) {
                 if let state = store.state.atomState(for: child) {
-                    state.terminate()
+                    terminate(for: child)
                     state.renew(with: self)
                 }
             }
@@ -335,7 +320,7 @@ private extension RootAtomStore {
         notifyChangesToObservers(of: atom, value: value)
     }
 
-    func checkForRelease(for key: AtomKey) {
+    func checkRelease(for key: AtomKey) {
         guard let store = store else {
             return
         }
@@ -359,24 +344,38 @@ private extension RootAtomStore {
             return
         }
 
-        if let state = store.state.removeAtomState(for: key) {
-            state.terminate()
-            state.notifyUnassigned(to: observers)
-        }
+        terminate(for: key)
 
+        let dependencies = store.graph.removeDependencies(for: key)
+        let state = store.state.removeAtomState(for: key)
         store.graph.removeChildren(for: key)
         store.state.removeSubscriptions(for: key)
 
-        let dependencies = store.graph.removeDependencies(for: key)
-        let pendeingDependencies = store.state.removePendingDependencies(for: key)
+        state?.notifyUnassigned(to: observers)
 
         // Recursively release dependencies.
-        for dependency in dependencies.union(pendeingDependencies) {
+        for dependency in dependencies {
             // Unlink this atom from the upstream atoms.
             store.graph.remove(child: key, for: dependency)
 
             // Release the upstream atoms as well.
-            checkForRelease(for: dependency)
+            checkRelease(for: dependency)
+        }
+    }
+
+    func terminate(for key: AtomKey) {
+        guard let store = store else {
+            return
+        }
+
+        let transaction = store.state.currentTransaction.removeValue(forKey: key)
+        let terminations = store.state.terminations.removeValue(forKey: key) ?? []
+        let uncommitedTerminations = transaction?.terminations ?? []
+
+        transaction?.close()
+
+        for termination in terminations + uncommitedTerminations {
+            termination()
         }
     }
 

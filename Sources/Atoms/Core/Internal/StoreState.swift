@@ -2,7 +2,8 @@
 internal struct StoreState {
     private var atomStates = [AtomKey: AtomState]()
     private var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
-    private var pendingDependencies = [AtomKey: Set<AtomKey>]()
+    var terminations = [AtomKey: ContiguousArray<Termination>]()
+    var currentTransaction = [AtomKey: Transaction]()
 
     nonisolated init() {}
 
@@ -33,21 +34,12 @@ internal struct StoreState {
         subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriptionKey)
     }
 
-    mutating func insert(pendingDependency dependency: AtomKey, for key: AtomKey) {
-        pendingDependencies[key, default: []].insert(dependency)
-    }
-
     mutating func removeSubscription(for subscriptionKey: SubscriptionKey, subscribedFor key: AtomKey) {
         subscriptions[key]?.removeValue(forKey: subscriptionKey)
     }
 
     mutating func removeSubscriptions(for key: AtomKey) {
         subscriptions.removeValue(forKey: key)
-    }
-
-    @discardableResult
-    mutating func removePendingDependencies(for key: AtomKey) -> Set<AtomKey> {
-        pendingDependencies.removeValue(forKey: key) ?? []
     }
 
     @discardableResult
