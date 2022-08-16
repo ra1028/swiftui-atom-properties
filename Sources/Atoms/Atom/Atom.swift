@@ -13,7 +13,7 @@ public protocol Atom {
 
     /// A type of the context structure that to read, watch, and otherwise interacting
     /// with other atoms.
-    typealias Context = AtomNodeContext
+    typealias Context = AtomTransactionContext
 
     /// A boolean value indicating whether the atom value should be preserved even if
     /// no longer watched to.

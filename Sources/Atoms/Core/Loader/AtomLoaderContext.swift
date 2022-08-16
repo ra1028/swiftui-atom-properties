@@ -29,14 +29,14 @@ public struct AtomLoaderContext<Value> {
         _transaction.terminations.append(Termination(termination))
     }
 
-    internal func transaction<T>(_ body: @MainActor (AtomNodeContext) -> T) -> T {
-        let context = AtomNodeContext(store: _store, transaction: _transaction)
+    internal func transaction<T>(_ body: @MainActor (AtomTransactionContext) -> T) -> T {
+        let context = AtomTransactionContext(store: _store, transaction: _transaction)
         defer { _commitTransaction(_transaction) }
         return body(context)
     }
 
-    internal func transaction<T>(_ body: @MainActor (AtomNodeContext) async throws -> T) async rethrows -> T {
-        let context = AtomNodeContext(store: _store, transaction: _transaction)
+    internal func transaction<T>(_ body: @MainActor (AtomTransactionContext) async throws -> T) async rethrows -> T {
+        let context = AtomTransactionContext(store: _store, transaction: _transaction)
         defer { _commitTransaction(_transaction) }
         return try await body(context)
     }

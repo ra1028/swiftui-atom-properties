@@ -1,9 +1,9 @@
 public struct ValueAtomLoader<T>: AtomLoader {
     public typealias Value = T
 
-    private let getValue: @MainActor (AtomNodeContext) -> T
+    private let getValue: @MainActor (AtomTransactionContext) -> T
 
-    internal init(getValue: @MainActor @escaping (AtomNodeContext) -> T) {
+    internal init(getValue: @MainActor @escaping (AtomTransactionContext) -> T) {
         self.getValue = getValue
     }
 

@@ -3,14 +3,14 @@ import XCTest
 @testable import Atoms
 
 @MainActor
-final class AtomNodeContextTests: XCTestCase {
+final class AtomTransactionContextTests: XCTestCase {
     //    func testAddTermination() {
     //        let atom = TestValueAtom(value: 100)
     //        let storeContainer = StoreContainer()
     //        let store = Store(container: storeContainer)
     //        let relationshipContainer = RelationshipContainer()
     //        let relationship = Relationship(container: relationshipContainer)
-    //        let context = AtomNodeContext(atom: atom, store: store)
+    //        let context = AtomTransactionContext(atom: atom, store: store)
     //        var terminationCount0 = 0
     //        var terminationCount1 = 0
     //
@@ -35,7 +35,7 @@ final class AtomNodeContextTests: XCTestCase {
     //        let store = Store(container: storeContainer)
     //        let relationshipContainer = RelationshipContainer()
     //        let relationship = Relationship(container: relationshipContainer)
-    //        let context = AtomNodeContext(atom: atom, store: store)
+    //        let context = AtomTransactionContext(atom: atom, store: store)
     //        var object: Object? = Object()
     //        var isDeinitialized = false
     //
@@ -60,7 +60,7 @@ final class AtomNodeContextTests: XCTestCase {
     //        let store = Store(container: storeContainer)
     //        let relationshipContainer = RelationshipContainer()
     //        let relationship = Relationship(container: relationshipContainer)
-    //        let context = AtomNodeContext(atom: atom, store: store)
+    //        let context = AtomTransactionContext(atom: atom, store: store)
     //        var updateCount = 0
     //
     //        _ = store.watch(atom, relationship: relationship) {
@@ -80,7 +80,7 @@ final class AtomNodeContextTests: XCTestCase {
     //        let atom = TestValueAtom(value: 100)
     //        let storeContainer = StoreContainer()
     //        let store = Store(container: storeContainer)
-    //        let context = AtomNodeContext(atom: atom, store: store)
+    //        let context = AtomTransactionContext(atom: atom, store: store)
     //
     //        XCTAssertEqual(context.read(atom), 100)
     //    }
@@ -92,7 +92,7 @@ final class AtomNodeContextTests: XCTestCase {
     //        let store = Store(container: storeContainer)
     //        let relationshipContainer = RelationshipContainer()
     //        let relationship = Relationship(container: relationshipContainer)
-    //        let context = AtomNodeContext(atom: atom0, store: store)
+    //        let context = AtomTransactionContext(atom: atom0, store: store)
     //        var updateCount = 0
     //
     //        _ = store.watch(atom0, relationship: relationship) {
@@ -114,7 +114,7 @@ final class AtomNodeContextTests: XCTestCase {
     //        let store = Store(container: storeContainer)
     //        let relationshipContainer = RelationshipContainer()
     //        let relationship = Relationship(container: relationshipContainer)
-    //        let context = AtomNodeContext(atom: atom, store: store)
+    //        let context = AtomTransactionContext(atom: atom, store: store)
     //        var updateCount = 0
     //
     //        _ = store.watch(atom, relationship: relationship) {
@@ -133,7 +133,7 @@ final class AtomNodeContextTests: XCTestCase {
     //        let store = Store(container: storeContainer)
     //        let relationshipContainer = RelationshipContainer()
     //        let relationship = Relationship(container: relationshipContainer)
-    //        let context = AtomNodeContext(atom: atom, store: store)
+    //        let context = AtomTransactionContext(atom: atom, store: store)
     //        var updateCount = 0
     //
     //        _ = store.watch(atom, relationship: relationship) {

@@ -3,7 +3,7 @@
 /// Through this context, watching of an atom is initiated, and when that atom is updated,
 /// the value of the atom to which this context is provided will be updated transitively.
 @MainActor
-public struct AtomNodeContext: AtomWatchableContext {
+public struct AtomTransactionContext: AtomWatchableContext {
     @usableFromInline
     internal let _store: RootAtomStore
     @usableFromInline
@@ -39,7 +39,7 @@ public struct AtomNodeContext: AtomWatchableContext {
     /// and assign a new value for the atom.
     /// When you assign a new value, it notifies update immediately to downstream atoms or views.
     ///
-    /// - SeeAlso: ``AtomNodeContext/subscript``
+    /// - SeeAlso: ``AtomTransactionContext/subscript``
     ///
     /// ```swift
     /// let context = ...

@@ -1,9 +1,9 @@
 public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomLoader {
     public typealias Value = AsyncPhase<Sequence.Element, Error>
 
-    private let makeSequence: @MainActor (AtomNodeContext) -> Sequence
+    private let makeSequence: @MainActor (AtomTransactionContext) -> Sequence
 
-    internal init(makeSequence: @MainActor @escaping (AtomNodeContext) -> Sequence) {
+    internal init(makeSequence: @MainActor @escaping (AtomTransactionContext) -> Sequence) {
         self.makeSequence = makeSequence
     }
 

@@ -2,9 +2,9 @@ public struct TaskAtomLoader<Success>: AsyncAtomLoader {
     public typealias Failure = Never
     public typealias Value = Task<Success, Failure>
 
-    private let getValue: @MainActor (AtomNodeContext) async -> Success
+    private let getValue: @MainActor (AtomTransactionContext) async -> Success
 
-    internal init(getValue: @MainActor @escaping (AtomNodeContext) async -> Success) {
+    internal init(getValue: @MainActor @escaping (AtomTransactionContext) async -> Success) {
         self.getValue = getValue
     }
 

@@ -108,7 +108,7 @@ public extension AtomContext {
 /// A context structure that to read, watch, and otherwise interacting with atoms.
 ///
 /// - SeeAlso: ``AtomViewContext``
-/// - SeeAlso: ``AtomNodeContext``
+/// - SeeAlso: ``AtomTransactionContext``
 /// - SeeAlso: ``AtomTestContext``
 @MainActor
 public protocol AtomWatchableContext: AtomContext {

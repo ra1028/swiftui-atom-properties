@@ -120,7 +120,7 @@ final class RootAtomStoreTests: XCTestCase {
             XCTAssertEqual(firstValue, 0)
             XCTAssertFalse(store.graph.hasChildren(for: AtomKey(d)))
             XCTAssertEqual(
-                store.graph.dependencies(for: AtomKey(atom)),
+                store.graph.dependencies[AtomKey(atom)],
                 [AtomKey(phase), AtomKey(a), AtomKey(b), AtomKey(c)]
             )
 
@@ -143,7 +143,7 @@ final class RootAtomStoreTests: XCTestCase {
             XCTAssertEqual(secondValue, 1)
             XCTAssertFalse(store.graph.hasChildren(for: AtomKey(c)))
             XCTAssertEqual(
-                store.graph.dependencies(for: AtomKey(atom)),
+                store.graph.dependencies[AtomKey(atom)],
                 [AtomKey(phase), AtomKey(a), AtomKey(d), AtomKey(b)]
             )
 
@@ -166,7 +166,7 @@ final class RootAtomStoreTests: XCTestCase {
             XCTAssertEqual(thirdValue, 3)
             XCTAssertFalse(store.graph.hasChildren(for: AtomKey(a)))
             XCTAssertEqual(
-                store.graph.dependencies(for: AtomKey(atom)),
+                store.graph.dependencies[AtomKey(atom)],
                 [AtomKey(phase), AtomKey(b), AtomKey(c), AtomKey(d)]
             )
 

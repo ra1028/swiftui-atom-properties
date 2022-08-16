@@ -3,9 +3,9 @@ import Combine
 public struct PublisherAtomLoader<Publisher: Combine.Publisher>: RefreshableAtomLoader {
     public typealias Value = AsyncPhase<Publisher.Output, Publisher.Failure>
 
-    private let makePublisher: @MainActor (AtomNodeContext) -> Publisher
+    private let makePublisher: @MainActor (AtomTransactionContext) -> Publisher
 
-    internal init(makePublisher: @MainActor @escaping (AtomNodeContext) -> Publisher) {
+    internal init(makePublisher: @MainActor @escaping (AtomTransactionContext) -> Publisher) {
         self.makePublisher = makePublisher
     }
 

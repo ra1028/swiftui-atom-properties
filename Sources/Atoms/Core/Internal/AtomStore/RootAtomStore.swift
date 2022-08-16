@@ -54,7 +54,7 @@ extension RootAtomStore: AtomStore {
         let subscriptionKey = container.key
         let subscription = Subscription(notifyUpdate: notifyUpdate) { [weak store] in
             // Remove subscription from the store.
-            store?.state.removeSubscription(for: subscriptionKey, subscribedFor: key)
+            store?.state.subscriptions[key]?.removeValue(forKey: subscriptionKey)
             // Release the atom if it is no longer watched to.
             checkRelease(for: key)
         }
@@ -65,7 +65,7 @@ extension RootAtomStore: AtomStore {
         container.insert(subscription: subscription, for: key)
 
         // Assign subscription to the store.
-        store.state.insert(subscription: subscription, for: subscriptionKey, subscribeFor: key)
+        store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriptionKey)
 
         return getValue(of: atom)
     }
@@ -187,7 +187,7 @@ private extension RootAtomStore {
 
         let key = AtomKey(atom)
         let dependencies = transaction.dependencies
-        let oldDependencies = store.graph.removeDependencies(for: key)
+        let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
         let obsoletedDependencies = oldDependencies.subtracting(dependencies)
 
         store.state.terminations[key, default: []].append(contentsOf: transaction.terminations)
@@ -196,12 +196,8 @@ private extension RootAtomStore {
             store.graph.addEdge(for: dependency, to: key)
         }
 
-        // Recursively release dependencies.
         for dependency in obsoletedDependencies {
-            // Unlink this atom from the upstream atoms.
-            store.graph.remove(child: key, for: dependency)
-
-            // Release the upstream atoms as well.
+            store.graph.children[dependency]?.remove(key)
             checkRelease(for: dependency)
         }
     }
@@ -240,7 +236,7 @@ private extension RootAtomStore {
     func getCachedState<Node: Atom>(of atom: Node) -> ConcreteAtomState<Node>? {
         let key = AtomKey(atom)
 
-        guard let baseState = store?.state.atomState(for: key) else {
+        guard let baseState = store?.state.atomStates[key] else {
             return nil
         }
 
@@ -270,16 +266,20 @@ private extension RootAtomStore {
         }
 
         // Notifying update for view subscriptions takes precedence.
-        for subscription in store.state.subscriptions(for: key) {
-            subscription.notifyUpdate()
+        if let subscriptions = store.state.subscriptions[key].map({ ContiguousArray($0.values) }) {
+            for subscription in subscriptions {
+                subscription.notifyUpdate()
+            }
         }
 
         // Notify update to downstream atoms.
         func notifyUpdateToDependents() {
-            for child in store.graph.children(for: key) {
-                if let state = store.state.atomState(for: child) {
-                    terminate(for: child)
-                    state.renew(with: self)
+            if let children = store.graph.children[key] {
+                for child in children {
+                    if let state = store.state.atomStates[child] {
+                        terminate(for: child)
+                        state.renew(with: self)
+                    }
                 }
             }
         }
@@ -326,7 +326,7 @@ private extension RootAtomStore {
         }
 
         // Do not release atoms marked as `KeepAlive`.
-        let shouldKeepAlive = store.state.atomState(for: key)?.shouldKeepAlive ?? false
+        let shouldKeepAlive = store.state.atomStates[key]?.shouldKeepAlive ?? false
         let shouldRelease =
             !shouldKeepAlive
             && !store.graph.hasChildren(for: key)
@@ -346,19 +346,16 @@ private extension RootAtomStore {
 
         terminate(for: key)
 
-        let dependencies = store.graph.removeDependencies(for: key)
-        let state = store.state.removeAtomState(for: key)
-        store.graph.removeChildren(for: key)
-        store.state.removeSubscriptions(for: key)
+        let dependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
+        let state = store.state.atomStates.removeValue(forKey: key)
+        store.graph.children.removeValue(forKey: key)
+        store.state.subscriptions.removeValue(forKey: key)
 
         state?.notifyUnassigned(to: observers)
 
         // Recursively release dependencies.
         for dependency in dependencies {
-            // Unlink this atom from the upstream atoms.
-            store.graph.remove(child: key, for: dependency)
-
-            // Release the upstream atoms as well.
+            store.graph.children[dependency]?.remove(key)
             checkRelease(for: dependency)
         }
     }

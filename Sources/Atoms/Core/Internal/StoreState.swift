@@ -1,22 +1,17 @@
 @MainActor
 internal struct StoreState {
-    private var atomStates = [AtomKey: AtomState]()
-    private var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
+    var atomStates = [AtomKey: AtomState]()
+    var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
     var terminations = [AtomKey: ContiguousArray<Termination>]()
     var currentTransaction = [AtomKey: Transaction]()
 
     nonisolated init() {}
 
     func hasSubscriptions(for key: AtomKey) -> Bool {
-        subscriptions[key].map { !$0.isEmpty } ?? false
-    }
-
-    func subscriptions(for key: AtomKey) -> ContiguousArray<Subscription> {
-        subscriptions[key].map { ContiguousArray($0.values) } ?? []
-    }
-
-    func atomState(for key: AtomKey) -> AtomState? {
-        atomStates[key]
+        guard let subscriptions = subscriptions[key] else {
+            return false
+        }
+        return !subscriptions.isEmpty
     }
 
     mutating func addAtomStateIfAbsent(for key: AtomKey, _ makeAtomState: () -> AtomState) -> Bool {
@@ -28,22 +23,5 @@ internal struct StoreState {
             pointer.pointee = makeAtomState()
             return true
         }
-    }
-
-    mutating func insert(subscription: Subscription, for subscriptionKey: SubscriptionKey, subscribeFor key: AtomKey) {
-        subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriptionKey)
-    }
-
-    mutating func removeSubscription(for subscriptionKey: SubscriptionKey, subscribedFor key: AtomKey) {
-        subscriptions[key]?.removeValue(forKey: subscriptionKey)
-    }
-
-    mutating func removeSubscriptions(for key: AtomKey) {
-        subscriptions.removeValue(forKey: key)
-    }
-
-    @discardableResult
-    mutating func removeAtomState(for key: AtomKey) -> AtomState? {
-        atomStates.removeValue(forKey: key)
     }
 }

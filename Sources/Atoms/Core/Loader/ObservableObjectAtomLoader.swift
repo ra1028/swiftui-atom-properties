@@ -4,9 +4,9 @@ import Foundation
 public struct ObservableObjectAtomLoader<ObjectType: ObservableObject>: AtomLoader {
     public typealias Value = ObjectType
 
-    private let makeObject: @MainActor (AtomNodeContext) -> ObjectType
+    private let makeObject: @MainActor (AtomTransactionContext) -> ObjectType
 
-    internal init(makeObject: @MainActor @escaping (AtomNodeContext) -> ObjectType) {
+    internal init(makeObject: @MainActor @escaping (AtomTransactionContext) -> ObjectType) {
         self.makeObject = makeObject
     }
 
