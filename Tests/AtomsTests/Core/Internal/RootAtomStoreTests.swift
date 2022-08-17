@@ -118,7 +118,7 @@ final class RootAtomStoreTests: XCTestCase {
             let value = await watch()
 
             XCTAssertEqual(value, 0)
-            XCTAssertFalse(store.graph.hasChildren(for: AtomKey(d)))
+            XCTAssertNil(store.graph.children[AtomKey(d)])
             XCTAssertEqual(
                 store.graph.dependencies[AtomKey(atom)],
                 [AtomKey(phase), AtomKey(a), AtomKey(b), AtomKey(c)]
@@ -148,7 +148,7 @@ final class RootAtomStoreTests: XCTestCase {
 
             XCTAssertEqual(before, 0)
             XCTAssertEqual(after, 1)
-            XCTAssertFalse(store.graph.hasChildren(for: AtomKey(c)))
+            XCTAssertNil(store.graph.children[AtomKey(c)])
             XCTAssertEqual(
                 store.graph.dependencies[AtomKey(atom)],
                 [AtomKey(phase), AtomKey(a), AtomKey(d), AtomKey(b)]
@@ -177,7 +177,7 @@ final class RootAtomStoreTests: XCTestCase {
 
             XCTAssertEqual(before, 1)
             XCTAssertEqual(after, 3)
-            XCTAssertFalse(store.graph.hasChildren(for: AtomKey(a)))
+            XCTAssertNil(store.graph.children[AtomKey(a)])
             XCTAssertEqual(
                 store.graph.dependencies[AtomKey(atom)],
                 [AtomKey(phase), AtomKey(b), AtomKey(c), AtomKey(d)]

@@ -12,7 +12,7 @@ internal struct Overrides {
         with value: @escaping (Node) -> Node.Loader.Value
     ) {
         let key = AtomKey(atom)
-        _entriesForNode[key] = ConcreteOverride(value)
+        _entriesForNode[key] = ConcreteOverride(value: value)
     }
 
     mutating func insert<Node: Atom>(
@@ -20,7 +20,7 @@ internal struct Overrides {
         with value: @escaping (Node) -> Node.Loader.Value
     ) {
         let key = AtomTypeKey(atomType)
-        _entriesForType[key] = ConcreteOverride(value)
+        _entriesForType[key] = ConcreteOverride(value: value)
     }
 
     func value<Node: Atom>(for atom: Node) -> Node.Loader.Value? {
@@ -44,7 +44,7 @@ internal struct Overrides {
             return nil
         }
 
-        return override.value(for: atom)
+        return override.value(atom)
     }
 }
 
@@ -54,15 +54,5 @@ internal protocol Override {}
 
 @usableFromInline
 internal struct ConcreteOverride<Node: Atom>: Override {
-    private let value: (Node) -> Node.Loader.Value
-
-    @usableFromInline
-    init(_ value: @escaping (Node) -> Node.Loader.Value) {
-        self.value = value
-    }
-
-    @usableFromInline
-    func value(for atom: Node) -> Node.Loader.Value {
-        value(atom)
-    }
+    let value: (Node) -> Node.Loader.Value
 }

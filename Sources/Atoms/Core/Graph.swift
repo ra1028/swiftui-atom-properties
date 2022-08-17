@@ -8,13 +8,6 @@ internal struct Graph {
 
     nonisolated init() {}
 
-    func hasChildren(for key: AtomKey) -> Bool {
-        guard let children = children[key] else {
-            return false
-        }
-        return !children.isEmpty
-    }
-
     mutating func addEdge(for key: AtomKey, to child: AtomKey) {
         children[key, default: []].insert(child)
         dependencies[child, default: []].insert(key)

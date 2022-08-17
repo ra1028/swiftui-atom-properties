@@ -1,6 +1,6 @@
 @usableFromInline
 internal struct AtomTypeKey: Hashable, CustomStringConvertible {
-    private let typeIdentifier: ObjectIdentifier
+    private let identifier: ObjectIdentifier
     private let getDescription: () -> String
 
     @usableFromInline
@@ -10,17 +10,17 @@ internal struct AtomTypeKey: Hashable, CustomStringConvertible {
 
     @usableFromInline
     func hash(into hasher: inout Hasher) {
-        hasher.combine(typeIdentifier)
+        hasher.combine(identifier)
     }
 
     @usableFromInline
     static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.typeIdentifier == rhs.typeIdentifier
+        lhs.identifier == rhs.identifier
     }
 
     @usableFromInline
     init<Node: Atom>(_: Node.Type) {
-        typeIdentifier = ObjectIdentifier(Node.self)
+        identifier = ObjectIdentifier(Node.self)
         getDescription = {
             String(describing: Node.self)
         }
