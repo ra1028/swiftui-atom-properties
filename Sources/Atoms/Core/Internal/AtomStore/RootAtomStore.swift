@@ -71,21 +71,9 @@ extension RootAtomStore: AtomStore {
     }
 
     @usableFromInline
-    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
-        let key = AtomKey(atom)
-
-        registerIfAbsent(atom: atom)
-        transaction.dependencies.insert(key)
-        return getValue(of: atom)
-    }
-
-    @usableFromInline
     func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
-        let key = AtomKey(atom)
         let context = prepareTransaction(for: atom)
         let value: Node.Loader.Value
-
-        terminate(for: key)
 
         if let overrideValue = overrides?.value(for: atom) {
             value = await atom._loader.refresh(context: context, with: overrideValue)
@@ -107,7 +95,7 @@ extension RootAtomStore: AtomStore {
         let key = AtomKey(atom)
 
         state.value = nil
-        terminate(for: key)
+        state.terminate()
         notifyUpdate(for: key)
     }
 
@@ -123,10 +111,35 @@ extension RootAtomStore: AtomStore {
 
 internal extension RootAtomStore {
     @usableFromInline
+    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
+        guard !transaction.isTerminated, let store = store else {
+            return getNewValue(of: atom)
+        }
+
+        let dependencyKey = AtomKey(atom)
+
+        registerIfAbsent(atom: atom)
+
+        store.graph.addEdge(for: dependencyKey, to: transaction.key)
+
+        return getValue(of: atom)
+    }
+
+    @usableFromInline
+    func addTermination(_ termination: Termination, in transaction: Transaction) {
+        guard !transaction.isTerminated, let state = store?.state.atomStates[transaction.key] else {
+            return termination()
+        }
+
+        state.terminations.append(termination)
+    }
+
+    @usableFromInline
     func renew<Node: Atom>(atom: Node) {
         let value = getNewValue(of: atom)
         update(atom: atom, with: value)
     }
+
 }
 
 private extension RootAtomStore {
@@ -138,28 +151,6 @@ private extension RootAtomStore {
         self.store = store
         self.overrides = overrides
         self.observers = observers
-    }
-
-    func prepareTransaction<Node: Atom>(for atom: Node) -> AtomLoaderContext<Node.Loader.Value> {
-        let key = AtomKey(atom)
-        let transaction = Transaction()
-
-        store?.state.currentTransaction[key] = transaction
-
-        return AtomLoaderContext(
-            store: self,
-            transaction: transaction,
-            update: { value, updatesDependentsOnNextRunLoop in
-                update(
-                    atom: atom,
-                    with: value,
-                    updatesDependentsOnNextRunLoop: updatesDependentsOnNextRunLoop
-                )
-            },
-            commitTransaction: { transaction in
-                commitTransaction(transaction, for: atom)
-            }
-        )
     }
 
     func registerIfAbsent<Node: Atom>(atom: Node) {
@@ -180,25 +171,21 @@ private extension RootAtomStore {
         }
     }
 
-    func commitTransaction<Node: Atom>(_ transaction: Transaction, for atom: Node) {
-        guard let store = store, !transaction.isClosed else {
-            return
-        }
-
+    /// Returns a loader context that will not accept subsequent operations to the store when terminated.
+    func prepareTransaction<Node: Atom>(for atom: Node) -> AtomLoaderContext<Node.Loader.Value> {
         let key = AtomKey(atom)
-        let dependencies = transaction.dependencies
-        let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
-        let obsoletedDependencies = oldDependencies.subtracting(dependencies)
+        let oldDependencies = terminate(for: key)
+        let transaction = Transaction(key: key) {
+            let dependencies = store?.graph.dependencies[key] ?? []
+            let obsoletedDependencies = oldDependencies.subtracting(dependencies)
 
-        store.state.terminations[key, default: []].append(contentsOf: transaction.terminations)
-
-        for dependency in dependencies {
-            store.graph.addEdge(for: dependency, to: key)
+            checkReleaseDependencies(obsoletedDependencies, for: key)
         }
 
-        for dependency in obsoletedDependencies {
-            store.graph.children[dependency]?.remove(key)
-            checkRelease(for: dependency)
+        store?.state.currentTransaction[key] = transaction
+
+        return AtomLoaderContext(store: self, transaction: transaction) { value, updatesDependentsOnNextRunLoop in
+            update(atom: atom, with: value, updatesDependentsOnNextRunLoop: updatesDependentsOnNextRunLoop)
         }
     }
 
@@ -277,7 +264,6 @@ private extension RootAtomStore {
             if let children = store.graph.children[key] {
                 for child in children {
                     if let state = store.state.atomStates[child] {
-                        terminate(for: child)
                         state.renew(with: self)
                     }
                 }
@@ -344,14 +330,20 @@ private extension RootAtomStore {
             return
         }
 
-        terminate(for: key)
-
-        let dependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
+        let dependencies = terminate(for: key)
         let state = store.state.atomStates.removeValue(forKey: key)
+
         store.graph.children.removeValue(forKey: key)
         store.state.subscriptions.removeValue(forKey: key)
-
         state?.notifyUnassigned(to: observers)
+
+        checkReleaseDependencies(dependencies, for: key)
+    }
+
+    func checkReleaseDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey) {
+        guard let store = store else {
+            return
+        }
 
         // Recursively release dependencies.
         for dependency in dependencies {
@@ -360,20 +352,23 @@ private extension RootAtomStore {
         }
     }
 
-    func terminate(for key: AtomKey) {
+    /// Terminates an atom associated with the given key bye the following steps.
+    ///
+    /// 1. Run all termination processes of the atom.
+    /// 2. Remove the current transaction and mark it as terminated.
+    /// 3. Temporarily remove the dependencies.
+    func terminate(for key: AtomKey) -> Set<AtomKey> {
         guard let store = store else {
-            return
+            return []
         }
 
-        let transaction = store.state.currentTransaction.removeValue(forKey: key)
-        let terminations = store.state.terminations.removeValue(forKey: key) ?? []
-        let uncommitedTerminations = transaction?.terminations ?? []
-
-        transaction?.close()
-
-        for termination in terminations + uncommitedTerminations {
-            termination()
-        }
+        // Terminate the atom state but do not release it so it can maintain the value.
+        store.state.atomStates[key]?.terminate()
+        // Remove the current transaction and then terminate to prevent current transaction
+        // to watch new values or add terminations.
+        store.state.currentTransaction.removeValue(forKey: key)?.terminate()
+        // Remove dependencies but do not release them recursively.
+        return store.graph.dependencies.removeValue(forKey: key) ?? []
     }
 
     func notifyChangesToObservers<Node: Atom>(of atom: Node, value: Node.Loader.Value) {

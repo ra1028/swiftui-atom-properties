@@ -13,10 +13,6 @@ internal struct DefaultAtomStore: AtomStore {
         store.set(value, for: atom)
     }
 
-    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
-        store.watch(atom, in: transaction)
-    }
-
     func watch<Node: Atom>(
         _ atom: Node,
         container: SubscriptionContainer.Wrapper,

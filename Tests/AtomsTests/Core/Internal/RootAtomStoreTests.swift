@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class RootAtomStoreTests: XCTestCase {
-    func testComplexDependencies() async throws {
+    func testComplexDependencies() async {
         enum Phase {
             case first
             case second
@@ -53,7 +53,7 @@ final class RootAtomStoreTests: XCTestCase {
                 // - Dependencies (`|` means a suspention point)
                 //   - first:  [A, B, C |]
                 //   - second: [A, D | B]
-                //   - third:  [B | C, D]
+                //   - third:  [B, D | C]
                 switch phase {
                 case .first:
                     let a = context.watch(AAtom())
@@ -81,12 +81,12 @@ final class RootAtomStoreTests: XCTestCase {
 
                 case .third:
                     let b = context.watch(BAtom())
+                    let d = context.watch(DAtom())
 
                     pipe.continuation.yield()
                     await pipe.stream.next()
 
                     let c = context.watch(CAtom())
-                    let d = context.watch(DAtom())
                     return b + c + d
                 }
             }
@@ -115,9 +115,9 @@ final class RootAtomStoreTests: XCTestCase {
                 pipe.continuation.yield()
             }
 
-            let firstValue = await watch()
+            let value = await watch()
 
-            XCTAssertEqual(firstValue, 0)
+            XCTAssertEqual(value, 0)
             XCTAssertFalse(store.graph.hasChildren(for: AtomKey(d)))
             XCTAssertEqual(
                 store.graph.dependencies[AtomKey(atom)],
@@ -125,7 +125,10 @@ final class RootAtomStoreTests: XCTestCase {
             )
 
             // Should be 1 (TestAtom's Task cancellation + first phase)
-            XCTAssertEqual(store.state.terminations[AtomKey(atom)]?.count, 2)
+            XCTAssertEqual(
+                2,
+                store.state.atomStates[AtomKey(atom)]?.terminations.count
+            )
         }
 
         do {
@@ -133,14 +136,18 @@ final class RootAtomStoreTests: XCTestCase {
 
             Task {
                 await pipe.stream.next()
-                atomStore.set(1, for: b)
+                atomStore.set(1, for: d)
                 pipe.continuation.yield()
             }
 
+            pipe.reset()
             atomStore.set(.second, for: phase)
-            let secondValue = await watch()
 
-            XCTAssertEqual(secondValue, 1)
+            let before = await watch()
+            let after = await watch()
+
+            XCTAssertEqual(before, 0)
+            XCTAssertEqual(after, 1)
             XCTAssertFalse(store.graph.hasChildren(for: AtomKey(c)))
             XCTAssertEqual(
                 store.graph.dependencies[AtomKey(atom)],
@@ -148,7 +155,10 @@ final class RootAtomStoreTests: XCTestCase {
             )
 
             // Should be 1 (TestAtom's Task cancellation + second phase)
-            XCTAssertEqual(store.state.terminations[AtomKey(atom)]?.count, 2)
+            XCTAssertEqual(
+                2,
+                store.state.atomStates[AtomKey(atom)]?.terminations.count
+            )
         }
 
         do {
@@ -156,14 +166,17 @@ final class RootAtomStoreTests: XCTestCase {
 
             Task {
                 await pipe.stream.next()
-                atomStore.set(2, for: d)
+                atomStore.set(2, for: b)
                 pipe.continuation.yield()
             }
 
+            pipe.reset()
             atomStore.set(.third, for: phase)
-            let thirdValue = await watch()
+            let before = await watch()
+            let after = await watch()
 
-            XCTAssertEqual(thirdValue, 3)
+            XCTAssertEqual(before, 1)
+            XCTAssertEqual(after, 3)
             XCTAssertFalse(store.graph.hasChildren(for: AtomKey(a)))
             XCTAssertEqual(
                 store.graph.dependencies[AtomKey(atom)],
@@ -171,7 +184,10 @@ final class RootAtomStoreTests: XCTestCase {
             )
 
             // Should be 1 (TestAtom's Task cancellation)
-            XCTAssertEqual(store.state.terminations[AtomKey(atom)]?.count, 1)
+            XCTAssertEqual(
+                1,
+                store.state.atomStates[AtomKey(atom)]?.terminations.count
+            )
         }
     }
 }

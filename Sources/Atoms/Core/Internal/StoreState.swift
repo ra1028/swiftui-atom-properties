@@ -2,7 +2,6 @@
 internal struct StoreState {
     var atomStates = [AtomKey: AtomState]()
     var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
-    var terminations = [AtomKey: ContiguousArray<Termination>]()
     var currentTransaction = [AtomKey: Transaction]()
 
     nonisolated init() {}

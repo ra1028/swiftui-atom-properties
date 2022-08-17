@@ -1,14 +1,24 @@
 @usableFromInline
 @MainActor
 internal final class Transaction {
-    @usableFromInline
-    var dependencies = Set<AtomKey>()
-    @usableFromInline
-    var terminations = ContiguousArray<Termination>()
-    @usableFromInline
-    private(set) var isClosed = false
+    private var _commit: (() -> Void)?
 
-    func close() {
-        isClosed = true
+    let key: AtomKey
+
+    private(set) var isTerminated = false
+
+    init(key: AtomKey, commit: @escaping () -> Void) {
+        self.key = key
+        self._commit = commit
+    }
+
+    func commit() {
+        _commit?()
+        _commit = nil
+    }
+
+    func terminate() {
+        commit()
+        isTerminated = true
     }
 }

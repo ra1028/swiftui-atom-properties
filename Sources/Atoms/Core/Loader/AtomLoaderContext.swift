@@ -6,19 +6,15 @@ public struct AtomLoaderContext<Value> {
     internal let _transaction: Transaction
     @usableFromInline
     internal let _update: @MainActor (Value, Bool) -> Void
-    @usableFromInline
-    internal let _commitTransaction: @MainActor (Transaction) -> Void
 
     internal init(
         store: RootAtomStore,
         transaction: Transaction,
-        update: @escaping @MainActor (Value, Bool) -> Void,
-        commitTransaction: @escaping @MainActor (Transaction) -> Void
+        update: @escaping @MainActor (Value, Bool) -> Void
     ) {
         _store = store
         _transaction = transaction
         _update = update
-        _commitTransaction = commitTransaction
     }
 
     internal func update(with value: Value, updatesDependentsOnNextRunLoop: Bool = false) {
@@ -26,18 +22,18 @@ public struct AtomLoaderContext<Value> {
     }
 
     internal func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        _transaction.terminations.append(Termination(termination))
+        _store.addTermination(Termination(termination), in: _transaction)
     }
 
     internal func transaction<T>(_ body: @MainActor (AtomTransactionContext) -> T) -> T {
         let context = AtomTransactionContext(store: _store, transaction: _transaction)
-        defer { _commitTransaction(_transaction) }
+        defer { _transaction.commit() }
         return body(context)
     }
 
     internal func transaction<T>(_ body: @MainActor (AtomTransactionContext) async throws -> T) async rethrows -> T {
         let context = AtomTransactionContext(store: _store, transaction: _transaction)
-        defer { _commitTransaction(_transaction) }
+        defer { _transaction.commit() }
         return try await body(context)
     }
 }

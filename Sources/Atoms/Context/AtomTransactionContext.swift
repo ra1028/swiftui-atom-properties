@@ -145,7 +145,7 @@ public struct AtomTransactionContext: AtomWatchableContext {
     /// - Parameter termination: A termination action.
     @inlinable
     public func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        _transaction.terminations.append(Termination(termination))
+        _store.addTermination(Termination(termination), in: _transaction)
     }
 
     /// Add the given object to the storage that to be retained until the atom will no longer be watched
