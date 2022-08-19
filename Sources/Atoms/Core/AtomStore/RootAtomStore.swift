@@ -121,16 +121,6 @@ internal extension RootAtomStore {
 
         return getValue(for: atom)
     }
-
-    // TODO: Move to Transaction.
-    @usableFromInline
-    func addTermination(_ termination: Termination, in transaction: Transaction) {
-        guard !transaction.isTerminated else {
-            return termination()
-        }
-
-        transaction.terminations.append(termination)
-    }
 }
 
 private extension RootAtomStore {
