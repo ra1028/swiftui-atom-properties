@@ -3,7 +3,7 @@ import XCTest
 @testable import Atoms
 
 @MainActor
-final class RootAtomStoreTests: XCTestCase {
+final class StoreContextTests: XCTestCase {
     func testComplexDependencies() async {
         enum Phase {
             case first
@@ -93,7 +93,7 @@ final class RootAtomStoreTests: XCTestCase {
         }
 
         let store = Store()
-        let atomStore = RootAtomStore(store: store)
+        let atomStore = StoreContext(store)
         let container = SubscriptionContainer()
         let pipe = AsyncThrowingStreamPipe<Void>()
         let atom = TestAtom(pipe: pipe)
@@ -104,7 +104,7 @@ final class RootAtomStoreTests: XCTestCase {
         let phase = PhaseAtom()
 
         func watch() async -> Int {
-            await atomStore.watch(atom, container: container.wrapper, notifyUpdate: {}).value
+            await atomStore.watch(atom, container: container, notifyUpdate: {}).value
         }
 
         do {

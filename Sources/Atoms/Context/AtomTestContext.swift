@@ -228,7 +228,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     public func unwatch<Node: Atom>(_ atom: Node) {
         let key = AtomKey(atom)
-        state.container.removeSubscription(for: key)?.unsubscribe()
+        state.container.subscriptions.removeValue(forKey: key)?.unsubscribe()
     }
 
     /// Overrides the atom value with the given value.
@@ -275,8 +275,8 @@ private extension AtomTestContext {
     @MainActor
     final class State {
         private let _store = Store()
-        private var _container: SubscriptionContainer
 
+        let container: SubscriptionContainer
         var overrides: Overrides
         var observers = [AtomObserver]()
         let notifier = PassthroughSubject<Void, Never>()
@@ -284,19 +284,15 @@ private extension AtomTestContext {
 
         init() {
             overrides = Overrides()
-            _container = SubscriptionContainer()
+            container = SubscriptionContainer()
         }
 
-        var store: RootAtomStore {
-            RootAtomStore(
-                store: _store,
+        var store: StoreContext {
+            StoreContext(
+                _store,
                 overrides: overrides,
                 observers: observers
             )
-        }
-
-        var container: SubscriptionContainer.Wrapper {
-            _container.wrapper
         }
 
         func notifyUpdate() {

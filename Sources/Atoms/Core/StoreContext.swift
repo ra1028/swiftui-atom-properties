@@ -2,23 +2,21 @@ import Foundation
 
 @usableFromInline
 @MainActor
-internal struct RootAtomStore {
-    private weak var store: Store?
+internal struct StoreContext {
+    private weak var weakStore: Store?
     private let overrides: Overrides?
     private let observers: [AtomObserver]
 
-    init(
-        store: Store,
+    nonisolated init(
+        _ store: Store? = nil,
         overrides: Overrides? = nil,
         observers: [AtomObserver] = []
     ) {
-        self.store = store
+        self.weakStore = store
         self.overrides = overrides
         self.observers = observers
     }
-}
 
-extension RootAtomStore: AtomStore {
     @usableFromInline
     func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         getValue(for: atom)
@@ -41,17 +39,32 @@ extension RootAtomStore: AtomStore {
     }
 
     @usableFromInline
-    func watch<Node: Atom>(
-        _ atom: Node,
-        container: SubscriptionContainer.Wrapper,
-        notifyUpdate: @escaping () -> Void
-    ) -> Node.Loader.Value {
-        guard let store = store else {
+    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
+        guard !transaction.isTerminated else {
             return getNewValue(for: atom)
         }
 
+        let store = getStore()
+        let dependencyKey = AtomKey(atom)
+
+        registerIfAbsent(atom: atom)
+
+        // Add an `Edge` from the upstream to downstream.
+        store.graph.dependencies[transaction.key, default: []].insert(dependencyKey)
+        store.graph.children[dependencyKey, default: []].insert(transaction.key)
+
+        return getValue(for: atom)
+    }
+
+    @usableFromInline
+    func watch<Node: Atom>(
+        _ atom: Node,
+        container: SubscriptionContainer,
+        notifyUpdate: @escaping () -> Void
+    ) -> Node.Loader.Value {
+        let store = getStore()
         let key = AtomKey(atom)
-        let subscriptionKey = container.key
+        let subscriptionKey = SubscriptionKey(container)
         let subscription = Subscription(notifyUpdate: notifyUpdate) { [weak store] in
             guard let store = store else {
                 return
@@ -66,7 +79,7 @@ extension RootAtomStore: AtomStore {
         registerIfAbsent(atom: atom)
 
         // Assign subscription to the container so the caller side can unsubscribe.
-        container.insert(subscription: subscription, for: key)
+        container.subscriptions[key] = subscription
 
         // Assign subscription to the store.
         store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriptionKey)
@@ -97,52 +110,22 @@ extension RootAtomStore: AtomStore {
     }
 
     @usableFromInline
-    func relay(observers: [AtomObserver]) -> AtomStore {
+    func relay(observers: [AtomObserver]) -> Self {
         Self(
-            store: store,
+            weakStore,
             overrides: overrides,
             observers: self.observers + observers
         )
     }
 }
 
-internal extension RootAtomStore {
-    @usableFromInline
-    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
-        guard !transaction.isTerminated, let store = store else {
-            return getNewValue(for: atom)
-        }
-
-        let dependencyKey = AtomKey(atom)
-
-        registerIfAbsent(atom: atom)
-
-        store.graph.addEdge(for: dependencyKey, to: transaction.key)
-
-        return getValue(for: atom)
-    }
-}
-
-private extension RootAtomStore {
-    init(
-        store: Store?,
-        overrides: Overrides? = nil,
-        observers: [AtomObserver] = []
-    ) {
-        self.store = store
-        self.overrides = overrides
-        self.observers = observers
-    }
-
+private extension StoreContext {
     func registerIfAbsent<Node: Atom>(atom: Node) {
-        guard let store = store else {
-            return
-        }
-
+        let store = getStore()
         let key = AtomKey(atom)
         let isNewlyRegistered = store.state.atomStates.insertValueIfAbsent(
             forKey: key,
-            default: ConcreteAtomState(atom: atom, value: nil)
+            default: ConcreteAtomState(atom: atom)
         )
 
         if isNewlyRegistered {
@@ -155,27 +138,26 @@ private extension RootAtomStore {
 
     /// Returns a loader context that will not accept subsequent operations to the store when terminated.
     func prepareTransaction<Node: Atom>(for atom: Node) -> AtomLoaderContext<Node.Loader.Value> {
+        let store = getStore()
         let key = AtomKey(atom)
         let oldDependencies = invalidate(for: key)
         let transaction = Transaction(key: key) {
-            guard let store = store else {
-                return
-            }
-
+            let store = getStore()
             let dependencies = store.graph.dependencies[key] ?? []
             let obsoletedDependencies = oldDependencies.subtracting(dependencies)
 
             checkReleaseDependencies(obsoletedDependencies, for: key)
         }
 
-        store?.state.transactions[key] = transaction
+        store.state.transactions[key] = transaction
 
-        return AtomLoaderContext(store: self, transaction: transaction) { value, updatesDependentsOnNextRunLoop in
-            update(atom: atom, with: value, updatesDependentsOnNextRunLoop: updatesDependentsOnNextRunLoop)
+        return AtomLoaderContext(store: self, transaction: transaction) { value, updatesChildrenOnNextRunLoop in
+            update(atom: atom, with: value, updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop)
         }
     }
 
     func getValue<Node: Atom>(for atom: Node) -> Node.Loader.Value {
+        let store = getStore()
         var state = getCachedState(for: atom)
 
         if let value = state?.value {
@@ -186,7 +168,7 @@ private extension RootAtomStore {
         let value = getNewValue(for: atom)
 
         state?.value = value
-        store?.state.atomStates[key] = state
+        store.state.atomStates[key] = state
 
         // Notify value changes.
         notifyChangesToObservers(of: atom, value: value)
@@ -210,9 +192,10 @@ private extension RootAtomStore {
     }
 
     func getCachedState<Node: Atom>(for atom: Node) -> ConcreteAtomState<Node>? {
+        let store = getStore()
         let key = AtomKey(atom)
 
-        guard let baseState = store?.state.atomStates[key] else {
+        guard let baseState = store.state.atomStates[key] else {
             return nil
         }
 
@@ -236,10 +219,8 @@ private extension RootAtomStore {
         return state
     }
 
-    func notifyUpdate(for key: AtomKey, updatesDependentsOnNextRunLoop: Bool = false) {
-        guard let store = store else {
-            return
-        }
+    func notifyUpdate(for key: AtomKey, updatesChildrenOnNextRunLoop: Bool = false) {
+        let store = getStore()
 
         // Notifying update for view subscriptions takes precedence.
         if let subscriptions = store.state.subscriptions[key].map({ ContiguousArray($0.values) }) {
@@ -249,7 +230,7 @@ private extension RootAtomStore {
         }
 
         // Notify update to downstream atoms.
-        func notifyUpdateToDependents() {
+        func notifyUpdateToChildren() {
             guard let children = store.graph.children[key] else {
                 return
             }
@@ -260,25 +241,22 @@ private extension RootAtomStore {
             }
         }
 
-        if updatesDependentsOnNextRunLoop {
+        if updatesChildrenOnNextRunLoop {
             RunLoop.current.perform {
-                notifyUpdateToDependents()
+                notifyUpdateToChildren()
             }
         }
         else {
-            notifyUpdateToDependents()
+            notifyUpdateToChildren()
         }
     }
 
     func update<Node: Atom>(
         atom: Node,
         with value: Node.Loader.Value,
-        updatesDependentsOnNextRunLoop: Bool = false
+        updatesChildrenOnNextRunLoop: Bool = false
     ) {
-        guard let store = store else {
-            return
-        }
-
+        let store = getStore()
         let key = AtomKey(atom)
         var state = getCachedState(for: atom)
         let oldValue = state?.value
@@ -292,16 +270,14 @@ private extension RootAtomStore {
         }
 
         // Notify update to the downstream atoms or views.
-        notifyUpdate(for: key, updatesDependentsOnNextRunLoop: updatesDependentsOnNextRunLoop)
+        notifyUpdate(for: key, updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop)
 
         // Notify new value.
         notifyChangesToObservers(of: atom, value: value)
     }
 
     func checkRelease(for key: AtomKey) {
-        guard let store = store else {
-            return
-        }
+        let store = getStore()
 
         // Do not release atoms marked as `KeepAlive`.
         let shouldKeepAlive = store.state.atomStates[key]?.shouldKeepAlive ?? false
@@ -318,10 +294,7 @@ private extension RootAtomStore {
     }
 
     func release(for key: AtomKey) {
-        guard let store = store else {
-            return
-        }
-
+        let store = getStore()
         let dependencies = invalidate(for: key)
         let atomState = store.state.atomStates.removeValue(forKey: key)
 
@@ -333,9 +306,7 @@ private extension RootAtomStore {
     }
 
     func checkReleaseDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey) {
-        guard let store = store else {
-            return
-        }
+        let store = getStore()
 
         // Recursively release dependencies.
         for dependency in dependencies {
@@ -350,9 +321,7 @@ private extension RootAtomStore {
     /// 2. Remove the current transaction and mark it as terminated.
     /// 3. Temporarily remove the dependencies.
     func invalidate(for key: AtomKey) -> Set<AtomKey> {
-        guard let store = store else {
-            return []
-        }
+        let store = getStore()
 
         // Remove the current transaction and then terminate to prevent current transaction
         // to watch new values or add terminations.
@@ -374,15 +343,70 @@ private extension RootAtomStore {
             observer.atomChanged(snapshot: snapshot)
         }
     }
+
+    func getStore() -> Store {
+        if let store = weakStore {
+            return store
+        }
+
+        assertionFailure(
+            """
+            [Atoms]
+            There is no store provided on the current view tree.
+            Make sure that this application has an `AtomRoot` as a root ancestor of any view.
+
+            ```
+            struct ExampleApp: App {
+                var body: some Scene {
+                    WindowGroup {
+                        AtomRoot {
+                            ExampleView()
+                        }
+                    }
+                }
+            }
+            ```
+
+            If for some reason the view tree is formed that does not inherit from `EnvironmentValues`,
+            consider using `AtomRelay` to pass it.
+            That happens when using SwiftUI view wrapped with `UIHostingController`.
+
+            ```
+            struct ExampleView: View {
+                @ViewContext
+                var context
+
+                var body: some View {
+                    UIViewWrappingView {
+                        AtomRelay(context) {
+                            WrappedView()
+                        }
+                    }
+                }
+            }
+            ```
+
+            The modal screen presented by the `.sheet` modifier or etc, inherits from the environment values,
+            but only in iOS14, there is a bug where the environment values will be dismantled during it is
+            dismissing. This also can be avoided by using `AtomRelay` to explicitly inherit from it.
+
+            ```
+            .sheet(isPresented: ...) {
+                AtomRelay(context) {
+                    ExampleView()
+                }
+            }
+            ```
+            """
+        )
+
+        return Store()
+    }
 }
 
 private extension Dictionary {
     func isEmptyOrNil(forKey key: Key) -> Bool where Value: Collection {
-        guard let collection = self[key] else {
-            return true
-        }
-
-        return collection.isEmpty
+        self[key]?.isEmpty ?? true
     }
 
     mutating func insertValueIfAbsent(forKey key: Key, default defaultValue: @autoclosure () -> Value) -> Bool {

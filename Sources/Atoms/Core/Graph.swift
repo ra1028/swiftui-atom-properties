@@ -7,9 +7,4 @@ internal struct Graph {
     var children = [AtomKey: Set<AtomKey>]()
 
     nonisolated init() {}
-
-    mutating func addEdge(for key: AtomKey, to child: AtomKey) {
-        children[key, default: []].insert(child)
-        dependencies[child, default: []].insert(key)
-    }
 }

@@ -26,7 +26,7 @@ public struct ObservableObjectAtomLoader<ObjectType: ObservableObject>: AtomLoad
             // the dependent atom reads it.
             // As a workaround, the update is executed in the next run loop
             // so that the downstream atoms can receive the updated value.
-            context.update(with: object, updatesDependentsOnNextRunLoop: true)
+            context.update(with: object, updatesChildrenOnNextRunLoop: true)
         }
 
         context.addTermination(cancellable.cancel)

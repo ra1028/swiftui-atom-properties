@@ -59,9 +59,9 @@ public struct AtomRoot<Content: View>: View {
     /// The content and behavior of the view.
     public var body: some View {
         content.environment(
-            \.atomStore,
-            RootAtomStore(
-                store: state.store,
+            \.store,
+            StoreContext(
+                state.store,
                 overrides: overrides,
                 observers: observers
             )

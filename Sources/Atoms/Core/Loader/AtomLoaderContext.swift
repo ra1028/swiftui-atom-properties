@@ -1,14 +1,14 @@
 @MainActor
 public struct AtomLoaderContext<Value> {
     @usableFromInline
-    internal let _store: RootAtomStore
+    internal let _store: StoreContext
     @usableFromInline
     internal let _transaction: Transaction
     @usableFromInline
     internal let _update: @MainActor (Value, Bool) -> Void
 
     internal init(
-        store: RootAtomStore,
+        store: StoreContext,
         transaction: Transaction,
         update: @escaping @MainActor (Value, Bool) -> Void
     ) {
@@ -17,8 +17,8 @@ public struct AtomLoaderContext<Value> {
         _update = update
     }
 
-    internal func update(with value: Value, updatesDependentsOnNextRunLoop: Bool = false) {
-        _update(value, updatesDependentsOnNextRunLoop)
+    internal func update(with value: Value, updatesChildrenOnNextRunLoop: Bool = false) {
+        _update(value, updatesChildrenOnNextRunLoop)
     }
 
     internal func addTermination(_ termination: @MainActor @escaping () -> Void) {

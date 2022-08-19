@@ -5,15 +5,15 @@
 @MainActor
 public struct AtomViewContext: AtomWatchableContext {
     @usableFromInline
-    internal let _store: AtomStore
+    internal let _store: StoreContext
     @usableFromInline
-    internal let _container: SubscriptionContainer.Wrapper
+    internal let _container: SubscriptionContainer
     @usableFromInline
     internal let _notifyUpdate: () -> Void
 
     internal init(
-        store: AtomStore,
-        container: SubscriptionContainer.Wrapper,
+        store: StoreContext,
+        container: SubscriptionContainer,
         notifyUpdate: @escaping () -> Void
     ) {
         _store = store

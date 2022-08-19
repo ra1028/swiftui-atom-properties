@@ -36,8 +36,8 @@ public struct ViewContext: DynamicProperty {
     @StateObject
     private var state: State
 
-    @Environment(\.atomStore)
-    private var store
+    @Environment(\.store)
+    private var _store
 
     /// Creates a view context.
     public init() {
@@ -51,8 +51,8 @@ public struct ViewContext: DynamicProperty {
     /// Instead, you use the property variable created with the `@ViewContext` attribute.
     public var wrappedValue: AtomViewContext {
         AtomViewContext(
-            store: store,
-            container: state.container.wrapper,
+            store: _store,
+            container: state.container,
             notifyUpdate: state.objectWillChange.send
         )
     }

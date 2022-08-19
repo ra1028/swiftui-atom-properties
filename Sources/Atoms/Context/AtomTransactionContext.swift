@@ -5,11 +5,11 @@
 @MainActor
 public struct AtomTransactionContext: AtomWatchableContext {
     @usableFromInline
-    internal let _store: RootAtomStore
+    internal let _store: StoreContext
     @usableFromInline
     internal let _transaction: Transaction
 
-    internal init(store: RootAtomStore, transaction: Transaction) {
+    internal init(store: StoreContext, transaction: Transaction) {
         _store = store
         _transaction = transaction
     }

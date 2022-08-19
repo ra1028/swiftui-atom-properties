@@ -2,7 +2,7 @@
 internal protocol AtomState {
     var shouldKeepAlive: Bool { get }
 
-    func reset(with store: RootAtomStore)
+    func reset(with store: StoreContext)
     func notifyUnassigned(to observers: [AtomObserver])
 }
 
@@ -15,7 +15,7 @@ internal struct ConcreteAtomState<Node: Atom>: AtomState {
         Node.shouldKeepAlive
     }
 
-    func reset(with store: RootAtomStore) {
+    func reset(with store: StoreContext) {
         store.reset(atom)
     }
 
