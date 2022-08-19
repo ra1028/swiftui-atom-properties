@@ -4,6 +4,7 @@ internal final class Transaction {
     private var _commit: (() -> Void)?
 
     let key: AtomKey
+    var terminations = ContiguousArray<Termination>()
 
     private(set) var isTerminated = false
 
@@ -18,6 +19,12 @@ internal final class Transaction {
     }
 
     func terminate() {
+        for termination in terminations {
+            termination()
+        }
+
+        terminations.removeAll()
+
         commit()
         isTerminated = true
     }

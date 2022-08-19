@@ -127,7 +127,7 @@ final class RootAtomStoreTests: XCTestCase {
             // Should be 1 (TestAtom's Task cancellation + first phase)
             XCTAssertEqual(
                 2,
-                store.state.atomStates[AtomKey(atom)]?.terminations.count
+                store.state.transactions[AtomKey(atom)]?.terminations.count
             )
         }
 
@@ -157,7 +157,7 @@ final class RootAtomStoreTests: XCTestCase {
             // Should be 1 (TestAtom's Task cancellation + second phase)
             XCTAssertEqual(
                 2,
-                store.state.atomStates[AtomKey(atom)]?.terminations.count
+                store.state.transactions[AtomKey(atom)]?.terminations.count
             )
         }
 
@@ -186,7 +186,7 @@ final class RootAtomStoreTests: XCTestCase {
             // Should be 1 (TestAtom's Task cancellation)
             XCTAssertEqual(
                 1,
-                store.state.atomStates[AtomKey(atom)]?.terminations.count
+                store.state.transactions[AtomKey(atom)]?.terminations.count
             )
         }
     }
