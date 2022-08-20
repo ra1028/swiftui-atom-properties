@@ -34,18 +34,27 @@ public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomL
 
     public func refresh(context: Context) async -> Value {
         let sequence = context.transaction(makeSequence)
-        var phase = Value.suspending
+        let task = Task { () -> Value in
+            var phase = Value.suspending
 
-        do {
-            for try await element in sequence {
-                phase = .success(element)
+            do {
+                for try await element in sequence {
+                    phase = .success(element)
+                }
             }
-        }
-        catch {
-            phase = .failure(error)
+            catch {
+                phase = .failure(error)
+            }
+
+            return phase
         }
 
-        return phase
+        context.addTermination(task.cancel)
+        return await withTaskCancellationHandler {
+            await task.value
+        } onCancel: {
+            task.cancel()
+        }
     }
 
     public func refresh(context: Context, with value: Value) async -> Value {

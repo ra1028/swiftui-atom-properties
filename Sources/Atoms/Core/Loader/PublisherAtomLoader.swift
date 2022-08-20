@@ -29,13 +29,22 @@ public struct PublisherAtomLoader<Publisher: Combine.Publisher>: RefreshableAtom
 
     public func refresh(context: Context) async -> Value {
         let results = context.transaction(makePublisher).results
-        var phase = Value.suspending
+        let task = Task { () -> Value in
+            var phase = Value.suspending
 
-        for await result in results {
-            phase = AsyncPhase(result)
+            for await result in results {
+                phase = AsyncPhase(result)
+            }
+
+            return phase
         }
 
-        return phase
+        context.addTermination(task.cancel)
+        return await withTaskCancellationHandler {
+            await task.value
+        } onCancel: {
+            task.cancel()
+        }
     }
 
     public func refresh(context: Context, with value: Value) async -> Value {

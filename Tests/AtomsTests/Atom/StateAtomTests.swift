@@ -89,4 +89,83 @@ final class StateAtomTests: XCTestCase {
         XCTAssertEqual(willSetCount, 1)
         XCTAssertEqual(didSetCount, 1)
     }
+
+    func testDependency() async {
+        struct Dependency1Atom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct Dependency2Atom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct Dependency3Atom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestAtom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                context.watch(Dependency1Atom())
+            }
+
+            func willSet(newValue: Int, oldValue: Int, context: Context) {
+                context.watch(Dependency2Atom())
+            }
+
+            func didSet(newValue: Int, oldValue: Int, context: Context) {
+                context.watch(Dependency3Atom())
+            }
+        }
+
+        let context = AtomTestContext()
+
+        let value0 = context.watch(TestAtom())
+        XCTAssertEqual(value0, 0)
+
+        context[TestAtom()] = 1
+
+        let value1 = context.watch(TestAtom())
+        XCTAssertEqual(value1, 1)
+
+        // Updated by the depenency update.
+
+        Task {
+            context[Dependency1Atom()] = 0
+        }
+
+        await context.waitUntilNextUpdate()
+
+        let value2 = context.watch(TestAtom())
+        XCTAssertEqual(value2, 0)
+
+        // Updated by the depenency update that is started to watch by `willSet`.
+
+        Task {
+            context[Dependency2Atom()] = 100
+        }
+
+        context[TestAtom()] = 1
+        await context.waitUntilNextUpdate()
+
+        let value3 = context.watch(TestAtom())
+        XCTAssertEqual(value3, 0)
+
+        // Updated by the depenency update that is started to watch by `didSet`.
+
+        Task {
+            context[Dependency3Atom()] = 200
+        }
+
+        context[TestAtom()] = 1
+        await context.waitUntilNextUpdate()
+
+        let value4 = context.watch(TestAtom())
+        XCTAssertEqual(value4, 0)
+    }
 }

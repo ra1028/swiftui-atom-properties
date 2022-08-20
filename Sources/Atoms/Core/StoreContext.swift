@@ -29,7 +29,21 @@ internal struct StoreContext {
             return
         }
 
-        let context = prepareTransaction(for: atom)
+        // Note that this is a special handling for `willSet/didSet` because the dependencies of the `StateAtom`
+        // can be invalidated if we call `prepareTransaction` here and there's no timing to restore them.
+        // The dependencies added in `willSet/didSet` will not be released until the value is invalidated and
+        // is going to be a bug, so `AtomTransactionContenxt` will no longer be passed.
+        // https://github.com/ra1028/swiftui-atom-properties/issues/18
+        let store = getStore()
+        let key = AtomKey(atom)
+        let transaction = Transaction(key: key) {
+            // Do nothing.
+        }
+        let context = AtomLoaderContext(store: self, transaction: transaction) { value, updatesChildrenOnNextRunLoop in
+            update(atom: atom, with: value, updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop)
+        }
+
+        store.state.transactions[key] = transaction
 
         context.transaction { context in
             atom.willSet(newValue: value, oldValue: oldValue, context: context)
@@ -40,6 +54,7 @@ internal struct StoreContext {
 
     @usableFromInline
     func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
+        // Return a new value if the transaction is already terminated.
         guard !transaction.isTerminated else {
             return getNewValue(for: atom)
         }
@@ -47,6 +62,7 @@ internal struct StoreContext {
         let store = getStore()
         let dependencyKey = AtomKey(atom)
 
+        // Create and register a state if it doesn't exist yet.
         registerIfAbsent(atom: atom)
 
         // Add an `Edge` from the upstream to downstream.
@@ -70,18 +86,16 @@ internal struct StoreContext {
                 return
             }
 
-            // Remove subscription from the store.
+            // Unsubscribe and then release the atom if it's doesn't have any subscriptions or children.
             store.state.subscriptions[key]?.removeValue(forKey: subscriptionKey)
-            // Release the atom if it is no longer watched to.
             checkRelease(for: key)
         }
 
+        // Create and register a state if it doesn't exist yet.
         registerIfAbsent(atom: atom)
 
-        // Assign subscription to the container so the caller side can unsubscribe.
+        // Register the subscription to both the store and the container, enabling notifying updates and unsubscription.
         container.subscriptions[key] = subscription
-
-        // Assign subscription to the store.
         store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriptionKey)
 
         return getValue(for: atom)
@@ -99,12 +113,14 @@ internal struct StoreContext {
             value = await atom._loader.refresh(context: context)
         }
 
+        // Update the current value with the refresh value.
         update(atom: atom, with: value)
         return value
     }
 
     @usableFromInline
     func reset<Node: Atom>(_ atom: Node) {
+        // Renew the value and then notify to the downstream.
         let value = getNewValue(for: atom)
         update(atom: atom, with: value)
     }
@@ -123,29 +139,32 @@ private extension StoreContext {
     func registerIfAbsent<Node: Atom>(atom: Node) {
         let store = getStore()
         let key = AtomKey(atom)
+
+        // Register a new state only if not yet exist.
         let isNewlyRegistered = store.state.atomStates.insertValueIfAbsent(
             forKey: key,
             default: ConcreteAtomState(atom: atom)
         )
 
         if isNewlyRegistered {
-            // Notify atom registration to observers.
             for observer in observers {
                 observer.atomAssigned(atom: atom)
             }
         }
     }
 
-    /// Returns a loader context that will not accept subsequent operations to the store when terminated.
     func prepareTransaction<Node: Atom>(for atom: Node) -> AtomLoaderContext<Node.Loader.Value> {
         let store = getStore()
         let key = AtomKey(atom)
+
+        // Invalidate dependencies and an ongoing transaction.
         let oldDependencies = invalidate(for: key)
         let transaction = Transaction(key: key) {
             let store = getStore()
             let dependencies = store.graph.dependencies[key] ?? []
             let obsoletedDependencies = oldDependencies.subtracting(dependencies)
 
+            // Check if the dependencies that are no longer watched can be released.
             checkReleaseDependencies(obsoletedDependencies, for: key)
         }
 
@@ -160,20 +179,20 @@ private extension StoreContext {
         let store = getStore()
         var state = getCachedState(for: atom)
 
+        // Return the cached value is exists otherwise, get a new value and then cache it.
         if let value = state?.value {
             return value
         }
+        else {
+            let key = AtomKey(atom)
+            let value = getNewValue(for: atom)
 
-        let key = AtomKey(atom)
-        let value = getNewValue(for: atom)
+            state?.value = value
+            store.state.atomStates[key] = state
 
-        state?.value = value
-        store.state.atomStates[key] = state
-
-        // Notify value changes.
-        notifyChangesToObservers(of: atom, value: value)
-
-        return value
+            notifyChangesToObservers(of: atom, value: value)
+            return value
+        }
     }
 
     func getNewValue<Node: Atom>(for atom: Node) -> Node.Loader.Value {
@@ -181,7 +200,6 @@ private extension StoreContext {
         let value: Node.Loader.Value
 
         if let overrideValue = overrides?.value(for: atom) {
-            // Set the override value.
             value = atom._loader.handle(context: context, with: overrideValue)
         }
         else {
@@ -211,7 +229,7 @@ private extension StoreContext {
                 """
             )
 
-            // Release invalid registration.
+            // Release the invalid registration.
             release(for: key)
             return nil
         }
@@ -222,14 +240,14 @@ private extension StoreContext {
     func notifyUpdate(for key: AtomKey, updatesChildrenOnNextRunLoop: Bool = false) {
         let store = getStore()
 
-        // Notifying update for view subscriptions takes precedence.
+        // Notifying update to view subscriptions first.
         if let subscriptions = store.state.subscriptions[key].map({ ContiguousArray($0.values) }) {
             for subscription in subscriptions {
                 subscription.notifyUpdate()
             }
         }
 
-        // Notify update to downstream atoms.
+        // Reset the atom value and then notify update to downstream atoms.
         func notifyUpdateToChildren() {
             guard let children = store.graph.children[key] else {
                 return
@@ -241,6 +259,10 @@ private extension StoreContext {
             }
         }
 
+        // At the timing when `ObservableObject/objectWillChange` emits, its properties
+        // have not yet been updated and are still old when the dependent atom reads it.
+        // As a workaround, the update is executed in the next run loop
+        // so that the downstream atoms can receive the object that's already updated.
         if updatesChildrenOnNextRunLoop {
             RunLoop.current.perform {
                 notifyUpdateToChildren()
@@ -261,25 +283,43 @@ private extension StoreContext {
         var state = getCachedState(for: atom)
         let oldValue = state?.value
 
+        // Update the current value with the new value.
         state?.value = value
         store.state.atomStates[key] = state
 
-        // Do not notify update if the value is equivalent to the old value.
+        // Do not notify update if the new value is equivalent to the old value.
         if let oldValue = oldValue, !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
             return
         }
 
         // Notify update to the downstream atoms or views.
         notifyUpdate(for: key, updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop)
-
-        // Notify new value.
         notifyChangesToObservers(of: atom, value: value)
+    }
+
+    func release(for key: AtomKey) {
+        let store = getStore()
+
+        // Invalidate transactions, dependencies, and the atom state.
+        let dependencies = invalidate(for: key)
+        let atomState = store.state.atomStates.removeValue(forKey: key)
+
+        // Cleanup downstream edges.
+        store.graph.children.removeValue(forKey: key)
+        store.state.subscriptions.removeValue(forKey: key)
+        atomState?.notifyUnassigned(to: observers)
+
+        // Check if the dependencies are releasable.
+        checkReleaseDependencies(dependencies, for: key)
     }
 
     func checkRelease(for key: AtomKey) {
         let store = getStore()
 
-        // Do not release atoms marked as `KeepAlive`.
+        // The condition under which an atom may be released are as follows:
+        //     1. It's not marked as `KeepAlive`.
+        //     2. It has no downstream atoms.
+        //     3. It has no subscriptions from views.
         let shouldKeepAlive = store.state.atomStates[key]?.shouldKeepAlive ?? false
         let shouldRelease =
             !shouldKeepAlive
@@ -293,40 +333,23 @@ private extension StoreContext {
         release(for: key)
     }
 
-    func release(for key: AtomKey) {
-        let store = getStore()
-        let dependencies = invalidate(for: key)
-        let atomState = store.state.atomStates.removeValue(forKey: key)
-
-        store.graph.children.removeValue(forKey: key)
-        store.state.subscriptions.removeValue(forKey: key)
-        atomState?.notifyUnassigned(to: observers)
-
-        checkReleaseDependencies(dependencies, for: key)
-    }
-
     func checkReleaseDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey) {
         let store = getStore()
 
-        // Recursively release dependencies.
+        // Recursively release dependencies while unlinking the dependent from the dependencies.
         for dependency in dependencies {
             store.graph.children[dependency]?.remove(key)
             checkRelease(for: dependency)
         }
     }
 
-    /// Terminates an atom associated with the given key bye the following steps.
-    ///
-    /// 1. Run all termination processes of the atom.
-    /// 2. Remove the current transaction and mark it as terminated.
-    /// 3. Temporarily remove the dependencies.
     func invalidate(for key: AtomKey) -> Set<AtomKey> {
         let store = getStore()
 
         // Remove the current transaction and then terminate to prevent current transaction
         // to watch new values or add terminations.
+        // Then, temporarily remove dependencies but do not release them recursively here.
         store.state.transactions.removeValue(forKey: key)?.terminate()
-        // Remove dependencies but do not release them recursively.
         return store.graph.dependencies.removeValue(forKey: key) ?? []
     }
 

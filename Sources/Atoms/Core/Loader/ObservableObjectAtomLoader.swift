@@ -21,11 +21,6 @@ public struct ObservableObjectAtomLoader<ObjectType: ObservableObject>: AtomLoad
                 return
             }
 
-            // At the timing when `ObservableObject/objectWillChange` emits,
-            // its properties have not yet been updated and is old when
-            // the dependent atom reads it.
-            // As a workaround, the update is executed in the next run loop
-            // so that the downstream atoms can receive the updated value.
             context.update(with: object, updatesChildrenOnNextRunLoop: true)
         }
 
