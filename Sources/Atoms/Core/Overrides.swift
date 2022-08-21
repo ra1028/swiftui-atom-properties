@@ -1,11 +1,7 @@
-@usableFromInline
 @MainActor
 internal struct Overrides {
-    @usableFromInline
-    internal var _entriesForNode = [AtomKey: Override]()
-
-    @usableFromInline
-    internal var _entriesForType = [AtomTypeKey: Override]()
+    private var _entriesForNode = [AtomKey: Override]()
+    private var _entriesForType = [AtomTypeKey: Override]()
 
     mutating func insert<Node: Atom>(
         _ atom: Node,
@@ -34,10 +30,11 @@ internal struct Overrides {
         guard let override = baseOverride as? ConcreteOverride<Node> else {
             assertionFailure(
                 """
+                [Atoms]
                 Detected an illegal override.
                 There might be duplicate keys or logic failure.
                 Detected: \(type(of: self))
-                Expected: OverrideValue<\(Node.self)>
+                Expected: ConcreteOverride<\(Node.self)>
                 """
             )
 
@@ -48,11 +45,9 @@ internal struct Overrides {
     }
 }
 
-@usableFromInline
 @MainActor
 internal protocol Override {}
 
-@usableFromInline
 internal struct ConcreteOverride<Node: Atom>: Override {
     let value: (Node) -> Node.Loader.Value
 }

@@ -24,15 +24,15 @@ internal struct StoreContext {
 
     @usableFromInline
     func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
-        // Do nothing if the atom is not yet to be watched.
+        // Do nothing if the atom is not yet to be registered.
         guard let oldValue = getCachedState(for: atom)?.value else {
             return
         }
 
-        // Note that this is a special handling for `willSet/didSet` because the dependencies of the `StateAtom`
-        // can be invalidated if we call `prepareTransaction` here and there's no timing to restore them.
-        // The dependencies added in `willSet/didSet` will not be released until the value is invalidated and
-        // is going to be a bug, so `AtomTransactionContenxt` will no longer be passed.
+        // Note that this is special handling for `willSet/didSet` because the dependencies could be invalidated
+        // by `prepareTransaction` here and there's no timing to restore them.
+        // The dependencies added by `willSet/didSet` will not be released until the value is invalidated and
+        // is going to be a bug, so `AtomTransactionContenxt` will no longer be passed soon.
         // https://github.com/ra1028/swiftui-atom-properties/issues/18
         let key = AtomKey(atom)
         let transaction = Transaction(key: key) {
@@ -51,7 +51,7 @@ internal struct StoreContext {
 
     @usableFromInline
     func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
-        // Return a new value if the transaction is already terminated.
+        // Return a new value immediately if the transaction is already terminated.
         guard !transaction.isTerminated else {
             return getNewValue(for: atom)
         }
@@ -83,7 +83,7 @@ internal struct StoreContext {
                 return
             }
 
-            // Unsubscribe and then release the atom if it's doesn't have any subscriptions or children.
+            // Unsubscribe and release if it's no longer used.
             store.state.subscriptions[key]?.removeValue(forKey: subscriptionKey)
             checkRelease(for: key)
         }
@@ -91,7 +91,7 @@ internal struct StoreContext {
         // Create and register a state if it doesn't exist yet.
         registerIfAbsent(atom: atom)
 
-        // Register the subscription to both the store and the container, enabling notifying updates and unsubscription.
+        // Register the subscription to both the store and the container.
         container.subscriptions[key] = subscription
         store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriptionKey)
 
@@ -110,14 +110,13 @@ internal struct StoreContext {
             value = await atom._loader.refresh(context: context)
         }
 
-        // Update the current value with the refresh value.
+        // Update the current value with the fresh value.
         update(atom: atom, with: value)
         return value
     }
 
     @usableFromInline
     func reset<Node: Atom>(_ atom: Node) {
-        // Renew the value and then notify to the downstream.
         let value = getNewValue(for: atom)
         update(atom: atom, with: value)
     }
@@ -161,10 +160,11 @@ private extension StoreContext {
             let dependencies = store.graph.dependencies[key] ?? []
             let obsoletedDependencies = oldDependencies.subtracting(dependencies)
 
-            // Check if the dependencies that are no longer watched can be released.
+            // Check if the dependencies that are no longer used and release them if possible.
             checkReleaseDependencies(obsoletedDependencies, for: key)
         }
 
+        // Register the transaction state so it can be terminated from anywhere.
         store.state.transactions[key] = transaction
 
         return AtomLoaderContext(store: self, transaction: transaction) { value, updatesChildrenOnNextRunLoop in
@@ -176,7 +176,7 @@ private extension StoreContext {
         let store = getStore()
         var state = getCachedState(for: atom)
 
-        // Return the cached value is exists otherwise, get a new value and then cache it.
+        // Return the cached value if exists, otherwise, get a new value and then cache it.
         if let value = state?.value {
             return value
         }
@@ -217,16 +217,18 @@ private extension StoreContext {
         guard let state = baseState as? ConcreteAtomState<Node> else {
             assertionFailure(
                 """
+                [Atoms]
                 The type of the given atom's value and the cached value did not match.
                 There might be duplicate keys, make sure that the keys for all atom types are unique.
 
-                Atom type: \(Node.self)
-                Key type: \(type(of: atom.key))
-                Invalid state type: \(type(of: baseState))
+                Atom: \(Node.self)
+                Key: \(type(of: atom.key))
+                Detected: \(type(of: baseState))
+                Expected: ConcreteAtomState<\(Node.self)>
                 """
             )
 
-            // Release the invalid registration.
+            // Release the invalid registration as a fallback.
             release(for: key)
             return nil
         }
@@ -257,7 +259,7 @@ private extension StoreContext {
         }
 
         // At the timing when `ObservableObject/objectWillChange` emits, its properties
-        // have not yet been updated and are still old when the dependent atom reads it.
+        // have not yet been updated and are still old when dependent atoms read it.
         // As a workaround, the update is executed in the next run loop
         // so that the downstream atoms can receive the object that's already updated.
         if updatesChildrenOnNextRunLoop {
@@ -284,7 +286,7 @@ private extension StoreContext {
         state?.value = value
         store.state.atomStates[key] = state
 
-        // Do not notify update if the new value is equivalent to the old value.
+        // Do not notify update if the new value and the old value are equivalent.
         if let oldValue = oldValue, !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
             return
         }
@@ -301,7 +303,7 @@ private extension StoreContext {
         let dependencies = invalidate(for: key)
         let atomState = store.state.atomStates.removeValue(forKey: key)
 
-        // Cleanup downstream edges.
+        // Cleanup downstreams.
         store.graph.children.removeValue(forKey: key)
         store.state.subscriptions.removeValue(forKey: key)
         atomState?.notifyUnassigned(to: observers)
@@ -333,7 +335,7 @@ private extension StoreContext {
     func checkReleaseDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey) {
         let store = getStore()
 
-        // Recursively release dependencies while unlinking the dependent from the dependencies.
+        // Recursively release dependencies while unlinking the dependent.
         for dependency in dependencies {
             store.graph.children[dependency]?.remove(key)
             checkRelease(for: dependency)
@@ -343,8 +345,8 @@ private extension StoreContext {
     func invalidate(for key: AtomKey) -> Set<AtomKey> {
         let store = getStore()
 
-        // Remove the current transaction and then terminate to prevent current transaction
-        // to watch new values or add terminations.
+        // Remove the current transaction and then terminate to prevent it to watch new atoms
+        // or add new terminations.
         // Then, temporarily remove dependencies but do not release them recursively here.
         store.state.transactions.removeValue(forKey: key)?.terminate()
         return store.graph.dependencies.removeValue(forKey: key) ?? []

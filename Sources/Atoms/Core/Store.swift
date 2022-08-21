@@ -1,4 +1,3 @@
-@usableFromInline
 @MainActor
 internal final class Store {
     var graph = Graph()
