@@ -1,12 +1,25 @@
 import Combine
 
+@testable import Atoms
+
 struct UniqueKey: Hashable {}
+final class Object {}
 
-final class Object {
-    var onDeinit: (() -> Void)?
+final class TestObserver: AtomObserver {
+    var assignedAtomKeys = [AtomKey]()
+    var unassignedAtomKeys = [AtomKey]()
+    var changedAtomKeys = [AtomKey]()
 
-    deinit {
-        onDeinit?()
+    func atomAssigned<Node: Atom>(atom: Node) {
+        assignedAtomKeys.append(AtomKey(atom))
+    }
+
+    func atomUnassigned<Node: Atom>(atom: Node) {
+        unassignedAtomKeys.append(AtomKey(atom))
+    }
+
+    func atomChanged<Node: Atom>(snapshot: Snapshot<Node>) {
+        changedAtomKeys.append(AtomKey(snapshot.atom))
     }
 }
 

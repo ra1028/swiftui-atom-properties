@@ -44,12 +44,32 @@ final class SelectModifierTests: XCTestCase {
     }
 
     func testValue() {
-        //        let atom = TestValueAtom(value: 0)
-        //        let modifier = SelectModifier<Int, String>(keyPath: \.description)
-        //        let store = Store(container: StoreContainer())
-        //        let context = AtomStateContext(atom: atom, store: store)
-        //        let value = modifier.value(context: context, with: 100, setValue: { _ in })
-        //
-        //        XCTAssertEqual(value, "100")
+        let atom = TestValueAtom(value: 0)
+        let modifier = SelectModifier<Int, String>(keyPath: \.description)
+        let store = Store()
+        let transaction = Transaction(key: AtomKey(atom)) {}
+        let context = AtomLoaderContext<String>(
+            store: StoreContext(store),
+            transaction: transaction,
+            update: { _, _ in }
+        )
+        let value = modifier.value(context: context, with: 100)
+
+        XCTAssertEqual(value, "100")
+    }
+
+    func testHanlde() {
+        let atom = TestValueAtom(value: 0)
+        let modifier = SelectModifier<Int, String>(keyPath: \.description)
+        let store = Store()
+        let transaction = Transaction(key: AtomKey(atom)) {}
+        let context = AtomLoaderContext<String>(
+            store: StoreContext(store),
+            transaction: transaction,
+            update: { _, _ in }
+        )
+
+        let value = modifier.handle(context: context, with: "100")
+        XCTAssertEqual(value, "100")
     }
 }

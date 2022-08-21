@@ -34,7 +34,6 @@ internal struct StoreContext {
         // The dependencies added in `willSet/didSet` will not be released until the value is invalidated and
         // is going to be a bug, so `AtomTransactionContenxt` will no longer be passed.
         // https://github.com/ra1028/swiftui-atom-properties/issues/18
-        let store = getStore()
         let key = AtomKey(atom)
         let transaction = Transaction(key: key) {
             // Do nothing.
@@ -42,8 +41,6 @@ internal struct StoreContext {
         let context = AtomLoaderContext(store: self, transaction: transaction) { value, updatesChildrenOnNextRunLoop in
             update(atom: atom, with: value, updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop)
         }
-
-        store.state.transactions[key] = transaction
 
         context.transaction { context in
             atom.willSet(newValue: value, oldValue: oldValue, context: context)
