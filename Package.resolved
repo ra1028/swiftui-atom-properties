@@ -59,8 +59,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
-        "revision" : "82905286cc3f0fa8adc4674bf49437cab65a8373",
-        "version" : "1.1.1"
+        "revision" : "df9ee6676cd5b3bf5b330ec7568a5644f547201b",
+        "version" : "1.1.3"
       }
     },
     {
@@ -77,8 +77,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-format.git",
       "state" : {
-        "revision" : "c06258081a3f8703f55ff6e9647b32cf3144e247",
-        "version" : "0.50600.0"
+        "revision" : "e6b8c60c7671066d229e30efa1e31acf57be412e",
+        "version" : "0.50600.1"
       }
     },
     {
@@ -104,8 +104,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-tools-support-core.git",
       "state" : {
-        "revision" : "b7667f3e266af621e5cc9c77e74cacd8e8c00cb4",
-        "version" : "0.2.5"
+        "revision" : "4f07be3dc201f6e2ee85b6942d0c220a16926811",
+        "version" : "0.2.7"
       }
     },
     {
@@ -131,8 +131,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/yonaskolb/XcodeGen.git",
       "state" : {
-        "revision" : "f6cdd090c22622c3e2254da167099e3980e9bd89",
-        "version" : "2.27.0"
+        "revision" : "ebf70f1a718e90eeeefeebd02e1e0af1e9463f5a",
+        "version" : "2.32.0"
       }
     },
     {
@@ -140,8 +140,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tuist/XcodeProj.git",
       "state" : {
-        "revision" : "c75c3acc25460195cfd203a04dde165395bf00e0",
-        "version" : "8.7.1"
+        "revision" : "b6de1bfe021b861c94e7c83821b595083f74b997",
+        "version" : "8.8.0"
       }
     },
     {
