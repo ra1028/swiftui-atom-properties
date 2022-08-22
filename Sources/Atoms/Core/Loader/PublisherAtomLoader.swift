@@ -23,6 +23,7 @@ public struct PublisherAtomLoader<Publisher: Combine.Publisher>: RefreshableAtom
         }
 
         context.addTermination(task.cancel)
+
         return .suspending
     }
 
@@ -45,6 +46,7 @@ public struct PublisherAtomLoader<Publisher: Combine.Publisher>: RefreshableAtom
         }
 
         context.addTermination(task.cancel)
+
         return await withTaskCancellationHandler {
             await task.value
         } onCancel: {

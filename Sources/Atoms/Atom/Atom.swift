@@ -9,6 +9,7 @@ public protocol Atom {
     /// A type representing the stable identity of this atom.
     associatedtype Key: Hashable
 
+    /// A loader type that represents an actual implementation of the corresponding atom.
     associatedtype Loader: AtomLoader
 
     /// A type of the context structure that to read, watch, and otherwise interacting
@@ -30,6 +31,7 @@ public protocol Atom {
     /// If this atom conforms to `Hashable`, it will adopt itself as the `key` by default.
     var key: Key { get }
 
+    /// A loader that represents an actual implementation of the corresponding atom.
     @MainActor
     var _loader: Loader { get }
 }

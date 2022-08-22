@@ -29,6 +29,7 @@ public struct ObservableObjectAtomLoader<ObjectType: ObservableObject>: AtomLoad
         }
 
         context.addTermination(cancellable.cancel)
+
         return object
     }
 }

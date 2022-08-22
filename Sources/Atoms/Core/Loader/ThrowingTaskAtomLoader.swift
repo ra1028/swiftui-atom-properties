@@ -37,6 +37,7 @@ public struct ThrowingTaskAtomLoader<Success>: AsyncAtomLoader {
     /// and returns a final value.
     public func refresh(context: Context, with task: Value) async -> Value {
         context.addTermination(task.cancel)
+
         return await withTaskCancellationHandler {
             _ = await task.result
             return task

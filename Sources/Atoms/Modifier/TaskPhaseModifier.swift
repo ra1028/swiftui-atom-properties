@@ -60,6 +60,7 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
         }
 
         context.addTermination(task.cancel)
+
         return .suspending
     }
 

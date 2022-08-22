@@ -28,6 +28,7 @@ public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomL
         }
 
         context.addTermination(task.cancel)
+
         return .suspending
     }
 
@@ -56,6 +57,7 @@ public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomL
         }
 
         context.addTermination(task.cancel)
+
         return await withTaskCancellationHandler {
             await task.value
         } onCancel: {
