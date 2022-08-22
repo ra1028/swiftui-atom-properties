@@ -1,6 +1,8 @@
 import Combine
 
+/// A loader protocol that represents an actual implementation of `PublisherAtom`.
 public struct PublisherAtomLoader<Publisher: Combine.Publisher>: RefreshableAtomLoader {
+    /// A type of value to provide.
     public typealias Value = AsyncPhase<Publisher.Output, Publisher.Failure>
 
     private let makePublisher: @MainActor (AtomTransactionContext) -> Publisher
@@ -9,6 +11,7 @@ public struct PublisherAtomLoader<Publisher: Combine.Publisher>: RefreshableAtom
         self.makePublisher = makePublisher
     }
 
+    /// Returns a new value for the corresponding atom.
     public func get(context: Context) -> Value {
         let results = context.transaction(makePublisher).results
         let task = Task {
@@ -23,10 +26,12 @@ public struct PublisherAtomLoader<Publisher: Combine.Publisher>: RefreshableAtom
         return .suspending
     }
 
+    /// Handles updates or cancellation of the passed value.
     public func handle(context: Context, with value: Value) -> Value {
         value
     }
 
+    /// Refreshes and awaits until the asynchronous is finished and returns a final value.
     public func refresh(context: Context) async -> Value {
         let results = context.transaction(makePublisher).results
         let task = Task { () -> Value in
@@ -47,6 +52,8 @@ public struct PublisherAtomLoader<Publisher: Combine.Publisher>: RefreshableAtom
         }
     }
 
+    /// Refreshes and awaits for the passed value to be finished to yield values
+    /// and returns a final value.
     public func refresh(context: Context, with value: Value) async -> Value {
         value
     }

@@ -1,3 +1,4 @@
+/// The context structure that to interact with an atom store.
 @MainActor
 public struct AtomLoaderContext<Value> {
     @usableFromInline

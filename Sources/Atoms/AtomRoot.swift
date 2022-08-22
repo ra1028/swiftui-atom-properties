@@ -18,8 +18,8 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// It optionally provides the modifier ``AtomRoot/override(_:with:)-32rse`` to replace the value of
-/// the specified atom, which is useful for dependency injection in testing.
+/// Optionally, this component allows you to override a value of arbitrary atoms, that's useful
+/// for dependency injection in testing.
 ///
 /// ```swift
 /// AtomRoot {
@@ -30,8 +30,7 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// In addition, all changes in atoms managed by ``AtomRoot`` can be monitored by passing an observer
-/// to the ``AtomRoot/observe(_:)`` modifier.
+/// It also provides a way to observe changes in atoms by passing a observer instance.
 ///
 /// ```swift
 /// AtomRoot {

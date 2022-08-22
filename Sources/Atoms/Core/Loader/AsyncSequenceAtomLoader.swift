@@ -1,4 +1,6 @@
+/// A loader protocol that represents an actual implementation of `AsyncSequenceAtom`.
 public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomLoader {
+    /// A type of value to provide.
     public typealias Value = AsyncPhase<Sequence.Element, Error>
 
     private let makeSequence: @MainActor (AtomTransactionContext) -> Sequence
@@ -7,6 +9,7 @@ public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomL
         self.makeSequence = makeSequence
     }
 
+    /// Returns a new value for the corresponding atom.
     public func get(context: Context) -> Value {
         let sequence = context.transaction(makeSequence)
         let task = Task {
@@ -28,10 +31,13 @@ public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomL
         return .suspending
     }
 
+    /// Refreshes and awaits until the asynchronous is finished and returns a final value.
     public func handle(context: Context, with value: Value) -> Value {
         value
     }
 
+    /// Refreshes and awaits for the passed value to be finished to yield values
+    /// and returns a final value.
     public func refresh(context: Context) async -> Value {
         let sequence = context.transaction(makeSequence)
         let task = Task { () -> Value in
@@ -57,6 +63,8 @@ public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomL
         }
     }
 
+    /// Refreshes and awaits for the passed value to be finished to yield values
+    /// and returns a final value.
     public func refresh(context: Context, with value: Value) async -> Value {
         value
     }

@@ -26,32 +26,18 @@ public protocol AtomModifier {
     /// A unique value used to identify the modifier internally.
     var key: Key { get }
 
-    /// Returns a boolean value that determines whether it should notify the value update to
-    /// watchers with comparing the given old value and the new value.
-    ///
-    /// - Parameters:
-    ///   - newValue: The new value after update.
-    ///   - oldValue: The old value before update.
-    ///
-    /// - Returns: A boolean value that determines whether it should notify the value update
-    ///            to watchers.
-    @MainActor
-    func shouldNotifyUpdate(newValue: ModifiedValue, oldValue: ModifiedValue) -> Bool
-
-    /// Returns a value with initiating the update process and caches the value for
-    /// the next access.
-    ///
-    /// - Parameters:
-    ///   - context: The context structure that to interact with an atom store.
-    ///   - value: The original value to be modified.
-    ///   - setValue: The closure that to set a new value to the original atom's state.
-    ///
-    /// - Returns: A modified value.
+    /// Returns a new value for the corresponding atom.
     @MainActor
     func value(context: Context, with value: Value) -> ModifiedValue
 
+    /// Handles updates or cancellation of the passed value.
     @MainActor
     func handle(context: Context, with value: ModifiedValue) -> ModifiedValue
+
+    /// Returns a boolean value indicating whether it should notify updates to downstream
+    /// by checking the equivalence of the given old value and new value.
+    @MainActor
+    func shouldNotifyUpdate(newValue: ModifiedValue, oldValue: ModifiedValue) -> Bool
 }
 
 public extension AtomModifier {

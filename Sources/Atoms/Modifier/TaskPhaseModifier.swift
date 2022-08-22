@@ -49,8 +49,7 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
         Key()
     }
 
-    /// Returns a value with initiating the update process and caches the value for
-    /// the next access.
+    /// Returns a new value for the corresponding atom.
     public func value(context: Context, with task: Task<Success, Failure>) -> ModifiedValue {
         let task = Task {
             let phase = await AsyncPhase(task.result)
@@ -64,6 +63,7 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
         return .suspending
     }
 
+    /// Handles updates or cancellation of the passed value.
     public func handle(context: Context, with value: ModifiedValue) -> ModifiedValue {
         value
     }

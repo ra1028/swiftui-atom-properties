@@ -59,19 +59,19 @@ public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
         Key(keyPath: keyPath)
     }
 
-    /// Returns a boolean value that determines whether it should notify the value update to
-    /// watchers with comparing the given old value and the new value.
-    public func shouldNotifyUpdate(newValue: Selected, oldValue: Selected) -> Bool {
-        newValue != oldValue
-    }
-
-    /// Returns a value with initiating the update process and caches the value for
-    /// the next access.
+    /// Returns a new value for the corresponding atom.
     public func value(context: Context, with value: Value) -> Selected {
         value[keyPath: keyPath]
     }
 
+    /// Handles updates or cancellation of the passed value.
     public func handle(context: Context, with value: Selected) -> Selected {
         value
+    }
+
+    /// Returns a boolean value that determines whether it should notify the value update to
+    /// watchers with comparing the given old value and the new value.
+    public func shouldNotifyUpdate(newValue: Selected, oldValue: Selected) -> Bool {
+        newValue != oldValue
     }
 }
