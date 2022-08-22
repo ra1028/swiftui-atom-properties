@@ -1,7 +1,7 @@
 /// An atom type that applies a modifier to an atom.
 ///
 /// Use ``Atom/modifier(_:)`` instead of using this atom directly.
-public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.State.Value == Modifier.Value {
+public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.Loader.Value == Modifier.Value {
     /// A type representing the stable identity of this atom.
     public struct Key: Hashable {
         private let atomKey: Node.Key
@@ -29,16 +29,8 @@ public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.
         Key(atomKey: atom.key, modifierKey: modifier.key)
     }
 
-    /// Creates a new state that is an actual implementation of this atom.
-    ///
-    /// - Returns: A state object that handles internal process and a value.
-    public func makeState() -> ModifiedAtomState<Node, Modifier> {
-        State(atom: atom, modifier: modifier)
-    }
-
-    /// Returns a boolean value that determines whether it should notify the value update to
-    /// watchers with comparing the given old value and the new value.
-    public func shouldNotifyUpdate(newValue: Modifier.ModifiedValue, oldValue: Modifier.ModifiedValue) -> Bool {
-        modifier.shouldNotifyUpdate(newValue: newValue, oldValue: oldValue)
+    /// A loader that represents an actual implementation of this atom.
+    public var _loader: ModifiedAtomLoader<Node, Modifier> {
+        Loader(atom: atom, modifier: modifier)
     }
 }

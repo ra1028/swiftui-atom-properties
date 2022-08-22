@@ -994,7 +994,7 @@ struct BooksView: View {
 
 Context available through the `@ViewContext` property wrapper when using atoms from a view. There is no specific API for this context.
 
-#### [AtomRelationContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelationcontext)
+#### [AtomTransactionContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext)
 
 <details><summary><code>📖 Click to expand example code</code></summary>
 
@@ -1028,8 +1028,8 @@ Context passed as a parameter to the primary function of each atom type.
 
 |API|Use|
 |:--|:--|
-|[addTermination(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelationcontext/addtermination(_:))|Calls the passed closure when the atom is updated or is no longer used.|
-|[keepUntilTermination(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelationcontext/keepuntiltermination(_:))|Retains the given object instance until the atom is updated or is no longer used.|
+|[addTermination(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext/addtermination(_:))|Calls the passed closure when the atom is updated or is no longer used.|
+|[keepUntilTermination(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext/keepuntiltermination(_:))|Retains the given object instance until the atom is updated or is no longer used.|
 
 #### [AtomTestContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext)
 

@@ -48,7 +48,7 @@ import Combine
 /// }
 /// ```
 ///
-public protocol ObservableObjectAtom: Atom where State == ObservableObjectAtomState<ObjectType> {
+public protocol ObservableObjectAtom: Atom where Loader == ObservableObjectAtomLoader<ObjectType> {
     /// The type of observable object that this atom produces.
     associatedtype ObjectType: ObservableObject
 
@@ -67,7 +67,7 @@ public protocol ObservableObjectAtom: Atom where State == ObservableObjectAtomSt
 
 public extension ObservableObjectAtom {
     @MainActor
-    func makeState() -> State {
-        State(makeObject: object)
+    var _loader: Loader {
+        Loader(makeObject: object)
     }
 }

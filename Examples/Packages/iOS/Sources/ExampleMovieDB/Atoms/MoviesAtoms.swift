@@ -15,8 +15,6 @@ final class MovieLoader: ObservableObject {
 
     func refresh() async {
         do {
-            pages = .suspending
-
             let page = try await api.getMovies(filter: filter, page: 1)
             pages = .success([page])
         }

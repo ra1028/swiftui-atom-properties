@@ -19,7 +19,7 @@ public protocol AtomContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value associated with the given atom.
-    func read<Node: Atom>(_ atom: Node) -> Node.State.Value
+    func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value
 
     /// Sets the new value for the given writable atom.
     ///
@@ -59,7 +59,7 @@ public protocol AtomContext {
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader
 
     /// Resets the value associated with the given atom, and then notify.
     ///
@@ -108,7 +108,7 @@ public extension AtomContext {
 /// A context structure that to read, watch, and otherwise interacting with atoms.
 ///
 /// - SeeAlso: ``AtomViewContext``
-/// - SeeAlso: ``AtomRelationContext``
+/// - SeeAlso: ``AtomTransactionContext``
 /// - SeeAlso: ``AtomTestContext``
 @MainActor
 public protocol AtomWatchableContext: AtomContext {
@@ -129,27 +129,7 @@ public protocol AtomWatchableContext: AtomContext {
     ///
     /// - Returns: The value associated with the given atom.
     @discardableResult
-    func watch<Node: Atom>(_ atom: Node) -> Node.State.Value
-
-    /// Accesses the observable object associated with the given atom for reading and initialing watch to
-    /// receive its updates.
-    ///
-    /// This method returns an observable object for the given atom and initiate watching the atom so that
-    /// the current context to get updated when the atom notifies updates.
-    /// The observable object associated with the atom is cached until it is no longer watched to or until
-    /// it is updated.
-    ///
-    /// ```swift
-    /// let context = ...
-    /// let store = context.watch(AccountStoreAtom())
-    /// print(store.currentUser) // Prints the user value after update.
-    /// ```
-    ///
-    /// - Parameter atom: An atom that associates the observable object.
-    ///
-    /// - Returns: The observable object associated with the given atom.
-    @discardableResult
-    func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.State.Value
+    func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value
 }
 
 public extension AtomWatchableContext {
@@ -174,7 +154,7 @@ public extension AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
-    func state<Node: StateAtom>(_ atom: Node) -> Binding<Node.State.Value> {
+    func state<Node: StateAtom>(_ atom: Node) -> Binding<Node.Loader.Value> {
         Binding(
             get: { watch(atom) },
             set: { self[atom] = $0 }

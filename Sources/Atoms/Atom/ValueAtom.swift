@@ -29,7 +29,7 @@
 /// }
 /// ```
 ///
-public protocol ValueAtom: Atom where State == ValueAtomState<Value> {
+public protocol ValueAtom: Atom where Loader == ValueAtomLoader<Value> {
     /// The type of value that this atom produces.
     associatedtype Value
 
@@ -48,7 +48,7 @@ public protocol ValueAtom: Atom where State == ValueAtomState<Value> {
 
 public extension ValueAtom {
     @MainActor
-    func makeState() -> State {
-        State(getValue: value)
+    var _loader: Loader {
+        Loader(getValue: value)
     }
 }

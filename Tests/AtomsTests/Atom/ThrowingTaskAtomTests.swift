@@ -122,4 +122,38 @@ final class ThrowingTaskAtomTests: XCTestCase {
             XCTAssertTrue(task1.isCancelled)
         }
     }
+
+    func testReleaseDependencies() async throws {
+        struct DependencyAtom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestAtom: ThrowingTaskAtom, Hashable {
+            func value(context: Context) async throws -> Int {
+                let dependency = context.watch(DependencyAtom())
+                return dependency
+            }
+        }
+
+        let context = AtomTestContext()
+
+        let value0 = try await context.watch(TestAtom()).value
+
+        XCTAssertEqual(value0, 0)
+
+        context[DependencyAtom()] = 100
+
+        let value1 = try await context.watch(TestAtom()).value
+
+        // Dependencies should not be released until task value is returned.
+        XCTAssertEqual(value1, 100)
+
+        context.unwatch(TestAtom())
+
+        let dependencyValue = context.read(DependencyAtom())
+
+        XCTAssertEqual(dependencyValue, 0)
+    }
 }

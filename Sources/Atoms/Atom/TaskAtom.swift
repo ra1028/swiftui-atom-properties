@@ -34,7 +34,7 @@
 /// }
 /// ```
 ///
-public protocol TaskAtom: Atom where State == TaskAtomState<Value> {
+public protocol TaskAtom: Atom where Loader == TaskAtomLoader<Value> {
     /// The type of value that this atom produces.
     associatedtype Value
 
@@ -53,7 +53,7 @@ public protocol TaskAtom: Atom where State == TaskAtomState<Value> {
 
 public extension TaskAtom {
     @MainActor
-    func makeState() -> State {
-        State(getValue: value)
+    var _loader: Loader {
+        Loader(getValue: value)
     }
 }

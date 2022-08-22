@@ -24,10 +24,9 @@ public extension Atom {
     /// - Parameter keyPath: A key path for the property of the original atom value.
     ///
     /// - Returns: An atom that provides the partial property of the original atom value.
-    @MainActor
     func select<Selected: Equatable>(
-        _ keyPath: KeyPath<State.Value, Selected>
-    ) -> ModifiedAtom<Self, SelectModifier<State.Value, Selected>> {
+        _ keyPath: KeyPath<Loader.Value, Selected>
+    ) -> ModifiedAtom<Self, SelectModifier<Loader.Value, Selected>> {
         modifier(SelectModifier(keyPath: keyPath))
     }
 }
@@ -60,15 +59,19 @@ public struct SelectModifier<Value, Selected: Equatable>: AtomModifier {
         Key(keyPath: keyPath)
     }
 
+    /// Returns a new value for the corresponding atom.
+    public func value(context: Context, with value: Value) -> Selected {
+        value[keyPath: keyPath]
+    }
+
+    /// Handles updates or cancellation of the passed value.
+    public func handle(context: Context, with value: Selected) -> Selected {
+        value
+    }
+
     /// Returns a boolean value that determines whether it should notify the value update to
     /// watchers with comparing the given old value and the new value.
     public func shouldNotifyUpdate(newValue: Selected, oldValue: Selected) -> Bool {
         newValue != oldValue
-    }
-
-    /// Returns a value with initiating the update process and caches the value for
-    /// the next access.
-    public func value(context: Context, with value: Value, setValue: SetValue) -> Selected {
-        value[keyPath: keyPath]
     }
 }

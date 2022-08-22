@@ -17,17 +17,6 @@ final class ModifiedAtomTests: XCTestCase {
         XCTAssertNotEqual(AnyHashable(atom.key).hashValue, AnyHashable(base.key).hashValue)
     }
 
-    func testShouldNotifyUpdate() {
-        let base = TestValueAtom(value: "test")
-        let modifier = SelectModifier<String, Int>(keyPath: \.count)
-        let atom = ModifiedAtom(atom: base, modifier: modifier)
-
-        XCTAssertEqual(
-            atom.shouldNotifyUpdate(newValue: 100, oldValue: 200),
-            modifier.shouldNotifyUpdate(newValue: 100, oldValue: 200)
-        )
-    }
-
     func testValue() async {
         let base = TestStateAtom(defaultValue: "test")
         let modifier = SelectModifier<String, Int>(keyPath: \.count)

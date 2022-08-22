@@ -18,8 +18,8 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// It optionally provides the modifier ``AtomRoot/override(_:with:)-32rse`` to replace the value of
-/// the specified atom, which is useful for dependency injection in testing.
+/// Optionally, this component allows you to override a value of arbitrary atoms, that's useful
+/// for dependency injection in testing.
 ///
 /// ```swift
 /// AtomRoot {
@@ -30,8 +30,7 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// In addition, all changes in atoms managed by ``AtomRoot`` can be monitored by passing an observer
-/// to the ``AtomRoot/observe(_:)`` modifier.
+/// It also provides a way to observe changes in atoms by passing a observer instance.
 ///
 /// ```swift
 /// AtomRoot {
@@ -43,7 +42,7 @@ import SwiftUI
 public struct AtomRoot<Content: View>: View {
     @StateObject
     private var state: State
-    private var overrides: AtomOverrides
+    private var overrides: Overrides
     private var observers = [AtomObserver]()
     private let content: Content
 
@@ -52,16 +51,16 @@ public struct AtomRoot<Content: View>: View {
     /// - Parameter content: The content that uses atoms.
     public init(@ViewBuilder content: () -> Content) {
         self._state = StateObject(wrappedValue: State())
-        self.overrides = AtomOverrides()
+        self.overrides = Overrides()
         self.content = content()
     }
 
     /// The content and behavior of the view.
     public var body: some View {
         content.environment(
-            \.atomStore,
-            Store(
-                container: state.container,
+            \.store,
+            StoreContext(
+                state.store,
                 overrides: overrides,
                 observers: observers
             )
@@ -78,7 +77,7 @@ public struct AtomRoot<Content: View>: View {
     ///   - value: A value that to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.State.Value) -> Self {
+    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
         mutating { $0.overrides.insert(atom, with: value) }
     }
 
@@ -94,7 +93,7 @@ public struct AtomRoot<Content: View>: View {
     ///   - value: A value that to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.State.Value) -> Self {
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
         mutating { $0.overrides.insert(atomType, with: value) }
     }
 
@@ -117,7 +116,7 @@ public struct AtomRoot<Content: View>: View {
 private extension AtomRoot {
     @MainActor
     final class State: ObservableObject {
-        let container = StoreContainer()
+        let store = Store()
     }
 
     func `mutating`(_ mutation: (inout Self) -> Void) -> Self {

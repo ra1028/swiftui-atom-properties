@@ -20,7 +20,7 @@ struct CastList: View {
             CaveatRow(text: "Failed to get casts data.")
 
         case .success(let casts) where casts.isEmpty:
-            CaveatRow(text: "There are no casts.")
+            CaveatRow(text: "No cast information is available.")
 
         case .success(let casts):
             ScrollView(.horizontal, showsIndicators: false) {

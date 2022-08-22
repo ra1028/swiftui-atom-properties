@@ -79,24 +79,6 @@ final class AtomTestContextTests: XCTestCase {
     }
 
     func testObserve() {
-        final class TestObserver: AtomObserver {
-            var asignedAtomKeys = [AtomKey]()
-            var unassignedAtomKeys = [AtomKey]()
-            var changedAtomKeys = [AtomKey]()
-
-            func atomAssigned<Node: Atom>(atom: Node) {
-                asignedAtomKeys.append(AtomKey(atom))
-            }
-
-            func atomUnassigned<Node: Atom>(atom: Node) {
-                unassignedAtomKeys.append(AtomKey(atom))
-            }
-
-            func atomChanged<Node: Atom>(snapshot: Snapshot<Node>) {
-                changedAtomKeys.append(AtomKey(snapshot.atom))
-            }
-        }
-
         let atom = TestStateAtom(defaultValue: 100)
         let key = AtomKey(atom)
         let observers = [TestObserver(), TestObserver()]
@@ -109,7 +91,7 @@ final class AtomTestContextTests: XCTestCase {
         context.watch(atom)
 
         for observer in observers {
-            XCTAssertEqual(observer.asignedAtomKeys, [key])
+            XCTAssertEqual(observer.assignedAtomKeys, [key])
             XCTAssertEqual(observer.unassignedAtomKeys, [])
             XCTAssertEqual(observer.changedAtomKeys, [key])
         }
@@ -117,7 +99,7 @@ final class AtomTestContextTests: XCTestCase {
         context[atom] = 200
 
         for observer in observers {
-            XCTAssertEqual(observer.asignedAtomKeys, [key])
+            XCTAssertEqual(observer.assignedAtomKeys, [key])
             XCTAssertEqual(observer.unassignedAtomKeys, [])
             XCTAssertEqual(observer.changedAtomKeys, [key, key])
         }
@@ -125,7 +107,7 @@ final class AtomTestContextTests: XCTestCase {
         context.unwatch(atom)
 
         for observer in observers {
-            XCTAssertEqual(observer.asignedAtomKeys, [key])
+            XCTAssertEqual(observer.assignedAtomKeys, [key])
             XCTAssertEqual(observer.unassignedAtomKeys, [key])
             XCTAssertEqual(observer.changedAtomKeys, [key, key])
         }

@@ -5,19 +5,19 @@
 @MainActor
 public struct AtomViewContext: AtomWatchableContext {
     @usableFromInline
-    internal let _relationship: Relationship
+    internal let _store: StoreContext
     @usableFromInline
-    internal let _store: AtomStore
+    internal let _container: SubscriptionContainer
     @usableFromInline
-    internal let _notifyUpdate: @MainActor () -> Void
+    internal let _notifyUpdate: () -> Void
 
     internal init(
-        store: AtomStore,
-        relationship: Relationship,
-        notifyUpdate: @MainActor @escaping () -> Void
+        store: StoreContext,
+        container: SubscriptionContainer,
+        notifyUpdate: @escaping () -> Void
     ) {
         _store = store
-        _relationship = relationship
+        _container = container
         _notifyUpdate = notifyUpdate
     }
 
@@ -36,7 +36,7 @@ public struct AtomViewContext: AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
-    public func read<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    public func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         _store.read(atom)
     }
 
@@ -82,7 +82,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
     @inlinable
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.State.Value where Node.State: RefreshableAtomState {
+    public func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         await _store.refresh(atom)
     }
 
@@ -126,11 +126,10 @@ public struct AtomViewContext: AtomWatchableContext {
     /// - Returns: The value associated with the given atom.
     @discardableResult
     @inlinable
-    public func watch<Node: Atom>(_ atom: Node) -> Node.State.Value {
+    public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         _store.watch(
             atom,
-            relationship: _relationship,
-            shouldNotifyAfterUpdates: false,
+            container: _container,
             notifyUpdate: _notifyUpdate
         )
     }
