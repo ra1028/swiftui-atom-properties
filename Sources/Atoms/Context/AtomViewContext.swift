@@ -7,13 +7,13 @@ public struct AtomViewContext: AtomWatchableContext {
     @usableFromInline
     internal let _store: StoreContext
     @usableFromInline
-    internal let _container: SubscriptionContainer
+    internal let _container: SubscriptionContainer.Wrapper
     @usableFromInline
     internal let _notifyUpdate: () -> Void
 
     internal init(
         store: StoreContext,
-        container: SubscriptionContainer,
+        container: SubscriptionContainer.Wrapper,
         notifyUpdate: @escaping () -> Void
     ) {
         _store = store

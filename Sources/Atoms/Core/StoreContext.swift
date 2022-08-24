@@ -19,7 +19,13 @@ internal struct StoreContext {
 
     @usableFromInline
     func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        getValue(for: atom)
+        let key = AtomKey(atom)
+
+        // Register if it doesn't exist yet because the atom needs to be maintained if it's marked as `KeepAlive`.
+        registerIfAbsent(atom: atom)
+        defer { checkRelease(for: key) }
+
+        return getValue(for: atom)
     }
 
     @usableFromInline
@@ -53,7 +59,7 @@ internal struct StoreContext {
     func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
         // Return a new value immediately if the transaction is already terminated.
         guard !transaction.isTerminated else {
-            return getNewValue(for: atom)
+            return read(atom)
         }
 
         let store = getStore()
@@ -72,19 +78,18 @@ internal struct StoreContext {
     @usableFromInline
     func watch<Node: Atom>(
         _ atom: Node,
-        container: SubscriptionContainer,
+        container: SubscriptionContainer.Wrapper,
         notifyUpdate: @escaping () -> Void
     ) -> Node.Loader.Value {
         let store = getStore()
         let key = AtomKey(atom)
-        let subscriptionKey = SubscriptionKey(container)
         let subscription = Subscription(notifyUpdate: notifyUpdate) { [weak store] in
             guard let store = store else {
                 return
             }
 
             // Unsubscribe and release if it's no longer used.
-            store.state.subscriptions[key]?.removeValue(forKey: subscriptionKey)
+            store.state.subscriptions[key]?.removeValue(forKey: container.key)
             checkRelease(for: key)
         }
 
@@ -93,13 +98,19 @@ internal struct StoreContext {
 
         // Register the subscription to both the store and the container.
         container.subscriptions[key] = subscription
-        store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriptionKey)
+        store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key)
 
         return getValue(for: atom)
     }
 
     @usableFromInline
     func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
+        let key = AtomKey(atom)
+
+        // Register if it doesn't exist yet because the atom needs to be maintained if it's marked as `KeepAlive`.
+        registerIfAbsent(atom: atom)
+        defer { checkRelease(for: key) }
+
         let context = prepareTransaction(for: atom)
         let value: Node.Loader.Value
 
@@ -117,6 +128,12 @@ internal struct StoreContext {
 
     @usableFromInline
     func reset<Node: Atom>(_ atom: Node) {
+        let key = AtomKey(atom)
+
+        // Register if it doesn't exist yet because the atom needs to be maintained if it's marked as `KeepAlive`.
+        registerIfAbsent(atom: atom)
+        defer { checkRelease(for: key) }
+
         let value = getNewValue(for: atom)
         update(atom: atom, with: value)
     }

@@ -52,7 +52,7 @@ public struct ViewContext: DynamicProperty {
     public var wrappedValue: AtomViewContext {
         AtomViewContext(
             store: _store,
-            container: state.container,
+            container: state.container.wrapper,
             notifyUpdate: state.objectWillChange.send
         )
     }
@@ -61,10 +61,6 @@ public struct ViewContext: DynamicProperty {
 private extension ViewContext {
     @MainActor
     final class State: ObservableObject {
-        let container: SubscriptionContainer
-
-        init() {
-            container = SubscriptionContainer()
-        }
+        let container = SubscriptionContainer()
     }
 }

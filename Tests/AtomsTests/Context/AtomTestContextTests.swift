@@ -92,7 +92,7 @@ final class AtomTestContextTests: XCTestCase {
 
         for observer in observers {
             XCTAssertEqual(observer.assignedAtomKeys, [key])
-            XCTAssertEqual(observer.unassignedAtomKeys, [])
+            XCTAssertTrue(observer.unassignedAtomKeys.isEmpty)
             XCTAssertEqual(observer.changedAtomKeys, [key])
         }
 
@@ -100,7 +100,7 @@ final class AtomTestContextTests: XCTestCase {
 
         for observer in observers {
             XCTAssertEqual(observer.assignedAtomKeys, [key])
-            XCTAssertEqual(observer.unassignedAtomKeys, [])
+            XCTAssertTrue(observer.unassignedAtomKeys.isEmpty)
             XCTAssertEqual(observer.changedAtomKeys, [key, key])
         }
 
