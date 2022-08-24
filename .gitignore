@@ -22,3 +22,4 @@ archive/
 .swiftpm
 .build
 docs
+Package.resolved
