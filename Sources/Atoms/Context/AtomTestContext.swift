@@ -275,17 +275,12 @@ private extension AtomTestContext {
     @MainActor
     final class State {
         private let _store = Store()
+        private let _container = SubscriptionContainer()
 
-        let container: SubscriptionContainer
-        var overrides: Overrides
+        var overrides = Overrides()
         var observers = [AtomObserver]()
         let notifier = PassthroughSubject<Void, Never>()
         var onUpdate: (() -> Void)?
-
-        init() {
-            overrides = Overrides()
-            container = SubscriptionContainer()
-        }
 
         var store: StoreContext {
             StoreContext(
@@ -293,6 +288,10 @@ private extension AtomTestContext {
                 overrides: overrides,
                 observers: observers
             )
+        }
+
+        var container: SubscriptionContainer.Wrapper {
+            _container.wrapper
         }
 
         func notifyUpdate() {

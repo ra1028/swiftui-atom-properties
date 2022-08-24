@@ -3,6 +3,8 @@ internal struct Overrides {
     private var _entriesForNode = [AtomKey: Override]()
     private var _entriesForType = [AtomTypeKey: Override]()
 
+    nonisolated init() {}
+
     mutating func insert<Node: Atom>(
         _ atom: Node,
         with value: @escaping (Node) -> Node.Loader.Value

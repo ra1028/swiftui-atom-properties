@@ -10,7 +10,7 @@ final class AtomViewContextTests: XCTestCase {
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
-            container: container,
+            container: container.wrapper,
             notifyUpdate: {}
         )
 
@@ -23,7 +23,7 @@ final class AtomViewContextTests: XCTestCase {
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
-            container: container,
+            container: container.wrapper,
             notifyUpdate: {}
         )
 
@@ -40,7 +40,7 @@ final class AtomViewContextTests: XCTestCase {
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
-            container: container,
+            container: container.wrapper,
             notifyUpdate: {}
         )
 
@@ -57,7 +57,7 @@ final class AtomViewContextTests: XCTestCase {
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
-            container: container,
+            container: container.wrapper,
             notifyUpdate: {}
         )
 
@@ -78,7 +78,7 @@ final class AtomViewContextTests: XCTestCase {
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
-            container: container,
+            container: container.wrapper,
             notifyUpdate: {}
         )
 
@@ -87,5 +87,23 @@ final class AtomViewContextTests: XCTestCase {
         context[atom] = 200
 
         XCTAssertEqual(context.watch(atom), 200)
+    }
+
+    func testUnsubscription() {
+        let atom = TestValueAtom(value: 100)
+        let key = AtomKey(atom)
+        let store = Store()
+        var container: SubscriptionContainer? = SubscriptionContainer()
+        let context = AtomViewContext(
+            store: StoreContext(store),
+            container: container!.wrapper,
+            notifyUpdate: {}
+        )
+
+        context.watch(atom)
+        XCTAssertNotNil(store.state.atomStates[key])
+
+        container = nil
+        XCTAssertNil(store.state.atomStates[key])
     }
 }

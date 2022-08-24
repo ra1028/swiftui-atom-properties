@@ -13,7 +13,7 @@ final class SubscriptionContainerTests: XCTestCase {
         let atom0 = TestValueAtom(value: 0)
         let atom1 = TestValueAtom(value: 1)
 
-        container?.subscriptions = [
+        container?.wrapper.subscriptions = [
             AtomKey(atom0): subscription,
             AtomKey(atom1): subscription,
         ]
