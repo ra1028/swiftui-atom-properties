@@ -1,5 +1,5 @@
-/// A loader protocol that represents an actual implementation of `ValueAtom`.
-public struct ValueAtomLoader<Node: ValueAtom>: AtomLoader {
+/// A loader protocol that represents an actual implementation of `StateAtom`.
+public struct StateAtomLoader<Node: StateAtom>: AtomLoader {
     /// A type of value to provide.
     public typealias Value = Node.Value
 
@@ -11,7 +11,7 @@ public struct ValueAtomLoader<Node: ValueAtom>: AtomLoader {
 
     /// Returns a new value for the corresponding atom.
     public func get(context: Context) -> Value {
-        context.transaction(atom.value)
+        context.transaction(atom.defaultValue)
     }
 
     /// Handles updates or cancellation of the passed value.

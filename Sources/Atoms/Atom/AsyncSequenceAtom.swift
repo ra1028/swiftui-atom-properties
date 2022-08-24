@@ -44,7 +44,7 @@
 /// }
 /// ```
 ///
-public protocol AsyncSequenceAtom: Atom where Loader == AsyncSequenceAtomLoader<Sequence> {
+public protocol AsyncSequenceAtom: Atom {
     /// The type of asynchronous sequence that this atom manages.
     associatedtype Sequence: AsyncSequence
 
@@ -64,7 +64,7 @@ public protocol AsyncSequenceAtom: Atom where Loader == AsyncSequenceAtomLoader<
 
 public extension AsyncSequenceAtom {
     @MainActor
-    var _loader: Loader {
-        Loader(makeSequence: sequence)
+    var _loader: AsyncSequenceAtomLoader<Self> {
+        AsyncSequenceAtomLoader(atom: self)
     }
 }

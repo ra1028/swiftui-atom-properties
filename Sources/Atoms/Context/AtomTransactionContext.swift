@@ -52,7 +52,7 @@ public struct AtomTransactionContext: AtomWatchableContext {
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
     @inlinable
-    public func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
+    public func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         _store.set(value, for: atom)
     }
 

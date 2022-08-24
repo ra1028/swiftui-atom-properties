@@ -36,7 +36,7 @@
 /// }
 /// ```
 ///
-public protocol ThrowingTaskAtom: Atom where Loader == ThrowingTaskAtomLoader<Value> {
+public protocol ThrowingTaskAtom: Atom {
     /// The type of value that this atom produces.
     associatedtype Value
 
@@ -57,7 +57,7 @@ public protocol ThrowingTaskAtom: Atom where Loader == ThrowingTaskAtomLoader<Va
 
 public extension ThrowingTaskAtom {
     @MainActor
-    var _loader: Loader {
-        Loader(getValue: value)
+    var _loader: ThrowingTaskAtomLoader<Self> {
+        ThrowingTaskAtomLoader(atom: self)
     }
 }

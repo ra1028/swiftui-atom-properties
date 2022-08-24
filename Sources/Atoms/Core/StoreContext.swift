@@ -29,7 +29,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
+    func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         // Do nothing if the atom is not yet to be registered.
         guard let oldValue = getCachedState(for: atom)?.value else {
             return

@@ -39,7 +39,7 @@ public protocol AtomContext {
     /// - Parameters
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
-    func set<Node: StateAtom>(_ value: Node.Value, for atom: Node)
+    func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node)
 
     /// Refreshes and then return the value associated with the given refreshable atom.
     ///
@@ -99,7 +99,7 @@ public extension AtomContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value associated with the given atom.
-    subscript<Node: StateAtom>(_ atom: Node) -> Node.Value {
+    subscript<Node: StateAtom>(_ atom: Node) -> Node.Loader.Value {
         get { read(atom) }
         nonmutating set { set(newValue, for: atom) }
     }

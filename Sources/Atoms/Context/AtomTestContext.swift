@@ -124,7 +124,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
-    public func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
+    public func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         state.store.set(value, for: atom)
     }
 
