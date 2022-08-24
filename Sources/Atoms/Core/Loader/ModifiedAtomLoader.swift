@@ -3,6 +3,8 @@ public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader
     /// A type of value to provide.
     public typealias Value = Modifier.ModifiedValue
 
+    public typealias Coordinator = Void
+
     private let atom: Node
     private let modifier: Modifier
 

@@ -3,6 +3,8 @@ public struct ValueAtomLoader<Node: ValueAtom>: AtomLoader {
     /// A type of value to provide.
     public typealias Value = Node.Value
 
+    public typealias Coordinator = Node.Coordinator
+
     private let atom: Node
 
     internal init(atom: Node) {

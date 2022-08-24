@@ -41,10 +41,15 @@ internal struct StoreContext {
         // is going to be a bug, so `AtomTransactionContenxt` will no longer be passed soon.
         // https://github.com/ra1028/swiftui-atom-properties/issues/18
         let key = AtomKey(atom)
+        let coordinator = getCoordinator(for: atom)
         let transaction = Transaction(key: key) {
             // Do nothing.
         }
-        let context = AtomLoaderContext(store: self, transaction: transaction) { value, updatesChildrenOnNextRunLoop in
+        let context = AtomLoaderContext(
+            store: self,
+            transaction: transaction,
+            coordinator: coordinator
+        ) { value, updatesChildrenOnNextRunLoop in
             update(atom: atom, with: value, updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop)
         }
 
@@ -154,24 +159,25 @@ private extension StoreContext {
         let key = AtomKey(atom)
 
         // Register a new state only if not yet exist.
-        let isNewlyRegistered = store.state.atomStates.insertValueIfAbsent(
+        let result = store.state.atomStates.insertValueIfAbsent(
             forKey: key,
             default: ConcreteAtomState(atom: atom)
         )
 
-        if isNewlyRegistered {
+        if result.inserted {
             for observer in observers {
                 observer.atomAssigned(atom: atom)
             }
         }
     }
 
-    func prepareTransaction<Node: Atom>(for atom: Node) -> AtomLoaderContext<Node.Loader.Value> {
+    func prepareTransaction<Node: Atom>(for atom: Node) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
         let store = getStore()
         let key = AtomKey(atom)
 
         // Invalidate dependencies and an ongoing transaction.
         let oldDependencies = invalidate(for: key)
+        let coordinator = getCoordinator(for: atom)
         let transaction = Transaction(key: key) {
             let store = getStore()
             let dependencies = store.graph.dependencies[key] ?? []
@@ -184,7 +190,11 @@ private extension StoreContext {
         // Register the transaction state so it can be terminated from anywhere.
         store.state.transactions[key] = transaction
 
-        return AtomLoaderContext(store: self, transaction: transaction) { value, updatesChildrenOnNextRunLoop in
+        return AtomLoaderContext(
+            store: self,
+            transaction: transaction,
+            coordinator: coordinator
+        ) { value, updatesChildrenOnNextRunLoop in
             update(atom: atom, with: value, updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop)
         }
     }
@@ -253,6 +263,17 @@ private extension StoreContext {
         return state
     }
 
+    func getCoordinator<Node: Atom>(for atom: Node) -> Node.Loader.Coordinator {
+        let store = getStore()
+        let key = AtomKey(atom)
+
+        return
+            store.state.coordinators.insertValueIfAbsent(
+                forKey: key,
+                default: atom.makeCoordinator()
+            ).valueAfterInsert as! Node.Loader.Coordinator
+    }
+
     func notifyUpdate(for key: AtomKey, updatesChildrenOnNextRunLoop: Bool = false) {
         let store = getStore()
 
@@ -319,6 +340,7 @@ private extension StoreContext {
         // Invalidate transactions, dependencies, and the atom state.
         let dependencies = invalidate(for: key)
         let atomState = store.state.atomStates.removeValue(forKey: key)
+        store.state.coordinators.removeValue(forKey: key)
 
         // Cleanup downstreams.
         store.graph.children.removeValue(forKey: key)
@@ -448,13 +470,16 @@ private extension Dictionary {
         self[key]?.isEmpty ?? true
     }
 
-    mutating func insertValueIfAbsent(forKey key: Key, default defaultValue: @autoclosure () -> Value) -> Bool {
+    mutating func insertValueIfAbsent(forKey key: Key, default defaultValue: @autoclosure () -> Value) -> (inserted: Bool, valueAfterInsert: Value) {
         withUnsafeMutablePointer(to: &self[key]) { pointer in
-            guard pointer.pointee == nil else {
-                return false
+            if let value = pointer.pointee {
+                return (false, value)
             }
-            pointer.pointee = defaultValue()
-            return true
+            else {
+                let value = defaultValue()
+                pointer.pointee = value
+                return (true, value)
+            }
         }
     }
 }

@@ -4,8 +4,10 @@ public protocol AtomLoader {
     /// A type of value to provide.
     associatedtype Value
 
+    associatedtype Coordinator
+
     /// The context structure that to interact with an atom store.
-    typealias Context = AtomLoaderContext<Value>
+    typealias Context = AtomLoaderContext<Value, Coordinator>
 
     /// Returns a new value for the corresponding atom.
     func get(context: Context) -> Value

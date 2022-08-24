@@ -14,13 +14,6 @@ final class LocationObserver: NSObject, ObservableObject, CLLocationManagerDeleg
         manager.delegate = self
     }
 
-    convenience override init() {
-        let manager = CLLocationManager()
-        manager.desiredAccuracy = kCLLocationAccuracyBest
-
-        self.init(manager: manager)
-    }
-
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         objectWillChange.send()
 
@@ -45,8 +38,14 @@ final class LocationObserver: NSObject, ObservableObject, CLLocationManagerDeleg
 }
 
 struct LocationObserverAtom: ObservableObjectAtom, Hashable {
+    func makeCoordinator() -> LocationManagerProtocol {
+        let manager = CLLocationManager()
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        return manager
+    }
+
     func object(context: Context) -> LocationObserver {
-        LocationObserver()
+        LocationObserver(manager: context.coordinator)
     }
 }
 

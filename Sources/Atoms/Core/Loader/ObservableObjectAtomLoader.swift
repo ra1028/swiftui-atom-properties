@@ -6,6 +6,8 @@ public struct ObservableObjectAtomLoader<Node: ObservableObjectAtom>: AtomLoader
     /// A type of value to provide.
     public typealias Value = Node.ObjectType
 
+    public typealias Coordinator = Node.Coordinator
+
     private let atom: Node
 
     internal init(atom: Node) {

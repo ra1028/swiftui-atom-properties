@@ -7,6 +7,8 @@ public struct ThrowingTaskAtomLoader<Node: ThrowingTaskAtom>: AsyncAtomLoader {
     /// A type of value to provide.
     public typealias Value = Task<Success, Failure>
 
+    public typealias Coordinator = Node.Coordinator
+
     private let atom: Node
 
     internal init(atom: Node) {

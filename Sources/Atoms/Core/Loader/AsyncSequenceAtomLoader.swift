@@ -3,6 +3,8 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
     /// A type of value to provide.
     public typealias Value = AsyncPhase<Node.Sequence.Element, Error>
 
+    public typealias Coordinator = Node.Coordinator
+
     private let atom: Node
 
     internal init(atom: Node) {
