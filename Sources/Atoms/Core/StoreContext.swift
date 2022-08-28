@@ -31,7 +31,7 @@ internal struct StoreContext {
     @usableFromInline
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         // Do nothing if the atom is not yet to be registered.
-        guard let oldValue = getCachedState(for: atom)?.value else {
+        guard let oldValue = getCache(for: atom)?.value else {
             return
         }
 
@@ -159,9 +159,9 @@ private extension StoreContext {
         let key = AtomKey(atom)
 
         // Register a new state only if not yet exist.
-        let result = store.state.atomStates.insertValueIfAbsent(
+        let result = store.state.atomCaches.insertValueIfAbsent(
             forKey: key,
-            default: ConcreteAtomState(atom: atom)
+            default: ConcreteAtomCache(atom: atom)
         )
 
         if result.inserted {
@@ -201,18 +201,18 @@ private extension StoreContext {
 
     func getValue<Node: Atom>(for atom: Node) -> Node.Loader.Value {
         let store = getStore()
-        var state = getCachedState(for: atom)
+        var cache = getCache(for: atom)
 
         // Return the cached value if exists, otherwise, get a new value and then cache it.
-        if let value = state?.value {
+        if let value = cache?.value {
             return value
         }
         else {
             let key = AtomKey(atom)
             let value = getNewValue(for: atom)
 
-            state?.value = value
-            store.state.atomStates[key] = state
+            cache?.value = value
+            store.state.atomCaches[key] = cache
 
             notifyChangesToObservers(of: atom, value: value)
             return value
@@ -233,15 +233,15 @@ private extension StoreContext {
         return value
     }
 
-    func getCachedState<Node: Atom>(for atom: Node) -> ConcreteAtomState<Node>? {
+    func getCache<Node: Atom>(for atom: Node) -> ConcreteAtomCache<Node>? {
         let store = getStore()
         let key = AtomKey(atom)
 
-        guard let baseState = store.state.atomStates[key] else {
+        guard let baseCache = store.state.atomCaches[key] else {
             return nil
         }
 
-        guard let state = baseState as? ConcreteAtomState<Node> else {
+        guard let cache = baseCache as? ConcreteAtomCache<Node> else {
             assertionFailure(
                 """
                 [Atoms]
@@ -250,8 +250,8 @@ private extension StoreContext {
 
                 Atom: \(Node.self)
                 Key: \(type(of: atom.key))
-                Detected: \(type(of: baseState))
-                Expected: ConcreteAtomState<\(Node.self)>
+                Detected: \(type(of: baseCache))
+                Expected: ConcreteAtomCache<\(Node.self)>
                 """
             )
 
@@ -260,7 +260,7 @@ private extension StoreContext {
             return nil
         }
 
-        return state
+        return cache
     }
 
     func getCoordinator<Node: Atom>(for atom: Node) -> Node.Loader.Coordinator {
@@ -291,8 +291,8 @@ private extension StoreContext {
             }
 
             for child in children {
-                let state = store.state.atomStates[child]
-                state?.reset(with: self)
+                let cache = store.state.atomCaches[child]
+                cache?.reset(with: self)
             }
         }
 
@@ -317,12 +317,12 @@ private extension StoreContext {
     ) {
         let store = getStore()
         let key = AtomKey(atom)
-        var state = getCachedState(for: atom)
-        let oldValue = state?.value
+        var cache = getCache(for: atom)
+        let oldValue = cache?.value
 
         // Update the current value with the new value.
-        state?.value = value
-        store.state.atomStates[key] = state
+        cache?.value = value
+        store.state.atomCaches[key] = cache
 
         // Do not notify update if the new value and the old value are equivalent.
         if let oldValue = oldValue, !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
@@ -339,13 +339,13 @@ private extension StoreContext {
 
         // Invalidate transactions, dependencies, and the atom state.
         let dependencies = invalidate(for: key)
-        let atomState = store.state.atomStates.removeValue(forKey: key)
+        let cache = store.state.atomCaches.removeValue(forKey: key)
         store.state.coordinators.removeValue(forKey: key)
 
         // Cleanup downstreams.
         store.graph.children.removeValue(forKey: key)
         store.state.subscriptions.removeValue(forKey: key)
-        atomState?.notifyUnassigned(to: observers)
+        cache?.notifyUnassigned(to: observers)
 
         // Check if the dependencies are releasable.
         checkReleaseDependencies(dependencies, for: key)
@@ -358,7 +358,7 @@ private extension StoreContext {
         //     1. It's not marked as `KeepAlive`.
         //     2. It has no downstream atoms.
         //     3. It has no subscriptions from views.
-        let shouldKeepAlive = store.state.atomStates[key]?.shouldKeepAlive ?? false
+        let shouldKeepAlive = store.state.atomCaches[key]?.shouldKeepAlive ?? false
         let shouldRelease =
             !shouldKeepAlive
             && store.graph.children.isEmptyOrNil(forKey: key)

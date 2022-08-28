@@ -1,6 +1,6 @@
 @MainActor
 internal struct StoreState {
-    var atomStates = [AtomKey: AtomState]()
+    var atomCaches = [AtomKey: AtomCache]()
     var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
     var transactions = [AtomKey: Transaction]()
     #warning("TODO: Avoid using Any")
