@@ -3,7 +3,7 @@ import XCTest
 @testable import Atoms
 
 @MainActor
-final class AtomStateTests: XCTestCase {
+final class AtomCacheTests: XCTestCase {
     func testShouldKeepAlive() {
         struct KeepAliveAtom: ValueAtom, KeepAlive, Hashable {
             func value(context: Context) -> Int {
@@ -11,8 +11,8 @@ final class AtomStateTests: XCTestCase {
             }
         }
 
-        let state0 = ConcreteAtomState(atom: TestValueAtom(value: 0))
-        let state1 = ConcreteAtomState(atom: KeepAliveAtom())
+        let state0 = ConcreteAtomCache(atom: TestValueAtom(value: 0))
+        let state1 = ConcreteAtomCache(atom: KeepAliveAtom())
 
         XCTAssertFalse(state0.shouldKeepAlive)
         XCTAssertTrue(state1.shouldKeepAlive)
@@ -21,23 +21,24 @@ final class AtomStateTests: XCTestCase {
     func testReset() {
         let store = Store()
         let context = StoreContext(store)
-        let atom = TestStateAtom(defaultValue: 0)
+        let atom = TestValueAtom(value: 0)
+        let dependency = TestStateAtom(defaultValue: 0)
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let state = ConcreteAtomState(atom: atom)
+        let state = ConcreteAtomCache(atom: atom)
 
-        XCTAssertEqual(context.watch(atom, in: transaction), 0)
+        XCTAssertEqual(context.watch(dependency, in: transaction), 0)
 
-        context.set(1, for: atom)
-        XCTAssertEqual(context.watch(atom, in: transaction), 1)
+        context.set(1, for: dependency)
+        XCTAssertEqual(context.watch(dependency, in: transaction), 1)
 
         state.reset(with: context)
 
-        XCTAssertEqual(context.watch(atom, in: transaction), 0)
+        XCTAssertEqual(context.watch(dependency, in: transaction), 0)
     }
 
     func testNotifyUnassigned() {
         let atom = TestStateAtom(defaultValue: 0)
-        let state = ConcreteAtomState(atom: atom)
+        let state = ConcreteAtomCache(atom: atom)
         let observer = TestObserver()
 
         XCTAssertTrue(observer.assignedAtomKeys.isEmpty)

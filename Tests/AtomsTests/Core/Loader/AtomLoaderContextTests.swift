@@ -9,7 +9,11 @@ final class AtomLoaderContextTests: XCTestCase {
         let transaction = Transaction(key: AtomKey(atom)) {}
         var updatedValue: Int?
 
-        let context = AtomLoaderContext<Int>(store: StoreContext(), transaction: transaction) { value, _ in
+        let context = AtomLoaderContext<Int, Void>(
+            store: StoreContext(),
+            transaction: transaction,
+            coordinator: ()
+        ) { value, _ in
             updatedValue = value
         }
 
@@ -21,7 +25,11 @@ final class AtomLoaderContextTests: XCTestCase {
     func testAddTermination() {
         let atom = TestValueAtom(value: 0)
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomLoaderContext<Int>(store: StoreContext(), transaction: transaction) { _, _ in }
+        let context = AtomLoaderContext<Int, Void>(
+            store: StoreContext(),
+            transaction: transaction,
+            coordinator: ()
+        ) { _, _ in }
 
         context.addTermination {}
         context.addTermination {}
@@ -40,7 +48,11 @@ final class AtomLoaderContextTests: XCTestCase {
         let transaction = Transaction(key: AtomKey(atom)) {
             isCommitted = true
         }
-        let context = AtomLoaderContext<Int>(store: StoreContext(), transaction: transaction) { _, _ in }
+        let context = AtomLoaderContext<Int, Void>(
+            store: StoreContext(),
+            transaction: transaction,
+            coordinator: ()
+        ) { _, _ in }
 
         context.transaction { _ in }
 
@@ -53,7 +65,11 @@ final class AtomLoaderContextTests: XCTestCase {
         let transaction = Transaction(key: AtomKey(atom)) {
             isCommitted = true
         }
-        let context = AtomLoaderContext<Int>(store: StoreContext(), transaction: transaction) { _, _ in }
+        let context = AtomLoaderContext<Int, Void>(
+            store: StoreContext(),
+            transaction: transaction,
+            coordinator: ()
+        ) { _, _ in }
 
         await context.transaction { _ in
             try? await Task.sleep(nanoseconds: 0)

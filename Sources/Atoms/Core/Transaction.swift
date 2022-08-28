@@ -14,8 +14,9 @@ internal final class Transaction {
     }
 
     func commit() {
-        _commit?()
+        let commit = _commit
         _commit = nil
+        commit?()
     }
 
     @usableFromInline
@@ -28,13 +29,14 @@ internal final class Transaction {
     }
 
     func terminate() {
+        isTerminated = true
+        commit()
+
+        let terminations = self.terminations
+        self.terminations.removeAll()
+
         for termination in terminations {
             termination()
         }
-
-        terminations.removeAll()
-
-        commit()
-        isTerminated = true
     }
 }

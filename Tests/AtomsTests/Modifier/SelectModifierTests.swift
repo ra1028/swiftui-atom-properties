@@ -48,9 +48,10 @@ final class SelectModifierTests: XCTestCase {
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
         let store = Store()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomLoaderContext<String>(
+        let context = AtomLoaderContext<String, Void>(
             store: StoreContext(store),
             transaction: transaction,
+            coordinator: (),
             update: { _, _ in }
         )
         let value = modifier.value(context: context, with: 100)
@@ -63,9 +64,10 @@ final class SelectModifierTests: XCTestCase {
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
         let store = Store()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomLoaderContext<String>(
+        let context = AtomLoaderContext<String, Void>(
             store: StoreContext(store),
             transaction: transaction,
+            coordinator: (),
             update: { _, _ in }
         )
 

@@ -8,29 +8,30 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom = TestValueAtom(value: 100)
         let store = Store()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction)
+        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
         XCTAssertEqual(context.read(atom), 100)
     }
 
     func testSet() {
-        let atom = TestStateAtom(defaultValue: 100)
+        let atom = TestValueAtom(value: 0)
+        let dependency = TestStateAtom(defaultValue: 100)
         let store = Store()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction)
+        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
-        XCTAssertEqual(context.watch(atom), 100)
+        XCTAssertEqual(context.watch(dependency), 100)
 
-        context.set(200, for: atom)
+        context.set(200, for: dependency)
 
-        XCTAssertEqual(context.watch(atom), 200)
+        XCTAssertEqual(context.watch(dependency), 200)
     }
 
     func testRefresh() async {
         let atom = TestTaskAtom(value: 100)
         let store = Store()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction)
+        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
         let value = await context.refresh(atom).value
 
@@ -38,20 +39,21 @@ final class AtomTransactionContextTests: XCTestCase {
     }
 
     func testReset() {
-        let atom = TestStateAtom(defaultValue: 0)
+        let atom = TestValueAtom(value: 0)
+        let dependency = TestStateAtom(defaultValue: 0)
         let store = Store()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction)
+        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
-        XCTAssertEqual(context.watch(atom), 0)
+        XCTAssertEqual(context.watch(dependency), 0)
 
-        context[atom] = 100
+        context[dependency] = 100
 
-        XCTAssertEqual(context.watch(atom), 100)
+        XCTAssertEqual(context.watch(dependency), 100)
 
-        context.reset(atom)
+        context.reset(dependency)
 
-        XCTAssertEqual(context.read(atom), 0)
+        XCTAssertEqual(context.read(dependency), 0)
     }
 
     func testWatch() {
@@ -59,7 +61,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom1 = TestStateAtom(defaultValue: 200)
         let store = Store()
         let transaction = Transaction(key: AtomKey(atom0)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction)
+        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
         let value = context.watch(atom1)
 
@@ -72,7 +74,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom = TestValueAtom(value: 100)
         let store = Store()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction)
+        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
         context.addTermination {}
 
@@ -88,7 +90,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom = TestValueAtom(value: 100)
         let store = Store()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction)
+        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
         var object: Object? = Object()
         weak var objectRef = object
 
