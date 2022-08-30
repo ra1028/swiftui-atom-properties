@@ -4,6 +4,7 @@ public protocol AtomLoader {
     /// A type of value to provide.
     associatedtype Value
 
+    /// A type to coordinate with the atom.
     associatedtype Coordinator
 
     /// The context structure that to interact with an atom store.
