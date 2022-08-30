@@ -3,6 +3,7 @@ public struct ValueAtomLoader<Node: ValueAtom>: AtomLoader {
     /// A type of value to provide.
     public typealias Value = Node.Value
 
+    /// A type to coordinate with the atom.
     public typealias Coordinator = Node.Coordinator
 
     private let atom: Node

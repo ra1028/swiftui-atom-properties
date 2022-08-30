@@ -9,6 +9,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     @usableFromInline
     internal let _transaction: Transaction
 
+    /// The atom's associated coordinator.
     public let coordinator: Coordinator
 
     internal init(

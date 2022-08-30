@@ -5,6 +5,7 @@ public struct PublisherAtomLoader<Node: PublisherAtom>: RefreshableAtomLoader {
     /// A type of value to provide.
     public typealias Value = AsyncPhase<Node.Publisher.Output, Node.Publisher.Failure>
 
+    /// A type to coordinate with the atom.
     public typealias Coordinator = Node.Coordinator
 
     private let atom: Node

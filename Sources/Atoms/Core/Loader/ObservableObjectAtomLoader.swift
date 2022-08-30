@@ -6,6 +6,7 @@ public struct ObservableObjectAtomLoader<Node: ObservableObjectAtom>: AtomLoader
     /// A type of value to provide.
     public typealias Value = Node.ObjectType
 
+    /// A type to coordinate with the atom.
     public typealias Coordinator = Node.Coordinator
 
     private let atom: Node

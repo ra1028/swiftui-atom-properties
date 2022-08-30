@@ -2,11 +2,14 @@
 public struct TaskAtomLoader<Node: TaskAtom>: AsyncAtomLoader {
     /// A type of success value.
     public typealias Success = Node.Value
+
     /// A type of failure value.
     public typealias Failure = Never
+
     /// A type of value to provide.
     public typealias Value = Task<Success, Failure>
 
+    /// A type to coordinate with the atom.
     public typealias Coordinator = Node.Coordinator
 
     private let atom: Node
