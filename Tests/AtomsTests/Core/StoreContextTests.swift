@@ -337,8 +337,6 @@ final class StoreContextTests: XCTestCase {
                     let b = context.watch(BAtom())
                     let c = context.watch(CAtom())
 
-                    context.addTermination {}
-
                     pipe.continuation.yield()
                     await pipe.stream.next()
 
@@ -350,8 +348,6 @@ final class StoreContextTests: XCTestCase {
 
                     pipe.continuation.yield()
                     await pipe.stream.next()
-
-                    context.addTermination {}
 
                     let b = context.watch(BAtom())
                     return a + d + b
@@ -403,11 +399,8 @@ final class StoreContextTests: XCTestCase {
 
             let state = store.state.atomStates[AtomKey(atom)]
 
-            // Should be 1 (TestAtom's Task cancellation + first phase)
-            XCTAssertEqual(
-                2,
-                state?.transaction?.terminations.count
-            )
+            // Should be 1 (TestAtom's Task cancellation)
+            XCTAssertEqual(1, state?.transaction?.terminations.count)
         }
 
         do {
@@ -435,11 +428,8 @@ final class StoreContextTests: XCTestCase {
 
             let state = store.state.atomStates[AtomKey(atom)]
 
-            // Should be 1 (TestAtom's Task cancellation + second phase)
-            XCTAssertEqual(
-                2,
-                state?.transaction?.terminations.count
-            )
+            // Should be 1 (TestAtom's Task cancellation)
+            XCTAssertEqual(1, state?.transaction?.terminations.count)
         }
 
         do {
@@ -467,10 +457,7 @@ final class StoreContextTests: XCTestCase {
             let state = store.state.atomStates[AtomKey(atom)]
 
             // Should be 1 (TestAtom's Task cancellation)
-            XCTAssertEqual(
-                1,
-                state?.transaction?.terminations.count
-            )
+            XCTAssertEqual(1, state?.transaction?.terminations.count)
         }
 
         do {

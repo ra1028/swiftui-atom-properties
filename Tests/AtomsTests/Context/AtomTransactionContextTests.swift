@@ -69,39 +69,4 @@ final class AtomTransactionContextTests: XCTestCase {
         XCTAssertEqual(store.graph.children, [AtomKey(atom1): [AtomKey(atom0)]])
         XCTAssertEqual(store.graph.dependencies, [AtomKey(atom0): [AtomKey(atom1)]])
     }
-
-    func testAddTermination() {
-        let atom = TestValueAtom(value: 100)
-        let store = Store()
-        let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
-
-        context.addTermination {}
-
-        XCTAssertEqual(transaction.terminations.count, 1)
-
-        transaction.terminate()
-        context.addTermination {}
-
-        XCTAssertEqual(transaction.terminations.count, 0)
-    }
-
-    func testKeepUntilTermination() {
-        let atom = TestValueAtom(value: 100)
-        let store = Store()
-        let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
-        var object: Object? = Object()
-        weak var objectRef = object
-
-        context.keepUntilTermination(object!)
-
-        XCTAssertNotNil(objectRef)
-
-        object = nil
-        XCTAssertNotNil(objectRef)
-
-        transaction.terminate()
-        XCTAssertNil(objectRef)
-    }
 }
