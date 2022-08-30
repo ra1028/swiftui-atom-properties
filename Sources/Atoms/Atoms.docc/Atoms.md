@@ -73,6 +73,7 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 - ``RefreshableAtomLoader``
 - ``AsyncAtomLoader``
 - ``ValueAtomLoader``
+- ``StateAtomLoader``
 - ``TaskAtomLoader``
 - ``ThrowingTaskAtomLoader``
 - ``AsyncSequenceAtomLoader``

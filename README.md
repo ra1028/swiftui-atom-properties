@@ -23,7 +23,7 @@
   - [Atoms](#atoms)
   - [Modifiers](#modifiers)
   - [Property Wrappers](#property-wrappers)
-  - [Contexts](#contexts)
+  - [Context](#context)
   - [KeepAlive](#keepalive)
   - [Suspense](#suspense)
   - [Testing](#testing)
@@ -903,13 +903,13 @@ await context.refresh(FetchMoviesAtom())
 context.reset(CounterAtom())
 ```
 
-The context also provides a flexible solution for passing dynamic parameters to atom's initializer. See [Contexts](#contexts) section for more detail.
+The context also provides a flexible solution for passing dynamic parameters to atom's initializer. See [Context](#context) section for more detail.
 
 ---
 
-### Contexts
+### Context
 
-Contexts are context structure for using and interacting with the data of other atoms from a view or an another atom. The basic API common to all contexts is as follows:
+Context is a context structure for using and interacting with atom values from a view or an another atom.  
 
 |API|Use|
 |:--|:--|
@@ -921,7 +921,7 @@ Contexts are context structure for using and interacting with the data of other 
 |[refresh(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/refresh(_:))|Reset an atom and await until asynchronous operation is complete.|
 |[reset(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/reset(_:))|Reset an atom to the default value or a first output.|
 
-There are the following types context as different contextual environments, and they have some specific APIs for each.
+There are the following types context as different contextual environments.
 
 #### [AtomViewContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext)
 
@@ -992,24 +992,23 @@ struct BooksView: View {
 
 </details>
 
-Context available through the `@ViewContext` property wrapper when using atoms from a view. There is no specific API for this context.
+Context available through the `@ViewContext` property wrapper when using atoms from a view.
 
 #### [AtomTransactionContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext)
 
 <details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
-class LocationManagerDelegate: NSObject, CLLocationManagerDelegate { ... }
-
 struct LocationManagerAtom: ValueAtom, Hashable {
+    final class Coordinator: NSObject, CLLocationManagerDelegate { ... }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
     func value(context: Context) -> LocationManagerProtocol {
         let manager = CLLocationManager()
-        let delegate = LocationManagerDelegate()
-
-        manager.delegate = delegate
-        context.addTermination(manager.stopUpdatingLocation)
-        context.keepUntilTermination(delegate)
-
+        manager.delegate = context.coordinator
         return manager
     }
 }
@@ -1024,12 +1023,12 @@ struct CoordinateAtom: ValueAtom, Hashable {
 
 </details>
 
-Context passed as a parameter to the primary function of each atom type.
+Context passed as a parameter to the primary function of an atom type.  
+This context type has a `coordinator` property that preserves an instance from the time an atom is used and initialized until it is unused and cleaned up, so it can be used to cache values or as a lifecycle for an atom.  
 
 |API|Use|
 |:--|:--|
-|[addTermination(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext/addtermination(_:))|Calls the passed closure when the atom is updated or is no longer used.|
-|[keepUntilTermination(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext/keepuntiltermination(_:))|Retains the given object instance until the atom is updated or is no longer used.|
+|[coordinator](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext/coordinator)|The atom’s associated coordinator that preservess a state until the atom will no longer be used.|
 
 #### [AtomTestContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext)
 
@@ -1133,7 +1132,7 @@ In order to fully test your app, this library guarantees the following principle
 - Dependencies are replaceable with any of mock/stub/fake/spy per test case.
 - Test cases can reproduce any possible scenarios at the view-layer.
 
-In the test case, you first create an `AtomTestContext` instance that behaves similarly to other context types. The context allows for flexible reproduction of expected scenarios for testing using the control functions described in the [Contexts](#contexts) section.  
+In the test case, you first create an `AtomTestContext` instance that behaves similarly to other context types. The context allows for flexible reproduction of expected scenarios for testing using the control functions described in the [Context](#context) section.  
 In addition, it's able to replace the atom value with test-friendly dependencies with `override` function. It helps you to write a reproducible & stable testing.  
 Since atom needs to be used from the main actor to guarantee thread-safety, `XCTestCase` class that to test atoms should have `@MainActor` attribute.
 
