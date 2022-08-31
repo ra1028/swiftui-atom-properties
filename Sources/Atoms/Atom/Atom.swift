@@ -10,11 +10,14 @@ public protocol Atom {
     associatedtype Key: Hashable
 
     /// A loader type that represents an actual implementation of the corresponding atom.
-    associatedtype Loader: AtomLoader
+    associatedtype Loader: AtomLoader where Loader.Coordinator == Coordinator
+
+    /// A type to coordinate with the atom.
+    associatedtype Coordinator = Void
 
     /// A type of the context structure that to read, watch, and otherwise interacting
     /// with other atoms.
-    typealias Context = AtomTransactionContext
+    typealias Context = AtomTransactionContext<Coordinator>
 
     /// A boolean value indicating whether the atom value should be preserved even if
     /// no longer watched to.
@@ -31,6 +34,17 @@ public protocol Atom {
     /// If this atom conforms to `Hashable`, it will adopt itself as the `key` by default.
     var key: Key { get }
 
+    /// Creates the custom coordinator instance that you use to preserve arbitrary state of
+    /// the atom.
+    ///
+    /// It's called when the atom is initialized, and the same instance is preserved until
+    /// the atom is no longer used and is deinitialized.
+    ///
+    /// - Returns: The atom's associated coordinator instance.
+    func makeCoordinator() -> Coordinator
+
+    // --- Internal ---
+
     /// A loader that represents an actual implementation of the corresponding atom.
     @MainActor
     var _loader: Loader { get }
@@ -40,8 +54,14 @@ public extension Atom {
     static var shouldKeepAlive: Bool {
         false
     }
+
+    func makeCoordinator() -> Coordinator where Coordinator == Void {
+        ()
+    }
 }
 
 public extension Atom where Self == Key {
-    var key: Self { self }
+    var key: Self {
+        self
+    }
 }

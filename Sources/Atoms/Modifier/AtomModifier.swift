@@ -21,7 +21,7 @@ public protocol AtomModifier {
     associatedtype ModifiedValue
 
     /// A type of the context structure that to interact with an atom store.
-    typealias Context = AtomLoaderContext<ModifiedValue>
+    typealias Context = AtomLoaderContext<ModifiedValue, Void>
 
     /// A unique value used to identify the modifier internally.
     var key: Key { get }

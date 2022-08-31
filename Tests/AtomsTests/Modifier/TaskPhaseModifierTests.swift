@@ -31,9 +31,10 @@ final class TaskPhaseModifierTests: XCTestCase {
 
         var phase: AsyncPhase<Int, Never>?
         let expectation = expectation(description: "testValue")
-        let context = AtomLoaderContext<AsyncPhase<Int, Never>>(
+        let context = AtomLoaderContext<AsyncPhase<Int, Never>, Void>(
             store: StoreContext(store),
             transaction: transaction,
+            coordinator: (),
             update: { newPhase, _ in
                 phase = newPhase
                 expectation.fulfill()
@@ -55,9 +56,10 @@ final class TaskPhaseModifierTests: XCTestCase {
         let modifier = TaskPhaseModifier<Int, Never>()
         let store = Store()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomLoaderContext<AsyncPhase<Int, Never>>(
+        let context = AtomLoaderContext<AsyncPhase<Int, Never>, Void>(
             store: StoreContext(store),
             transaction: transaction,
+            coordinator: (),
             update: { _, _ in }
         )
 

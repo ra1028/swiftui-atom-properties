@@ -1,20 +1,27 @@
 /// A loader protocol that represents an actual implementation of `ThrowingTaskAtom`.
-public struct ThrowingTaskAtomLoader<Success>: AsyncAtomLoader {
+public struct ThrowingTaskAtomLoader<Node: ThrowingTaskAtom>: AsyncAtomLoader {
+    /// A type of success value.
+    public typealias Success = Node.Value
+
     /// A type of failure value.
     public typealias Failure = Error
+
     /// A type of value to provide.
     public typealias Value = Task<Success, Failure>
 
-    private let getValue: @MainActor (AtomTransactionContext) async throws -> Success
+    /// A type to coordinate with the atom.
+    public typealias Coordinator = Node.Coordinator
 
-    internal init(getValue: @MainActor @escaping (AtomTransactionContext) async throws -> Success) {
-        self.getValue = getValue
+    private let atom: Node
+
+    internal init(atom: Node) {
+        self.atom = atom
     }
 
     /// Returns a new value for the corresponding atom.
     public func get(context: Context) -> Value {
         let task = Task {
-            try await context.transaction(getValue)
+            try await context.transaction(atom.value)
         }
         return handle(context: context, with: task)
     }
@@ -28,7 +35,7 @@ public struct ThrowingTaskAtomLoader<Success>: AsyncAtomLoader {
     /// Refreshes and awaits until the asynchronous is finished and returns a final value.
     public func refresh(context: Context) async -> Value {
         let task = Task {
-            try await context.transaction(getValue)
+            try await context.transaction(atom.value)
         }
         return await refresh(context: context, with: task)
     }

@@ -34,7 +34,7 @@
 /// }
 /// ```
 ///
-public protocol TaskAtom: Atom where Loader == TaskAtomLoader<Value> {
+public protocol TaskAtom: Atom {
     /// The type of value that this atom produces.
     associatedtype Value
 
@@ -53,7 +53,7 @@ public protocol TaskAtom: Atom where Loader == TaskAtomLoader<Value> {
 
 public extension TaskAtom {
     @MainActor
-    var _loader: Loader {
-        Loader(getValue: value)
+    var _loader: TaskAtomLoader<Self> {
+        TaskAtomLoader(atom: self)
     }
 }

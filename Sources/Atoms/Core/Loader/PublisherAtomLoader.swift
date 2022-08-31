@@ -1,19 +1,22 @@
 import Combine
 
 /// A loader protocol that represents an actual implementation of `PublisherAtom`.
-public struct PublisherAtomLoader<Publisher: Combine.Publisher>: RefreshableAtomLoader {
+public struct PublisherAtomLoader<Node: PublisherAtom>: RefreshableAtomLoader {
     /// A type of value to provide.
-    public typealias Value = AsyncPhase<Publisher.Output, Publisher.Failure>
+    public typealias Value = AsyncPhase<Node.Publisher.Output, Node.Publisher.Failure>
 
-    private let makePublisher: @MainActor (AtomTransactionContext) -> Publisher
+    /// A type to coordinate with the atom.
+    public typealias Coordinator = Node.Coordinator
 
-    internal init(makePublisher: @MainActor @escaping (AtomTransactionContext) -> Publisher) {
-        self.makePublisher = makePublisher
+    private let atom: Node
+
+    internal init(atom: Node) {
+        self.atom = atom
     }
 
     /// Returns a new value for the corresponding atom.
     public func get(context: Context) -> Value {
-        let results = context.transaction(makePublisher).results
+        let results = context.transaction(atom.publisher).results
         let task = Task {
             for await result in results {
                 if !Task.isCancelled {
@@ -34,7 +37,7 @@ public struct PublisherAtomLoader<Publisher: Combine.Publisher>: RefreshableAtom
 
     /// Refreshes and awaits until the asynchronous is finished and returns a final value.
     public func refresh(context: Context) async -> Value {
-        let results = context.transaction(makePublisher).results
+        let results = context.transaction(atom.publisher).results
         let task = Task { () -> Value in
             var phase = Value.suspending
 

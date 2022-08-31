@@ -1,7 +1,7 @@
 @MainActor
 internal struct Overrides {
-    private var _entriesForNode = [AtomKey: Override]()
-    private var _entriesForType = [AtomTypeKey: Override]()
+    private var _entriesForNode = [AtomKey: AtomOverrideBase]()
+    private var _entriesForType = [AtomTypeKey: AtomOverrideBase]()
 
     nonisolated init() {}
 
@@ -10,7 +10,7 @@ internal struct Overrides {
         with value: @escaping (Node) -> Node.Loader.Value
     ) {
         let key = AtomKey(atom)
-        _entriesForNode[key] = ConcreteOverride(value: value)
+        _entriesForNode[key] = AtomOverride(value: value)
     }
 
     mutating func insert<Node: Atom>(
@@ -18,7 +18,7 @@ internal struct Overrides {
         with value: @escaping (Node) -> Node.Loader.Value
     ) {
         let key = AtomTypeKey(atomType)
-        _entriesForType[key] = ConcreteOverride(value: value)
+        _entriesForType[key] = AtomOverride(value: value)
     }
 
     func value<Node: Atom>(for atom: Node) -> Node.Loader.Value? {
@@ -29,14 +29,14 @@ internal struct Overrides {
             return nil
         }
 
-        guard let override = baseOverride as? ConcreteOverride<Node> else {
+        guard let override = baseOverride as? AtomOverride<Node> else {
             assertionFailure(
                 """
                 [Atoms]
                 Detected an illegal override.
                 There might be duplicate keys or logic failure.
                 Detected: \(type(of: self))
-                Expected: ConcreteOverride<\(Node.self)>
+                Expected: AtomOverride<\(Node.self)>
                 """
             )
 
@@ -48,8 +48,8 @@ internal struct Overrides {
 }
 
 @MainActor
-internal protocol Override {}
+internal protocol AtomOverrideBase {}
 
-internal struct ConcreteOverride<Node: Atom>: Override {
+internal struct AtomOverride<Node: Atom>: AtomOverrideBase {
     let value: (Node) -> Node.Loader.Value
 }

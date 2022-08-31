@@ -1,8 +1,7 @@
 @MainActor
 internal struct StoreState {
-    var atomStates = [AtomKey: AtomState]()
-    var subscriptions = [AtomKey: [SubscriptionKey: Subscription]]()
-    var transactions = [AtomKey: Transaction]()
+    var atomCaches = [AtomKey: AtomCacheBase]()
+    var atomStates = [AtomKey: AtomStateBase]()
 
     nonisolated init() {}
 }

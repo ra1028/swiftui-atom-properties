@@ -36,7 +36,7 @@
 /// }
 /// ```
 ///
-public protocol StateAtom: Atom where Loader == ValueAtomLoader<Value> {
+public protocol StateAtom: Atom {
     /// The type of state value that this atom produces.
     associatedtype Value
 
@@ -61,7 +61,7 @@ public protocol StateAtom: Atom where Loader == ValueAtomLoader<Value> {
     ///   - context: A context structure that to read, watch, and otherwise
     ///              interacting with other atoms.
     @MainActor
-    func willSet(newValue: Value, oldValue: Value, context: Context)
+    func willSet(newValue: Loader.Value, oldValue: Loader.Value, context: Context)
 
     /// Observes and responds to changes in the state value which is called just after
     /// the state is changed.
@@ -72,18 +72,18 @@ public protocol StateAtom: Atom where Loader == ValueAtomLoader<Value> {
     ///   - context: A context structure that to read, watch, and otherwise
     ///              interacting with other atoms.
     @MainActor
-    func didSet(newValue: Value, oldValue: Value, context: Context)
+    func didSet(newValue: Loader.Value, oldValue: Loader.Value, context: Context)
 }
 
 public extension StateAtom {
     @MainActor
-    var _loader: Loader {
-        Loader(getValue: defaultValue)
+    var _loader: StateAtomLoader<Self> {
+        StateAtomLoader(atom: self)
     }
 
     @MainActor
-    func willSet(newValue: Value, oldValue: Value, context: Context) {}
+    func willSet(newValue: Loader.Value, oldValue: Loader.Value, context: Context) {}
 
     @MainActor
-    func didSet(newValue: Value, oldValue: Value, context: Context) {}
+    func didSet(newValue: Loader.Value, oldValue: Loader.Value, context: Context) {}
 }

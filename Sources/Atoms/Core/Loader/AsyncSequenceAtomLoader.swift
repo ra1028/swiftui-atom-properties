@@ -1,17 +1,20 @@
 /// A loader protocol that represents an actual implementation of `AsyncSequenceAtom`.
-public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomLoader {
+public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomLoader {
     /// A type of value to provide.
-    public typealias Value = AsyncPhase<Sequence.Element, Error>
+    public typealias Value = AsyncPhase<Node.Sequence.Element, Error>
 
-    private let makeSequence: @MainActor (AtomTransactionContext) -> Sequence
+    /// A type to coordinate with the atom.
+    public typealias Coordinator = Node.Coordinator
 
-    internal init(makeSequence: @MainActor @escaping (AtomTransactionContext) -> Sequence) {
-        self.makeSequence = makeSequence
+    private let atom: Node
+
+    internal init(atom: Node) {
+        self.atom = atom
     }
 
     /// Returns a new value for the corresponding atom.
     public func get(context: Context) -> Value {
-        let sequence = context.transaction(makeSequence)
+        let sequence = context.transaction(atom.sequence)
         let task = Task {
             do {
                 for try await element in sequence {
@@ -40,7 +43,7 @@ public struct AsyncSequenceAtomLoader<Sequence: AsyncSequence>: RefreshableAtomL
     /// Refreshes and awaits for the passed value to be finished to yield values
     /// and returns a final value.
     public func refresh(context: Context) async -> Value {
-        let sequence = context.transaction(makeSequence)
+        let sequence = context.transaction(atom.sequence)
         let task = Task { () -> Value in
             var phase = Value.suspending
 

@@ -3,15 +3,23 @@
 /// Through this context, watching of an atom is initiated, and when that atom is updated,
 /// the value of the atom to which this context is provided will be updated transitively.
 @MainActor
-public struct AtomTransactionContext: AtomWatchableContext {
+public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     @usableFromInline
     internal let _store: StoreContext
     @usableFromInline
     internal let _transaction: Transaction
 
-    internal init(store: StoreContext, transaction: Transaction) {
-        _store = store
-        _transaction = transaction
+    /// The atom's associated coordinator.
+    public let coordinator: Coordinator
+
+    internal init(
+        store: StoreContext,
+        transaction: Transaction,
+        coordinator: Coordinator
+    ) {
+        self._store = store
+        self._transaction = transaction
+        self.coordinator = coordinator
     }
 
     /// Accesses the value associated with the given atom without watching to it.
@@ -52,7 +60,7 @@ public struct AtomTransactionContext: AtomWatchableContext {
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
     @inlinable
-    public func set<Node: StateAtom>(_ value: Node.Value, for atom: Node) {
+    public func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         _store.set(value, for: atom)
     }
 
@@ -121,55 +129,5 @@ public struct AtomTransactionContext: AtomWatchableContext {
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         _store.watch(atom, in: _transaction)
-    }
-
-    /// Add the termination action that will be performed when the atom will no longer be watched to
-    /// or upstream atoms are updated.
-    ///
-    /// ```swift
-    /// struct QuakeMonitorAtom: ValueAtom, Hashable {
-    ///     func value(context: Context) -> QuakeMonitor {
-    ///         let monitor = QuakeMonitor()
-    ///         monitor.quakeHandler = { quake in
-    ///             print("Quake: \(quake.date)")
-    ///         }
-    ///         context.addTermination {
-    ///             monitor.stopMonitoring()
-    ///         }
-    ///         monitor.startMonitoring()
-    ///         return monitor
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// - Parameter termination: A termination action.
-    @inlinable
-    public func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        _transaction.addTermination(Termination(termination))
-    }
-
-    /// Add the given object to the storage that to be retained until the atom will no longer be watched
-    /// to or upstream atoms are updated.
-    ///
-    /// ```swift
-    /// struct LocationManagerAtom: ValueAtom, Hashable {
-    ///     func value(context: Context) -> LocationManagerProtocol {
-    ///         let manager = CLLocationManager()
-    ///         let delegate = LocationManagerDelegate()
-    ///
-    ///         manager.delegate = delegate
-    ///         context.keepUntilTermination(delegate)
-    ///         context.addTermination(manager.stopUpdatingLocation)
-    ///
-    ///         return manager
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// - Parameter object: An object that to be retained.
-    @inlinable
-    public func keepUntilTermination<Object: AnyObject>(_ object: Object) {
-        let retainer = ObjectRetainer(object)
-        addTermination(retainer.release)
     }
 }

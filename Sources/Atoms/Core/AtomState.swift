@@ -1,27 +1,15 @@
 @MainActor
-internal protocol AtomState {
-    var shouldKeepAlive: Bool { get }
-
-    func reset(with store: StoreContext)
-    func notifyUnassigned(to observers: [AtomObserver])
+internal protocol AtomStateBase {
+    var transaction: Transaction? { get nonmutating set }
+    var subscriptions: [SubscriptionKey: Subscription] { get nonmutating set }
 }
 
-@MainActor
-internal struct ConcreteAtomState<Node: Atom>: AtomState {
-    var atom: Node
-    var value: Node.Loader.Value?
+internal final class AtomState<Coordinator>: AtomStateBase {
+    let coordinator: Coordinator
+    var transaction: Transaction?
+    var subscriptions = [SubscriptionKey: Subscription]()
 
-    var shouldKeepAlive: Bool {
-        Node.shouldKeepAlive
-    }
-
-    func reset(with store: StoreContext) {
-        store.reset(atom)
-    }
-
-    func notifyUnassigned(to observers: [AtomObserver]) {
-        for observer in observers {
-            observer.atomUnassigned(atom: atom)
-        }
+    init(coordinator: Coordinator) {
+        self.coordinator = coordinator
     }
 }
