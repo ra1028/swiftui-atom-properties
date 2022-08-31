@@ -11,8 +11,8 @@ final class AtomCacheTests: XCTestCase {
             }
         }
 
-        let state0 = ConcreteAtomCache(atom: TestValueAtom(value: 0))
-        let state1 = ConcreteAtomCache(atom: KeepAliveAtom())
+        let state0 = AtomCache(atom: TestValueAtom(value: 0))
+        let state1 = AtomCache(atom: KeepAliveAtom())
 
         XCTAssertFalse(state0.shouldKeepAlive)
         XCTAssertTrue(state1.shouldKeepAlive)
@@ -24,7 +24,7 @@ final class AtomCacheTests: XCTestCase {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let state = ConcreteAtomCache(atom: atom)
+        let state = AtomCache(atom: atom)
 
         XCTAssertEqual(context.watch(dependency, in: transaction), 0)
 
@@ -38,7 +38,7 @@ final class AtomCacheTests: XCTestCase {
 
     func testNotifyUnassigned() {
         let atom = TestStateAtom(defaultValue: 0)
-        let state = ConcreteAtomCache(atom: atom)
+        let state = AtomCache(atom: atom)
         let observer = TestObserver()
 
         XCTAssertTrue(observer.assignedAtomKeys.isEmpty)

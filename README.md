@@ -909,7 +909,7 @@ The context also provides a flexible solution for passing dynamic parameters to 
 
 ### Context
 
-Context is a context structure for using and interacting with atom values from a view or an another atom.  
+Context is a structure for using and interacting with atom values from views or other atoms.  
 
 |API|Use|
 |:--|:--|
@@ -992,7 +992,7 @@ struct BooksView: View {
 
 </details>
 
-Context available through the `@ViewContext` property wrapper when using atoms from a view.
+A context available through the `@ViewContext` property wrapper when using atoms from a view.
 
 #### [AtomTransactionContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext)
 
@@ -1023,7 +1023,7 @@ struct CoordinateAtom: ValueAtom, Hashable {
 
 </details>
 
-Context passed as a parameter to the primary function of an atom type.  
+A context passed as a parameter to the primary function of each atom type.  
 This context type has a `coordinator` property that preserves an instance from the time an atom is used and initialized until it is unused and cleaned up, so it can be used to cache values or as a lifecycle for an atom.  
 
 |API|Use|
@@ -1073,7 +1073,7 @@ class FetchMusicsTests: XCTestCase {
 
 </details>
 
-Context that can simulate any scenarios in which atoms are used from a view or another atom and provides a comprehensive means of testing.
+A context that can simulate any scenarios in which atoms are used from a view or another atom and provides a comprehensive means of testing.
 
 |API|Use|
 |:--|:--|

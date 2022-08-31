@@ -210,14 +210,14 @@ private extension StoreContext {
         }
     }
 
-    func getCache<Node: Atom>(of atom: Node, for key: AtomKey) -> ConcreteAtomCache<Node> {
+    func getCache<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomCache<Node> {
         let store = getStore()
 
         if let cache = peekCache(of: atom, for: key) {
             return cache
         }
         else {
-            let cache = ConcreteAtomCache(atom: atom)
+            let cache = AtomCache(atom: atom)
             store.state.atomCaches[key] = cache
 
             for observer in observers {
@@ -228,14 +228,14 @@ private extension StoreContext {
         }
     }
 
-    func peekCache<Node: Atom>(of atom: Node, for key: AtomKey) -> ConcreteAtomCache<Node>? {
+    func peekCache<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomCache<Node>? {
         let store = getStore()
 
         guard let baseCache = store.state.atomCaches[key] else {
             return nil
         }
 
-        guard let cache = baseCache as? ConcreteAtomCache<Node> else {
+        guard let cache = baseCache as? AtomCache<Node> else {
             assertionFailure(
                 """
                 [Atoms]
@@ -245,7 +245,7 @@ private extension StoreContext {
                 Atom: \(Node.self)
                 Key: \(type(of: atom.key))
                 Detected: \(type(of: baseCache))
-                Expected: ConcreteAtomCache<\(Node.self)>
+                Expected: AtomCache<\(Node.self)>
                 """
             )
 
@@ -257,12 +257,12 @@ private extension StoreContext {
         return cache
     }
 
-    func getState<Node: Atom>(of atom: Node, for key: AtomKey) -> ConcreteAtomState<Node.Coordinator> {
+    func getState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Coordinator> {
         let store = getStore()
 
-        func makeState() -> ConcreteAtomState<Node.Coordinator> {
+        func makeState() -> AtomState<Node.Coordinator> {
             let coordinator = atom.makeCoordinator()
-            let state = ConcreteAtomState(coordinator: coordinator)
+            let state = AtomState(coordinator: coordinator)
             store.state.atomStates[key] = state
             return state
         }
@@ -271,7 +271,7 @@ private extension StoreContext {
             return makeState()
         }
 
-        guard let state = baseState as? ConcreteAtomState<Node.Coordinator> else {
+        guard let state = baseState as? AtomState<Node.Coordinator> else {
             assertionFailure(
                 """
                 [Atoms]
@@ -281,7 +281,7 @@ private extension StoreContext {
                 Atom: \(Node.self)
                 Key: \(type(of: atom.key))
                 Detected: \(type(of: baseState))
-                Expected: ConcreteAtomState<\(Node.Coordinator.self)>
+                Expected: AtomState<\(Node.Coordinator.self)>
                 """
             )
 

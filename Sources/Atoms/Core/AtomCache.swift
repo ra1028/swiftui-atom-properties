@@ -1,5 +1,5 @@
 @MainActor
-internal protocol AtomCache {
+internal protocol AtomCacheBase {
     var shouldKeepAlive: Bool { get }
 
     func reset(with store: StoreContext)
@@ -7,7 +7,7 @@ internal protocol AtomCache {
 }
 
 @MainActor
-internal struct ConcreteAtomCache<Node: Atom>: AtomCache {
+internal struct AtomCache<Node: Atom>: AtomCacheBase {
     var atom: Node
     var value: Node.Loader.Value?
 
