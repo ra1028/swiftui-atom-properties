@@ -28,7 +28,7 @@ public struct ObservableObjectAtomLoader<Node: ObservableObjectAtom>: AtomLoader
                 return
             }
 
-            context.update(with: object, updatesChildrenOnNextRunLoop: true)
+            context.update(with: object, needsEnsureValueUpdate: true)
         }
 
         context.addTermination(cancellable.cancel)

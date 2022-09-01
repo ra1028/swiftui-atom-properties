@@ -19,6 +19,9 @@ public protocol Atom {
     /// with other atoms.
     typealias Context = AtomTransactionContext<Coordinator>
 
+    /// A type of the structure that to read value other atoms.
+    typealias Reader = AtomReader
+
     /// A boolean value indicating whether the atom value should be preserved even if
     /// no longer watched to.
     ///
@@ -41,7 +44,21 @@ public protocol Atom {
     /// the atom is no longer used and is deinitialized.
     ///
     /// - Returns: The atom's associated coordinator instance.
+    @MainActor
     func makeCoordinator() -> Coordinator
+
+    /// Notifies the atom that the associated value is updated.
+    ///
+    /// Use it to manage arbitrary side-effects of value updates, such as state persistence,
+    /// state synchronization, logging, and etc.
+    /// You can also access other atom values via `reader` passed as a parameter.
+    ///
+    /// - Parameters:
+    ///   - newValue: A new value after update.
+    ///   - oldValue: An old value before update.
+    ///   - reader: A structure that to read value other atoms.
+    @MainActor
+    func updated(newValue: Loader.Value, oldValue: Loader.Value, reader: Reader)
 
     // --- Internal ---
 
@@ -58,6 +75,8 @@ public extension Atom {
     func makeCoordinator() -> Coordinator where Coordinator == Void {
         ()
     }
+
+    func updated(newValue: Loader.Value, oldValue: Loader.Value, reader: Reader) {}
 }
 
 public extension Atom where Self == Key {

@@ -48,12 +48,12 @@ internal struct StoreContext {
             store: self,
             transaction: transaction,
             coordinator: state.coordinator
-        ) { value, updatesChildrenOnNextRunLoop in
+        ) { value, needsEnsureValueUpdate in
             update(
                 atom: atom,
                 for: key,
                 with: value,
-                updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop
+                needsEnsureValueUpdate: needsEnsureValueUpdate
             )
         }
 
@@ -168,12 +168,12 @@ private extension StoreContext {
             store: self,
             transaction: transaction,
             coordinator: state.coordinator
-        ) { value, updatesChildrenOnNextRunLoop in
+        ) { value, needsEnsureValueUpdate in
             update(
                 atom: atom,
                 for: key,
                 with: value,
-                updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop
+                needsEnsureValueUpdate: needsEnsureValueUpdate
             )
         }
     }
@@ -293,7 +293,7 @@ private extension StoreContext {
         return state
     }
 
-    func notifyUpdate(for key: AtomKey, updatesChildrenOnNextRunLoop: Bool = false) {
+    func notifyUpdate(for key: AtomKey, needsEnsureValueUpdate: Bool = false) {
         let store = getStore()
 
         // Notifying update to view subscriptions first.
@@ -319,7 +319,7 @@ private extension StoreContext {
         // have not yet been updated and are still old when dependent atoms read it.
         // As a workaround, the update is executed in the next run loop
         // so that the downstream atoms can receive the object that's already updated.
-        if updatesChildrenOnNextRunLoop {
+        if needsEnsureValueUpdate {
             RunLoop.current.perform {
                 updateChildren()
             }
@@ -333,7 +333,7 @@ private extension StoreContext {
         atom: Node,
         for key: AtomKey,
         with value: Node.Loader.Value,
-        updatesChildrenOnNextRunLoop: Bool = false
+        needsEnsureValueUpdate: Bool = false
     ) {
         let store = getStore()
         var cache = getCache(of: atom, for: key)
@@ -349,8 +349,27 @@ private extension StoreContext {
         }
 
         // Notify update to the downstream atoms or views.
-        notifyUpdate(for: key, updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop)
+        notifyUpdate(for: key, needsEnsureValueUpdate: needsEnsureValueUpdate)
         notifyChangesToObservers(of: atom, value: value)
+
+        guard let oldValue = oldValue else {
+            return
+        }
+
+        func notifyUpdated() {
+            let reader = AtomReader(store: self)
+            atom.updated(newValue: value, oldValue: oldValue, reader: reader)
+        }
+
+        // Ensures the value is updated.
+        if needsEnsureValueUpdate {
+            RunLoop.current.perform {
+                notifyUpdated()
+            }
+        }
+        else {
+            notifyUpdated()
+        }
     }
 
     func release(for key: AtomKey) {
