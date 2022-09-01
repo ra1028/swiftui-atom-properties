@@ -11,8 +11,6 @@ struct TestValueAtom<T: Hashable>: ValueAtom, Hashable {
 
 struct TestStateAtom<T>: StateAtom {
     var defaultValue: T
-    var willSet: ((T, T) -> Void)?
-    var didSet: ((T, T) -> Void)?
 
     var key: UniqueKey {
         UniqueKey()
@@ -20,14 +18,6 @@ struct TestStateAtom<T>: StateAtom {
 
     func defaultValue(context: Context) -> T {
         defaultValue
-    }
-
-    func willSet(newValue: T, oldValue: T, context: Context) {
-        willSet?(newValue, oldValue)
-    }
-
-    func didSet(newValue: T, oldValue: T, context: Context) {
-        didSet?(newValue, oldValue)
     }
 }
 
