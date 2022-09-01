@@ -29,6 +29,7 @@ internal struct StoreContext {
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         let key = AtomKey(atom)
         update(atom: atom, for: key, with: value)
+        checkRelease(for: key)
     }
 
     @usableFromInline
