@@ -458,16 +458,6 @@ struct CounterAtom: StateAtom, Hashable {
     func defaultValue(context: Context) -> Int {
         0
     }
-
-    // Does nothing by default.
-    func willSet(newValue: Int, oldValue: Int, context: Context) {
-        print("Will change")
-    }
-
-    // Does nothing by default.
-    func didSet(newValue: Int, oldValue: Int, context: Context) {
-        print("Did change")
-    }
 }
 
 struct CounterView: View {

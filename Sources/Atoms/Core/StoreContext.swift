@@ -28,40 +28,7 @@ internal struct StoreContext {
     @usableFromInline
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         let key = AtomKey(atom)
-        let cache = peekCache(of: atom, for: key)
-
-        // Do nothing if the atom is not yet to be registered.
-        guard let oldValue = cache?.value else {
-            return
-        }
-
-        // Note that this is special handling for `willSet/didSet` because the dependencies could be invalidated
-        // by `prepareTransaction` here and there's no timing to restore them.
-        // The dependencies added by `willSet/didSet` will not be released until the value is invalidated and
-        // is going to be a bug, so `AtomTransactionContenxt` will no longer be passed soon.
-        // https://github.com/ra1028/swiftui-atom-properties/issues/18
-        let state = getState(of: atom, for: key)
-        let transaction = Transaction(key: key) {
-            // Do nothing.
-        }
-        let context = AtomLoaderContext(
-            store: self,
-            transaction: transaction,
-            coordinator: state.coordinator
-        ) { value, needsEnsureValueUpdate in
-            update(
-                atom: atom,
-                for: key,
-                with: value,
-                needsEnsureValueUpdate: needsEnsureValueUpdate
-            )
-        }
-
-        context.transaction { context in
-            atom.willSet(newValue: value, oldValue: oldValue, context: context)
-            update(atom: atom, for: key, with: value)
-            atom.didSet(newValue: value, oldValue: oldValue, context: context)
-        }
+        update(atom: atom, for: key, with: value)
     }
 
     @usableFromInline
