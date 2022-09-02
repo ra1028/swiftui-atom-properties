@@ -35,20 +35,4 @@ final class AtomCacheTests: XCTestCase {
 
         XCTAssertEqual(context.watch(dependency, in: transaction), 0)
     }
-
-    func testNotifyUnassigned() {
-        let atom = TestStateAtom(defaultValue: 0)
-        let state = AtomCache(atom: atom)
-        let observer = TestObserver()
-
-        XCTAssertTrue(observer.assignedAtomKeys.isEmpty)
-        XCTAssertTrue(observer.changedAtomKeys.isEmpty)
-        XCTAssertTrue(observer.unassignedAtomKeys.isEmpty)
-
-        state.notifyUnassigned(to: [observer])
-
-        XCTAssertTrue(observer.assignedAtomKeys.isEmpty)
-        XCTAssertTrue(observer.changedAtomKeys.isEmpty)
-        XCTAssertEqual(observer.unassignedAtomKeys, [AtomKey(atom)])
-    }
 }

@@ -5,13 +5,13 @@ import Foundation
 internal struct StoreContext {
     private weak var weakStore: Store?
     private let overrides: Overrides?
-    private let observers: [AtomObserver]
+    private let observers: [Observer]
     private let enablesAssertion: Bool
 
     nonisolated init(
         _ store: Store? = nil,
         overrides: Overrides? = nil,
-        observers: [AtomObserver] = [],
+        observers: [Observer] = [],
         enablesAssertion: Bool = false
     ) {
         self.weakStore = store
@@ -66,14 +66,13 @@ internal struct StoreContext {
             }
 
             // Unsubscribe and release if it's no longer used.
-            store.state.atomStates[key]?.subscriptions.removeValue(forKey: container.key)
+            store.state.subscriptions[key]?.removeValue(forKey: container.key)
             checkRelease(for: key)
         }
 
         // Register the subscription to both the store and the container.
-        let state = getState(of: atom, for: key)
-        state.subscriptions[container.key] = subscription
         container.subscriptions[key] = subscription
+        store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key)
 
         return getValue(of: atom, for: key)
     }
@@ -108,7 +107,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func relay(observers: [AtomObserver]) -> Self {
+    func relay(observers: [Observer]) -> Self {
         Self(
             weakStore,
             overrides: overrides,
@@ -175,7 +174,9 @@ private extension StoreContext {
 
             cache.value = value
             store.state.atomCaches[key] = cache
-            notifyChangesToObservers(of: atom, value: value)
+
+            // Notify new value.
+            notifyUpdateToObservers()
 
             return value
         }
@@ -190,10 +191,6 @@ private extension StoreContext {
         else {
             let cache = AtomCache(atom: atom)
             store.state.atomCaches[key] = cache
-
-            for observer in observers {
-                observer.atomAssigned(atom: atom)
-            }
 
             return cache
         }
@@ -268,8 +265,8 @@ private extension StoreContext {
         let store = getStore()
 
         // Notifying update to view subscriptions first.
-        if let state = store.state.atomStates[key] {
-            for subscription in ContiguousArray(state.subscriptions.values) {
+        if let subscriptions = store.state.subscriptions[key] {
+            for subscription in ContiguousArray(subscriptions.values) {
                 subscription.notifyUpdate()
             }
         }
@@ -321,7 +318,9 @@ private extension StoreContext {
 
         // Notify update to the downstream atoms or views.
         notifyUpdate(for: key, needsEnsureValueUpdate: needsEnsureValueUpdate)
-        notifyChangesToObservers(of: atom, value: value)
+
+        // Notify value update.
+        notifyUpdateToObservers()
 
         guard let oldValue = oldValue else {
             return
@@ -348,11 +347,13 @@ private extension StoreContext {
 
         // Invalidate transactions, dependencies, and the atom state.
         let dependencies = invalidate(for: key)
-        let cache = store.state.atomCaches.removeValue(forKey: key)
-
-        store.state.atomStates.removeValue(forKey: key)
         store.graph.children.removeValue(forKey: key)
-        cache?.notifyUnassigned(to: observers)
+        store.state.atomCaches.removeValue(forKey: key)
+        store.state.atomStates.removeValue(forKey: key)
+        store.state.subscriptions.removeValue(forKey: key)
+
+        // Notify release.
+        notifyUpdateToObservers()
 
         // Check if the dependencies are releasable.
         checkReleaseDependencies(dependencies, for: key)
@@ -369,7 +370,7 @@ private extension StoreContext {
         let shouldRelease =
             !shouldKeepAlive
             && (store.graph.children[key]?.isEmpty ?? true)
-            && (store.state.atomStates[key]?.subscriptions.isEmpty ?? true)
+            && (store.state.subscriptions[key]?.isEmpty ?? true)
 
         guard shouldRelease else {
             return
@@ -398,19 +399,49 @@ private extension StoreContext {
         return store.graph.dependencies.removeValue(forKey: key) ?? []
     }
 
-    func notifyChangesToObservers<Node: Atom>(of atom: Node, value: Node.Loader.Value) {
+    func notifyUpdateToObservers() {
         guard !observers.isEmpty else {
             return
         }
 
-        let snapshot = Snapshot(atom: atom, value: value) {
-            let key = AtomKey(atom)
-            update(atom: atom, for: key, with: value)
-            checkRelease(for: key)
+        let store = getStore()
+        let graph = store.graph
+        let atomCaches = store.state.atomCaches
+        let snapshot = Snapshot(graph: graph, atomCaches: atomCaches) {
+            let store = getStore()
+
+            for key in atomCaches.keys {
+                let oldDependencies = store.graph.dependencies[key] ?? []
+                let newDependencies = graph.dependencies[key] ?? []
+                let obsoletedDependencies = oldDependencies.subtracting(newDependencies)
+
+                // Update atom values and the graph.
+                store.state.atomCaches[key] = atomCaches[key]
+                store.graph.dependencies[key] = newDependencies
+                store.graph.children[key] = graph.children[key]
+
+                // Remove and terminate the current atom state.
+                if let state = store.state.atomStates.removeValue(forKey: key) {
+                    state.transaction?.terminate()
+                }
+
+                // Notify updates only for the subscriptions for restored atoms.
+                if let subscriptions = store.state.subscriptions[key] {
+                    for subscription in ContiguousArray(subscriptions.values) {
+                        subscription.notifyUpdate()
+                    }
+                }
+
+                // Release dependencies that are no longer dependent.
+                checkReleaseDependencies(obsoletedDependencies, for: key)
+
+                // Release if the atom is no longer used.
+                checkRelease(for: key)
+            }
         }
 
         for observer in observers {
-            observer.atomChanged(snapshot: snapshot)
+            observer.onUpdate(snapshot)
         }
     }
 

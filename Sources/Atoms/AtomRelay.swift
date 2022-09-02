@@ -34,10 +34,11 @@ import SwiftUI
 /// .observe(Logger())
 /// ```
 ///
+@MainActor
 public struct AtomRelay<Content: View>: View {
     private let context: AtomViewContext?
+    private var observers = [Observer]()
     private let content: Content
-    private var observers = [AtomObserver]()
 
     @Environment(\.store)
     private var inheritedStore
@@ -65,19 +66,15 @@ public struct AtomRelay<Content: View>: View {
         )
     }
 
-    /// Observes changes in any atom values and lifecycles used in descendant views.
+    /// Observes updates with a snapshot that captures specific set of values of atoms.
     ///
-    /// This method registers the given observer to notify changes of any atom values.
-    /// It would be useful for monitoring and debugging the atoms and for producing side effects in
-    /// the changes of particular atom.
+    /// Use this to monitor and debugging the atoms or for producing side effects.
     ///
-    /// - SeeAlso: ``AtomObserver``
-    ///
-    /// - Parameter observer: A observer value to observe atom changes.
+    /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
     ///
     /// - Returns: The self instance.
-    public func observe<Observer: AtomObserver>(_ observer: Observer) -> Self {
-        mutating { $0.observers.append(observer) }
+    public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
+        mutating { $0.observers.append(Observer(onUpdate: onUpdate)) }
     }
 }
 

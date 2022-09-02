@@ -11,24 +11,6 @@ struct Pair<T: Equatable>: Equatable {
     let second: T
 }
 
-final class TestObserver: AtomObserver {
-    var assignedAtomKeys = [AtomKey]()
-    var unassignedAtomKeys = [AtomKey]()
-    var changedAtomKeys = [AtomKey]()
-
-    func atomAssigned<Node: Atom>(atom: Node) {
-        assignedAtomKeys.append(AtomKey(atom))
-    }
-
-    func atomUnassigned<Node: Atom>(atom: Node) {
-        unassignedAtomKeys.append(AtomKey(atom))
-    }
-
-    func atomChanged<Node: Atom>(snapshot: Snapshot<Node>) {
-        changedAtomKeys.append(AtomKey(snapshot.atom))
-    }
-}
-
 final class AsyncThrowingStreamPipe<Element> {
     private(set) var stream: AsyncThrowingStream<Element, Error>
     private(set) var continuation: AsyncThrowingStream<Element, Error>.Continuation!
