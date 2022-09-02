@@ -142,7 +142,7 @@ final class TaskAtomTests: XCTestCase {
         XCTAssertEqual(dependencyValue, 0)
     }
 
-    func testUpdated() async {
+    func testUpdated() {
         var updatedTaskHashValues = [Int]()
         let atom = TestTaskAtom {
             0
@@ -151,18 +151,14 @@ final class TaskAtomTests: XCTestCase {
         }
         let context = AtomTestContext()
 
-        let task0 = context.watch(atom)
+        context.watch(atom)
 
         XCTAssertTrue(updatedTaskHashValues.isEmpty)
 
         context.reset(atom)
 
-        let task1 = context.watch(atom)
+        let task = context.watch(atom)
 
-        // Ensures that the transactions are done, othewise the store context access to the store which is already released.
-        _ = await task0.value
-        _ = await task1.value
-
-        XCTAssertEqual(updatedTaskHashValues, [task1.hashValue])
+        XCTAssertEqual(updatedTaskHashValues, [task.hashValue])
     }
 }

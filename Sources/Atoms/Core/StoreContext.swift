@@ -6,15 +6,18 @@ internal struct StoreContext {
     private weak var weakStore: Store?
     private let overrides: Overrides?
     private let observers: [AtomObserver]
+    private let enablesAssertion: Bool
 
     nonisolated init(
         _ store: Store? = nil,
         overrides: Overrides? = nil,
-        observers: [AtomObserver] = []
+        observers: [AtomObserver] = [],
+        enablesAssertion: Bool = false
     ) {
         self.weakStore = store
         self.overrides = overrides
         self.observers = observers
+        self.enablesAssertion = enablesAssertion
     }
 
     @usableFromInline
@@ -416,7 +419,8 @@ private extension StoreContext {
             return store
         }
 
-        assertionFailure(
+        assert(
+            !enablesAssertion,
             """
             [Atoms]
             There is no store provided on the current view tree.
