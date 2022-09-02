@@ -1274,7 +1274,7 @@ In addition, this observability can be applied to do [time travel debugging](htt
 
 ### Advanced Usage
 
-#### Obtain an atom value without watching to it
+#### Use atoms without watching
 
 <details><summary><code>📖 Click to expand example code</code></summary>
 
@@ -1301,7 +1301,7 @@ struct TextCopyView: View {
 
 The `read(_:)` function is a way to get the data of an atom without having watch to and receiving future updates of it. It's commonly used inside functions triggered by call-to-actions.
 
-#### Dynamically initiate an atom with external parameters
+#### Dynamically initiate atom families
 
 <details><summary><code>📖 Click to expand example code</code></summary>
 
@@ -1343,11 +1343,17 @@ struct UserView: View {
 
 Each atom must have a unique `key` to be uniquely associated with its value. As described in the [Atoms](#atoms) section, it is automatically synthesized by conforming to `Hashable`, but with explicitly specifying a `key` allowing you to pass arbitrary external parameters to the atom. It is commonly used, for example, to retrieve user information associated with a dynamically specified ID from a server.
 
-#### Pass a context to your object to interact with other atoms
+#### Use atoms from objects
 
 <details><summary><code>📖 Click to expand example code</code></summary>
 
 ```swift
+struct MessageLoaderAtom: ObservableObjectAtom, Hashable {
+    func object(context: Context) -> MessageLoader {
+        MessageLoader(context: context)
+    }
+}
+
 @MainActor
 class MessageLoader: ObservableObject {
     let context: AtomContext
@@ -1385,17 +1391,34 @@ class MessageLoader: ObservableObject {
         }
     }
 }
+```
 
-struct MessageLoaderAtom: ObservableObjectAtom, Hashable {
-    func object(context: Context) -> MessageLoader {
-        MessageLoader(context: context)
+</details>
+
+You can pass a context to your object and interact with other atoms at any asynchronous timing. However, in that case, when the `watch` is called, it end up with the object instance itself will be re-created with fresh data. Therefore, you can explicitly prevent the use of the `watch` by passing it as `AtomContext` type.
+
+#### Manage side-effects
+
+<details><summary><code>📖 Click to expand example code</code></summary>
+
+```swift
+struct PersistentCounterAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> Int {
+        UserDefaults.standard.integer(forKey: "persistence_key")
+    }
+
+    func updated(newValue: Int, oldValue: Int, reader: Reader) {
+        if newValue != oldValue {
+            UserDefaults.standard.set(newValue, forKey: "persistence_key")
+        }
     }
 }
 ```
 
 </details>
 
-You can pass a context to your object and interact with other atoms at any asynchronous timing. However, in that case, when the `watch` is called, it end up with the object instance itself will be re-created with fresh data. Therefore, you can explicitly prevent the use of the `watch` by passing it as `AtomContext` type.
+All atom types can optionally implement [`updated(newValue:oldValue:reader:`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/updated(newvalue:oldvalue:reader:)-fgb8) method to manage arbitrary side-effects of value updates, such as state persistence, state synchronization, logging, and etc.  
+In the above example, the initial state of the atom is retrieved from UserDefaults, and when the user updates the state, the value is reflected into UserDefaults as a side effect.
 
 ---
 
