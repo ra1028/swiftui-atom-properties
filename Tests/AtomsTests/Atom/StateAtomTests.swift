@@ -80,4 +80,30 @@ final class StateAtomTests: XCTestCase {
         let value2 = context.watch(TestAtom())
         XCTAssertEqual(value2, 0)
     }
+
+    func testUpdated() {
+        var updatedValues = [Pair<Int>]()
+        let atom = TestStateAtom(defaultValue: 0) { new, old in
+            let values = Pair(first: new, second: old)
+            updatedValues.append(values)
+        }
+        let context = AtomTestContext()
+
+        context.watch(atom)
+
+        XCTAssertTrue(updatedValues.isEmpty)
+
+        context.set(1, for: atom)
+        context.set(2, for: atom)
+        context.set(3, for: atom)
+
+        XCTAssertEqual(
+            updatedValues,
+            [
+                Pair(first: 1, second: 0),
+                Pair(first: 2, second: 1),
+                Pair(first: 3, second: 2),
+            ]
+        )
+    }
 }

@@ -11,7 +11,7 @@ final class SubscriptionContainerTests: XCTestCase {
             unsubscribedCount += 1
         }
         let atom0 = TestValueAtom(value: 0)
-        let atom1 = TestValueAtom(value: 1)
+        let atom1 = TestStateAtom(defaultValue: 0)
 
         container?.wrapper.subscriptions = [
             AtomKey(atom0): subscription,

@@ -2,8 +2,14 @@ import Combine
 
 @testable import Atoms
 
-struct UniqueKey: Hashable {}
 final class Object {}
+
+struct UniqueKey: Hashable {}
+
+struct Pair<T: Equatable>: Equatable {
+    let first: T
+    let second: T
+}
 
 final class TestObserver: AtomObserver {
     var assignedAtomKeys = [AtomKey]()

@@ -22,4 +22,21 @@ final class ValueAtomTests: XCTestCase {
             XCTAssertEqual(context.watch(atom), 1)
         }
     }
+
+    func testUpdated() async {
+        var updatedValues = [Pair<Int>]()
+        let atom = TestValueAtom(value: 0) { new, old in
+            let values = Pair(first: new, second: old)
+            updatedValues.append(values)
+        }
+        let context = AtomTestContext()
+
+        context.watch(atom)
+
+        XCTAssertTrue(updatedValues.isEmpty)
+
+        context.reset(atom)
+
+        XCTAssertEqual(updatedValues, [Pair(first: 0, second: 0)])
+    }
 }

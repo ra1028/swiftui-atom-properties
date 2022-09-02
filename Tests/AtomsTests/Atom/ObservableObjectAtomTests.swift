@@ -14,9 +14,19 @@ final class ObservableObjectAtomTests: XCTestCase {
         }
     }
 
-    struct TestAtom: ObservableObjectAtom, Hashable {
+    struct TestAtom: ObservableObjectAtom {
+        var onUpdated: ((TestObject, TestObject) -> Void)?
+
+        var key: UniqueKey {
+            UniqueKey()
+        }
+
         func object(context: Context) -> TestObject {
             TestObject()
+        }
+
+        func updated(newValue: TestObject, oldValue: TestObject, reader: Reader) {
+            onUpdated?(newValue, oldValue)
         }
     }
 
@@ -100,5 +110,21 @@ final class ObservableObjectAtomTests: XCTestCase {
             XCTAssertTrue(object === overrideObject)
             XCTAssertEqual(updateCount, 1)
         }
+    }
+
+    func testUpdated() async {
+        var updatedObjects = [TestObject]()
+        let atom = TestAtom { object, _ in
+            updatedObjects.append(object)
+        }
+        let context = AtomTestContext()
+        let object = context.watch(atom)
+
+        XCTAssertTrue(updatedObjects.isEmpty)
+        object.update()
+
+        await context.waitUntilNextUpdate()
+
+        XCTAssertEqual(updatedObjects.last?.updatedCount, 1)
     }
 }

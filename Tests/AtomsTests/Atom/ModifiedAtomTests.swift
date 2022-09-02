@@ -5,7 +5,7 @@ import XCTest
 @MainActor
 final class ModifiedAtomTests: XCTestCase {
     func testKey() {
-        let base = TestValueAtom(value: 0)
+        let base = TestAtom(value: 0)
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
         let atom = ModifiedAtom(atom: base, modifier: modifier)
 

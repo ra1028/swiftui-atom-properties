@@ -25,11 +25,6 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testSet() {
-        struct Values<T: Equatable>: Equatable {
-            let old: T
-            let new: T
-        }
-
         let store = Store()
         let observer = TestObserver()
         let context = StoreContext(store, observers: [observer])
@@ -79,9 +74,9 @@ final class StoreContextTests: XCTestCase {
         let store = Store()
         let observer = TestObserver()
         let context = StoreContext(store, observers: [observer])
-        let atom = TestValueAtom(value: 0)
+        let atom = TestAtom(value: 0)
         let dependency0 = TestStateAtom(defaultValue: 0)
-        let dependency1 = TestValueAtom(value: 1)
+        let dependency1 = TestAtom(value: 1)
         let key = AtomKey(atom)
         let dependency0Key = AtomKey(dependency0)
         let dependency1Key = AtomKey(dependency1)
