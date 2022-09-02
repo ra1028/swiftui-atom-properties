@@ -28,40 +28,8 @@ internal struct StoreContext {
     @usableFromInline
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         let key = AtomKey(atom)
-        let cache = peekCache(of: atom, for: key)
-
-        // Do nothing if the atom is not yet to be registered.
-        guard let oldValue = cache?.value else {
-            return
-        }
-
-        // Note that this is special handling for `willSet/didSet` because the dependencies could be invalidated
-        // by `prepareTransaction` here and there's no timing to restore them.
-        // The dependencies added by `willSet/didSet` will not be released until the value is invalidated and
-        // is going to be a bug, so `AtomTransactionContenxt` will no longer be passed soon.
-        // https://github.com/ra1028/swiftui-atom-properties/issues/18
-        let state = getState(of: atom, for: key)
-        let transaction = Transaction(key: key) {
-            // Do nothing.
-        }
-        let context = AtomLoaderContext(
-            store: self,
-            transaction: transaction,
-            coordinator: state.coordinator
-        ) { value, updatesChildrenOnNextRunLoop in
-            update(
-                atom: atom,
-                for: key,
-                with: value,
-                updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop
-            )
-        }
-
-        context.transaction { context in
-            atom.willSet(newValue: value, oldValue: oldValue, context: context)
-            update(atom: atom, for: key, with: value)
-            atom.didSet(newValue: value, oldValue: oldValue, context: context)
-        }
+        update(atom: atom, for: key, with: value)
+        checkRelease(for: key)
     }
 
     @usableFromInline
@@ -168,12 +136,12 @@ private extension StoreContext {
             store: self,
             transaction: transaction,
             coordinator: state.coordinator
-        ) { value, updatesChildrenOnNextRunLoop in
+        ) { value, needsEnsureValueUpdate in
             update(
                 atom: atom,
                 for: key,
                 with: value,
-                updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop
+                needsEnsureValueUpdate: needsEnsureValueUpdate
             )
         }
     }
@@ -293,7 +261,7 @@ private extension StoreContext {
         return state
     }
 
-    func notifyUpdate(for key: AtomKey, updatesChildrenOnNextRunLoop: Bool = false) {
+    func notifyUpdate(for key: AtomKey, needsEnsureValueUpdate: Bool = false) {
         let store = getStore()
 
         // Notifying update to view subscriptions first.
@@ -319,7 +287,7 @@ private extension StoreContext {
         // have not yet been updated and are still old when dependent atoms read it.
         // As a workaround, the update is executed in the next run loop
         // so that the downstream atoms can receive the object that's already updated.
-        if updatesChildrenOnNextRunLoop {
+        if needsEnsureValueUpdate {
             RunLoop.current.perform {
                 updateChildren()
             }
@@ -333,7 +301,7 @@ private extension StoreContext {
         atom: Node,
         for key: AtomKey,
         with value: Node.Loader.Value,
-        updatesChildrenOnNextRunLoop: Bool = false
+        needsEnsureValueUpdate: Bool = false
     ) {
         let store = getStore()
         var cache = getCache(of: atom, for: key)
@@ -349,8 +317,27 @@ private extension StoreContext {
         }
 
         // Notify update to the downstream atoms or views.
-        notifyUpdate(for: key, updatesChildrenOnNextRunLoop: updatesChildrenOnNextRunLoop)
+        notifyUpdate(for: key, needsEnsureValueUpdate: needsEnsureValueUpdate)
         notifyChangesToObservers(of: atom, value: value)
+
+        guard let oldValue = oldValue else {
+            return
+        }
+
+        func notifyUpdated() {
+            let reader = AtomReader(store: self)
+            atom.updated(newValue: value, oldValue: oldValue, reader: reader)
+        }
+
+        // Ensures the value is updated.
+        if needsEnsureValueUpdate {
+            RunLoop.current.perform {
+                notifyUpdated()
+            }
+        }
+        else {
+            notifyUpdated()
+        }
     }
 
     func release(for key: AtomKey) {

@@ -127,4 +127,38 @@ final class AsyncSequenceAtomTests: XCTestCase {
             XCTAssertEqual(updateCount, 1)
         }
     }
+
+    func testUpdated() async {
+        let pipe = AsyncThrowingStreamPipe<Int>()
+        var updatedValues = [Pair<Int?>]()
+        let atom = TestAsyncSequenceAtom {
+            pipe.stream
+        } onUpdated: { new, old in
+            let values = Pair(first: new.value, second: old.value)
+            updatedValues.append(values)
+        }
+        let context = AtomTestContext()
+
+        context.watch(atom)
+
+        XCTAssertTrue(updatedValues.isEmpty)
+
+        pipe.continuation.yield(0)
+        await context.waitUntilNextUpdate()
+
+        pipe.continuation.yield(1)
+        await context.waitUntilNextUpdate()
+
+        pipe.continuation.yield(2)
+        await context.waitUntilNextUpdate()
+
+        XCTAssertEqual(
+            updatedValues,
+            [
+                Pair(first: 0, second: nil),
+                Pair(first: 1, second: 0),
+                Pair(first: 2, second: 1),
+            ]
+        )
+    }
 }

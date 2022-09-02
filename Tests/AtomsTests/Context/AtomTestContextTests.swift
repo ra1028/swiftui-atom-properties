@@ -52,7 +52,7 @@ final class AtomTestContextTests: XCTestCase {
 
     func testOverride() {
         let atom0 = TestValueAtom(value: 100)
-        let atom1 = TestValueAtom(value: 200)
+        let atom1 = TestStateAtom(defaultValue: 200)
         let context = AtomTestContext()
 
         XCTAssertEqual(context.read(atom0), 100)

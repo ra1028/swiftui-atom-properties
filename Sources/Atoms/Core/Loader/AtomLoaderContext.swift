@@ -22,8 +22,8 @@ public struct AtomLoaderContext<Value, Coordinator> {
         _update = update
     }
 
-    internal func update(with value: Value, updatesChildrenOnNextRunLoop: Bool = false) {
-        _update(value, updatesChildrenOnNextRunLoop)
+    internal func update(with value: Value, needsEnsureValueUpdate: Bool = false) {
+        _update(value, needsEnsureValueUpdate)
     }
 
     internal func addTermination(_ termination: @MainActor @escaping () -> Void) {

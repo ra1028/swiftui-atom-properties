@@ -1,7 +1,7 @@
 import Atoms
 import Combine
 
-struct TestValueAtom<T: Hashable>: ValueAtom, Hashable {
+struct TestAtom<T: Hashable>: ValueAtom, Hashable {
     var value: T
 
     func value(context: Context) -> T {
@@ -9,10 +9,26 @@ struct TestValueAtom<T: Hashable>: ValueAtom, Hashable {
     }
 }
 
+struct TestValueAtom<T>: ValueAtom {
+    var value: T
+    var onUpdated: ((T, T) -> Void)?
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
+
+    func value(context: Context) -> T {
+        value
+    }
+
+    func updated(newValue: T, oldValue: T, reader: Reader) {
+        onUpdated?(newValue, oldValue)
+    }
+}
+
 struct TestStateAtom<T>: StateAtom {
     var defaultValue: T
-    var willSet: ((T, T) -> Void)?
-    var didSet: ((T, T) -> Void)?
+    var onUpdated: ((T, T) -> Void)?
 
     var key: UniqueKey {
         UniqueKey()
@@ -22,37 +38,47 @@ struct TestStateAtom<T>: StateAtom {
         defaultValue
     }
 
-    func willSet(newValue: T, oldValue: T, context: Context) {
-        willSet?(newValue, oldValue)
-    }
-
-    func didSet(newValue: T, oldValue: T, context: Context) {
-        didSet?(newValue, oldValue)
+    func updated(newValue: T, oldValue: T, reader: Reader) {
+        onUpdated?(newValue, oldValue)
     }
 }
 
-struct TestTaskAtom<T>: TaskAtom {
+struct TestTaskAtom<T: Sendable>: TaskAtom {
     var getValue: () -> T
+    var onUpdated: ((Task<T, Never>, Task<T, Never>) -> Void)?
 
     var key: UniqueKey {
         UniqueKey()
     }
 
     init(value: T) {
-        self.getValue = { value }
+        self.init { value }
     }
 
-    init(getValue: @escaping () -> T) {
+    init(
+        getValue: @escaping () -> T,
+        onUpdated: ((Task<T, Never>, Task<T, Never>) -> Void)? = nil
+    ) {
         self.getValue = getValue
+        self.onUpdated = onUpdated
     }
 
     func value(context: Context) async -> T {
         getValue()
     }
+
+    func updated(
+        newValue: Task<T, Never>,
+        oldValue: Task<T, Never>,
+        reader: Reader
+    ) {
+        onUpdated?(newValue, oldValue)
+    }
 }
 
-struct TestThrowingTaskAtom<Success>: ThrowingTaskAtom {
+struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom {
     var getResult: () -> Result<Success, Error>
+    var onUpdated: ((Task<Success, Error>, Task<Success, Error>) -> Void)?
 
     var key: UniqueKey {
         UniqueKey()
@@ -62,17 +88,30 @@ struct TestThrowingTaskAtom<Success>: ThrowingTaskAtom {
         self.getResult = { result }
     }
 
-    init(getResult: @escaping () -> Result<Success, Error>) {
+    init(
+        getResult: @escaping () -> Result<Success, Error>,
+        onUpdated: ((Task<Success, Error>, Task<Success, Error>) -> Void)? = nil
+    ) {
         self.getResult = getResult
+        self.onUpdated = onUpdated
     }
 
     func value(context: Context) async throws -> Success {
         try getResult().get()
     }
+
+    func updated(
+        newValue: Task<Success, Error>,
+        oldValue: Task<Success, Error>,
+        reader: Reader
+    ) {
+        onUpdated?(newValue, oldValue)
+    }
 }
 
 struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom {
     var makePublisher: () -> Publisher
+    var onUpdated: ((AsyncPhase<Publisher.Output, Publisher.Failure>, AsyncPhase<Publisher.Output, Publisher.Failure>) -> Void)?
 
     var key: UniqueKey {
         UniqueKey()
@@ -81,10 +120,19 @@ struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom {
     func publisher(context: Context) -> Publisher {
         makePublisher()
     }
+
+    func updated(
+        newValue: AsyncPhase<Publisher.Output, Publisher.Failure>,
+        oldValue: AsyncPhase<Publisher.Output, Publisher.Failure>,
+        reader: Reader
+    ) {
+        onUpdated?(newValue, oldValue)
+    }
 }
 
 struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom {
     var makeSequence: () -> Sequence
+    var onUpdated: ((AsyncPhase<Sequence.Element, Error>, AsyncPhase<Sequence.Element, Error>) -> Void)?
 
     var key: UniqueKey {
         UniqueKey()
@@ -92,5 +140,13 @@ struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom {
 
     func sequence(context: Context) -> Sequence {
         makeSequence()
+    }
+
+    func updated(
+        newValue: AsyncPhase<Sequence.Element, Error>,
+        oldValue: AsyncPhase<Sequence.Element, Error>,
+        reader: Reader
+    ) {
+        onUpdated?(newValue, oldValue)
     }
 }

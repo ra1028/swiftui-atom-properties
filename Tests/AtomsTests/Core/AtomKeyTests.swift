@@ -4,7 +4,7 @@ import XCTest
 
 final class AtomKeyTests: XCTestCase {
     func testKeyHashableForSameAtoms() {
-        let atom = TestValueAtom(value: 0)
+        let atom = TestAtom(value: 0)
         let key0 = AtomKey(atom)
         let key1 = AtomKey(atom)
 
@@ -15,8 +15,8 @@ final class AtomKeyTests: XCTestCase {
     }
 
     func testKeyHashableForDifferentAtoms() {
-        let atom0 = TestValueAtom(value: 0)
-        let atom1 = TestValueAtom(value: 1)
+        let atom0 = TestAtom(value: 0)
+        let atom1 = TestAtom(value: 1)
         let key0 = AtomKey(atom0)
         let key1 = AtomKey(atom1)
 
@@ -27,8 +27,8 @@ final class AtomKeyTests: XCTestCase {
     }
 
     func testDictionaryKey() {
-        let atom0 = TestValueAtom(value: 0)
-        let atom1 = TestValueAtom(value: 1)
+        let atom0 = TestAtom(value: 0)
+        let atom1 = TestAtom(value: 1)
         let key0 = AtomKey(atom0)
         let key1 = AtomKey(atom1)
         let key2 = AtomKey(atom1)
