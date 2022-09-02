@@ -17,4 +17,10 @@ public struct Snapshot {
     public func restore() {
         _restore()
     }
+
+    public func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
+        let key = AtomKey(atom)
+        let cache = atomCaches[key] as? AtomCache<Node>
+        return cache?.value
+    }
 }
