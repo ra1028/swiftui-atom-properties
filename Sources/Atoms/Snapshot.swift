@@ -1,21 +1,21 @@
 /// A snapshot structure that captures specific set of values of atoms and their dependency graph.
-@MainActor
 public struct Snapshot {
     internal let graph: Graph
-    internal let atomCaches: [AtomKey: AtomCacheBase]
+    internal let caches: [AtomKey: AtomCacheBase]
     private let _restore: @MainActor () -> Void
 
     internal init(
         graph: Graph,
-        atomCaches: [AtomKey: AtomCacheBase],
+        caches: [AtomKey: AtomCacheBase],
         restore: @MainActor @escaping () -> Void
     ) {
         self.graph = graph
-        self.atomCaches = atomCaches
+        self.caches = caches
         self._restore = restore
     }
 
     /// Restores the atom values that are captured in this snapshot.
+    @MainActor
     public func restore() {
         _restore()
     }
@@ -25,9 +25,10 @@ public struct Snapshot {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The captured value associated with the given atom if it exists.
+    @MainActor
     public func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
         let key = AtomKey(atom)
-        let cache = atomCaches[key] as? AtomCache<Node>
+        let cache = caches[key] as? AtomCache<Node>
         return cache?.value
     }
 }

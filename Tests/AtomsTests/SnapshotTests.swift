@@ -6,7 +6,7 @@ import XCTest
 final class SnapshotTests: XCTestCase {
     func testRestore() {
         var isRestoreCalled = false
-        let snapshot = Snapshot(graph: Graph(), atomCaches: [:]) {
+        let snapshot = Snapshot(graph: Graph(), caches: [:]) {
             isRestoreCalled = true
         }
 
@@ -21,7 +21,7 @@ final class SnapshotTests: XCTestCase {
         let atomCache = [
             AtomKey(atom0): AtomCache(atom: atom0, value: 0)
         ]
-        let snapshot = Snapshot(graph: Graph(), atomCaches: atomCache) {}
+        let snapshot = Snapshot(graph: Graph(), caches: atomCache) {}
 
         XCTAssertEqual(snapshot.lookup(atom0), 0)
         XCTAssertNil(snapshot.lookup(atom1))

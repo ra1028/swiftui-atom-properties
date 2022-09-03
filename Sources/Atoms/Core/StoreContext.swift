@@ -173,7 +173,7 @@ private extension StoreContext {
             let value = getNewValue(of: atom, for: key)
 
             cache.value = value
-            store.state.atomCaches[key] = cache
+            store.state.caches[key] = cache
 
             // Notify new value.
             notifyUpdateToObservers()
@@ -190,7 +190,7 @@ private extension StoreContext {
         }
         else {
             let cache = AtomCache(atom: atom)
-            store.state.atomCaches[key] = cache
+            store.state.caches[key] = cache
 
             return cache
         }
@@ -199,7 +199,7 @@ private extension StoreContext {
     func peekCache<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomCache<Node>? {
         let store = getStore()
 
-        guard let baseCache = store.state.atomCaches[key] else {
+        guard let baseCache = store.state.caches[key] else {
             return nil
         }
 
@@ -231,11 +231,11 @@ private extension StoreContext {
         func makeState() -> AtomState<Node.Coordinator> {
             let coordinator = atom.makeCoordinator()
             let state = AtomState(coordinator: coordinator)
-            store.state.atomStates[key] = state
+            store.state.states[key] = state
             return state
         }
 
-        guard let baseState = store.state.atomStates[key] else {
+        guard let baseState = store.state.states[key] else {
             return makeState()
         }
 
@@ -278,7 +278,7 @@ private extension StoreContext {
             }
 
             for child in children {
-                let cache = store.state.atomCaches[child]
+                let cache = store.state.caches[child]
                 cache?.reset(with: self)
             }
         }
@@ -309,7 +309,7 @@ private extension StoreContext {
 
         // Update the current value with the new value.
         cache.value = value
-        store.state.atomCaches[key] = cache
+        store.state.caches[key] = cache
 
         // Do not notify update if the new value and the old value are equivalent.
         if let oldValue = oldValue, !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
@@ -348,8 +348,8 @@ private extension StoreContext {
         // Invalidate transactions, dependencies, and the atom state.
         let dependencies = invalidate(for: key)
         store.graph.children.removeValue(forKey: key)
-        store.state.atomCaches.removeValue(forKey: key)
-        store.state.atomStates.removeValue(forKey: key)
+        store.state.caches.removeValue(forKey: key)
+        store.state.states.removeValue(forKey: key)
         store.state.subscriptions.removeValue(forKey: key)
 
         // Notify release.
@@ -366,7 +366,7 @@ private extension StoreContext {
         //     1. It's not marked as `KeepAlive`.
         //     2. It has no downstream atoms.
         //     3. It has no subscriptions from views.
-        let shouldKeepAlive = store.state.atomCaches[key]?.shouldKeepAlive ?? false
+        let shouldKeepAlive = store.state.caches[key]?.shouldKeepAlive ?? false
         let shouldRelease =
             !shouldKeepAlive
             && (store.graph.children[key]?.isEmpty ?? true)
@@ -395,7 +395,7 @@ private extension StoreContext {
         // Remove the current transaction and then terminate to prevent it to watch new atoms
         // or add new terminations.
         // Then, temporarily remove dependencies but do not release them recursively here.
-        store.state.atomStates[key]?.transaction?.terminate()
+        store.state.states[key]?.transaction?.terminate()
         return store.graph.dependencies.removeValue(forKey: key) ?? []
     }
 
@@ -406,22 +406,22 @@ private extension StoreContext {
 
         let store = getStore()
         let graph = store.graph
-        let atomCaches = store.state.atomCaches
-        let snapshot = Snapshot(graph: graph, atomCaches: atomCaches) {
+        let caches = store.state.caches
+        let snapshot = Snapshot(graph: graph, caches: caches) {
             let store = getStore()
 
-            for key in atomCaches.keys {
+            for key in caches.keys {
                 let oldDependencies = store.graph.dependencies[key] ?? []
                 let newDependencies = graph.dependencies[key] ?? []
                 let obsoletedDependencies = oldDependencies.subtracting(newDependencies)
 
                 // Update atom values and the graph.
-                store.state.atomCaches[key] = atomCaches[key]
+                store.state.caches[key] = caches[key]
                 store.graph.dependencies[key] = newDependencies
                 store.graph.children[key] = graph.children[key]
 
                 // Remove and terminate the current atom state.
-                if let state = store.state.atomStates.removeValue(forKey: key) {
+                if let state = store.state.states.removeValue(forKey: key) {
                     state.transaction?.terminate()
                 }
 
