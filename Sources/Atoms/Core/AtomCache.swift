@@ -14,7 +14,7 @@ internal struct AtomCache<Node: Atom>: AtomCacheBase, CustomStringConvertible {
     }
 
     var description: String {
-        String(describing: Node.self) + (value.map { "(\($0))" } ?? "")
+        String(describing: Node.self) + "(\(value.map { "\($0)" } ?? "nil"))"
     }
 
     func reset(with store: StoreContext) {

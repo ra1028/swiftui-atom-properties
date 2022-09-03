@@ -425,7 +425,7 @@ private extension StoreContext {
                     state.transaction?.terminate()
                 }
 
-                // Notify updates only for the subscriptions for restored atoms.
+                // Notify updates only for the subscriptions of restored atoms.
                 if let subscriptions = store.state.subscriptions[key] {
                     for subscription in ContiguousArray(subscriptions.values) {
                         subscription.notifyUpdate()

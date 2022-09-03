@@ -229,41 +229,102 @@ final class StoreContextTests: XCTestCase {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let context = StoreContext(store, observers: [observer])
-        let atom = TestAtom(value: 0)
-        let key = AtomKey(atom)
+        let atom0 = TestAtom(value: 0)
+        let key0 = AtomKey(atom0)
 
         // New value.
-        _ = context.watch(atom, container: container.wrapper) {}
+
+        _ = context.watch(atom0, container: container.wrapper) {}
 
         XCTAssertEqual(
-            snapshots.map { $0.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> } },
+            snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
             [
-                [key: AtomCache(atom: atom, value: 0)]
+                [key0: AtomCache(atom: atom0, value: 0)]
             ]
         )
 
         // Update.
-        context.reset(atom)
+
+        context.reset(atom0)
 
         XCTAssertEqual(
-            snapshots.map { $0.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> } },
+            snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
             [
-                [key: AtomCache(atom: atom, value: 0)],
-                [key: AtomCache(atom: atom, value: 0)],
+                [key0: AtomCache(atom: atom0, value: 0)],
+                [key0: AtomCache(atom: atom0, value: 0)],
             ]
         )
 
         // Release.
+
         for subscription in container.wrapper.subscriptions.values {
             subscription.unsubscribe()
         }
 
         XCTAssertEqual(
-            snapshots.map { $0.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> } },
+            snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
             [
-                [key: AtomCache(atom: atom, value: 0)],
-                [key: AtomCache(atom: atom, value: 0)],
+                [key0: AtomCache(atom: atom0, value: 0)],
+                [key0: AtomCache(atom: atom0, value: 0)],
                 [:],
+            ]
+        )
+
+        // Restore with no subscriptions.
+
+        snapshots[1].restore()
+
+        XCTAssertEqual(
+            store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
+            [:]
+        )
+
+        // Restore.
+        // - state must be removed.
+        // - update should notified only for the subscriptions of the restored atom.
+        // - dependencies that weren't used in the snapshot must be released.
+
+        let atom1 = TestAtom(value: 1)
+        let atom2 = TestAtom(value: 2)
+        let key1 = AtomKey(atom1)
+        let key2 = AtomKey(atom2)
+        var updatedSubscriptions = [AtomKey]()
+
+        _ = context.watch(atom0, container: container.wrapper) { updatedSubscriptions.append(key0) }
+        _ = context.watch(atom1, container: container.wrapper) { updatedSubscriptions.append(key1) }
+        _ = context.watch(atom2, in: Transaction(key: key0) {})
+
+        XCTAssertTrue(updatedSubscriptions.isEmpty)
+        XCTAssertNotNil(store.state.states[key0])
+        XCTAssertEqual(
+            store.graph,
+            Graph(
+                dependencies: [key0: [key2]],
+                children: [key2: [key0]]
+            )
+        )
+        XCTAssertEqual(
+            store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
+            [
+                key0: AtomCache(atom: atom0, value: 0),
+                key1: AtomCache(atom: atom1, value: 1),
+                key2: AtomCache(atom: atom2, value: 2),
+            ]
+        )
+
+        snapshots[1].restore()
+
+        XCTAssertEqual(updatedSubscriptions, [key0])
+        XCTAssertNil(store.state.states[key0])
+        XCTAssertEqual(
+            store.graph,
+            Graph(dependencies: [key0: []], children: [:])
+        )
+        XCTAssertEqual(
+            store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
+            [
+                key0: AtomCache(atom: atom0, value: 0),
+                key1: AtomCache(atom: atom1, value: 1),
             ]
         )
     }

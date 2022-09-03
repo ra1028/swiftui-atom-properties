@@ -41,7 +41,7 @@ final class AtomCacheTests: XCTestCase {
         let cache0 = AtomCache(atom: atom)
         let cache1 = AtomCache(atom: atom, value: 0)
 
-        XCTAssertEqual(cache0.description, "TestAtom<Int>")
+        XCTAssertEqual(cache0.description, "TestAtom<Int>(nil)")
         XCTAssertEqual(cache1.description, "TestAtom<Int>(0)")
     }
 }
