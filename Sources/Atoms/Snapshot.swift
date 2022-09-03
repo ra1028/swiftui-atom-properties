@@ -1,5 +1,5 @@
 /// A snapshot structure that captures specific set of values of atoms and their dependency graph.
-public struct Snapshot {
+public struct Snapshot: CustomStringConvertible {
     internal let graph: Graph
     internal let caches: [AtomKey: AtomCacheBase]
     private let _restore: @MainActor () -> Void
@@ -12,6 +12,15 @@ public struct Snapshot {
         self.graph = graph
         self.caches = caches
         self._restore = restore
+    }
+
+    /// A textual representation of this snapshot.
+    public var description: String {
+        """
+        Snapshot
+        - graph: \(graph)
+        - caches: \(caches)
+        """
     }
 
     /// Restores the atom values that are captured in this snapshot.

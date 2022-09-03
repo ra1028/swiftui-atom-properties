@@ -5,13 +5,16 @@ internal protocol AtomCacheBase {
     func reset(with store: StoreContext)
 }
 
-@MainActor
-internal struct AtomCache<Node: Atom>: AtomCacheBase {
+internal struct AtomCache<Node: Atom>: AtomCacheBase, CustomStringConvertible {
     var atom: Node
     var value: Node.Loader.Value?
 
     var shouldKeepAlive: Bool {
         Node.shouldKeepAlive
+    }
+
+    var description: String {
+        String(describing: Node.self) + (value.map { "(\($0))" } ?? "")
     }
 
     func reset(with store: StoreContext) {
