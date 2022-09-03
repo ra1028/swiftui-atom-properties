@@ -30,13 +30,17 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// It also provides a way to observe changes in atoms by passing a observer instance.
+/// You can also observe updates with a snapshot that captures a specific set of values of atoms.
 ///
 /// ```swift
 /// AtomRoot {
 ///     MyView()
 /// }
-/// .observe(Logger())
+/// .observe { snapshot in
+///     if let count = snapshot.lookup(CounterAtom()) {
+///         print(count)
+///     }
+/// }
 /// ```
 ///
 @MainActor
@@ -97,7 +101,7 @@ public struct AtomRoot<Content: View>: View {
         mutating { $0.overrides.insert(atomType, with: value) }
     }
 
-    /// Observes updates with a snapshot that captures specific set of values of atoms.
+    /// Observes updates with a snapshot that captures a specific set of values of atoms.
     ///
     /// Use this to monitor and debugging the atoms or for producing side effects.
     ///

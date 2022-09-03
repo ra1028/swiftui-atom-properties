@@ -31,7 +31,11 @@ import SwiftUI
 /// AtomRelay {
 ///     MyView()
 /// }
-/// .observe(Logger())
+/// .observe { snapshot in
+///     if let count = snapshot.lookup(CounterAtom()) {
+///         print(count)
+///     }
+/// }
 /// ```
 ///
 @MainActor
@@ -66,7 +70,7 @@ public struct AtomRelay<Content: View>: View {
         )
     }
 
-    /// Observes updates with a snapshot that captures specific set of values of atoms.
+    /// Observes updates with a snapshot that captures a specific set of values of atoms.
     ///
     /// Use this to monitor and debugging the atoms or for producing side effects.
     ///

@@ -15,8 +15,8 @@ public struct AtomReader {
     /// the value will not be cached.
     ///
     /// ```swift
-    /// let context = ...
-    /// print(context.read(TextAtom()))  // Prints the current value associated with `TextAtom`.
+    /// let reader = ...
+    /// print(reader.read(TextAtom()))  // Prints the current value associated with `TextAtom`.
     /// ```
     ///
     /// - Parameter atom: An atom that associates the value.
