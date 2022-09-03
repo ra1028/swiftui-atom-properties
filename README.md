@@ -1069,7 +1069,7 @@ A context that can simulate any scenarios in which atoms are used from a view or
 |:--|:--|
 |[unwatch(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/unwatch(_:))|Simulates a scenario in which the atom is no longer watched.|
 |[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-1ce4h)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
-|[observe(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/observe(_:))|Observes changes in any atom values and its lifecycles.|
+|[observe(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/observe(_:))|Observes updates with a snapshot that captures a specific set of values of atoms.|
 |[onUpdate](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/onupdate)|Sets a closure that notifies there has been an update to one of the atoms.|
 
 ---
@@ -1223,23 +1223,13 @@ struct NewsList_Preview: PreviewProvider {
 
 ### Observability
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+You can observe updates with a snapshot that captures a specific set of values of atoms through the `observe(_:)` function in [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot) or [AtomRelay](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelay).  
+Observing in `AtomRoot` will receive all atom updates that happened in the whole app, but observing in `AtomRelay` will only receive atoms used in the descendant views.  
+
+The [Snapshot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot) passed to `observe(:_)` has a [restore()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot/restore()) function that can be executed to restore a specific set of atom values.
+This observability API can be applied to do [time travel debugging](https://en.wikipedia.org/wiki/Time_travel_debugging) and is demonstrated in one of the [examples](Examples).  
 
 ```swift
-struct Logger: AtomObserver {
-    func atomAssigned<Node: Atom>(atom: Node) {
-        print("\(atom) started to be used somewhere.")
-    }
-
-    func atomUnassigned<Node: Atom>(atom: Node) {
-        print("\(atom) is no longer used.")
-    }
-
-    func atomChanged<Node: Atom>(snapshot: Snapshot<Node>) {
-        print("The value of `\(snapshot.atom)` is changed to `\(snapshot.value)`.")
-    }
-}
-
 @main
 struct ExampleApp: App {
     var body: some Scene {
@@ -1254,21 +1244,19 @@ struct ExampleApp: App {
                         AtomRelay {
                             Setting()
                         }
-                        .observe(Logger())  // Observes setting related atoms only.
+                        .observe { snapshot in  // Observes setting related atoms only.
+                            print(snapshot)
+                        }
                     }
                 }
             }
-            .observe(Logger())  // Observes all atoms used in the app.
+            .observe { snapshot in  // Observes all atoms used in the app.
+                print(snapshot)
+            }
         }
     }
 }
 ```
-
-</details>
-
-You can monitor the updates and lifecycle of atoms used in your app by registering an [AtomObserver](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomobserver) compliant instance through the `observe(_:)` function in `AtomRoot` or `AtomRelay`.  
-Registering an observer in `AtomRoot` observes all atoms used in the app, but in contrast, using `AtomRelay` can observe partial atoms that used in the descendant views.  
-In addition, this observability can be applied to do [time travel debugging](https://en.wikipedia.org/wiki/Time_travel_debugging) and is demonstrated in one of the [examples](Examples).
 
 ---
 
