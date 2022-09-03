@@ -18,3 +18,5 @@ internal struct AtomCache<Node: Atom>: AtomCacheBase {
         store.reset(atom)
     }
 }
+
+extension AtomCache: Equatable where Node: Equatable, Node.Loader.Value: Equatable {}

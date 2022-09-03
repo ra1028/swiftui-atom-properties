@@ -23,9 +23,9 @@ final class TransactionTests: XCTestCase {
         let transaction = Transaction(key: key) {}
 
         XCTAssertTrue(transaction.terminations.isEmpty)
-        transaction.addTermination(Termination {})
+        transaction.addTermination {}
         XCTAssertEqual(transaction.terminations.count, 1)
-        transaction.addTermination(Termination {})
+        transaction.addTermination {}
         XCTAssertEqual(transaction.terminations.count, 2)
     }
 
@@ -36,11 +36,10 @@ final class TransactionTests: XCTestCase {
         let transaction = Transaction(key: key) {
             isCommitted = true
         }
-        let termination = Termination {
+
+        transaction.addTermination {
             isTerminationCalled = true
         }
-
-        transaction.addTermination(termination)
 
         XCTAssertFalse(isCommitted)
         XCTAssertFalse(isTerminationCalled)
@@ -55,7 +54,9 @@ final class TransactionTests: XCTestCase {
         XCTAssertTrue(transaction.terminations.isEmpty)
 
         isTerminationCalled = false
-        transaction.addTermination(termination)
+        transaction.addTermination {
+            isTerminationCalled = true
+        }
 
         XCTAssertTrue(isTerminationCalled)
         XCTAssertTrue(transaction.terminations.isEmpty)

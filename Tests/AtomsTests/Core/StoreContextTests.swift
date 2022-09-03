@@ -6,16 +6,12 @@ import XCTest
 final class StoreContextTests: XCTestCase {
     func testRead() {
         let store = Store()
-        let observer = TestObserver()
-        let context = StoreContext(store, observers: [observer])
+        let context = StoreContext(store)
         let atom = TestValueAtom(value: 0)
         let key = AtomKey(atom)
 
         XCTAssertEqual(context.read(atom), 0)
         XCTAssertNil(store.state.atomCaches[AtomKey(atom)])
-        XCTAssertEqual(observer.assignedAtomKeys, [AtomKey(atom)])
-        XCTAssertEqual(observer.changedAtomKeys, [AtomKey(atom)])
-        XCTAssertEqual(observer.unassignedAtomKeys, [AtomKey(atom)])
 
         store.state.atomCaches[key] = AtomCache(atom: atom, value: 1)
 
@@ -26,8 +22,7 @@ final class StoreContextTests: XCTestCase {
 
     func testSet() {
         let store = Store()
-        let observer = TestObserver()
-        let context = StoreContext(store, observers: [observer])
+        let context = StoreContext(store)
         let subscriptionKey = SubscriptionKey(SubscriptionContainer())
         var updateCount = 0
         let atom = TestStateAtom(defaultValue: 0)
@@ -36,15 +31,11 @@ final class StoreContextTests: XCTestCase {
         context.set(1, for: atom)
 
         XCTAssertEqual(updateCount, 0)
-        XCTAssertEqual(observer.assignedAtomKeys, [key])
-        XCTAssertEqual(observer.changedAtomKeys, [key])
-        XCTAssertEqual(observer.unassignedAtomKeys, [key])
         XCTAssertNil(store.state.atomStates[key])
         XCTAssertNil(store.state.atomCaches[key])
 
-        let atomState = AtomState(coordinator: atom.makeCoordinator())
-        store.state.atomStates[key] = atomState
-        atomState.subscriptions[subscriptionKey] = Subscription(
+        store.state.atomStates[key] = AtomState(coordinator: atom.makeCoordinator())
+        store.state.subscriptions[key, default: [:]][subscriptionKey] = Subscription(
             notifyUpdate: { updateCount += 1 },
             unsubscribe: {}
         )
@@ -52,19 +43,12 @@ final class StoreContextTests: XCTestCase {
         context.set(2, for: atom)
 
         XCTAssertEqual(updateCount, 1)
-        XCTAssertEqual(observer.assignedAtomKeys, [key, key])
-        XCTAssertEqual(observer.changedAtomKeys, [key, key])
-        XCTAssertEqual(observer.unassignedAtomKeys, [key])
-        XCTAssertNotNil(store.state.atomStates[key])
         XCTAssertNil(store.state.atomStates[key]?.transaction)
         XCTAssertEqual((store.state.atomCaches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 2)
 
         context.set(3, for: atom)
 
         XCTAssertEqual(updateCount, 2)
-        XCTAssertEqual(observer.assignedAtomKeys, [key, key])
-        XCTAssertEqual(observer.changedAtomKeys, [key, key, key])
-        XCTAssertEqual(observer.unassignedAtomKeys, [key])
         XCTAssertNotNil(store.state.atomStates[key])
         XCTAssertNil(store.state.atomStates[key]?.transaction)
         XCTAssertEqual((store.state.atomCaches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 3)
@@ -72,8 +56,7 @@ final class StoreContextTests: XCTestCase {
 
     func testWatch() {
         let store = Store()
-        let observer = TestObserver()
-        let context = StoreContext(store, observers: [observer])
+        let context = StoreContext(store)
         let atom = TestAtom(value: 0)
         let dependency0 = TestStateAtom(defaultValue: 0)
         let dependency1 = TestAtom(value: 1)
@@ -87,9 +70,6 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(store.graph.children, [dependency0Key: [key]])
         XCTAssertEqual((store.state.atomCaches[dependency0Key] as? AtomCache<TestStateAtom<Int>>)?.value, 0)
         XCTAssertNotNil(store.state.atomStates[dependency0Key])
-        XCTAssertEqual(observer.assignedAtomKeys, [dependency0Key])
-        XCTAssertEqual(observer.changedAtomKeys, [dependency0Key])
-        XCTAssertTrue(observer.unassignedAtomKeys.isEmpty)
 
         transaction.terminate()
 
@@ -98,9 +78,6 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(store.graph.children, [dependency0Key: [key]])
         XCTAssertNil(store.state.atomCaches[dependency1Key])
         XCTAssertNil(store.state.atomStates[dependency1Key])
-        XCTAssertEqual(observer.assignedAtomKeys, [dependency0Key, dependency1Key])
-        XCTAssertEqual(observer.changedAtomKeys, [dependency0Key, dependency1Key])
-        XCTAssertEqual(observer.unassignedAtomKeys, [dependency1Key])
     }
 
     func testWatchFromView() {
@@ -117,8 +94,7 @@ final class StoreContextTests: XCTestCase {
         }
 
         let store = Store()
-        let observer = TestObserver()
-        let context = StoreContext(store, observers: [observer])
+        let context = StoreContext(store)
         let container = SubscriptionContainer()
         let subscriptionKey = SubscriptionKey(container)
         let atom = TestAtom()
@@ -132,14 +108,11 @@ final class StoreContextTests: XCTestCase {
 
         XCTAssertEqual(initialValue, 0)
         XCTAssertNotNil(container.wrapper.subscriptions[key])
-        XCTAssertNotNil(store.state.atomStates[key]?.subscriptions[subscriptionKey])
+        XCTAssertNotNil(store.state.subscriptions[key]?[subscriptionKey])
         XCTAssertEqual((store.state.atomCaches[key] as? AtomCache<TestAtom>)?.value, 0)
         XCTAssertEqual((store.state.atomCaches[dependencyKey] as? AtomCache<DependencyAtom>)?.value, 0)
-        XCTAssertEqual(observer.assignedAtomKeys, [key, dependencyKey])
-        XCTAssertEqual(observer.changedAtomKeys, [dependencyKey, key])
-        XCTAssertTrue(observer.unassignedAtomKeys.isEmpty)
 
-        let subscription = store.state.atomStates[key]?.subscriptions[subscriptionKey]
+        let subscription = store.state.subscriptions[key]?[subscriptionKey]
         subscription?.notifyUpdate()
         subscription?.unsubscribe()
 
@@ -148,15 +121,11 @@ final class StoreContextTests: XCTestCase {
         XCTAssertNil(store.state.atomStates[key])
         XCTAssertNil(store.state.atomCaches[dependencyKey])
         XCTAssertNil(store.state.atomStates[dependencyKey])
-        XCTAssertEqual(observer.assignedAtomKeys, [key, dependencyKey])
-        XCTAssertEqual(observer.changedAtomKeys, [dependencyKey, key])
-        XCTAssertEqual(observer.unassignedAtomKeys, [key, dependencyKey])
     }
 
     func testRefresh() async {
         let store = Store()
-        let observer = TestObserver()
-        let context = StoreContext(store, observers: [observer])
+        let context = StoreContext(store)
         let container = SubscriptionContainer()
         let atom = TestTaskAtom(value: 0)
         let key = AtomKey(atom)
@@ -165,9 +134,6 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(value0, 0)
         XCTAssertNil(store.state.atomCaches[key])
         XCTAssertNil(store.state.atomStates[key])
-        XCTAssertEqual(observer.assignedAtomKeys, [key])
-        XCTAssertEqual(observer.changedAtomKeys, [key])
-        XCTAssertEqual(observer.unassignedAtomKeys, [key])
 
         var updateCount = 0
 
@@ -187,11 +153,9 @@ final class StoreContextTests: XCTestCase {
 
     func testReset() {
         let store = Store()
-        let observer = TestObserver()
-        let context = StoreContext(store, observers: [observer])
+        let context = StoreContext(store)
         let container = SubscriptionContainer()
         let atom = TestStateAtom(defaultValue: 0)
-        let key = AtomKey(atom)
         var updateCount = 0
         let initialValue = context.watch(atom, container: container.wrapper) {
             updateCount += 1
@@ -203,32 +167,28 @@ final class StoreContextTests: XCTestCase {
 
         XCTAssertEqual(updateCount, 1)
         XCTAssertEqual(context.read(atom), 1)
-        XCTAssertEqual(observer.assignedAtomKeys, [key])
-        XCTAssertEqual(observer.changedAtomKeys, [key, key])
-        XCTAssertTrue(observer.unassignedAtomKeys.isEmpty)
 
         context.reset(atom)
 
         XCTAssertEqual(updateCount, 2)
         XCTAssertEqual(context.read(atom), 0)
-        XCTAssertEqual(observer.assignedAtomKeys, [key])
-        XCTAssertEqual(observer.changedAtomKeys, [key, key, key])
-        XCTAssertTrue(observer.unassignedAtomKeys.isEmpty)
     }
 
     func testRelay() {
         let store = Store()
         let container = SubscriptionContainer()
         let atom = TestValueAtom(value: 0)
-        let observer0 = TestObserver()
-        let observer1 = TestObserver()
+        var snapshots0 = [Snapshot]()
+        var snapshots1 = [Snapshot]()
+        let observer0 = Observer { snapshots0.append($0) }
+        let observer1 = Observer { snapshots1.append($0) }
         let context = StoreContext(store, observers: [observer0])
         let relayedContext = context.relay(observers: [observer1])
 
         _ = relayedContext.watch(atom, container: container.wrapper) {}
 
-        XCTAssertFalse(observer0.assignedAtomKeys.isEmpty)
-        XCTAssertFalse(observer1.assignedAtomKeys.isEmpty)
+        XCTAssertFalse(snapshots0.isEmpty)
+        XCTAssertFalse(snapshots1.isEmpty)
     }
 
     func testCoordinator() {
@@ -261,6 +221,51 @@ final class StoreContextTests: XCTestCase {
         let newState = store.state.atomStates[key] as? AtomState<TestAtom.Coordinator>
 
         XCTAssertTrue(state?.coordinator === newState?.coordinator)
+    }
+
+    func testObservers() {
+        let store = Store()
+        let container = SubscriptionContainer()
+        var snapshots = [Snapshot]()
+        let observer = Observer { snapshots.append($0) }
+        let context = StoreContext(store, observers: [observer])
+        let atom = TestAtom(value: 0)
+        let key = AtomKey(atom)
+
+        // New value.
+        _ = context.watch(atom, container: container.wrapper) {}
+
+        XCTAssertEqual(
+            snapshots.map { $0.atomCaches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> } },
+            [
+                [key: AtomCache(atom: atom, value: 0)]
+            ]
+        )
+
+        // Update.
+        context.reset(atom)
+
+        XCTAssertEqual(
+            snapshots.map { $0.atomCaches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> } },
+            [
+                [key: AtomCache(atom: atom, value: 0)],
+                [key: AtomCache(atom: atom, value: 0)],
+            ]
+        )
+
+        // Release.
+        for subscription in container.wrapper.subscriptions.values {
+            subscription.unsubscribe()
+        }
+
+        XCTAssertEqual(
+            snapshots.map { $0.atomCaches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> } },
+            [
+                [key: AtomCache(atom: atom, value: 0)],
+                [key: AtomCache(atom: atom, value: 0)],
+                [:],
+            ]
+        )
     }
 
     func testComplexDependencies() async {

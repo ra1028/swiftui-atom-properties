@@ -1,7 +1,7 @@
 @MainActor
 public struct Snapshot {
-    private let graph: Graph
-    private let atomCaches: [AtomKey: AtomCacheBase]
+    internal let graph: Graph
+    internal let atomCaches: [AtomKey: AtomCacheBase]
     private let _restore: @MainActor () -> Void
 
     internal init(

@@ -5,14 +5,25 @@ import XCTest
 @MainActor
 final class SnapshotTests: XCTestCase {
     func testRestore() {
-        let atom = TestValueAtom(value: 0)
         var isRestoreCalled = false
-        let snapshot = Snapshot(atom: atom, value: 100) {
+        let snapshot = Snapshot(graph: Graph(), atomCaches: [:]) {
             isRestoreCalled = true
         }
 
         snapshot.restore()
 
         XCTAssertTrue(isRestoreCalled)
+    }
+
+    func testLookup() {
+        let atom0 = TestAtom(value: 0)
+        let atom1 = TestAtom(value: 1)
+        let atomCache = [
+            AtomKey(atom0): AtomCache(atom: atom0, value: 0)
+        ]
+        let snapshot = Snapshot(graph: Graph(), atomCaches: atomCache) {}
+
+        XCTAssertEqual(snapshot.lookup(atom0), 0)
+        XCTAssertNil(snapshot.lookup(atom1))
     }
 }
