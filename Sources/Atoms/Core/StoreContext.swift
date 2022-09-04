@@ -107,6 +107,52 @@ internal struct StoreContext {
     }
 
     @usableFromInline
+    func snapshot() -> Snapshot {
+        let store = getStore()
+        let graph = store.graph
+        let caches = store.state.caches
+
+        return Snapshot(graph: graph, caches: caches) {
+            let store = getStore()
+            let keys = ContiguousArray(caches.keys)
+            var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
+
+            for key in keys {
+                let oldDependencies = store.graph.dependencies[key]
+                let newDependencies = graph.dependencies[key]
+
+                // Update atom values and the graph.
+                store.state.caches[key] = caches[key]
+                store.graph.dependencies[key] = newDependencies
+                store.graph.children[key] = graph.children[key]
+                obsoletedDependencies[key] = oldDependencies?.subtracting(newDependencies ?? [])
+
+                // Remove and terminate the current atom state.
+                if let state = store.state.states.removeValue(forKey: key) {
+                    state.transaction?.terminate()
+                }
+            }
+
+            for key in keys {
+                // Release if the atom is no longer used.
+                checkRelease(for: key)
+
+                // Release dependencies that are no longer dependent.
+                if let dependencies = obsoletedDependencies[key] {
+                    checkReleaseDependencies(dependencies, for: key)
+                }
+
+                // Notify updates only for the subscriptions of restored atoms.
+                if let subscriptions = store.state.subscriptions[key] {
+                    for subscription in ContiguousArray(subscriptions.values) {
+                        subscription.notifyUpdate()
+                    }
+                }
+            }
+        }
+    }
+
+    @usableFromInline
     func relay(observers: [Observer]) -> Self {
         Self(
             weakStore,
@@ -404,41 +450,7 @@ private extension StoreContext {
             return
         }
 
-        let store = getStore()
-        let graph = store.graph
-        let caches = store.state.caches
-        let snapshot = Snapshot(graph: graph, caches: caches) {
-            let store = getStore()
-
-            for key in caches.keys {
-                let oldDependencies = store.graph.dependencies[key] ?? []
-                let newDependencies = graph.dependencies[key] ?? []
-                let obsoletedDependencies = oldDependencies.subtracting(newDependencies)
-
-                // Update atom values and the graph.
-                store.state.caches[key] = caches[key]
-                store.graph.dependencies[key] = newDependencies
-                store.graph.children[key] = graph.children[key]
-
-                // Remove and terminate the current atom state.
-                if let state = store.state.states.removeValue(forKey: key) {
-                    state.transaction?.terminate()
-                }
-
-                // Notify updates only for the subscriptions of restored atoms.
-                if let subscriptions = store.state.subscriptions[key] {
-                    for subscription in ContiguousArray(subscriptions.values) {
-                        subscription.notifyUpdate()
-                    }
-                }
-
-                // Release dependencies that are no longer dependent.
-                checkReleaseDependencies(obsoletedDependencies, for: key)
-
-                // Release if the atom is no longer used.
-                checkRelease(for: key)
-            }
-        }
+        let snapshot = snapshot()
 
         for observer in observers {
             observer.onUpdate(snapshot)
