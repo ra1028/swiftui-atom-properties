@@ -46,7 +46,7 @@ public struct iOSApp: App {
                 .navigationViewStyle(.stack)
             }
             .observe { snapshot in
-                print(snapshot)
+                print(snapshot.dotRepresentation())
             }
         }
     }

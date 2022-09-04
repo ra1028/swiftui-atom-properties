@@ -111,8 +111,9 @@ internal struct StoreContext {
         let store = getStore()
         let graph = store.graph
         let caches = store.state.caches
+        let subscriptions = store.state.subscriptions
 
-        return Snapshot(graph: graph, caches: caches) {
+        return Snapshot(graph: graph, caches: caches, subscriptions: subscriptions) {
             let store = getStore()
             let keys = ContiguousArray(caches.keys)
             var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
@@ -398,11 +399,11 @@ private extension StoreContext {
         store.state.states.removeValue(forKey: key)
         store.state.subscriptions.removeValue(forKey: key)
 
-        // Notify release.
-        notifyUpdateToObservers()
-
         // Check if the dependencies are releasable.
         checkReleaseDependencies(dependencies, for: key)
+
+        // Notify release.
+        notifyUpdateToObservers()
     }
 
     func checkRelease(for key: AtomKey) {

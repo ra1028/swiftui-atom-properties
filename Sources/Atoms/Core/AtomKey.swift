@@ -9,6 +9,6 @@ internal struct AtomKey: Hashable, CustomStringConvertible {
     }
 
     var description: String {
-        "\(typeKey.description)(\(identifier.hashValue))"
+        typeKey.description
     }
 }
