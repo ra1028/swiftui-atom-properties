@@ -134,7 +134,7 @@ public struct AtomViewContext: AtomWatchableContext {
         )
     }
 
-    /// Takes a snapshot that captures specific set of values of atoms.
+    /// For debugging, takes a snapshot that captures specific set of values of atoms.
     ///
     /// This method captures all atom values and dependencies currently in use somewhere in
     /// the descendants of `AtomRoot` and returns a `Snapshot` that allows you to analyze

@@ -992,7 +992,7 @@ A context available through the `@ViewContext` property wrapper when using atoms
 
 |API|Use|
 |:--|:--|
-|[snapshot()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/snapshot())|Takes a snapshot that captures specific set of values of atoms.|
+|[snapshot()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/snapshot())|For debugging, takes a snapshot that captures specific set of values of atoms.|
 
 #### [AtomTransactionContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext)
 
@@ -1234,7 +1234,7 @@ struct NewsList_Preview: PreviewProvider {
 
 ### Observability
 
-You can observe updates with a snapshot that captures a specific set of values of atoms through the `observe(_:)` function in [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot) or [AtomRelay](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelay).  
+For debugging, you can observe updates with a snapshot that captures a specific set of values of atoms through the `observe(_:)` function in [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot) or [AtomRelay](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelay).  
 Observing in `AtomRoot` will receive all atom updates that happened in the whole app, but observing in `AtomRelay` will only receive atoms used in the descendant views.  
 
 The [Snapshot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot) passed to `observe(:_)` has a [restore()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot/restore()) function that can be executed to restore a specific set of atom values. `Snapshot` can also be obtained on-demand through [AtomViewContext](#atomviewcontext).  
