@@ -133,4 +133,17 @@ public struct AtomViewContext: AtomWatchableContext {
             notifyUpdate: _notifyUpdate
         )
     }
+
+    /// For debugging, takes a snapshot that captures specific set of values of atoms.
+    ///
+    /// This method captures all atom values and dependencies currently in use somewhere in
+    /// the descendants of `AtomRoot` and returns a `Snapshot` that allows you to analyze
+    /// or rollback to a specific state.
+    ///
+    /// - Returns: A snapshot that captures specific set of values of atoms.
+    @discardableResult
+    @inlinable
+    public func snapshot() -> Snapshot {
+        _store.snapshot()
+    }
 }

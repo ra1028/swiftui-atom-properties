@@ -89,6 +89,43 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom), 200)
     }
 
+    func testSnapshot() {
+        let store = Store()
+        let container = SubscriptionContainer()
+        let context = AtomViewContext(
+            store: StoreContext(store),
+            container: container.wrapper,
+            notifyUpdate: {}
+        )
+        let atom0 = TestAtom(value: 0)
+        let atom1 = TestAtom(value: 1)
+        let atom2 = TestAtom(value: 2)
+        let key0 = AtomKey(atom0)
+        let key1 = AtomKey(atom1)
+        let key2 = AtomKey(atom2)
+
+        let graph = Graph(
+            dependencies: [key0: [key1, key2]],
+            children: [key1: [key0], key2: [key0]]
+        )
+        let caches = [
+            key0: AtomCache(atom: atom0, value: 0),
+            key1: AtomCache(atom: atom1, value: 1),
+            key2: AtomCache(atom: atom2, value: 2),
+        ]
+
+        store.graph = graph
+        store.state.caches = caches
+
+        let snapshot = context.snapshot()
+
+        XCTAssertEqual(snapshot.graph, graph)
+        XCTAssertEqual(
+            snapshot.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
+            caches
+        )
+    }
+
     func testUnsubscription() {
         let atom = TestValueAtom(value: 100)
         let key = AtomKey(atom)

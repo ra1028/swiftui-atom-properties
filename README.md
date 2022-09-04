@@ -911,7 +911,8 @@ Context is a structure for using and interacting with atom values from views or 
 |[refresh(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/refresh(_:))|Reset an atom and await until asynchronous operation is complete.|
 |[reset(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/reset(_:))|Reset an atom to the default value or a first output.|
 
-There are the following types context as different contextual environments.
+There are the following types context as different contextual environments.  
+The APIs described in each section below are their own specific functionality depending on the environment in which it is used, in addition to the above common APIs.  
 
 #### [AtomViewContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext)
 
@@ -973,6 +974,11 @@ struct BooksView: View {
                         let query = context.read(SearchQueryAtom())
                         print(query)
                     }
+                    Button("Snapshot") {
+                        // snapshot
+                        let snapshot = context.snapshot()
+                        print(snapshot)
+                    }
                 }
             }
         }
@@ -983,6 +989,10 @@ struct BooksView: View {
 </details>
 
 A context available through the `@ViewContext` property wrapper when using atoms from a view.
+
+|API|Use|
+|:--|:--|
+|[snapshot()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/snapshot())|For debugging, takes a snapshot that captures specific set of values of atoms.|
 
 #### [AtomTransactionContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext)
 
@@ -1070,6 +1080,7 @@ A context that can simulate any scenarios in which atoms are used from a view or
 |[unwatch(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/unwatch(_:))|Simulates a scenario in which the atom is no longer watched.|
 |[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-1ce4h)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
 |[observe(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/observe(_:))|Observes updates with a snapshot that captures a specific set of values of atoms.|
+|[waitUntilNextUpdate(timeout:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/waituntilnextupdate(timeout:))|Waits until any of atoms watched through this context is updated.|
 |[onUpdate](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/onupdate)|Sets a closure that notifies there has been an update to one of the atoms.|
 
 ---
@@ -1223,10 +1234,10 @@ struct NewsList_Preview: PreviewProvider {
 
 ### Observability
 
-You can observe updates with a snapshot that captures a specific set of values of atoms through the `observe(_:)` function in [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot) or [AtomRelay](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelay).  
+For debugging, you can observe updates with a snapshot that captures a specific set of values of atoms through the `observe(_:)` function in [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot) or [AtomRelay](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelay).  
 Observing in `AtomRoot` will receive all atom updates that happened in the whole app, but observing in `AtomRelay` will only receive atoms used in the descendant views.  
 
-The [Snapshot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot) passed to `observe(:_)` has a [restore()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot/restore()) function that can be executed to restore a specific set of atom values.
+The [Snapshot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot) passed to `observe(:_)` has a [restore()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot/restore()) function that can be executed to restore a specific set of atom values. `Snapshot` can also be obtained on-demand through [AtomViewContext](#atomviewcontext).  
 This observability API can be applied to do [time travel debugging](https://en.wikipedia.org/wiki/Time_travel_debugging) and is demonstrated in one of the [examples](Examples).  
 
 ```swift
