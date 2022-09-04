@@ -256,15 +256,6 @@ public struct AtomTestContext: AtomWatchableContext {
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) {
         state.overrides.insert(atomType, with: value)
     }
-
-    /// Observes updates with a snapshot that captures specific set of values of atoms.
-    ///
-    /// Use this to monitor and debugging the atoms or for producing side effects.
-    ///
-    /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
-    public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) {
-        state.observers.append(Observer(onUpdate: onUpdate))
-    }
 }
 
 private extension AtomTestContext {
@@ -274,16 +265,11 @@ private extension AtomTestContext {
         private let _container = SubscriptionContainer()
 
         var overrides = Overrides()
-        var observers = [Observer]()
         let notifier = PassthroughSubject<Void, Never>()
         var onUpdate: (() -> Void)?
 
         var store: StoreContext {
-            StoreContext(
-                _store,
-                overrides: overrides,
-                observers: observers
-            )
+            StoreContext(_store, overrides: overrides)
         }
 
         var container: SubscriptionContainer.Wrapper {
