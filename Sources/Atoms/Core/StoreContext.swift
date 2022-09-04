@@ -126,11 +126,6 @@ internal struct StoreContext {
                 store.graph.dependencies[key] = newDependencies
                 store.graph.children[key] = graph.children[key]
                 obsoletedDependencies[key] = oldDependencies?.subtracting(newDependencies ?? [])
-
-                // Remove and terminate the current atom state.
-                if let state = store.state.states.removeValue(forKey: key) {
-                    state.transaction?.terminate()
-                }
             }
 
             for key in keys {
