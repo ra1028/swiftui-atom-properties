@@ -78,30 +78,6 @@ final class AtomTestContextTests: XCTestCase {
         XCTAssertEqual(context.read(atom1), 300)
     }
 
-    func testObserve() {
-        let atom = TestStateAtom(defaultValue: 100)
-        var snapshots0 = [Snapshot]()
-        var snapshots1 = [Snapshot]()
-        let context = AtomTestContext()
-
-        context.observe { snapshots0.append($0) }
-        context.observe { snapshots1.append($0) }
-        context.watch(atom)
-
-        XCTAssertEqual(snapshots0.count, 1)
-        XCTAssertEqual(snapshots1.count, 1)
-
-        context[atom] = 200
-
-        XCTAssertEqual(snapshots0.count, 2)
-        XCTAssertEqual(snapshots1.count, 2)
-
-        context.unwatch(atom)
-
-        XCTAssertEqual(snapshots0.count, 3)
-        XCTAssertEqual(snapshots1.count, 3)
-    }
-
     func testTerminate() {
         let atom = TestStateAtom(defaultValue: 100)
         let context = AtomTestContext()
