@@ -257,17 +257,13 @@ public struct AtomTestContext: AtomWatchableContext {
         state.overrides.insert(atomType, with: value)
     }
 
-    /// Observes changes of any atom values and its lifecycles.
+    /// Observes updates with a snapshot that captures specific set of values of atoms.
     ///
-    /// This method registers the given observer to notify changes of any atom values.
-    /// It would be useful for monitoring and debugging the atoms and for producing side effects in
-    /// the changes of particular atom.
+    /// Use this to monitor and debugging the atoms or for producing side effects.
     ///
-    /// - SeeAlso: ``AtomObserver``
-    ///
-    /// - Parameter observer: A observer value to observe atom changes.
-    public func observe<Observer: AtomObserver>(_ observer: Observer) {
-        state.observers.append(observer)
+    /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
+    public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) {
+        state.observers.append(Observer(onUpdate: onUpdate))
     }
 }
 
@@ -278,7 +274,7 @@ private extension AtomTestContext {
         private let _container = SubscriptionContainer()
 
         var overrides = Overrides()
-        var observers = [AtomObserver]()
+        var observers = [Observer]()
         let notifier = PassthroughSubject<Void, Never>()
         var onUpdate: (() -> Void)?
 

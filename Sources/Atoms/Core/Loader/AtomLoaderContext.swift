@@ -27,7 +27,7 @@ public struct AtomLoaderContext<Value, Coordinator> {
     }
 
     internal func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        _transaction.addTermination(Termination(termination))
+        _transaction.addTermination(termination)
     }
 
     internal func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) -> T) -> T {

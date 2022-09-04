@@ -30,20 +30,25 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// It also provides a way to observe changes in atoms by passing a observer instance.
+/// You can also observe updates with a snapshot that captures a specific set of values of atoms.
 ///
 /// ```swift
 /// AtomRoot {
 ///     MyView()
 /// }
-/// .observe(Logger())
+/// .observe { snapshot in
+///     if let count = snapshot.lookup(CounterAtom()) {
+///         print(count)
+///     }
+/// }
 /// ```
 ///
+@MainActor
 public struct AtomRoot<Content: View>: View {
     @StateObject
     private var state: State
     private var overrides = Overrides()
-    private var observers = [AtomObserver]()
+    private var observers = [Observer]()
     private let content: Content
 
     /// Creates an atom root with the specified content that will be allowed to use atoms.
@@ -96,19 +101,15 @@ public struct AtomRoot<Content: View>: View {
         mutating { $0.overrides.insert(atomType, with: value) }
     }
 
-    /// Observes changes in any atom values and its lifecycles.
+    /// Observes updates with a snapshot that captures a specific set of values of atoms.
     ///
-    /// This method registers the given observer to notify changes of any atom values.
-    /// It would be useful for monitoring and debugging the atoms and for producing side effects in
-    /// the changes of particular atom.
+    /// Use this to monitor and debugging the atoms or for producing side effects.
     ///
-    /// - SeeAlso: ``AtomObserver``
-    ///
-    /// - Parameter observer: A observer value to observe atom changes.
+    /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
     ///
     /// - Returns: The self instance.
-    public func observe<Observer: AtomObserver>(_ observer: Observer) -> Self {
-        mutating { $0.observers.append(observer) }
+    public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
+        mutating { $0.observers.append(Observer(onUpdate: onUpdate)) }
     }
 }
 

@@ -11,11 +11,11 @@ final class AtomCacheTests: XCTestCase {
             }
         }
 
-        let state0 = AtomCache(atom: TestValueAtom(value: 0))
-        let state1 = AtomCache(atom: KeepAliveAtom())
+        let cache0 = AtomCache(atom: TestValueAtom(value: 0))
+        let cache1 = AtomCache(atom: KeepAliveAtom())
 
-        XCTAssertFalse(state0.shouldKeepAlive)
-        XCTAssertTrue(state1.shouldKeepAlive)
+        XCTAssertFalse(cache0.shouldKeepAlive)
+        XCTAssertTrue(cache1.shouldKeepAlive)
     }
 
     func testReset() {
@@ -24,31 +24,24 @@ final class AtomCacheTests: XCTestCase {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let state = AtomCache(atom: atom)
+        let cache = AtomCache(atom: atom)
 
         XCTAssertEqual(context.watch(dependency, in: transaction), 0)
 
         context.set(1, for: dependency)
         XCTAssertEqual(context.watch(dependency, in: transaction), 1)
 
-        state.reset(with: context)
+        cache.reset(with: context)
 
         XCTAssertEqual(context.watch(dependency, in: transaction), 0)
     }
 
-    func testNotifyUnassigned() {
-        let atom = TestStateAtom(defaultValue: 0)
-        let state = AtomCache(atom: atom)
-        let observer = TestObserver()
+    func testDescription() {
+        let atom = TestAtom(value: 0)
+        let cache0 = AtomCache(atom: atom)
+        let cache1 = AtomCache(atom: atom, value: 0)
 
-        XCTAssertTrue(observer.assignedAtomKeys.isEmpty)
-        XCTAssertTrue(observer.changedAtomKeys.isEmpty)
-        XCTAssertTrue(observer.unassignedAtomKeys.isEmpty)
-
-        state.notifyUnassigned(to: [observer])
-
-        XCTAssertTrue(observer.assignedAtomKeys.isEmpty)
-        XCTAssertTrue(observer.changedAtomKeys.isEmpty)
-        XCTAssertEqual(observer.unassignedAtomKeys, [AtomKey(atom)])
+        XCTAssertEqual(cache0.description, "TestAtom<Int>(nil)")
+        XCTAssertEqual(cache1.description, "TestAtom<Int>(0)")
     }
 }

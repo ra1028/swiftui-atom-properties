@@ -42,4 +42,11 @@ final class AtomKeyTests: XCTestCase {
         XCTAssertEqual(dictionary[key1], 300)
         XCTAssertEqual(dictionary[key2], 300)
     }
+
+    func testDescription() {
+        let atom = TestAtom(value: 0)
+        let key = AtomKey(atom)
+
+        XCTAssertEqual(key.description, "TestAtom<Int>(\(atom.hashValue))")
+    }
 }

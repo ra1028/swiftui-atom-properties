@@ -1,37 +1,43 @@
-/// A protocol that abstracts restorable change history of an atom.
-///
-/// This type would be useful, for example, when you want to erase the type of
-/// a ``Snapshot`` to add it to single array.
-@MainActor
-public protocol AtomHistory: Sendable {
-    /// Restores the change in this history.
-    func restore()
-}
-
-/// A snapshot that contains the changed atom and its value.
-///
-/// - SeeAlso: ``AtomObserver``
-public struct Snapshot<Node: Atom>: AtomHistory {
-    /// The snapshot atom instance.
-    public let atom: Node
-
-    /// The snapshot value of the``atom``.
-    public let value: Node.Loader.Value
-
+/// A snapshot structure that captures specific set of values of atoms and their dependency graph.
+public struct Snapshot: CustomStringConvertible {
+    internal let graph: Graph
+    internal let caches: [AtomKey: AtomCacheBase]
     private let _restore: @MainActor () -> Void
 
     internal init(
-        atom: Node,
-        value: Node.Loader.Value,
+        graph: Graph,
+        caches: [AtomKey: AtomCacheBase],
         restore: @MainActor @escaping () -> Void
     ) {
-        self.atom = atom
-        self.value = value
+        self.graph = graph
+        self.caches = caches
         self._restore = restore
     }
 
-    /// Restores the change in this snapshot.
+    /// A textual representation of this snapshot.
+    public var description: String {
+        """
+        Snapshot
+        - graph: \(graph)
+        - caches: \(caches)
+        """
+    }
+
+    /// Restores the atom values that are captured in this snapshot.
+    @MainActor
     public func restore() {
         _restore()
+    }
+
+    /// Lookup a value associated with the given atom from the set captured in this snapshot..
+    ///
+    /// - Parameter atom: An atom that associates the value.
+    ///
+    /// - Returns: The captured value associated with the given atom if it exists.
+    @MainActor
+    public func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
+        let key = AtomKey(atom)
+        let cache = caches[key] as? AtomCache<Node>
+        return cache?.value
     }
 }

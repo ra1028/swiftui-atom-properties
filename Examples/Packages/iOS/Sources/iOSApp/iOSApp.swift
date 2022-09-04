@@ -45,7 +45,9 @@ public struct iOSApp: App {
                 }
                 .navigationViewStyle(.stack)
             }
-            .observe(AtomLoggingObserver())
+            .observe { snapshot in
+                print(snapshot)
+            }
         }
     }
 }

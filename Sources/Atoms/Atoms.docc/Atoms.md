@@ -48,6 +48,7 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 ### Values
 
 - ``AsyncPhase``
+- ``Snapshot``
 
 ### Contexts
 
@@ -56,12 +57,7 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 - ``AtomTransactionContext``
 - ``AtomViewContext``
 - ``AtomTestContext``
-
-### Debugging
-
-- ``AtomObserver``
-- ``AtomHistory``
-- ``Snapshot``
+- ``AtomReader``
 
 ### Internal System
 

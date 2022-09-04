@@ -42,13 +42,15 @@ struct NumberInputScreen: View {
             ForEach(matrix, id: \.first) { row in
                 HStack {
                     ForEach(row, id: \.self) { number in
-                        Button("\(number)") {
+                        Button {
                             inputState.input(number: number)
+                        } label: {
+                            Text("\(number)")
+                                .font(.largeTitle)
+                                .frame(width: 80, height: 80)
+                                .background(Color(inputState.latestInput == number ? .systemOrange : .secondarySystemBackground))
+                                .clipShape(Circle())
                         }
-                        .font(.largeTitle)
-                        .frame(width: 80, height: 80)
-                        .background(Color(inputState.latestInput == number ? .systemOrange : .secondarySystemBackground))
-                        .clipShape(Circle())
                     }
                 }
             }
@@ -66,92 +68,54 @@ struct NumberInputScreen: View {
     }
 }
 
-struct TimeTravelDebug<Content: View>: View, AtomObserver {
+struct TimeTravelDebug<Content: View>: View {
     @ViewBuilder
     let content: () -> Content
 
     @State
-    var history = [AtomHistory]()
+    var snapshots = [Snapshot]()
 
     @State
     var position = 0
 
-    @State
-    var isTimeTravelMode = false
-
     var body: some View {
         AtomRelay {
             ZStack(alignment: .bottom) {
-                content().disabled(isTimeTravelMode)
-
-                if isTimeTravelMode {
-                    slider
-                }
-                else {
-                    startButton
-                }
+                content()
+                slider
             }
             .padding()
         }
-        .observe(self)  // Observes atom changes by this view itself.
+        .observe { snapshot in
+            Task {
+                snapshots = Array(snapshots.prefix(position + 1))
+                snapshots.append(snapshot)
+                position = snapshots.endIndex - 1
+            }
+        }
     }
 
     var slider: some View {
         VStack(alignment: .leading) {
-            HStack {
-                Text("History (\(position + 1) / \(history.count))")
-                Spacer()
-                doneButton
-            }
+            Text("History (\(position + 1) / \(snapshots.count))")
 
             Slider(
                 value: Binding(
                     get: { Double(position) },
-                    set: {
-                        position = Int($0)
-
-                        // Restores the snapshot in the history.
-                        history[position].restore()
+                    set: { value in
+                        Task { @MainActor in
+                            position = Int(value)
+                            snapshots[position].restore()
+                        }
                     }
                 ),
-                in: 0...Double(max(0, history.endIndex - 1))
+                in: 0...Double(max(0, snapshots.endIndex - 1))
             )
         }
         .padding()
         .background(Color(.secondarySystemBackground))
         .cornerRadius(8)
         .shadow(radius: 5)
-    }
-
-    var startButton: some View {
-        Button("Go to Time Travel ⏳") {
-            position = history.count - 1
-            isTimeTravelMode = true
-        }
-        .buttonStyle(.borderedProminent)
-    }
-
-    var doneButton: some View {
-        Button("Done") {
-            // Erases the frame of history that never was.
-            history = Array(history.prefix(through: position))
-            isTimeTravelMode = false
-        }
-        .buttonStyle(.borderedProminent)
-    }
-
-    /// Method of `AtomObserver`, for receiving atom changes.
-    func atomChanged<Node: Atom>(snapshot: Snapshot<Node>) {
-        // Collects the snapshots only while `isTimeTravelMode` is off, because
-        // the store emits change events even by `snapshot.restore()`.
-        guard !isTimeTravelMode else {
-            return
-        }
-
-        // Updates `history` asynchronously to prevent "attempting to update during view update" issue.
-        Task {
-            history.append(snapshot)
-        }
     }
 }
 

@@ -101,9 +101,9 @@ final class AtomViewContextTests: XCTestCase {
         )
 
         context.watch(atom)
-        XCTAssertNotNil(store.state.atomCaches[key])
+        XCTAssertNotNil(store.state.caches[key])
 
         container = nil
-        XCTAssertNil(store.state.atomCaches[key])
+        XCTAssertNil(store.state.caches[key])
     }
 }

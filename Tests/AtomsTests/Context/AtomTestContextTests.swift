@@ -80,37 +80,26 @@ final class AtomTestContextTests: XCTestCase {
 
     func testObserve() {
         let atom = TestStateAtom(defaultValue: 100)
-        let key = AtomKey(atom)
-        let observers = [TestObserver(), TestObserver()]
+        var snapshots0 = [Snapshot]()
+        var snapshots1 = [Snapshot]()
         let context = AtomTestContext()
 
-        for observer in observers {
-            context.observe(observer)
-        }
-
+        context.observe { snapshots0.append($0) }
+        context.observe { snapshots1.append($0) }
         context.watch(atom)
 
-        for observer in observers {
-            XCTAssertEqual(observer.assignedAtomKeys, [key])
-            XCTAssertTrue(observer.unassignedAtomKeys.isEmpty)
-            XCTAssertEqual(observer.changedAtomKeys, [key])
-        }
+        XCTAssertEqual(snapshots0.count, 1)
+        XCTAssertEqual(snapshots1.count, 1)
 
         context[atom] = 200
 
-        for observer in observers {
-            XCTAssertEqual(observer.assignedAtomKeys, [key])
-            XCTAssertTrue(observer.unassignedAtomKeys.isEmpty)
-            XCTAssertEqual(observer.changedAtomKeys, [key, key])
-        }
+        XCTAssertEqual(snapshots0.count, 2)
+        XCTAssertEqual(snapshots1.count, 2)
 
         context.unwatch(atom)
 
-        for observer in observers {
-            XCTAssertEqual(observer.assignedAtomKeys, [key])
-            XCTAssertEqual(observer.unassignedAtomKeys, [key])
-            XCTAssertEqual(observer.changedAtomKeys, [key, key])
-        }
+        XCTAssertEqual(snapshots0.count, 3)
+        XCTAssertEqual(snapshots1.count, 3)
     }
 
     func testTerminate() {

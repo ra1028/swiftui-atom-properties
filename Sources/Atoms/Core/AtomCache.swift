@@ -3,11 +3,9 @@ internal protocol AtomCacheBase {
     var shouldKeepAlive: Bool { get }
 
     func reset(with store: StoreContext)
-    func notifyUnassigned(to observers: [AtomObserver])
 }
 
-@MainActor
-internal struct AtomCache<Node: Atom>: AtomCacheBase {
+internal struct AtomCache<Node: Atom>: AtomCacheBase, CustomStringConvertible {
     var atom: Node
     var value: Node.Loader.Value?
 
@@ -15,13 +13,13 @@ internal struct AtomCache<Node: Atom>: AtomCacheBase {
         Node.shouldKeepAlive
     }
 
+    var description: String {
+        String(describing: Node.self) + "(\(value.map { "\($0)" } ?? "nil"))"
+    }
+
     func reset(with store: StoreContext) {
         store.reset(atom)
     }
-
-    func notifyUnassigned(to observers: [AtomObserver]) {
-        for observer in observers {
-            observer.atomUnassigned(atom: atom)
-        }
-    }
 }
+
+extension AtomCache: Equatable where Node: Equatable, Node.Loader.Value: Equatable {}
