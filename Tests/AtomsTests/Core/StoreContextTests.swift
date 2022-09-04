@@ -194,15 +194,9 @@ final class StoreContextTests: XCTestCase {
             key0: AtomCache(atom: atom0, value: 0),
             key1: AtomCache(atom: atom1, value: 1),
         ]
-        let state0 = AtomState(coordinator: atom0.makeCoordinator())
-        let state1 = AtomState(coordinator: atom1.makeCoordinator())
 
-        state0.transaction = Transaction(key: key0) {}
-        state1.transaction = Transaction(key: key1) {}
         store.graph = graph
         store.state.caches = caches
-        store.state.states[key0] = state0
-        store.state.states[key1] = state1
         store.state.subscriptions[key0, default: [:]][subscriptionKey] = Subscription(notifyUpdate: {}, unsubscribe: {})
         store.state.subscriptions[key1, default: [:]][subscriptionKey] = Subscription(notifyUpdate: {}, unsubscribe: {})
 
@@ -228,9 +222,6 @@ final class StoreContextTests: XCTestCase {
 
         snapshot.restore()
 
-        XCTAssertTrue(store.state.states.isEmpty)
-        XCTAssertTrue(state0.transaction!.isTerminated)
-        XCTAssertTrue(state1.transaction!.isTerminated)
         XCTAssertEqual(store.graph, snapshot.graph)
         XCTAssertEqual(
             store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
@@ -367,7 +358,6 @@ final class StoreContextTests: XCTestCase {
         _ = context.watch(atom2, in: Transaction(key: key0) {})
 
         XCTAssertTrue(updatedSubscriptions.isEmpty)
-        XCTAssertNotNil(store.state.states[key0])
         XCTAssertEqual(
             store.graph,
             Graph(
@@ -387,11 +377,7 @@ final class StoreContextTests: XCTestCase {
         snapshots[1].restore()
 
         XCTAssertEqual(updatedSubscriptions, [key0])
-        XCTAssertNil(store.state.states[key0])
-        XCTAssertEqual(
-            store.graph,
-            Graph()
-        )
+        XCTAssertEqual(store.graph, Graph())
         XCTAssertEqual(
             store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
             [
