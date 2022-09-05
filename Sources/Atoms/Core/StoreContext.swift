@@ -399,11 +399,11 @@ private extension StoreContext {
         store.state.states.removeValue(forKey: key)
         store.state.subscriptions.removeValue(forKey: key)
 
-        // Check if the dependencies are releasable.
-        checkReleaseDependencies(dependencies, for: key)
-
         // Notify release.
         notifyUpdateToObservers()
+
+        // Check if the dependencies are releasable.
+        checkReleaseDependencies(dependencies, for: key)
     }
 
     func checkRelease(for key: AtomKey) {

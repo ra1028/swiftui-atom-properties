@@ -49,52 +49,41 @@ public struct Snapshot: CustomStringConvertible {
             return ""
         }
 
-        let separator = ";\n  "
+        var statements = [String]()
 
-        func quoted(_ string: String) -> String {
-            "\"\(string)\""
-        }
-
-        func edges<Nodes: Collection>(from key: AtomKey, to nodes: Nodes) -> String where Nodes.Element: CustomStringConvertible {
-            nodes.lazy
-                .map { "\(quoted(key.description)) -> \(quoted($0.description))" }
-                .sorted()
-                .joined(separator: separator)
-        }
-
-        func edges(for key: AtomKey) -> String {
-            var statements = quoted(key.description)
+        for key in caches.keys {
+            statements.append(key.description.quoted)
 
             if let children = graph.children[key], !children.isEmpty {
-                statements += separator + edges(from: key, to: children)
+                for child in children {
+                    let edge = "\(key.description.quoted) -> \(child.description.quoted)"
+                    statements.append(edge)
+                }
             }
 
-            if let subscriptions = subscriptions[key]?.keys, !subscriptions.isEmpty {
-                statements += separator + edges(from: key, to: subscriptions)
+            if let subscribers = subscriptions[key]?.keys, !subscribers.isEmpty {
+                for subscriber in subscribers {
+                    let edge = "\(key.description.quoted) -> \(subscriber.description.quoted)"
+                    statements.append(edge)
+                    statements.append("\(subscriber.description.quoted) [style=filled]")
+                }
             }
-
-            return statements
         }
 
-        var statements = caches.keys.lazy
-            .map(edges)
-            .sorted()
-            .joined(separator: separator)
-
-        if !subscriptions.isEmpty {
-            let subscribers = Set(subscriptions.values.lazy.flatMap(\.keys))
-            statements += separator
-            statements += subscribers.lazy
-                .map { "\(quoted($0.description)) [shape=ellipse, style=filled]" }
-                .sorted()
-                .joined(separator: separator)
-        }
+        // Eliminate duplicated statements.
+        statements = Set(statements).sorted()
 
         return """
             digraph {
               node [shape=box];
-              \(statements);
+              \(statements.joined(separator: ";\n  "));
             }
             """
+    }
+}
+
+private extension String {
+    var quoted: String {
+        "\"\(self)\""
     }
 }
