@@ -7,15 +7,15 @@ internal struct AtomTypeKey: Hashable, CustomStringConvertible {
         getName = { String(describing: Node.self) }
     }
 
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.identifier == rhs.identifier
-    }
-
     var description: String {
         getName()
     }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(identifier)
+    }
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.identifier == rhs.identifier
     }
 }

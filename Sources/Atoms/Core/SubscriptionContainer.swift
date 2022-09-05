@@ -3,16 +3,16 @@
 internal final class SubscriptionContainer {
     private var subscriptions = [AtomKey: Subscription]()
 
-    var wrapper: Wrapper {
-        Wrapper(self)
-    }
-
     nonisolated init() {}
 
     deinit {
         for subscription in ContiguousArray(subscriptions.values) {
             subscription.unsubscribe()
         }
+    }
+
+    func wrapper(location: SourceLocation) -> Wrapper {
+        Wrapper(self, location: location)
     }
 }
 
@@ -29,9 +29,9 @@ internal extension SubscriptionContainer {
             nonmutating set { container?.subscriptions = newValue }
         }
 
-        init(_ container: SubscriptionContainer) {
+        init(_ container: SubscriptionContainer, location: SourceLocation) {
             self.container = container
-            self.key = SubscriptionKey(container)
+            self.key = SubscriptionKey(container, location: location)
         }
     }
 }

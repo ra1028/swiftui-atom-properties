@@ -39,9 +39,12 @@ public struct ViewContext: DynamicProperty {
     @Environment(\.store)
     private var _store
 
+    private let location: SourceLocation
+
     /// Creates a view context.
-    public init() {
+    public init(fileID: String = #fileID, line: UInt = #line) {
         _state = StateObject(wrappedValue: State())
+        location = SourceLocation(fileID: fileID, line: line)
     }
 
     /// The underlying view context to interact with atoms.
@@ -52,7 +55,7 @@ public struct ViewContext: DynamicProperty {
     public var wrappedValue: AtomViewContext {
         AtomViewContext(
             store: _store,
-            container: state.container.wrapper,
+            container: state.container.wrapper(location: location),
             notifyUpdate: state.objectWillChange.send
         )
     }

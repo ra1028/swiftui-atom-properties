@@ -63,9 +63,10 @@ public struct Snapshot: CustomStringConvertible {
 
             if let subscribers = subscriptions[key]?.keys, !subscribers.isEmpty {
                 for subscriber in subscribers {
+                    let node = "\(subscriber.description.quoted) [style=filled]"
                     let edge = "\(key.description.quoted) -> \(subscriber.description.quoted)"
+                    statements.append(node)
                     statements.append(edge)
-                    statements.append("\(subscriber.description.quoted) [style=filled]")
                 }
             }
         }
