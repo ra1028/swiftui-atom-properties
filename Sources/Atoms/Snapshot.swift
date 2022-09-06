@@ -46,38 +46,32 @@ public struct Snapshot: CustomStringConvertible {
 
     public func dotRepresentation() -> String {
         guard !caches.keys.isEmpty else {
-            return ""
+            return "digraph {}"
         }
 
-        var statements = [String]()
+        var statements = Set<String>()
 
         for key in caches.keys {
-            statements.append(key.description.quoted)
+            statements.insert(key.description.quoted)
 
-            if let children = graph.children[key], !children.isEmpty {
+            if let children = graph.children[key] {
                 for child in children {
-                    let edge = "\(key.description.quoted) -> \(child.description.quoted)"
-                    statements.append(edge)
+                    statements.insert("\(key.description.quoted) -> \(child.description.quoted)")
                 }
             }
 
-            if let subscribers = subscriptions[key]?.keys, !subscribers.isEmpty {
+            if let subscribers = subscriptions[key]?.keys {
                 for subscriber in subscribers {
-                    let node = "\(subscriber.description.quoted) [style=filled]"
-                    let edge = "\(key.description.quoted) -> \(subscriber.description.quoted)"
-                    statements.append(node)
-                    statements.append(edge)
+                    statements.insert("\(subscriber.location.fileID.quoted) [style=filled]")
+                    statements.insert("\(key.description.quoted) -> \(subscriber.location.fileID.quoted) [label=\"line:\(subscriber.location.line)\"]")
                 }
             }
         }
-
-        // Eliminate duplicated statements.
-        statements = Set(statements).sorted()
 
         return """
             digraph {
-              node [shape=box];
-              \(statements.joined(separator: ";\n  "));
+              node [shape=box]
+              \(statements.sorted().joined(separator: "\n  "))
             }
             """
     }

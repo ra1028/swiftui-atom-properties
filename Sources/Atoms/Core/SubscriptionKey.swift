@@ -1,14 +1,11 @@
-internal struct SubscriptionKey: Hashable, CustomStringConvertible {
+internal struct SubscriptionKey: Hashable {
     private let identifier: ObjectIdentifier
-    private let location: SourceLocation
+
+    let location: SourceLocation
 
     init(_ container: SubscriptionContainer, location: SourceLocation) {
         self.identifier = ObjectIdentifier(container)
         self.location = location
-    }
-
-    var description: String {
-        "\(location.fileID):\(location.line)"
     }
 
     // Ignores `location` because it is a debugging metadata.
