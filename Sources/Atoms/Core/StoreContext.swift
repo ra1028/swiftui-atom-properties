@@ -79,9 +79,6 @@ internal struct StoreContext {
             // Unsubscribe and release if it's no longer used.
             store.state.subscriptions[key]?.removeValue(forKey: container.key)
             checkRelease(for: key)
-
-            // Notify release.
-            notifyUpdateToObservers()
         }
 
         // Register the subscription to both the store and the container.
@@ -412,6 +409,9 @@ private extension StoreContext {
 
         // Check if the dependencies are releasable.
         checkReleaseDependencies(dependencies, for: key)
+
+        // Notify release.
+        notifyUpdateToObservers()
     }
 
     func checkRelease(for key: AtomKey) {
