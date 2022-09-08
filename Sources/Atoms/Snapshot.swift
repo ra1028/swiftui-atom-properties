@@ -44,6 +44,30 @@ public struct Snapshot: CustomStringConvertible {
         return cache?.value
     }
 
+    /// Returns a DOT language representation of dependency graph.
+    ///
+    /// This method generates a string that represents
+    /// the [DOT the graph description language](https://graphviz.org/doc/info/lang.html)
+    /// for the dependency graph of atoms clipped in this snapshot and views that use them.
+    /// The generated strings can be converted into images that visually represent dependencies
+    /// graph using [Graphviz](https://graphviz.org) for debugging and analysis.
+    ///
+    /// ## Example
+    ///
+    /// ```dot
+    /// digraph {
+    ///   node [shape=box]
+    ///   "AAtom"
+    ///   "AAtom" -> "BAtom"
+    ///   "BAtom"
+    ///   "BAtom" -> "CAtom"
+    ///   "CAtom"
+    ///   "CAtom" -> "Module/View.swift" [label="line:3"]
+    ///   "Module/View.swift" [style=filled]
+    /// }
+    /// ```
+    ///
+    /// - Returns: A dependency graph represented in DOT the graph description language.
     public func dotRepresentation() -> String {
         guard !caches.keys.isEmpty else {
             return "digraph {}"
@@ -62,8 +86,9 @@ public struct Snapshot: CustomStringConvertible {
 
             if let subscribers = subscriptions[key]?.keys {
                 for subscriber in subscribers {
+                    let label = "line:\(subscriber.location.line)".quoted
                     statements.insert("\(subscriber.location.fileID.quoted) [style=filled]")
-                    statements.insert("\(key.description.quoted) -> \(subscriber.location.fileID.quoted) [label=\"line:\(subscriber.location.line)\"]")
+                    statements.insert("\(key.description.quoted) -> \(subscriber.location.fileID.quoted) [label=\(label)]")
                 }
             }
         }
