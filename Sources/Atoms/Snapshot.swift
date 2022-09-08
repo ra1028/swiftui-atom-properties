@@ -44,7 +44,7 @@ public struct Snapshot: CustomStringConvertible {
         return cache?.value
     }
 
-    /// Returns a DOT language representation of dependency graph.
+    /// Returns a DOT language representation of the dependency graph.
     ///
     /// This method generates a string that represents
     /// the [DOT the graph description language](https://graphviz.org/doc/info/lang.html)
@@ -68,7 +68,7 @@ public struct Snapshot: CustomStringConvertible {
     /// ```
     ///
     /// - Returns: A dependency graph represented in DOT the graph description language.
-    public func dotRepresentation() -> String {
+    public func graphDescription() -> String {
         guard !caches.keys.isEmpty else {
             return "digraph {}"
         }

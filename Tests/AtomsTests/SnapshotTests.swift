@@ -27,13 +27,13 @@ final class SnapshotTests: XCTestCase {
         XCTAssertNil(snapshot.lookup(atom1))
     }
 
-    func testDotRepresentationEmpty() {
+    func testEmptyGraphDescription() {
         let snapshot = Snapshot(graph: Graph(), caches: [:], subscriptions: [:]) {}
 
-        XCTAssertEqual(snapshot.dotRepresentation(), "digraph {}")
+        XCTAssertEqual(snapshot.graphDescription(), "digraph {}")
     }
 
-    func testDotRepresentation() {
+    func testGraphDescription() {
         struct Value0: Hashable {}
         struct Value1: Hashable {}
         struct Value2: Hashable {}
@@ -76,7 +76,7 @@ final class SnapshotTests: XCTestCase {
         ) {}
 
         XCTAssertEqual(
-            snapshot.dotRepresentation(),
+            snapshot.graphDescription(),
             """
             digraph {
               node [shape=box]
