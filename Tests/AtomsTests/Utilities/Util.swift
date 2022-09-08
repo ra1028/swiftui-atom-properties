@@ -56,3 +56,17 @@ final class ResettableSubject<Output, Failure: Error>: Publisher, Subject {
         internalSubject = PassthroughSubject()
     }
 }
+
+extension SubscriptionKey {
+    init(_ container: SubscriptionContainer) {
+        let location = SourceLocation(fileID: #fileID, line: #line)
+        self.init(container, location: location)
+    }
+}
+
+extension SubscriptionContainer {
+    var wrapper: Wrapper {
+        let location = SourceLocation(fileID: #fileID, line: #line)
+        return wrapper(location: location)
+    }
+}
