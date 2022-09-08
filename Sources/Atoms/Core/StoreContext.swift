@@ -53,7 +53,8 @@ internal struct StoreContext {
 
         // Add an `Edge` from the upstream to downstream.
         store.graph.dependencies[transaction.key, default: []].insert(key)
-        let (isInserted, _) = store.graph.children[key, default: []].insert(transaction.key)
+
+        let isInserted = store.graph.children[key, default: []].insert(transaction.key).inserted
         let (isNew, value) = getValue(of: atom, for: key)
 
         if isInserted || isNew {
@@ -83,6 +84,7 @@ internal struct StoreContext {
 
         // Register the subscription to both the store and the container.
         container.subscriptions[key] = subscription
+
         let isInserted = store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key) == nil
         let (isNew, value) = getValue(of: atom, for: key)
 
