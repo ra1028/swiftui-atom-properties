@@ -12,8 +12,9 @@ public struct AtomTestContext: AtomWatchableContext {
     private let state: State
 
     /// Creates a new test context instance with fresh internal state.
-    public init() {
-        state = State()
+    public init(fileID: String = #fileID, line: UInt = #line) {
+        let location = SourceLocation(fileID: fileID, line: line)
+        state = State(location: location)
     }
 
     /// A callback to perform when any of atoms watched by this context is updated.
@@ -264,16 +265,21 @@ private extension AtomTestContext {
         private let _store = Store()
         private let _container = SubscriptionContainer()
 
-        var overrides = Overrides()
+        let location: SourceLocation
         let notifier = PassthroughSubject<Void, Never>()
+        var overrides = Overrides()
         var onUpdate: (() -> Void)?
+
+        init(location: SourceLocation) {
+            self.location = location
+        }
 
         var store: StoreContext {
             StoreContext(_store, overrides: overrides)
         }
 
         var container: SubscriptionContainer.Wrapper {
-            _container.wrapper
+            _container.wrapper(location: location)
         }
 
         func notifyUpdate() {

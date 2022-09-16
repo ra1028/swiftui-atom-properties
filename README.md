@@ -27,8 +27,8 @@
   - [KeepAlive](#keepalive)
   - [Suspense](#suspense)
   - [Testing](#testing)
+  - [Debugging](#debugging)
   - [Preview](#preview)
-  - [Observability](#observability)
   - [Advanced Usage](#advanced-usage)
   - [Dealing with Known SwiftUI Bugs](#dealing-with-known-swiftui-bugs)
 - [Contributing](#contributing)
@@ -1212,6 +1212,62 @@ class FetchBookTests: XCTestCase {
 
 ---
 
+### Debugging
+
+This library defines a Directed Acyclic Graph (DAG) internally to centrally manage atom states, making it easy to analyze its dependencies and where they are (or are not) being used.  
+There are the following two ways to get a [Snapshot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot) of the dependency graph at a given point in time.  
+
+The first is to get `Snapshot` through [@ViewContext](#atomviewcontext). This API is suitable for obtaining and analyzing debugging information on demand.  
+
+```swift
+@ViewContext
+var context
+
+var debugButton: some View {
+    Button("Dump dependency graph") {
+        let snapshot = context.snapshot()
+        print(snapshot.graphDescription())
+    }
+}
+```
+
+Or, you can observe all updates of atoms and always continue to receive `Snapshots` at that point in time through `observe(_:)` modifier of [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot) or [AtomRelay](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelay).  
+Note that observing in `AtomRoot` will receive all atom updates that happened in the whole app, but observing in `AtomRelay` will only receive atoms used in the descendant views.  
+
+```swift
+AtomRoot {
+    HomeScreen()
+}
+.observe { snapshot in
+    print(snapshot.graphDescription())
+}
+```
+
+Calling the [restore()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot/restore()) method of the obtained `Snapshot` will roll back to the states and dependency graph at that point in time to see what happened.  
+The debugging technique is called [time travel debugging](https://en.wikipedia.org/wiki/Time_travel_debugging), and the example application [here](Examples/Packages/iOS/Sources/ExampleTimeTravel) demonstrates how it works.  
+
+In addition, [graphDescription()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot/graphdescription()) method returns a string, that represents the dependencies graph and where they are used, as a String in [graph description language DOT](https://graphviz.org/doc/info/lang.html).  
+This can be converted to an image using [Graphviz](https://graphviz.org), a graph visualization tool, to visually analyze information about the state of the application, as shown below.  
+
+<img src="assets/dependency_graph.png" alt="Dependency Graph" width="50%" align="right">
+
+```dot
+digraph {
+  node [shape=box]
+  "FilterAtom"
+  "FilterAtom" -> "TodoApp/FilterPicker.swift" [label="line:3"]
+  "FilterAtom" -> "FilteredTodosAtom"
+  "TodosAtom"
+  "TodosAtom" -> "FilteredTodosAtom"
+  "FilteredTodosAtom"
+  "FilteredTodosAtom" -> "TodoApp/TodoList.swift" [label="line:5"]
+  "TodoApp/TodoList.swift" [style=filled]
+  "TodoApp/FilterPicker.swift" [style=filled]
+}
+```
+
+---
+
 ### Preview
 
 Even in SwiftUI previews, the view must have an `AtomRoot` somewhere in the ancestor. However, since This library offers the new solution for dependency injection, you don't need to do painful DI each time you create previews anymore. You can to override the atoms that you really want to inject substitutions.
@@ -1224,45 +1280,6 @@ struct NewsList_Preview: PreviewProvider {
         }
         .override(APIClientAtom()) { _ in
             StubAPIClient()
-        }
-    }
-}
-```
-
----
-
-### Observability
-
-For debugging, you can observe updates with a snapshot that captures a specific set of values of atoms through the `observe(_:)` function in [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot) or [AtomRelay](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelay).  
-Observing in `AtomRoot` will receive all atom updates that happened in the whole app, but observing in `AtomRelay` will only receive atoms used in the descendant views.  
-
-The [Snapshot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot) passed to `observe(:_)` has a [restore()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot/restore()) function that can be executed to restore a specific set of atom values. `Snapshot` can also be obtained on-demand through [AtomViewContext](#atomviewcontext).  
-This observability API can be applied to do [time travel debugging](https://en.wikipedia.org/wiki/Time_travel_debugging) and is demonstrated in one of the [examples](Examples).  
-
-```swift
-@main
-struct ExampleApp: App {
-    var body: some Scene {
-        WindowGroup {
-            AtomRoot {
-                VStack {
-                    NavigationLink("Home") {
-                        Home()
-                    }
-
-                    NavigationLink("Setting") {
-                        AtomRelay {
-                            Setting()
-                        }
-                        .observe { snapshot in  // Observes setting related atoms only.
-                            print(snapshot)
-                        }
-                    }
-                }
-            }
-            .observe { snapshot in  // Observes all atoms used in the app.
-                print(snapshot)
-            }
         }
     }
 }

@@ -47,6 +47,6 @@ final class AtomKeyTests: XCTestCase {
         let atom = TestAtom(value: 0)
         let key = AtomKey(atom)
 
-        XCTAssertEqual(key.description, "TestAtom<Int>(\(atom.hashValue))")
+        XCTAssertEqual(key.description, "TestAtom<Int>")
     }
 }

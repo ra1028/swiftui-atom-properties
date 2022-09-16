@@ -72,8 +72,9 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     private var context
 
     /// Creates a watch with the atom that to be watched.
-    public init(_ atom: Node) {
+    public init(_ atom: Node, fileID: String = #fileID, line: UInt = #line) {
         self.atom = atom
+        self._context = ViewContext(fileID: fileID, line: line)
     }
 
     /// The underlying observable object associated with the given atom.

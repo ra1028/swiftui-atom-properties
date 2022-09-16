@@ -25,7 +25,13 @@ internal struct StoreContext {
         let key = AtomKey(atom)
         defer { checkRelease(for: key) }
 
-        return getValue(of: atom, for: key)
+        let (isNew, value) = getValue(of: atom, for: key)
+
+        if isNew {
+            notifyUpdateToObservers()
+        }
+
+        return value
     }
 
     @usableFromInline
@@ -47,9 +53,15 @@ internal struct StoreContext {
 
         // Add an `Edge` from the upstream to downstream.
         store.graph.dependencies[transaction.key, default: []].insert(key)
-        store.graph.children[key, default: []].insert(transaction.key)
 
-        return getValue(of: atom, for: key)
+        let isInserted = store.graph.children[key, default: []].insert(transaction.key).inserted
+        let (isNew, value) = getValue(of: atom, for: key)
+
+        if isInserted || isNew {
+            notifyUpdateToObservers()
+        }
+
+        return value
     }
 
     @usableFromInline
@@ -72,9 +84,15 @@ internal struct StoreContext {
 
         // Register the subscription to both the store and the container.
         container.subscriptions[key] = subscription
-        store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key)
 
-        return getValue(of: atom, for: key)
+        let isInserted = store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key) == nil
+        let (isNew, value) = getValue(of: atom, for: key)
+
+        if isInserted || isNew {
+            notifyUpdateToObservers()
+        }
+
+        return value
     }
 
     @usableFromInline
@@ -111,8 +129,9 @@ internal struct StoreContext {
         let store = getStore()
         let graph = store.graph
         let caches = store.state.caches
+        let subscriptions = store.state.subscriptions
 
-        return Snapshot(graph: graph, caches: caches) {
+        return Snapshot(graph: graph, caches: caches, subscriptions: subscriptions) {
             let store = getStore()
             let keys = ContiguousArray(caches.keys)
             var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
@@ -203,12 +222,12 @@ private extension StoreContext {
         return value
     }
 
-    func getValue<Node: Atom>(of atom: Node, for key: AtomKey) -> Node.Loader.Value {
+    func getValue<Node: Atom>(of atom: Node, for key: AtomKey) -> (isNew: Bool, value: Node.Loader.Value) {
         let store = getStore()
         var cache = getCache(of: atom, for: key)
 
         if let value = cache.value {
-            return value
+            return (isNew: false, value: value)
         }
         else {
             let value = getNewValue(of: atom, for: key)
@@ -216,10 +235,7 @@ private extension StoreContext {
             cache.value = value
             store.state.caches[key] = cache
 
-            // Notify new value.
-            notifyUpdateToObservers()
-
-            return value
+            return (isNew: true, value: value)
         }
     }
 
@@ -393,11 +409,11 @@ private extension StoreContext {
         store.state.states.removeValue(forKey: key)
         store.state.subscriptions.removeValue(forKey: key)
 
-        // Notify release.
-        notifyUpdateToObservers()
-
         // Check if the dependencies are releasable.
         checkReleaseDependencies(dependencies, for: key)
+
+        // Notify release.
+        notifyUpdateToObservers()
     }
 
     func checkRelease(for key: AtomKey) {
