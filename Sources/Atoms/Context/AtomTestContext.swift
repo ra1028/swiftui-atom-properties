@@ -216,7 +216,7 @@ public struct AtomTestContext: AtomWatchableContext {
     public func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.Loader.Value {
         state.store.watch(atom, container: state.container) { [weak state] in
             // Ensures that the observable object is updated before notifying updates.
-            RunLoop.current.perform {
+            RunLoop.current.perform { [weak state] in
                 state?.notifyUpdate()
             }
         }
@@ -260,7 +260,6 @@ public struct AtomTestContext: AtomWatchableContext {
 }
 
 private extension AtomTestContext {
-    @MainActor
     final class State {
         private let _store = Store()
         private let _container = SubscriptionContainer()
@@ -278,6 +277,7 @@ private extension AtomTestContext {
             StoreContext(_store, overrides: overrides)
         }
 
+        @MainActor
         var container: SubscriptionContainer.Wrapper {
             _container.wrapper(location: location)
         }
