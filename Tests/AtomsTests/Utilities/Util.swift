@@ -70,3 +70,9 @@ extension SubscriptionContainer {
         return wrapper(location: location)
     }
 }
+
+extension AtomCache: Equatable where Node: Equatable, Node.Loader.Value: Equatable {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.atom == rhs.atom && lhs.value == rhs.value
+    }
+}
