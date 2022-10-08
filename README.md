@@ -43,7 +43,7 @@
 
 |Reactive Data Binding|Effective Data Caching|Compile Safe<br>Dependency Injection|
 |:------------------------|:----------------|:--------------------------------|
-|Piece of app data that can be accessed from anywhere propagates changes reactively.|Recompute atom data and views only when truly need, otherwise it caches data until no longer used.|Successful compilation guarantees that dependency injection is ready.|
+|Pieces of app data that can be accessed from anywhere propagate changes reactively.|Recompute atom data and views only when truly needed, otherwise, it caches data until no longer used.|Successful compilation guarantees that dependency injection is ready.|
 
 </p>
 
@@ -51,23 +51,21 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 
 ### Motivation
 
-SwiftUI offers a simple and understandable data-binding solution with built-in property wrappers, but is a little uneasiness for building middle to large scale production apps. As a typical example, view data can only be shared by pushing it up to a common ancestor.  
-Software development is not all set in advance; it evolves over time to meet business and customer needs. Therefore, you may need to radically redesign it so that local data used only in one part of the view-tree can be shared elsewhere, as the app grows.  
-EnvironmentObject was hoped to be a solution to the problem, but it ended up with let us to create a huge state-holder object - [Big Ball of Mud](https://en.wikipedia.org/wiki/Big_ball_of_mud) being provided from the root of an app, so it could not be an ideal.  
-Ultimately, pure SwiftUI needs state-drilling from the root to descendants in anyway, which not only makes code-splitting difficult, but also causes gradual performance degradation due to the huge view-tree computation as the app grow up.  
+SwiftUI offers a simple and understandable data-binding solution with built-in property wrappers but is a little uneasy for building middle to large-scale production apps. As a typical example, view data can only be shared by pushing it up to a common ancestor.  
+EnvironmentObject was hoped to be a solution to the problem, but it ended up with let us create a huge state-holder object being provided from the root of an app, so pure SwiftUI needs state-drilling from the root to descendants in any way, which not only makes code-splitting difficult but also causes gradual performance degradation due to the huge view-tree computation as the app grow up.  
 
-This library solves these problems by defining application data as distributed pieces called atom, allowing data to be shared throughout the app as the source of truth. That said, atom itself doesn't have internal state, but rather retrieves the associated state from the context in which they are used, and ensures that the app is testable.  
-Furthermore, it manages a directed graph of atoms and propagates data changes transitively from upstream to downstream, such that it updates only the views truly need update while preventing expensive data recomputation, resulting in effortlessly high performance and efficient memory use.  
+This library solves these problems by defining application data as distributed pieces called atoms, allowing data to be shared throughout the app as the source of truth. That said, an atom itself doesn't have an internal state, but rather retrieves the associated state from the context in which they are used, and ensures that the app is testable.  
+It manages a directed graph of atoms and propagates data changes transitively from upstream to downstream, such that it updates only the views that truly need update while preventing expensive data recomputation, resulting in effortlessly high performance and efficient memory use.  
 
 <img src="assets/diagram.png" width=700>
 
 This approach guarantees the following principles:
 
-- Reactively reflects data changes into views.
+- Reactively reflects data changes.
 - Boilerplate-free interface where shared data has the same simple interface as SwiftUI built-ins.
-- Compatible with any other libraries (e.g. [TCA](https://github.com/pointfreeco/swift-composable-architecture)) of your choice if needed.
+- Compatible with any other libraries like [TCA](https://github.com/pointfreeco/swift-composable-architecture).
 - Accelerates code-splitting by distributed & incremental state definition.
-- Ensures testable code over time with capabilities of dependency injection.
+- Ensures testable with capabilities of dependency injection.
 - Provides simplified interfaces for asynchronous process.
 - Swift Concurrency based thread-safety.
 
@@ -196,7 +194,7 @@ And then, include "Atoms" as a dependency for your target:
 
 ### Basic Tutorial
 
-In this tutorial, we will create a simple todo app as an example. This app will support:
+In this tutorial, we are going to create a simple todo app as an example. This app will support:
 
 - Create todo items
 - Edit todo items
@@ -344,7 +342,7 @@ struct TodoItem: View {
 }
 ```
 
-Use `@Watch` to obtain the value of `FilteredTodosAtom` read-only. Updates to any of the dependent atoms are propagated to this view, and it re-render the todo list.  
+Use `@Watch` to obtain the value of `FilteredTodosAtom` read-only. It updates to any of the dependent atoms are propagated to this view, and it re-render the todo list.  
 Finally, assemble the views we've created so far and complete.
 
 ```swift
