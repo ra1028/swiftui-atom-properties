@@ -27,7 +27,7 @@ let package = Package(
 if ProcessInfo.processInfo.environment["SWIFTUI_ATOM_PROPERTIES_DEVELOPMENT"] != nil {
     package.dependencies.append(contentsOf: [
         .package(url: "https://github.com/apple/swift-docc-plugin", exact: "1.0.0"),
-        .package(url: "https://github.com/apple/swift-format.git", exact: "0.50600.1"),
+        .package(url: "https://github.com/apple/swift-format.git", exact: "0.50700.0"),
         .package(url: "https://github.com/yonaskolb/XcodeGen.git", exact: "2.32.0"),
     ])
 }

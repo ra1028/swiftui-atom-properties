@@ -120,10 +120,10 @@ final class AtomViewContextTests: XCTestCase {
         let snapshot = context.snapshot()
 
         XCTAssertEqual(snapshot.graph, graph)
-//        XCTAssertEqual(
-//            snapshot.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
-//            caches
-//        )
+        XCTAssertEqual(
+            snapshot.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
+            caches
+        )
     }
 
     func testUnsubscription() {
