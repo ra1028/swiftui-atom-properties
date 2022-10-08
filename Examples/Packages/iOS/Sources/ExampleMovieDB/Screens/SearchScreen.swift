@@ -38,7 +38,7 @@ struct SearchScreen: View {
         .sheet(item: $selectedMovie) { movie in
             DetailScreen(movie: movie)
         }
-        .refreshable { [context] in
+        .refreshable {
             await context.refresh(SearchMoviesAtom())
         }
     }

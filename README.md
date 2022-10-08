@@ -948,7 +948,7 @@ struct BooksView: View {
             }
         }
         .searchable(text: searchQuery)
-        .refreshable { [context] in  // NB: Unfortunately, SwiftUI has a memory leak when capturing `self` implicitly inside a `refreshable` modifier.
+        .refreshable {
             // refresh
             await context.refresh(FetchBooksAtom())
         }
@@ -1437,7 +1437,7 @@ In the above example, the initial state of the atom is retrieved from UserDefaul
 
 ### Dealing with Known SwiftUI Bugs
 
-#### In iOS14, modal presentation causes assertionFailure when dismissing it
+#### Modal presentation causes assertionFailure when dismissing it (Fixed in iOS15)
 
 <details><summary><code>💡 Click to expand workaround</code></summary>
 
@@ -1464,10 +1464,10 @@ struct RootView: View {
 
 </details>
 
-Unfortunately, SwiftUI has a bug in iOS14 where the `EnvironmentValue` is removed from a screen presented with `.sheet` just before dismissing it. Since this library is designed based on `EnvironmentValue`, this bug end up triggering the friendly `assertionFailure` that is added so that developers can easily aware of forgotten `AtomRoot` implementation.  
+Unfortunately, SwiftUI has a bug in iOS14 or lower where the `EnvironmentValue` is removed from a screen presented with `.sheet` just before dismissing it. Since this library is designed based on `EnvironmentValue`, this bug end up triggering the friendly `assertionFailure` that is added so that developers can easily aware of forgotten `AtomRoot` implementation.  
 As a workaround, `AtomRelay` has the ability to explicitly inherit the internal store through `AtomViewContext` from the parent view.
 
-#### Some SwiftUI modifiers cause memory leak
+#### Some SwiftUI modifiers cause memory leak (Fixed in iOS16)
 
 <details><summary><code>💡 Click to expand workaround</code></summary>
 
@@ -1495,7 +1495,7 @@ var isShowingSearchScreen = false
 
 </details>
 
-Some modifiers in SwiftUI seem to cause an internal memory leak if it captures `self` implicitly or explicitly. To avoid that bug, make sure that `self` is not captured when using those modifiers.  
+In iOS 15 or lower, some modifiers in SwiftUI seem to cause an internal memory leak if it captures `self` implicitly or explicitly. To avoid that bug, make sure that `self` is not captured when using those modifiers.  
 Below are the list of modifiers I found that cause memory leaks:
 
 - [`refreshable(action:)`](https://developer.apple.com/documentation/SwiftUI/View/refreshable(action:))

@@ -63,13 +63,13 @@ struct MoviesScreen: View {
             text: $searchQuery,
             placement: .navigationBarDrawer(displayMode: .always)
         )
-        .onSubmit(of: .search) { [$isShowingSearchScreen] in
-            $isShowingSearchScreen.wrappedValue = true
+        .onSubmit(of: .search) {
+            isShowingSearchScreen = true
         }
         .task(id: loader.filter) {
             await loader.refresh()
         }
-        .refreshable { [context] in
+        .refreshable {
             // NB: Implicitly capturing `self` causes memory leak with `refreshable`,
             // and also capturing `loader` makes refresh doesn't work, so here reads
             // `MovieLoader` via context.
