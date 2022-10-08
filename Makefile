@@ -4,7 +4,7 @@ SWIFT_FILE_PATHS = Package.swift Sources Tests Examples
 TEST_PLATFORM_IOS = iOS Simulator,name=iPhone 13 Pro
 TEST_PLATFORM_MACOS = macOS
 TEST_PLATFORM_TVOS = tvOS Simulator,name=Apple TV 4K (at 1080p) (2nd generation)
-TEST_PLATFORM_WATCHOS = watchOS Simulator,name=Apple Watch Series 7 - 45mm
+TEST_PLATFORM_WATCHOS = watchOS Simulator,name=Apple Watch Series 7 (45mm)
 
 .PHONY: proj
 proj:

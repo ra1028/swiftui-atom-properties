@@ -46,7 +46,7 @@ targets:
     templates:
       - App
     platform: iOS
-    deploymentTarget: 15.0
+    deploymentTarget: 16.0
     dependencies:
       - package: iOSApp
     sources:

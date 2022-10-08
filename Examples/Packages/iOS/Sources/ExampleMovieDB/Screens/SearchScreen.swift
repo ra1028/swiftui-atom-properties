@@ -35,11 +35,11 @@ struct SearchScreen: View {
         }
         .navigationTitle("Search Results")
         .listStyle(.insetGrouped)
+        .refreshable {
+            await context.refresh(SearchMoviesAtom())
+        }
         .sheet(item: $selectedMovie) { movie in
             DetailScreen(movie: movie)
-        }
-        .refreshable { [context] in
-            await context.refresh(SearchMoviesAtom())
         }
     }
 }

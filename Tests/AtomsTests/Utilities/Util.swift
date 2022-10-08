@@ -70,3 +70,11 @@ extension SubscriptionContainer {
         return wrapper(location: location)
     }
 }
+
+extension AtomCache: Equatable where Node: Equatable, Node.Loader.Value: Equatable {
+    // NB: Synthesized Equatable conformance doesn't work well in Xcode 14.0.1.
+    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.atom == rhs.atom && lhs.value == rhs.value
+    }
+}

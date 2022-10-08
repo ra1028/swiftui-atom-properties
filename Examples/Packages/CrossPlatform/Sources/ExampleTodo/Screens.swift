@@ -34,7 +34,7 @@ struct TodoListScreen: View {
 
         #if os(iOS)
             .listStyle(.insetGrouped)
-                .buttonStyle(.borderless)
+            .buttonStyle(.borderless)
         #elseif !os(tvOS)
             .buttonStyle(.borderless)
         #endif
