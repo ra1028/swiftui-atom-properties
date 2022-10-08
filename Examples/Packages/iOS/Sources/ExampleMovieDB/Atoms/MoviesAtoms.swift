@@ -14,12 +14,8 @@ final class MovieLoader: ObservableObject {
     }
 
     func refresh() async {
-        do {
-            let page = try await api.getMovies(filter: filter, page: 1)
-            pages = .success([page])
-        }
-        catch {
-            pages = .failure(error)
+        pages = await AsyncPhase {
+            try await [api.getMovies(filter: filter, page: 1)]
         }
     }
 

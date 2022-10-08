@@ -1379,13 +1379,9 @@ class MessageLoader: ObservableObject {
     }
 
     func load() async {
-        do {
-            let api = context.read(APIClientAtom())
-            let messages = try await api.fetchMessages(offset: 0)
-            phase = .success(messages)
-        }
-        catch {
-            phase = .failure(error)
+        let api = context.read(APIClientAtom())
+        phase = await AsyncPhase {
+            try await api.fetchMessages(offset: 0)
         }
     }
 
@@ -1394,14 +1390,11 @@ class MessageLoader: ObservableObject {
             return
         }
 
-        do {
-            let api = context.read(APIClientAtom())
-            let next = try await api.fetchMessages(offset: messages.count)
-            phase = .success(messages + next)
+        let api = context.read(APIClientAtom())
+        let nextPhase = await AsyncPhase {
+            try await api.fetchMessages(offset: messages.count)
         }
-        catch {
-            phase = .failure(error)
-        }
+        phase = nextPhase.map { messages + $0 }
     }
 }
 ```
