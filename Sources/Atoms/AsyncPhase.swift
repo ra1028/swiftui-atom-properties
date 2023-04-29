@@ -24,6 +24,20 @@ public enum AsyncPhase<Success, Failure: Error> {
         }
     }
 
+    /// Creates a new phase by evaluating a async throwing closure, capturing the
+    /// returned value as a success, or any thrown error as a failure.
+    ///
+    /// - Parameter body: A async throwing closure to evaluate.
+    public init(catching body: () async throws -> Success) async where Failure == Error {
+        do {
+            let value = try await body()
+            self = .success(value)
+        }
+        catch {
+            self = .failure(error)
+        }
+    }
+
     /// A boolean value indicating whether `self` is ``AsyncPhase/suspending``.
     public var isSuspending: Bool {
         guard case .suspending = self else {

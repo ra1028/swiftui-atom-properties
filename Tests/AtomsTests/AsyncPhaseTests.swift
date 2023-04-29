@@ -77,6 +77,14 @@ final class AsyncPhaseTests: XCTestCase {
         XCTAssertEqual(results.map(AsyncPhase.init), expected)
     }
 
+    func testAsyncInit() async {
+        let success = await AsyncPhase { 100 }
+        let failure = await AsyncPhase { throw URLError(.badURL) }
+
+        XCTAssertEqual(success.value, 100)
+        XCTAssertEqual(failure.error as? URLError, URLError(.badURL))
+    }
+
     func testMap() {
         let phase = AsyncPhase<Int, Error>.success(0)
             .map(String.init)
