@@ -1,5 +1,5 @@
 TOOL = SWIFTUI_ATOM_PROPERTIES_DEVELOPMENT=1 swift run -c release
-PACKAGE = SWIFTUI_ATOM_PROPERTIES_DEVELOPMENT=1 swift package
+PACKAGE = SWIFTUI_ATOM_PROPERTIES_DEVELOPMENT=1 swift package -c release
 SWIFT_FILE_PATHS = Package.swift Sources Tests Examples
 TEST_PLATFORM_IOS = iOS Simulator,name=iPhone 13 Pro
 TEST_PLATFORM_MACOS = macOS

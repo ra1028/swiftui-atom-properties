@@ -37,6 +37,10 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_14.2.app
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/cache@v3
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.swift') }}
       - name: Validate lint
         run: make lint
       - name: Validate format
