@@ -21,5 +21,6 @@ archive/
 *.xcframework
 .swiftpm
 .build
+bin
 docs
 Package.resolved

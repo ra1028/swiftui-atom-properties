@@ -15,12 +15,6 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_14.2.app
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v3
-        with:
-          path: |
-            .build
-            ~/Library/Developer/Xcode/DerivedData
-          key: spm-${{ runner.os }}-${{env.DEVELOPER_DIR}}-${{ hashFiles('Package.swift') }}-${{ github.job }}
       - name: Build docs
         run: make docs
       - name: Deploy
