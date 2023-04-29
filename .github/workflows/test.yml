@@ -39,8 +39,10 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/cache@v3
         with:
-          path: .build
-          key: spm-${{ runner.os }}-${{ hashFiles('Package.swift') }}
+          path: |
+            .build
+            ~/Library/Developer/Xcode/DerivedData
+          key: spm-${{ runner.os }}-${{env.DEVELOPER_DIR}}-${{ hashFiles('Package.swift') }}-${{ github.job }}
       - name: Validate lint
         run: make lint
       - name: Validate format
