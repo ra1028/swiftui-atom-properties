@@ -9,34 +9,40 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  DEVELOPER_DIR: /Applications/Xcode_14.2.app
+
 jobs:
   test:
     name: Test
     runs-on: macos-12
     strategy:
       matrix:
-        xcode_version:
-          - 14.2
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode_version }}.app
+        platform:
+          - ios
+          - macos
+          - tvos
+          - watchos
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test product
+        run: scripts/test.sh product ${{ matrix.platform }}
+      - name: Test example iOS
+        if: matrix.platform == 'ios'
+        run: scripts/test.sh example-ios ${{ matrix.platform }}
+      - name: Test example cross platform
+        if: matrix.platform == 'ios' || matrix.platform == 'macos' || matrix.platform == 'tvos'
+        run: scripts/test.sh example-cross-platform ${{ matrix.platform }}
+
+  validation:
+    name: Validation
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v2
       - name: Show environments
         run: |
           swift --version
           xcodebuild -version
-      - name: Test library
-        run: make test-library
-      - name: Test examples
-        run: make test-examples
-
-  validation:
-    name: Validation
-    runs-on: macos-12
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_14.2.app
-    steps:
-      - uses: actions/checkout@v2
       - uses: actions/cache@v3
         with:
           path: bin
