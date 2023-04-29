@@ -13,56 +13,30 @@ env:
   DEVELOPER_DIR: /Applications/Xcode_14.2.app
 
 jobs:
-  test-product:
+  test:
     name: Test
     runs-on: macos-12
     strategy:
       matrix:
-        test_platform:
-          - "iOS Simulator,name=iPhone 13 Pro"
-          - "macOS"
-          - "tvOS Simulator,name=Apple TV 4K (at 1080p) (2nd generation)"
-          - "watchOS Simulator,name=Apple Watch Series 7 (45mm)"
+        platform:
+          - ios
+          - macos
+          - tvos
+          - watchos
     steps:
       - uses: actions/checkout@v2
-      - name: Test
-        run: xcodebuild test -scheme swiftui-atom-properties -destination platform="${{ matrix.test_platform }}"
-
-  test-example-ios:
-    name: Test
-    runs-on: macos-12
-    strategy:
-      matrix:
-        test_platform:
-          - "iOS Simulator,name=iPhone 13 Pro"
-    steps:
-      - uses: actions/checkout@v2
-      - name: Test
-        run: |
-          cd Examples/Packages/iOS
-          xcodebuild test -scheme iOSExamples -destination platform="${{ matrix.test_platform }}"
-
-  test-example-cross-platform:
-    name: Test
-    runs-on: macos-12
-    strategy:
-      matrix:
-        test_platform:
-          - "iOS Simulator,name=iPhone 13 Pro"
-          - "macOS"
-          - "tvOS Simulator,name=Apple TV 4K (at 1080p) (2nd generation)"
-    steps:
-      - uses: actions/checkout@v2
-      - name: Test
-        run: |
-          cd Examples/Packages/CrossPlatform
-          xcodebuild test -scheme CrossPlatformExamples -destination platform="${{ matrix.test_platform }}"
+      - name: Test product
+        run: scripts/test.sh product ${{ matrix.platform }}
+      - name: Test example iOS
+        if: matrix.platform == 'ios'
+        run: scripts/test.sh example-ios ${{ matrix.platform }}
+      - name: Test example cross platform
+        if: matrix.platform == 'ios' || matrix.platform == 'macos' || matrix.platform == 'tvos'
+        run: scripts/test.sh example-cross-platform ${{ matrix.platform }}
 
   validation:
     name: Validation
     runs-on: macos-12
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_14.2.app
     steps:
       - uses: actions/checkout@v2
       - name: Show environments
