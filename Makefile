@@ -1,5 +1,5 @@
-TOOL = SWIFTUI_ATOM_PROPERTIES_DEVELOPMENT=1 swift run -c release
-PACKAGE = SWIFTUI_ATOM_PROPERTIES_DEVELOPMENT=1 swift package
+TOOL = scripts/swift-run.sh
+PACKAGE = SWIFTUI_ATOM_PROPERTIES_DEVELOPMENT=1 swift package -c release
 SWIFT_FILE_PATHS = Package.swift Sources Tests Examples
 TEST_PLATFORM_IOS = iOS Simulator,name=iPhone 13 Pro
 TEST_PLATFORM_MACOS = macOS
@@ -8,7 +8,7 @@ TEST_PLATFORM_WATCHOS = watchOS Simulator,name=Apple Watch Series 7 (45mm)
 
 .PHONY: proj
 proj:
-	$(TOOL) xcodegen -s Examples/project.yml
+	SWIFT_PACKAGE_RESOURCES=.build/checkouts/XcodeGen/SettingPresets $(TOOL) xcodegen -s Examples/project.yml
 
 .PHONY: format
 format:
