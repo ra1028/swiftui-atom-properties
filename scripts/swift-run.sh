@@ -21,11 +21,17 @@ checksum=$(echo $swift_version_hash $package_hash | md5 -q)
 
 echo "CHECKSUM: $checksum"
 
-if [[ ! -e $BIN || $checksum != $(cat $CHECKSUM_FILE 2>/dev/null) ]]; then
+if [[ ! -f $BIN || $checksum != $(cat $CHECKSUM_FILE 2>/dev/null) ]]; then
     echo "Building..."
     swift_build --product $PACKAGE
     mkdir -p $BIN_DIR
     mv -f $(swift_build --show-bin-path)/$PACKAGE $BIN
+
+    if [[ -e ${SWIFT_PACKAGE_RESOURCES:-} ]]; then
+        echo "Copying $SWIFT_PACKAGE_RESOURCES..."
+        cp -R $SWIFT_PACKAGE_RESOURCES $BIN_DIR
+    fi
+
     echo "$checksum" >"$CHECKSUM_FILE"
 fi
 

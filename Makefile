@@ -8,7 +8,7 @@ TEST_PLATFORM_WATCHOS = watchOS Simulator,name=Apple Watch Series 7 (45mm)
 
 .PHONY: proj
 proj:
-	$(TOOL) xcodegen -s Examples/project.yml
+	SWIFT_PACKAGE_RESOURCES=.build/checkouts/XcodeGen/SettingPresets $(TOOL) xcodegen -s Examples/project.yml
 
 .PHONY: format
 format:
