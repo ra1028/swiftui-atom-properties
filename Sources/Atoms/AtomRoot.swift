@@ -43,7 +43,6 @@ import SwiftUI
 /// }
 /// ```
 ///
-@MainActor
 public struct AtomRoot<Content: View>: View {
     @StateObject
     private var state: State

@@ -38,7 +38,6 @@ import SwiftUI
 /// }
 /// ```
 ///
-@MainActor
 public struct AtomRelay<Content: View>: View {
     private let context: AtomViewContext?
     private var observers = [Observer]()
