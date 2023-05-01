@@ -1,7 +1,7 @@
 @MainActor
 internal struct Overrides {
-    private var _entriesForNode = [AtomKey: AtomOverrideBase]()
-    private var _entriesForType = [AtomTypeKey: AtomOverrideBase]()
+    private var _entriesForNode = [AtomKey: any AtomOverrideProtocol]()
+    private var _entriesForType = [AtomTypeKey: any AtomOverrideProtocol]()
 
     nonisolated init() {}
 
@@ -48,8 +48,12 @@ internal struct Overrides {
 }
 
 @MainActor
-internal protocol AtomOverrideBase {}
+internal protocol AtomOverrideProtocol {
+    associatedtype Node: Atom
 
-internal struct AtomOverride<Node: Atom>: AtomOverrideBase {
+    var value: (Node) -> Node.Loader.Value { get }
+}
+
+internal struct AtomOverride<Node: Atom>: AtomOverrideProtocol {
     let value: (Node) -> Node.Loader.Value
 }

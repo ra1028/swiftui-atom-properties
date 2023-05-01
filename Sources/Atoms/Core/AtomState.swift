@@ -1,9 +1,12 @@
 @MainActor
-internal protocol AtomStateBase {
-    var transaction: Transaction? { get nonmutating set }
+internal protocol AtomStateProtocol: AnyObject {
+    associatedtype Coordinator
+
+    var coordinator: Coordinator { get }
+    var transaction: Transaction? { get set }
 }
 
-internal final class AtomState<Coordinator>: AtomStateBase {
+internal final class AtomState<Coordinator>: AtomStateProtocol {
     let coordinator: Coordinator
     var transaction: Transaction?
 
