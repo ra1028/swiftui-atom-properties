@@ -1,3 +1,4 @@
+@usableFromInline
 @MainActor
 internal struct Overrides {
     private var _entriesForNode = [AtomKey: any AtomOverrideProtocol]()

@@ -51,8 +51,9 @@ import SwiftUI
 ///
 public struct AtomScope<Content: View>: View {
     private let store: StoreContext?
-    private let content: Content
+    private var overrides = Overrides()
     private var observers = [Observer]()
+    private let content: Content
 
     @Environment(\.store)
     private var environmentStore
@@ -97,7 +98,10 @@ public struct AtomScope<Content: View>: View {
     public var body: some View {
         content.environment(
             \.store,
-            (store ?? environmentStore).scoped(observers: observers)
+             (store ?? environmentStore).scoped(
+                overrides: overrides,
+                observers: observers
+             )
         )
     }
 

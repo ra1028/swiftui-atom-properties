@@ -4,13 +4,13 @@ import Foundation
 @MainActor
 internal struct StoreContext {
     private weak var weakStore: AtomStore?
-    private let overrides: Overrides?
+    private let overrides: Overrides
     private let observers: [Observer]
     private let enablesAssertion: Bool
 
     nonisolated init(
         _ store: AtomStore? = nil,
-        overrides: Overrides? = nil,
+        overrides: Overrides = Overrides(),
         observers: [Observer] = [],
         enablesAssertion: Bool = false
     ) {
@@ -101,7 +101,7 @@ internal struct StoreContext {
         let context = prepareTransaction(of: atom, for: key)
         let value: Node.Loader.Value
 
-        if let overrideValue = overrides?.value(for: atom) {
+        if let overrideValue = overrides.value(for: atom) {
             value = await atom._loader.refresh(context: context, with: overrideValue)
         }
         else {
@@ -167,7 +167,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func scoped(observers: [Observer]) -> Self {
+    func scoped(overrides: Overrides, observers: [Observer]) -> Self {
         Self(
             weakStore,
             overrides: overrides,
@@ -212,7 +212,7 @@ private extension StoreContext {
         let context = prepareTransaction(of: atom, for: key)
         let value: Node.Loader.Value
 
-        if let overrideValue = overrides?.value(for: atom) {
+        if let overrideValue = overrides.value(for: atom) {
             value = atom._loader.handle(context: context, with: overrideValue)
         }
         else {
