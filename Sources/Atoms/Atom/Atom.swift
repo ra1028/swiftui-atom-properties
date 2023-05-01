@@ -52,7 +52,7 @@ public protocol Atom {
     ///
     /// Use it to manage arbitrary side-effects of value updates, such as state persistence,
     /// state synchronization, logging, and etc.
-    /// You can also access other atom values via `reader` passed as a parameter.
+    /// You can also access other atom values via `context` passed as a parameter.
     ///
     /// - Parameters:
     ///   - newValue: A new value after update.
