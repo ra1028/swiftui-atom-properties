@@ -24,7 +24,7 @@ public struct ObservableObjectAtomLoader<Node: ObservableObjectAtom>: AtomLoader
     /// Handles updates or cancellation of the passed value.
     public func handle(context: Context, with object: Value) -> Value {
         let cancellable = object.objectWillChange.sink { [weak object] _ in
-            guard let object = object else {
+            guard let object else {
                 return
             }
 

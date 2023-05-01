@@ -25,7 +25,7 @@ internal struct Overrides {
         let key = AtomKey(atom)
         let baseOverride = _entriesForNode[key] ?? _entriesForType[key.typeKey]
 
-        guard let baseOverride = baseOverride else {
+        guard let baseOverride else {
             return nil
         }
 
