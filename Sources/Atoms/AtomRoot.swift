@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// A view that stores the state container of atoms and provides an internal store to view-tree
-/// through environment values.
+/// A view that stores the state of atoms.
 ///
 /// It must be the root of any views to manage the state of atoms used throughout the application.
 ///

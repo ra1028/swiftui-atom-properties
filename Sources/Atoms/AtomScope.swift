@@ -2,9 +2,23 @@ import SwiftUI
 
 /// A view to override or monitor atoms in scope.
 ///
-/// For some reasons, sometimes SwiftUI can fail to pass environment values in the view-tree.
-/// The typical example is that, if you use SwiftUI view inside UIKit view, it could fail as
-/// SwiftUI can't pass environment values across UIKit.
+/// This view allows you to monitor changes of atoms used in descendant views by``AtomScope/observe(_:)``.
+///
+/// ```swift
+/// AtomScope {
+///     MyView()
+/// }
+/// .observe { snapshot in
+///     if let count = snapshot.lookup(CounterAtom()) {
+///         print(count)
+///     }
+/// }
+/// ```
+///
+/// It inherits from the atom store provided by ``AtomRoot`` through environment values by default,
+/// but sometimes SwiftUI can fail to pass environment values in the view-tree for some reason.
+/// The typical example is that, in case you use SwiftUI view inside UIKit view, it could fail as
+/// SwiftUI can't pass environment values to UIKit across boundaries.
 /// In that case, you can wrap the view with ``AtomScope`` and pass a view context to it so that
 /// the descendant views can explicitly inherit the store.
 ///
@@ -21,19 +35,19 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// ``AtomScope`` can be created without passing a view context, and in this case, it inherits
-/// from an internal store through environment values from ``AtomRoot.
-/// It allows you to monitor changes of atoms used in descendant views by``AtomScope/observe(_:)``.
+/// Additionally, if for some reason your app cannot use ``AtomRoot`` to manage the store
+/// that manages the state of atoms, you can manage the store on your own and pass the instance
+/// to ``AtomScope`` so that you can use the atoms in descendant views.
 ///
 /// ```swift
-/// AtomScope {
-///     MyView()
+/// let store = AtomStore()
+/// let rootView = AtomScope(store) {
+///     RootView()
 /// }
-/// .observe { snapshot in
-///     if let count = snapshot.lookup(CounterAtom()) {
-///         print(count)
-///     }
-/// }
+/// let window = UIWindow(frame: UIScreen.main.bounds)
+///
+/// window.rootViewController = UIHostingController(rootView: rootView)
+/// window.makeKeyAndVisible()
 /// ```
 ///
 public struct AtomScope<Content: View>: View {

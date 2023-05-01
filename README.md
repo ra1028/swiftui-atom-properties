@@ -377,7 +377,7 @@ To look into the APIs in more detail, visit the [API referrence](https://ra1028.
 
 ### [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot)
 
-Provides the internal store which provides atoms to view-tree through environment values.  
+Provides a store object which manages the state of atoms to view-tree through environment values.  
 It must be the root of any views to manage atoms used throughout the application.
 
 ```swift
@@ -398,7 +398,7 @@ struct ExampleApp: App {
 ### Atoms
 
 An atom represents a piece of state and is the source of truth for your app. It can also represent a derived data by combining and transforming one or more other atoms.  
-Each atom does not actually have a global data inside, and retrieve values from the internal store provided by the `AtomRoot`. That's why *they can be accessed from anywhere, but never lose testability.*  
+Each atom does not actually have a global data inside, and retrieve values from the store provided by the `AtomRoot`. That's why *they can be accessed from anywhere, but never lose testability.*  
 
 An atom and its value are associated using a unique `key` which is automatically defined if the atom conforms to `Hashable`, but you can also define it explicitly without Hashable.  
 
@@ -1458,7 +1458,7 @@ struct RootView: View {
 </details>
 
 Unfortunately, SwiftUI has a bug in iOS14 or lower where the `EnvironmentValue` is removed from a screen presented with `.sheet` just before dismissing it. Since this library is designed based on `EnvironmentValue`, this bug end up triggering the friendly `assertionFailure` that is added so that developers can easily aware of forgotten `AtomRoot` implementation.  
-As a workaround, `AtomScope` has the ability to explicitly inherit the internal store through `AtomViewContext` from the parent view.
+As a workaround, `AtomScope` has the ability to explicitly inherit the store through `AtomViewContext` from the parent view.
 
 #### Some SwiftUI modifiers cause memory leak (Fixed in iOS16)
 
