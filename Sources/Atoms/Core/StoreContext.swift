@@ -167,7 +167,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func relay(observers: [Observer]) -> Self {
+    func scoped(observers: [Observer]) -> Self {
         Self(
             weakStore,
             overrides: overrides,
@@ -493,7 +493,7 @@ private extension StoreContext {
             ```
 
             If for some reason the view tree is formed that does not inherit from `EnvironmentValues`,
-            consider using `AtomRelay` to pass it.
+            consider using `AtomScope` to pass it.
             That happens when using SwiftUI view wrapped with `UIHostingController`.
 
             ```
@@ -503,7 +503,7 @@ private extension StoreContext {
 
                 var body: some View {
                     UIViewWrappingView {
-                        AtomRelay(context) {
+                        AtomScope(context) {
                             WrappedView()
                         }
                     }
@@ -513,11 +513,11 @@ private extension StoreContext {
 
             The modal screen presented by the `.sheet` modifier or etc, inherits from the environment values,
             but only in iOS14, there is a bug where the environment values will be dismantled during it is
-            dismissing. This also can be avoided by using `AtomRelay` to explicitly inherit from it.
+            dismissing. This also can be avoided by using `AtomScope` to explicitly inherit from it.
 
             ```
             .sheet(isPresented: ...) {
-                AtomRelay(context) {
+                AtomScope(context) {
                     ExampleView()
                 }
             }

@@ -42,7 +42,7 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 ### Views
 
 - ``AtomRoot``
-- ``AtomRelay``
+- ``AtomScope``
 - ``Suspense``
 
 ### Values

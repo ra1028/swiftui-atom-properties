@@ -237,7 +237,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertTrue(store.state.caches.isEmpty)
     }
 
-    func testRelay() {
+    func testScoped() {
         let store = Store()
         let container = SubscriptionContainer()
         let atom = TestValueAtom(value: 0)
@@ -246,9 +246,9 @@ final class StoreContextTests: XCTestCase {
         let observer0 = Observer { snapshots0.append($0) }
         let observer1 = Observer { snapshots1.append($0) }
         let context = StoreContext(store, observers: [observer0])
-        let relayedContext = context.relay(observers: [observer1])
+        let scopedContext = context.scoped(observers: [observer1])
 
-        _ = relayedContext.watch(atom, container: container.wrapper) {}
+        _ = scopedContext.watch(atom, container: container.wrapper) {}
 
         XCTAssertFalse(snapshots0.isEmpty)
         XCTAssertFalse(snapshots1.isEmpty)
