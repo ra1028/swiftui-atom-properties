@@ -50,6 +50,8 @@ import SwiftUI
 /// ```
 ///
 public struct AtomScope<Content: View>: View {
+    @StateObject
+    private var state = State()
     private let store: StoreContext?
     private var overrides = Overrides()
     private var observers = [Observer]()
@@ -99,6 +101,7 @@ public struct AtomScope<Content: View>: View {
         content.environment(
             \.store,
             (store ?? environmentStore).scoped(
+                store: state.store,
                 overrides: overrides,
                 observers: observers
             )
@@ -148,6 +151,11 @@ public struct AtomScope<Content: View>: View {
 }
 
 private extension AtomScope {
+    @MainActor
+    final class State: ObservableObject {
+        let store = AtomStore()
+    }
+
     func `mutating`(_ mutation: (inout Self) -> Void) -> Self {
         var view = self
         mutation(&view)

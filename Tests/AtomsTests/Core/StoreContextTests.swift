@@ -34,6 +34,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertNil(store.state.states[key])
         XCTAssertNil(store.state.caches[key])
 
+        store.state.caches[key] = AtomCache(atom: atom, value: 0)
         store.state.states[key] = AtomState(coordinator: atom.makeCoordinator())
         store.state.subscriptions[key, default: [:]][subscriptionKey] = Subscription(
             notifyUpdate: { updateCount += 1 },
@@ -142,7 +143,7 @@ final class StoreContextTests: XCTestCase {
         }
 
         let value1 = await context.refresh(atom).value
-        let cachedValue = await (store.state.caches[key] as? AtomCache<TestTaskAtom<Int>>)?.value?.value
+        let cachedValue = await (store.state.caches[key] as? AtomCache<TestTaskAtom<Int>>)?.value.value
 
         XCTAssertEqual(value1, 0)
         XCTAssertNotNil(store.state.caches[key])
@@ -246,7 +247,11 @@ final class StoreContextTests: XCTestCase {
         let observer0 = Observer { snapshots0.append($0) }
         let observer1 = Observer { snapshots1.append($0) }
         let context = StoreContext(store, observers: [observer0])
-        let scopedContext = context.scoped(overrides: Overrides(), observers: [observer1])
+        let scopedContext = context.scoped(
+            store: store,
+            overrides: Overrides(),
+            observers: [observer1]
+        )
 
         _ = scopedContext.watch(atom, container: container.wrapper) {}
 

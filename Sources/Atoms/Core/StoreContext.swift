@@ -1,20 +1,25 @@
 import Foundation
 
+internal protocol StoreContextProtocol {}
+
 @usableFromInline
 @MainActor
-internal struct StoreContext {
+internal struct StoreContext: StoreContextProtocol {
     private weak var weakStore: AtomStore?
+    private let parent: StoreContextProtocol?
     private let overrides: Overrides
     private let observers: [Observer]
     private let enablesAssertion: Bool
 
     nonisolated init(
         _ store: AtomStore? = nil,
+        parent: StoreContextProtocol? = nil,
         overrides: Overrides = Overrides(),
         observers: [Observer] = [],
         enablesAssertion: Bool = false
     ) {
         self.weakStore = store
+        self.parent = parent
         self.overrides = overrides
         self.observers = observers
         self.enablesAssertion = enablesAssertion
@@ -167,9 +172,14 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func scoped(overrides: Overrides, observers: [Observer]) -> Self {
+    func scoped(
+        store: AtomStore,
+        overrides: Overrides,
+        observers: [Observer]
+    ) -> Self {
         Self(
-            weakStore,
+            store,
+            parent: self,
             overrides: overrides,
             observers: self.observers + observers
         )
@@ -208,6 +218,21 @@ private extension StoreContext {
         }
     }
 
+    func getValue<Node: Atom>(of atom: Node, for key: AtomKey) -> (isNew: Bool, value: Node.Loader.Value) {
+        let store = getStore()
+
+        if let cache = peekCache(of: atom, for: key) {
+            return (isNew: false, value: cache.value)
+        }
+        else {
+            let value = getNewValue(of: atom, for: key)
+            let cache = AtomCache(atom: atom, value: value)
+            store.state.caches[key] = cache
+
+            return (isNew: true, value: value)
+        }
+    }
+
     func getNewValue<Node: Atom>(of atom: Node, for key: AtomKey) -> Node.Loader.Value {
         let context = prepareTransaction(of: atom, for: key)
         let value: Node.Loader.Value
@@ -220,37 +245,6 @@ private extension StoreContext {
         }
 
         return value
-    }
-
-    func getValue<Node: Atom>(of atom: Node, for key: AtomKey) -> (isNew: Bool, value: Node.Loader.Value) {
-        let store = getStore()
-        var cache = getCache(of: atom, for: key)
-
-        if let value = cache.value {
-            return (isNew: false, value: value)
-        }
-        else {
-            let value = getNewValue(of: atom, for: key)
-
-            cache.value = value
-            store.state.caches[key] = cache
-
-            return (isNew: true, value: value)
-        }
-    }
-
-    func getCache<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomCache<Node> {
-        let store = getStore()
-
-        if let cache = peekCache(of: atom, for: key) {
-            return cache
-        }
-        else {
-            let cache = AtomCache(atom: atom)
-            store.state.caches[key] = cache
-
-            return cache
-        }
     }
 
     func peekCache<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomCache<Node>? {
@@ -360,8 +354,11 @@ private extension StoreContext {
         with value: Node.Loader.Value,
         needsEnsureValueUpdate: Bool = false
     ) {
+        guard var cache = peekCache(of: atom, for: key) else {
+            return
+        }
+
         let store = getStore()
-        var cache = getCache(of: atom, for: key)
         let oldValue = cache.value
 
         // Update the current value with the new value.
@@ -369,7 +366,7 @@ private extension StoreContext {
         store.state.caches[key] = cache
 
         // Do not notify update if the new value and the old value are equivalent.
-        if let oldValue, !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
+        if !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
             return
         }
 
@@ -378,10 +375,6 @@ private extension StoreContext {
 
         // Notify value update.
         notifyUpdateToObservers()
-
-        guard let oldValue else {
-            return
-        }
 
         func notifyUpdated() {
             let context = AtomUpdatedContext(store: self)

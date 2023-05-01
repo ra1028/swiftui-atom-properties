@@ -3,7 +3,7 @@ internal protocol AtomCacheProtocol: CustomStringConvertible {
     associatedtype Node: Atom
 
     var atom: Node { get set }
-    var value: Node.Loader.Value? { get set }
+    var value: Node.Loader.Value { get set }
     var shouldKeepAlive: Bool { get }
 
     func reset(with store: StoreContext)
@@ -11,13 +11,13 @@ internal protocol AtomCacheProtocol: CustomStringConvertible {
 
 internal extension AtomCacheProtocol {
     var description: String {
-        value.map { "\($0)" } ?? "nil"
+        "\(value)"
     }
 }
 
 internal struct AtomCache<Node: Atom>: AtomCacheProtocol {
     var atom: Node
-    var value: Node.Loader.Value?
+    var value: Node.Loader.Value
 
     var shouldKeepAlive: Bool {
         Node.shouldKeepAlive

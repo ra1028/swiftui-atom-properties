@@ -11,8 +11,8 @@ final class AtomCacheTests: XCTestCase {
             }
         }
 
-        let cache0 = AtomCache(atom: TestValueAtom(value: 0))
-        let cache1 = AtomCache(atom: KeepAliveAtom())
+        let cache0 = AtomCache(atom: TestValueAtom(value: 0), value: 0)
+        let cache1 = AtomCache(atom: KeepAliveAtom(), value: 0)
 
         XCTAssertFalse(cache0.shouldKeepAlive)
         XCTAssertTrue(cache1.shouldKeepAlive)
@@ -24,7 +24,7 @@ final class AtomCacheTests: XCTestCase {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let cache = AtomCache(atom: atom)
+        let cache = AtomCache(atom: atom, value: 0)
 
         XCTAssertEqual(context.watch(dependency, in: transaction), 0)
 
@@ -38,10 +38,8 @@ final class AtomCacheTests: XCTestCase {
 
     func testDescription() {
         let atom = TestAtom(value: 0)
-        let cache0 = AtomCache(atom: atom)
-        let cache1 = AtomCache(atom: atom, value: 0)
+        let cache = AtomCache(atom: atom, value: 0)
 
-        XCTAssertEqual(cache0.description, "nil")
-        XCTAssertEqual(cache1.description, "0")
+        XCTAssertEqual(cache.description, "0")
     }
 }
