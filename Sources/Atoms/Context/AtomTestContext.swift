@@ -167,7 +167,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// ```
     ///
     /// - Parameter atom: An atom that associates the value.
-    public func reset<Node: Atom>(_ atom: Node) {
+    public func reset(_ atom: some Atom) {
         state.store.reset(atom)
     }
 

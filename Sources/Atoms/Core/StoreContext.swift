@@ -116,7 +116,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func reset<Node: Atom>(_ atom: Node) {
+    func reset(_ atom: some Atom) {
         let key = AtomKey(atom)
         let value = getNewValue(of: atom, for: key)
 

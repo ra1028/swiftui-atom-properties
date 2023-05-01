@@ -77,7 +77,7 @@ public protocol AtomContext {
     /// ```
     ///
     /// - Parameter atom: An atom that associates the value.
-    func reset<Node: Atom>(_ atom: Node)
+    func reset(_ atom: some Atom)
 }
 
 public extension AtomContext {
