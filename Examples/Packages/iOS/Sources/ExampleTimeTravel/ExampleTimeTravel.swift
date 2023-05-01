@@ -79,7 +79,7 @@ struct TimeTravelDebug<Content: View>: View {
     var position = 0
 
     var body: some View {
-        AtomRelay {
+        AtomScope {
             ZStack(alignment: .bottom) {
                 content()
                 slider

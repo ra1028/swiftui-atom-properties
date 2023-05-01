@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// A view that relays an internal store from the passed view context or from environment values.
+/// A view to override or monitor atoms in scope.
 ///
 /// For some reasons, sometimes SwiftUI can fail to pass environment values in the view-tree.
 /// The typical example is that, if you use SwiftUI view inside UIKit view, it could fail as
 /// SwiftUI can't pass environment values across UIKit.
-/// In that case, you can wrap the view with ``AtomRelay`` and pass a view context to it so that
-/// the descendant views can explicitly inherit an internal store.
+/// In that case, you can wrap the view with ``AtomScope`` and pass a view context to it so that
+/// the descendant views can explicitly inherit the store.
 ///
 /// ```swift
 /// @ViewContext
@@ -14,21 +14,19 @@ import SwiftUI
 ///
 /// var body: some View {
 ///     MyUIViewWrappingView {
-///         AtomRelay(context) {
+///         AtomScope(context) {
 ///             MySwiftUIView()
 ///         }
 ///     }
 /// }
 /// ```
 ///
-/// Also, ``AtomRelay`` can be created without passing a view context, and in this case, it relays
-/// an internal store from environment values.
-/// Relaying from environment values means that does actually nothing and just inherits an internal
-/// store from ``AtomRoot`` as same as usual views, but ``AtomRelay`` provides the modifier
-/// ``AtomRelay/observe(_:)`` to monitor all changes in atoms used in descendant views.
+/// ``AtomScope`` can be created without passing a view context, and in this case, it inherits
+/// from an internal store through environment values from ``AtomRoot.
+/// It allows you to monitor changes of atoms used in descendant views by``AtomScope/observe(_:)``.
 ///
 /// ```swift
-/// AtomRelay {
+/// AtomScope {
 ///     MyView()
 /// }
 /// .observe { snapshot in
@@ -38,7 +36,7 @@ import SwiftUI
 /// }
 /// ```
 ///
-public struct AtomRelay<Content: View>: View {
+public struct AtomScope<Content: View>: View {
     private let context: AtomViewContext?
     private var observers = [Observer]()
     private let content: Content
@@ -81,7 +79,7 @@ public struct AtomRelay<Content: View>: View {
     }
 }
 
-private extension AtomRelay {
+private extension AtomScope {
     func `mutating`(_ mutation: (inout Self) -> Void) -> Self {
         var view = self
         mutation(&view)
