@@ -477,7 +477,7 @@ final class StoreContextTests: XCTestCase {
         }
 
         let store = AtomStore()
-        let atomStore = StoreContext(store)
+        let context = StoreContext(store)
         let container = SubscriptionContainer()
         let pipe = AsyncThrowingStreamPipe<Void>()
         let atom = TestAtom(pipe: pipe)
@@ -488,7 +488,7 @@ final class StoreContextTests: XCTestCase {
         let phase = PhaseAtom()
 
         func watch() async -> Int {
-            await atomStore.watch(atom, container: container.wrapper, notifyUpdate: {}).value
+            await context.watch(atom, container: container.wrapper, notifyUpdate: {}).value
         }
 
         do {
@@ -519,12 +519,12 @@ final class StoreContextTests: XCTestCase {
 
             Task {
                 await pipe.stream.next()
-                atomStore.set(1, for: d)
+                context.set(1, for: d)
                 pipe.continuation.yield()
             }
 
             pipe.reset()
-            atomStore.set(.second, for: phase)
+            context.set(.second, for: phase)
 
             let before = await watch()
             let after = await watch()
@@ -548,12 +548,12 @@ final class StoreContextTests: XCTestCase {
 
             Task {
                 await pipe.stream.next()
-                atomStore.set(2, for: b)
+                context.set(2, for: b)
                 pipe.continuation.yield()
             }
 
             pipe.reset()
-            atomStore.set(.third, for: phase)
+            context.set(.third, for: phase)
             let before = await watch()
             let after = await watch()
 

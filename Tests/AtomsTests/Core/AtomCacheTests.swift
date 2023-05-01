@@ -18,24 +18,6 @@ final class AtomCacheTests: XCTestCase {
         XCTAssertTrue(cache1.shouldKeepAlive)
     }
 
-    func testReset() {
-        let store = AtomStore()
-        let context = StoreContext(store)
-        let atom = TestValueAtom(value: 0)
-        let dependency = TestStateAtom(defaultValue: 0)
-        let transaction = Transaction(key: AtomKey(atom)) {}
-        let cache = AtomCache(atom: atom, value: 0)
-
-        XCTAssertEqual(context.watch(dependency, in: transaction), 0)
-
-        context.set(1, for: dependency)
-        XCTAssertEqual(context.watch(dependency, in: transaction), 1)
-
-        cache.reset(with: context)
-
-        XCTAssertEqual(context.watch(dependency, in: transaction), 0)
-    }
-
     func testDescription() {
         let atom = TestAtom(value: 0)
         let cache = AtomCache(atom: atom, value: 0)

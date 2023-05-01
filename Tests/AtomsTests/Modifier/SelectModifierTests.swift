@@ -20,6 +20,7 @@ final class SelectModifierTests: XCTestCase {
 
         XCTAssertEqual(updatedCount, 1)
         XCTAssertEqual(context.watch(atom.select(\.count)), 8)
+
         context[atom] = "modified"
 
         // Should not be updated with an equivalent value.
