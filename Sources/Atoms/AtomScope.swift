@@ -44,7 +44,7 @@ public struct AtomScope<Content: View>: View {
     @Environment(\.store)
     private var inheritedStore
 
-    /// Creates an atom relay with the specified content that will be allowed to use atoms by
+    /// Creates an new scope with the specified content that will be allowed to use atoms by
     /// passing a view context to explicitly make the descendant views inherit an internal store.
     ///
     /// - Parameters:
@@ -63,7 +63,7 @@ public struct AtomScope<Content: View>: View {
     public var body: some View {
         content.environment(
             \.store,
-            (context?._store ?? inheritedStore).relay(observers: observers)
+            (context?._store ?? inheritedStore).scoped(observers: observers)
         )
     }
 

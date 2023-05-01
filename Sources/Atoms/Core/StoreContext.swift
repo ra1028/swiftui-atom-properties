@@ -167,7 +167,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func relay(observers: [Observer]) -> Self {
+    func scoped(observers: [Observer]) -> Self {
         Self(
             weakStore,
             overrides: overrides,
