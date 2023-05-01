@@ -6,7 +6,7 @@ import XCTest
 final class AtomTransactionContextTests: XCTestCase {
     func testRead() {
         let atom = TestValueAtom(value: 100)
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
         let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
@@ -16,7 +16,7 @@ final class AtomTransactionContextTests: XCTestCase {
     func testSet() {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 100)
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
         let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
@@ -29,7 +29,7 @@ final class AtomTransactionContextTests: XCTestCase {
 
     func testRefresh() async {
         let atom = TestTaskAtom(value: 100)
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
         let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
@@ -41,7 +41,7 @@ final class AtomTransactionContextTests: XCTestCase {
     func testReset() {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
         let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
@@ -59,7 +59,7 @@ final class AtomTransactionContextTests: XCTestCase {
     func testWatch() {
         let atom0 = TestValueAtom(value: 100)
         let atom1 = TestStateAtom(defaultValue: 200)
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom0)) {}
         let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 

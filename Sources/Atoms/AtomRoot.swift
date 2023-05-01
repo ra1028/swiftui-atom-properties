@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// A view that stores the state container of atoms and provides an internal store to view-tree
-/// through environment values.
+/// A view that stores the state of atoms.
 ///
 /// It must be the root of any views to manage the state of atoms used throughout the application.
 ///
@@ -115,7 +114,7 @@ public struct AtomRoot<Content: View>: View {
 private extension AtomRoot {
     @MainActor
     final class State: ObservableObject {
-        let store = Store()
+        let store = AtomStore()
     }
 
     func `mutating`(_ mutation: (inout Self) -> Void) -> Self {

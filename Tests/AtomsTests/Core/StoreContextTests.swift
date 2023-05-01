@@ -5,7 +5,7 @@ import XCTest
 @MainActor
 final class StoreContextTests: XCTestCase {
     func testRead() {
-        let store = Store()
+        let store = AtomStore()
         let context = StoreContext(store)
         let atom = TestValueAtom(value: 0)
         let key = AtomKey(atom)
@@ -21,7 +21,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testSet() {
-        let store = Store()
+        let store = AtomStore()
         let context = StoreContext(store)
         let subscriptionKey = SubscriptionKey(SubscriptionContainer())
         var updateCount = 0
@@ -55,7 +55,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testWatch() {
-        let store = Store()
+        let store = AtomStore()
         let context = StoreContext(store)
         let atom = TestAtom(value: 0)
         let dependency0 = TestStateAtom(defaultValue: 0)
@@ -93,7 +93,7 @@ final class StoreContextTests: XCTestCase {
             }
         }
 
-        let store = Store()
+        let store = AtomStore()
         let context = StoreContext(store)
         let container = SubscriptionContainer()
         let subscriptionKey = SubscriptionKey(container)
@@ -124,7 +124,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testRefresh() async {
-        let store = Store()
+        let store = AtomStore()
         let context = StoreContext(store)
         let container = SubscriptionContainer()
         let atom = TestTaskAtom(value: 0)
@@ -152,7 +152,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testReset() {
-        let store = Store()
+        let store = AtomStore()
         let context = StoreContext(store)
         let container = SubscriptionContainer()
         let atom = TestStateAtom(defaultValue: 0)
@@ -175,7 +175,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testSnapshot() {
-        let store = Store()
+        let store = AtomStore()
         let subscriptionKey = SubscriptionKey(SubscriptionContainer())
         let context = StoreContext(store)
         let atom0 = TestAtom(value: 0)
@@ -238,7 +238,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testScoped() {
-        let store = Store()
+        let store = AtomStore()
         let container = SubscriptionContainer()
         let atom = TestValueAtom(value: 0)
         var snapshots0 = [Snapshot]()
@@ -267,7 +267,7 @@ final class StoreContextTests: XCTestCase {
             }
         }
 
-        let store = Store()
+        let store = AtomStore()
         let container = SubscriptionContainer()
         let context = StoreContext(store)
         let atom = TestAtom()
@@ -287,7 +287,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testObservers() {
-        let store = Store()
+        let store = AtomStore()
         let container = SubscriptionContainer()
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
@@ -471,7 +471,7 @@ final class StoreContextTests: XCTestCase {
             }
         }
 
-        let store = Store()
+        let store = AtomStore()
         let atomStore = StoreContext(store)
         let container = SubscriptionContainer()
         let pipe = AsyncThrowingStreamPipe<Void>()

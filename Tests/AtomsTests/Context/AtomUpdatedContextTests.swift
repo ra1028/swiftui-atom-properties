@@ -6,7 +6,7 @@ import XCTest
 final class AtomUpdatedContextTests: XCTestCase {
     func testRead() {
         let atom = TestValueAtom(value: 100)
-        let store = Store()
+        let store = AtomStore()
         let context = AtomUpdatedContext(store: StoreContext(store))
 
         XCTAssertEqual(context.read(atom), 100)
@@ -15,7 +15,7 @@ final class AtomUpdatedContextTests: XCTestCase {
     func testSet() {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 100)
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
         let storeContext = StoreContext(store)
         let context = AtomUpdatedContext(store: storeContext)
@@ -29,7 +29,7 @@ final class AtomUpdatedContextTests: XCTestCase {
 
     func testRefresh() async {
         let atom = TestTaskAtom(value: 100)
-        let store = Store()
+        let store = AtomStore()
         let context = AtomUpdatedContext(store: StoreContext(store))
 
         let value = await context.refresh(atom).value
@@ -40,7 +40,7 @@ final class AtomUpdatedContextTests: XCTestCase {
     func testReset() {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
         let storeContext = StoreContext(store)
         let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())

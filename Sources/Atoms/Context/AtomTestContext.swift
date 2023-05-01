@@ -3,7 +3,7 @@ import Foundation
 
 /// A context structure that to read, watch, and otherwise interacting with atoms in testing.
 ///
-/// This context has an internal Store that manages atoms, so it can be used to test individual
+/// This context has a store that manages the state of atoms, so it can be used to test individual
 /// atoms or their interactions with other atoms without depending on the SwiftUI view tree.
 /// Furthermore, unlike other contexts, it is possible to override or observe changes in atoms
 /// by this itself.
@@ -261,7 +261,7 @@ public struct AtomTestContext: AtomWatchableContext {
 
 private extension AtomTestContext {
     final class State {
-        private let _store = Store()
+        private let _store = AtomStore()
         private let _container = SubscriptionContainer()
 
         let location: SourceLocation

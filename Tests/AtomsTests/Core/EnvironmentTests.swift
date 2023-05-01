@@ -6,7 +6,7 @@ import XCTest
 @MainActor
 final class EnvironmentTests: XCTestCase {
     func testStore() {
-        let store = Store()
+        let store = AtomStore()
         let atom = TestValueAtom(value: 0)
         var environment = EnvironmentValues()
 
