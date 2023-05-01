@@ -25,7 +25,7 @@ final class ObservableObjectAtomTests: XCTestCase {
             TestObject()
         }
 
-        func updated(newValue: TestObject, oldValue: TestObject, reader: Reader) {
+        func updated(newValue: TestObject, oldValue: TestObject, context: UpdatedContext) {
             onUpdated?(newValue, oldValue)
         }
     }

@@ -1413,7 +1413,7 @@ struct PersistentCounterAtom: StateAtom, Hashable {
         UserDefaults.standard.integer(forKey: "persistence_key")
     }
 
-    func updated(newValue: Int, oldValue: Int, reader: Reader) {
+    func updated(newValue: Int, oldValue: Int, context: UpdatedContext) {
         if newValue != oldValue {
             UserDefaults.standard.set(newValue, forKey: "persistence_key")
         }
@@ -1423,7 +1423,7 @@ struct PersistentCounterAtom: StateAtom, Hashable {
 
 </details>
 
-All atom types can optionally implement [`updated(newValue:oldValue:reader:`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/updated(newvalue:oldvalue:reader:)-fgb8) method to manage arbitrary side-effects of value updates, such as state persistence, state synchronization, logging, and etc.  
+All atom types can optionally implement [`updated(newValue:oldValue:context:`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/updated(newvalue:oldvalue:context:)-7kvo0) method to manage arbitrary side-effects of value updates, such as state persistence, state synchronization, logging, and etc.  
 In the above example, the initial state of the atom is retrieved from UserDefaults, and when the user updates the state, the value is reflected into UserDefaults as a side effect.
 
 ---

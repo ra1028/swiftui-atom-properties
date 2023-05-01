@@ -384,8 +384,8 @@ private extension StoreContext {
         }
 
         func notifyUpdated() {
-            let reader = AtomReader(store: self)
-            atom.updated(newValue: value, oldValue: oldValue, reader: reader)
+            let context = AtomUpdatedContext(store: self)
+            atom.updated(newValue: value, oldValue: oldValue, context: context)
         }
 
         // Ensures the value is updated.

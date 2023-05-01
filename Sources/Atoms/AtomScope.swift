@@ -45,7 +45,7 @@ import SwiftUI
 ///     RootView()
 /// }
 /// let window = UIWindow(frame: UIScreen.main.bounds)
-///
+
 /// window.rootViewController = UIHostingController(rootView: rootView)
 /// window.makeKeyAndVisible()
 /// ```
