@@ -1229,8 +1229,8 @@ var debugButton: some View {
 }
 ```
 
-Or, you can observe all updates of atoms and always continue to receive `Snapshots` at that point in time through `observe(_:)` modifier of [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot) or [AtomRelay](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomrelay).  
-Note that observing in `AtomRoot` will receive all atom updates that happened in the whole app, but observing in `AtomRelay` will only receive atoms used in the descendant views.  
+Or, you can observe all updates of atoms and always continue to receive `Snapshots` at that point in time through `observe(_:)` modifier of [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot) or [AtomScope](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomscope).  
+Note that observing in `AtomRoot` will receive all atom updates that happened in the whole app, but observing in `AtomScope` will only receive atoms used in the descendant views.  
 
 ```swift
 AtomRoot {
@@ -1447,7 +1447,7 @@ struct RootView: View {
             Text("Example View")
         }
         .sheet(isPresented: $isPresented) {
-            AtomRelay(context) {
+            AtomScope(context) {
                 MailView()
             }
         }
@@ -1458,7 +1458,7 @@ struct RootView: View {
 </details>
 
 Unfortunately, SwiftUI has a bug in iOS14 or lower where the `EnvironmentValue` is removed from a screen presented with `.sheet` just before dismissing it. Since this library is designed based on `EnvironmentValue`, this bug end up triggering the friendly `assertionFailure` that is added so that developers can easily aware of forgotten `AtomRoot` implementation.  
-As a workaround, `AtomRelay` has the ability to explicitly inherit the internal store through `AtomViewContext` from the parent view.
+As a workaround, `AtomScope` has the ability to explicitly inherit the internal store through `AtomViewContext` from the parent view.
 
 #### Some SwiftUI modifiers cause memory leak (Fixed in iOS16)
 
