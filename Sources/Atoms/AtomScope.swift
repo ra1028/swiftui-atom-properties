@@ -37,25 +37,47 @@ import SwiftUI
 /// ```
 ///
 public struct AtomScope<Content: View>: View {
-    private let context: AtomViewContext?
-    private var observers = [Observer]()
+    private let store: StoreContext?
     private let content: Content
+    private var observers = [Observer]()
 
     @Environment(\.store)
-    private var inheritedStore
+    private var environmentStore
 
-    /// Creates an new scope with the specified content that will be allowed to use atoms by
-    /// passing a view context to explicitly make the descendant views inherit an internal store.
+    /// Creates a new scope with the specified content.
     ///
     /// - Parameters:
-    ///   - context: The parent view context that for inheriting an internal store explicitly.
-    ///              Default is nil.
+    ///   - content: The view content that inheriting from the parent.
+    public init(@ViewBuilder content: () -> Content) {
+        self.store = nil
+        self.content = content()
+    }
+
+    /// Creates a new scope with the specified content that will be allowed to use atoms by
+    /// passing a view context to explicitly make the descendant views inherit store.
+    ///
+    /// - Parameters:
+    ///   - context: The parent view context that for inheriting store explicitly.
     ///   - content: The view content that inheriting from the parent.
     public init(
-        _ context: AtomViewContext? = nil,
+        _ context: AtomViewContext,
         @ViewBuilder content: () -> Content
     ) {
-        self.context = context
+        self.store = context._store
+        self.content = content()
+    }
+
+    /// Creates a new scope with the specified content that will be allowed to use atoms by
+    /// passing a store object.
+    ///
+    /// - Parameters:
+    ///   - store: An object that stores the state of atoms.
+    ///   - content: The view content that inheriting from the parent.
+    public init(
+        _ store: AtomStore,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.store = StoreContext(store)
         self.content = content()
     }
 
@@ -63,7 +85,7 @@ public struct AtomScope<Content: View>: View {
     public var body: some View {
         content.environment(
             \.store,
-            (context?._store ?? inheritedStore).scoped(observers: observers)
+            (store ?? environmentStore).scoped(observers: observers)
         )
     }
 
