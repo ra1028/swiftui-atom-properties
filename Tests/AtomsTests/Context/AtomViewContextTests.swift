@@ -6,7 +6,7 @@ import XCTest
 final class AtomViewContextTests: XCTestCase {
     func testRead() {
         let atom = TestValueAtom(value: 100)
-        let store = Store()
+        let store = AtomStore()
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
@@ -19,7 +19,7 @@ final class AtomViewContextTests: XCTestCase {
 
     func testSet() {
         let atom = TestStateAtom(defaultValue: 100)
-        let store = Store()
+        let store = AtomStore()
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
@@ -36,7 +36,7 @@ final class AtomViewContextTests: XCTestCase {
 
     func testRefresh() async {
         let atom = TestTaskAtom(value: 100)
-        let store = Store()
+        let store = AtomStore()
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
@@ -53,7 +53,7 @@ final class AtomViewContextTests: XCTestCase {
 
     func testReset() {
         let atom = TestStateAtom(defaultValue: 0)
-        let store = Store()
+        let store = AtomStore()
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
@@ -74,7 +74,7 @@ final class AtomViewContextTests: XCTestCase {
 
     func testWatch() {
         let atom = TestStateAtom(defaultValue: 100)
-        let store = Store()
+        let store = AtomStore()
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
@@ -90,7 +90,7 @@ final class AtomViewContextTests: XCTestCase {
     }
 
     func testSnapshot() {
-        let store = Store()
+        let store = AtomStore()
         let container = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),
@@ -129,7 +129,7 @@ final class AtomViewContextTests: XCTestCase {
     func testUnsubscription() {
         let atom = TestValueAtom(value: 100)
         let key = AtomKey(atom)
-        let store = Store()
+        let store = AtomStore()
         var container: SubscriptionContainer? = SubscriptionContainer()
         let context = AtomViewContext(
             store: StoreContext(store),

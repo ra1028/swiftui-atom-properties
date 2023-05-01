@@ -261,7 +261,7 @@ public struct AtomTestContext: AtomWatchableContext {
 
 private extension AtomTestContext {
     final class State {
-        private let _store = Store()
+        private let _store = AtomStore()
         private let _container = SubscriptionContainer()
 
         let location: SourceLocation

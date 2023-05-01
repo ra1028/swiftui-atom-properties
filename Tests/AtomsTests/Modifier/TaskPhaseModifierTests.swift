@@ -26,7 +26,7 @@ final class TaskPhaseModifierTests: XCTestCase {
     func testValue() {
         let atom = TestValueAtom(value: 0)
         let modifier = TaskPhaseModifier<Int, Never>()
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
 
         var phase: AsyncPhase<Int, Never>?
@@ -54,7 +54,7 @@ final class TaskPhaseModifierTests: XCTestCase {
     func testHandle() {
         let atom = TestValueAtom(value: 0)
         let modifier = TaskPhaseModifier<Int, Never>()
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
         let context = AtomLoaderContext<AsyncPhase<Int, Never>, Void>(
             store: StoreContext(store),

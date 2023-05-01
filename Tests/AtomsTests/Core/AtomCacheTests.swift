@@ -19,7 +19,7 @@ final class AtomCacheTests: XCTestCase {
     }
 
     func testReset() {
-        let store = Store()
+        let store = AtomStore()
         let context = StoreContext(store)
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)

@@ -46,7 +46,7 @@ final class SelectModifierTests: XCTestCase {
     func testValue() {
         let atom = TestValueAtom(value: 0)
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
         let context = AtomLoaderContext<String, Void>(
             store: StoreContext(store),
@@ -62,7 +62,7 @@ final class SelectModifierTests: XCTestCase {
     func testHanlde() {
         let atom = TestValueAtom(value: 0)
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
-        let store = Store()
+        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
         let context = AtomLoaderContext<String, Void>(
             store: StoreContext(store),

@@ -3,13 +3,13 @@ import Foundation
 @usableFromInline
 @MainActor
 internal struct StoreContext {
-    private weak var weakStore: Store?
+    private weak var weakStore: AtomStore?
     private let overrides: Overrides?
     private let observers: [Observer]
     private let enablesAssertion: Bool
 
     nonisolated init(
-        _ store: Store? = nil,
+        _ store: AtomStore? = nil,
         overrides: Overrides? = nil,
         observers: [Observer] = [],
         enablesAssertion: Bool = false
@@ -468,7 +468,7 @@ private extension StoreContext {
         }
     }
 
-    func getStore() -> Store {
+    func getStore() -> AtomStore {
         if let store = weakStore {
             return store
         }
@@ -525,6 +525,6 @@ private extension StoreContext {
             """
         )
 
-        return Store()
+        return AtomStore()
     }
 }

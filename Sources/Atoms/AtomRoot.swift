@@ -115,7 +115,7 @@ public struct AtomRoot<Content: View>: View {
 private extension AtomRoot {
     @MainActor
     final class State: ObservableObject {
-        let store = Store()
+        let store = AtomStore()
     }
 
     func `mutating`(_ mutation: (inout Self) -> Void) -> Self {
