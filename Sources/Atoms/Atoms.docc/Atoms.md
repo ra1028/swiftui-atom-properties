@@ -56,8 +56,8 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 - ``AtomWatchableContext``
 - ``AtomTransactionContext``
 - ``AtomViewContext``
+- ``AtomUpdatedContext``
 - ``AtomTestContext``
-- ``AtomReader``
 
 ### Internal System
 
