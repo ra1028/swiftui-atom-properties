@@ -35,9 +35,9 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// Additionally, if for some reason your app cannot use ``AtomRoot`` to manage the store
-/// that manages the state of atoms, you can manage the store on your own and pass the instance
-/// to ``AtomScope`` so that you can use the atoms in descendant views.
+/// Additionally, if for some reason your app cannot use ``AtomRoot`` to manage the store,
+/// you can instead manage the store on your own and pass the instance to ``AtomScope``
+/// to allow descendant views to use atoms.
 ///
 /// ```swift
 /// let store = AtomStore()
@@ -45,7 +45,6 @@ import SwiftUI
 ///     RootView()
 /// }
 /// let window = UIWindow(frame: UIScreen.main.bounds)
-
 /// window.rootViewController = UIHostingController(rootView: rootView)
 /// window.makeKeyAndVisible()
 /// ```
@@ -60,8 +59,7 @@ public struct AtomScope<Content: View>: View {
 
     /// Creates a new scope with the specified content.
     ///
-    /// - Parameters:
-    ///   - content: The view content that inheriting from the parent.
+    /// - Parameter content: The view content that inheriting from the parent.
     public init(@ViewBuilder content: () -> Content) {
         self.store = nil
         self.content = content()
