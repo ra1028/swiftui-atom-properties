@@ -104,7 +104,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     ///
     /// - Parameter atom: An atom that associates the value.
     @inlinable
-    public func reset<Node: Atom>(_ atom: Node) {
+    public func reset(_ atom: some Atom) {
         _store.reset(atom)
     }
 

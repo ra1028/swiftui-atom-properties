@@ -190,7 +190,7 @@ private extension Suspense {
                     return
                 }
 
-                guard let task = task else {
+                guard let task else {
                     phase = .suspending
                     return suspensionTask = nil
                 }

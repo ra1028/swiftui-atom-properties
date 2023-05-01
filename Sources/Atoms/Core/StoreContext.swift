@@ -73,7 +73,7 @@ internal struct StoreContext {
         let store = getStore()
         let key = AtomKey(atom)
         let subscription = Subscription(notifyUpdate: notifyUpdate) { [weak store] in
-            guard let store = store else {
+            guard let store else {
                 return
             }
 
@@ -116,7 +116,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func reset<Node: Atom>(_ atom: Node) {
+    func reset(_ atom: some Atom) {
         let key = AtomKey(atom)
         let value = getNewValue(of: atom, for: key)
 
@@ -369,7 +369,7 @@ private extension StoreContext {
         store.state.caches[key] = cache
 
         // Do not notify update if the new value and the old value are equivalent.
-        if let oldValue = oldValue, !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
+        if let oldValue, !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
             return
         }
 
@@ -379,7 +379,7 @@ private extension StoreContext {
         // Notify value update.
         notifyUpdateToObservers()
 
-        guard let oldValue = oldValue else {
+        guard let oldValue else {
             return
         }
 

@@ -1157,7 +1157,7 @@ class MockAPIClient: APIClientProtocol {
     var response: Book?
 
     func fetchBook(isbn: String) async throws -> Book {
-        guard let response = response else {
+        guard let response else {
             throw URLError(.unknown)
         }
         return response

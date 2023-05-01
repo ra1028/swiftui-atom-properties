@@ -102,7 +102,7 @@ final class AsyncPhaseTests: XCTestCase {
     func testFlatMap() {
         XCTContext.runActivity(named: "To suspending") { _ in
             let transformed = phases.map { phase in
-                phase.flatMap { _ -> AsyncPhase<Int, TestError> in
+                phase.flatMap { _ -> AsyncPhase<Int, _> in
                     .suspending
                 }
             }
@@ -132,7 +132,7 @@ final class AsyncPhaseTests: XCTestCase {
 
         XCTContext.runActivity(named: "To failure") { _ in
             let transformed = phases.map { phase in
-                phase.flatMap { _ -> AsyncPhase<Int, TestError> in
+                phase.flatMap { _ -> AsyncPhase<Int, _> in
                     .failure(TestError(value: 1))
                 }
             }
@@ -150,7 +150,7 @@ final class AsyncPhaseTests: XCTestCase {
     func testFlatMapError() {
         XCTContext.runActivity(named: "To suspending") { _ in
             let transformed = phases.map { phase in
-                phase.flatMapError { _ -> AsyncPhase<Int, TestError> in
+                phase.flatMapError { _ -> AsyncPhase<_, TestError> in
                     .suspending
                 }
             }
@@ -166,7 +166,7 @@ final class AsyncPhaseTests: XCTestCase {
 
         XCTContext.runActivity(named: "To success") { _ in
             let transformed = phases.map { phase in
-                phase.flatMapError { _ -> AsyncPhase<Int, TestError> in
+                phase.flatMapError { _ -> AsyncPhase<_, TestError> in
                     .success(1)
                 }
             }
@@ -182,7 +182,7 @@ final class AsyncPhaseTests: XCTestCase {
 
         XCTContext.runActivity(named: "To failure") { _ in
             let transformed = phases.map { phase in
-                phase.flatMapError { _ -> AsyncPhase<Int, URLError> in
+                phase.flatMapError { _ -> AsyncPhase<_, URLError> in
                     .failure(URLError(.badURL))
                 }
             }

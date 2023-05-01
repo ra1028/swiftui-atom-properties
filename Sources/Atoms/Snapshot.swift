@@ -1,13 +1,13 @@
 /// A snapshot structure that captures specific set of values of atoms and their dependency graph.
 public struct Snapshot: CustomStringConvertible {
     internal let graph: Graph
-    internal let caches: [AtomKey: AtomCacheBase]
+    internal let caches: [AtomKey: any AtomCacheProtocol]
     internal let subscriptions: [AtomKey: [SubscriptionKey: Subscription]]
     private let _restore: @MainActor () -> Void
 
     internal init(
         graph: Graph,
-        caches: [AtomKey: AtomCacheBase],
+        caches: [AtomKey: any AtomCacheProtocol],
         subscriptions: [AtomKey: [SubscriptionKey: Subscription]],
         restore: @MainActor @escaping () -> Void
     ) {
