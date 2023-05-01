@@ -34,7 +34,7 @@ public struct Suspense<Value, Failure: Error, Content: View, Suspending: View, F
     private let failureContent: (Failure) -> FailureContent
 
     @StateObject
-    private var state: State
+    private var state = State()
 
     /// Waits for the given task to provide a resulting value and display the content
     /// accordingly.
@@ -62,7 +62,6 @@ public struct Suspense<Value, Failure: Error, Content: View, Suspending: View, F
         @ViewBuilder suspending: @escaping () -> Suspending,
         @ViewBuilder catch: @escaping (Failure) -> FailureContent
     ) {
-        self._state = StateObject(wrappedValue: State())
         self.task = task
         self.content = content
         self.suspending = suspending

@@ -98,11 +98,41 @@ public struct AtomScope<Content: View>: View {
     public var body: some View {
         content.environment(
             \.store,
-             (store ?? environmentStore).scoped(
+            (store ?? environmentStore).scoped(
                 overrides: overrides,
                 observers: observers
-             )
+            )
         )
+    }
+
+    /// Overrides the atom value with the given value.
+    ///
+    /// When accessing the overridden atom, this context will create and return the given value
+    /// instead of the atom value.
+    ///
+    /// - Parameters:
+    ///   - atom: An atom that to be overridden.
+    ///   - value: A value that to be used instead of the atom's value.
+    ///
+    /// - Returns: The self instance.
+    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
+        mutating { $0.overrides.insert(atom, with: value) }
+    }
+
+    /// Overrides the atom value with the given value.
+    ///
+    /// Instead of overriding the particular instance of atom, this method overrides any atom that
+    /// has the same metatype.
+    /// When accessing the overridden atom, this context will create and return the given value
+    /// instead of the atom value.
+    ///
+    /// - Parameters:
+    ///   - atomType: An atom type that to be overridden.
+    ///   - value: A value that to be used instead of the atom's value.
+    ///
+    /// - Returns: The self instance.
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
+        mutating { $0.overrides.insert(atomType, with: value) }
     }
 
     /// For debugging, observes updates with a snapshot that captures a specific set of values of atoms.
