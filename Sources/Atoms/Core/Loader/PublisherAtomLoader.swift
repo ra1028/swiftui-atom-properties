@@ -38,7 +38,7 @@ public struct PublisherAtomLoader<Node: PublisherAtom>: RefreshableAtomLoader {
     /// Refreshes and awaits until the asynchronous is finished and returns a final value.
     public func refresh(context: Context) async -> Value {
         let results = context.transaction(atom.publisher).results
-        let task = Task { () -> Value in
+        let task = Task {
             var phase = Value.suspending
 
             for await result in results {

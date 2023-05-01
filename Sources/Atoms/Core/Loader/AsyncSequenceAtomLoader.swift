@@ -44,7 +44,7 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
     /// and returns a final value.
     public func refresh(context: Context) async -> Value {
         let sequence = context.transaction(atom.sequence)
-        let task = Task { () -> Value in
+        let task = Task {
             var phase = Value.suspending
 
             do {
