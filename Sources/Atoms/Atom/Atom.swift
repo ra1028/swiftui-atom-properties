@@ -19,8 +19,9 @@ public protocol Atom {
     /// with other atoms.
     typealias Context = AtomTransactionContext<Coordinator>
 
-    /// A type of the structure that to read value other atoms.
-    typealias Reader = AtomReader
+    /// A type of the context structure that to read, set, and otherwise interacting
+    /// with other atoms.
+    typealias UpdatedContext = AtomUpdatedContext
 
     /// A boolean value indicating whether the atom value should be preserved even if
     /// no longer watched to.
@@ -56,9 +57,10 @@ public protocol Atom {
     /// - Parameters:
     ///   - newValue: A new value after update.
     ///   - oldValue: An old value before update.
-    ///   - reader: A structure that to read value other atoms.
+    ///   - context: A context structure that to read, set, and otherwise
+    ///              interacting with other atoms.
     @MainActor
-    func updated(newValue: Loader.Value, oldValue: Loader.Value, reader: Reader)
+    func updated(newValue: Loader.Value, oldValue: Loader.Value, context: UpdatedContext)
 
     // --- Internal ---
 
@@ -76,7 +78,7 @@ public extension Atom {
         ()
     }
 
-    func updated(newValue: Loader.Value, oldValue: Loader.Value, reader: Reader) {}
+    func updated(newValue: Loader.Value, oldValue: Loader.Value, context: UpdatedContext) {}
 }
 
 public extension Atom where Self == Key {

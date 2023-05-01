@@ -21,7 +21,7 @@ struct TestValueAtom<T>: ValueAtom {
         value
     }
 
-    func updated(newValue: T, oldValue: T, reader: Reader) {
+    func updated(newValue: T, oldValue: T, context: UpdatedContext) {
         onUpdated?(newValue, oldValue)
     }
 }
@@ -38,7 +38,7 @@ struct TestStateAtom<T>: StateAtom {
         defaultValue
     }
 
-    func updated(newValue: T, oldValue: T, reader: Reader) {
+    func updated(newValue: T, oldValue: T, context: UpdatedContext) {
         onUpdated?(newValue, oldValue)
     }
 }
@@ -70,7 +70,7 @@ struct TestTaskAtom<T: Sendable>: TaskAtom {
     func updated(
         newValue: Task<T, Never>,
         oldValue: Task<T, Never>,
-        reader: Reader
+        context: UpdatedContext
     ) {
         onUpdated?(newValue, oldValue)
     }
@@ -103,7 +103,7 @@ struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom {
     func updated(
         newValue: Task<Success, Error>,
         oldValue: Task<Success, Error>,
-        reader: Reader
+        context: UpdatedContext
     ) {
         onUpdated?(newValue, oldValue)
     }
@@ -124,7 +124,7 @@ struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom {
     func updated(
         newValue: AsyncPhase<Publisher.Output, Publisher.Failure>,
         oldValue: AsyncPhase<Publisher.Output, Publisher.Failure>,
-        reader: Reader
+        context: UpdatedContext
     ) {
         onUpdated?(newValue, oldValue)
     }
@@ -145,7 +145,7 @@ struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom {
     func updated(
         newValue: AsyncPhase<Sequence.Element, Error>,
         oldValue: AsyncPhase<Sequence.Element, Error>,
-        reader: Reader
+        context: UpdatedContext
     ) {
         onUpdated?(newValue, oldValue)
     }
