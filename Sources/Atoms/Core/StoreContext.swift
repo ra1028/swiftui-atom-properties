@@ -211,7 +211,7 @@ internal struct StoreContext: StoreContextProtocol {
     }
 
     @usableFromInline
-    func reset<Node: Atom>(_ atom: Node, scoped: StoreContext? = nil) {
+    func reset(_ atom: some Atom, scoped: StoreContext? = nil) {
         let key = AtomKey(atom)
 
         if let cache = peekCache(of: atom, for: key) {
