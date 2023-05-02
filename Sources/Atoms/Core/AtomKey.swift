@@ -1,4 +1,3 @@
-@usableFromInline
 internal struct AtomKey: Hashable, CustomStringConvertible {
     private let identifier: AnyHashable
 
@@ -9,7 +8,6 @@ internal struct AtomKey: Hashable, CustomStringConvertible {
         identifier = AnyHashable(atom.key)
     }
 
-    @usableFromInline
     var description: String {
         typeKey.description
     }
