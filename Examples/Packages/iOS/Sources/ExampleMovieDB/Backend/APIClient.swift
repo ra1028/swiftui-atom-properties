@@ -98,7 +98,11 @@ private extension APIClient {
         urlRequest.httpMethod = "GET"
 
         do {
+            let start = Date()
             let (data, _) = try await session.data(for: urlRequest)
+            let end = Date()
+            let leeway = max(0.5 - start.distance(to: end), 0)
+            try await Task.sleep(nanoseconds: UInt64(leeway * 1000_000_000))
             return try jsonDecoder.decode(Response.self, from: data)
         }
         catch {
