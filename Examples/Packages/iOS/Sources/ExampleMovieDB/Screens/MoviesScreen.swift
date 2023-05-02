@@ -30,7 +30,7 @@ struct MoviesScreen: View {
 
                 switch loader.pages {
                 case .suspending:
-                    ProgressRow()
+                    ProgressRow().id(loader.filter)
 
                 case .failure:
                     CaveatRow(text: "Failed to get the data.")
