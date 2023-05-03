@@ -79,6 +79,7 @@ internal struct StoreContext {
 
             // Unsubscribe and release if it's no longer used.
             store.state.subscriptions[key]?.removeValue(forKey: container.key)
+            notifyUpdateToObservers()
             checkRelease(for: key)
         }
 
