@@ -1,3 +1,4 @@
+import Combine
 import XCTest
 
 @testable import Atoms
@@ -257,6 +258,176 @@ final class StoreContextTests: XCTestCase {
 
         XCTAssertFalse(snapshots0.isEmpty)
         XCTAssertFalse(snapshots1.isEmpty)
+    }
+
+    func testScopedOverride() async {
+        struct TestDependency1Atom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestDependency2Atom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestTransactionAtom: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestPublisherAtom: PublisherAtom, Hashable {
+            func publisher(context: Context) -> Just<Int> {
+                let value1 = context.watch(TestDependency1Atom())
+                let value2 = context.watch(TestDependency2Atom())
+                return Just(value1 + value2)
+            }
+        }
+
+        struct TestAtom: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                let value1 = context.watch(TestDependency1Atom())
+                let value2 = context.watch(TestDependency2Atom())
+                return value1 + value2
+            }
+        }
+
+        let atom = TestAtom()
+        let publisherAtom = TestPublisherAtom()
+        let dependency1Atom = TestDependency1Atom()
+        let dependency2Atom = TestDependency2Atom()
+        let transactionAtom = TestTransactionAtom()
+        let container = SubscriptionContainer()
+        let transaction = Transaction(key: AtomKey(transactionAtom)) {}
+        let store = AtomStore()
+        let scoped1Store = AtomStore()
+        let scoped2Store = AtomStore()
+
+        var scoped1Overrides = Overrides()
+        scoped1Overrides.insert(dependency1Atom) { _ in
+            10
+        }
+
+        var scoped2Overrides = Overrides()
+        scoped2Overrides.insert(dependency2Atom) { _ in
+            100
+        }
+
+        let context = StoreContext(store)
+        let scoped1Context = context.scoped(
+            store: scoped1Store,
+            overrides: scoped1Overrides,
+            observers: []
+        )
+        let scoped2Context = scoped1Context.scoped(
+            store: scoped2Store,
+            overrides: scoped2Overrides,
+            observers: []
+        )
+
+        XCTAssertEqual(scoped2Context.watch(atom, container: container.wrapper) {}, 110)
+        XCTAssertEqual(scoped2Context.watch(atom, in: transaction), 110)
+        XCTAssertEqual(scoped2Context.watch(publisherAtom, container: container.wrapper) {}, .suspending)
+
+        // Should return the default value because the atom is cached in the scoped store.
+        XCTAssertEqual(context.read(dependency1Atom), 0)
+        XCTAssertEqual(context.read(dependency2Atom), 0)
+
+        // Should set the value and then propagate it to the dependent atoms..
+        scoped2Context.set(20, for: dependency1Atom)
+
+        // Shouldn't set the value here because the atom is cached in the scoped store.
+        context.set(30, for: dependency1Atom)
+
+        // Should return overridden values.
+        XCTAssertEqual(scoped2Context.read(atom), 120)
+        XCTAssertEqual(scoped2Context.read(dependency1Atom), 20)
+        XCTAssertEqual(scoped2Context.read(dependency2Atom), 100)
+        XCTAssertEqual(context.read(atom), 120)
+
+        do {
+            let phase = await scoped2Context.refresh(publisherAtom)
+            XCTAssertEqual(phase, .success(120))
+        }
+
+        // Should reset the value and then propagate it to the dependent atoms..
+        scoped2Context.reset(dependency1Atom)
+
+        // Should return overridden values.
+        XCTAssertEqual(scoped2Context.read(atom), 110)
+        XCTAssertEqual(scoped2Context.read(dependency1Atom), 10)
+        XCTAssertEqual(scoped2Context.read(dependency2Atom), 100)
+        XCTAssertEqual(context.read(atom), 110)
+
+        do {
+            let phase = await scoped2Context.refresh(publisherAtom)
+            XCTAssertEqual(phase, .success(110))
+        }
+
+        XCTAssertEqual(
+            store.graph,
+            Graph(
+                dependencies: [
+                    AtomKey(transactionAtom): [AtomKey(atom)]
+                ],
+                children: [
+                    AtomKey(atom): [AtomKey(transactionAtom)]
+                ]
+            )
+        )
+        XCTAssertEqual(
+            scoped1Store.graph,
+            Graph(
+                dependencies: [
+                    AtomKey(atom): [AtomKey(dependency1Atom)],
+                    AtomKey(publisherAtom): [AtomKey(dependency1Atom)],
+                ],
+                children: [
+                    AtomKey(dependency1Atom): [AtomKey(atom), AtomKey(publisherAtom)]
+                ]
+            )
+        )
+        XCTAssertEqual(
+            scoped2Store.graph,
+            Graph(
+                dependencies: [
+                    AtomKey(atom): [AtomKey(dependency2Atom)],
+                    AtomKey(publisherAtom): [AtomKey(dependency2Atom)],
+                ],
+                children: [
+                    AtomKey(dependency2Atom): [AtomKey(atom), AtomKey(publisherAtom)]
+                ]
+            )
+        )
+        XCTAssertEqual(
+            store.state.caches.mapValues { $0 as? AtomCache<TestAtom> },
+            [
+                AtomKey(publisherAtom): nil,
+                AtomKey(atom): AtomCache(atom: atom, value: 110),
+            ]
+        )
+        XCTAssertEqual(
+            store.state.caches.mapValues { $0 as? AtomCache<TestPublisherAtom> },
+            [
+                AtomKey(publisherAtom): AtomCache(atom: publisherAtom, value: .success(110)),
+                AtomKey(atom): nil,
+            ]
+        )
+        XCTAssertEqual(
+            scoped1Store.state.caches.mapValues { $0 as? AtomCache<TestDependency1Atom> },
+            [
+                AtomKey(dependency1Atom): AtomCache(atom: dependency1Atom, value: 10)
+            ]
+        )
+        XCTAssertEqual(
+            scoped2Store.state.caches.mapValues { $0 as? AtomCache<TestDependency2Atom> },
+            [
+                AtomKey(dependency2Atom): AtomCache(atom: dependency2Atom, value: 100)
+            ]
+        )
     }
 
     func testCoordinator() {
