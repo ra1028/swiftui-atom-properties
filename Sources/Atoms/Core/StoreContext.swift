@@ -51,7 +51,7 @@ internal struct StoreContext: StoreContextProtocol {
             override = value
         }
         else if let parent {
-            return parent.read(atom, scoped: self)
+            return parent.read(atom, scoped: scoped ?? self)
         }
         else {
             override = nil
@@ -72,7 +72,7 @@ internal struct StoreContext: StoreContextProtocol {
             checkRelease(for: key)
         }
         else if let parent {
-            return parent.set(value, for: atom, scoped: self)
+            return parent.set(value, for: atom, scoped: scoped ?? self)
         }
     }
 
@@ -95,7 +95,7 @@ internal struct StoreContext: StoreContextProtocol {
             override = value
         }
         else if let parent {
-            return parent.watch(atom, in: transaction, scoped: self)
+            return parent.watch(atom, in: transaction, scoped: scoped ?? self)
         }
         else {
             cache = nil
@@ -136,7 +136,12 @@ internal struct StoreContext: StoreContextProtocol {
             override = value
         }
         else if let parent {
-            return parent.watch(atom, container: container, scoped: self, notifyUpdate: notifyUpdate)
+            return parent.watch(
+                atom,
+                container: container,
+                scoped: scoped ?? self,
+                notifyUpdate: notifyUpdate
+            )
         }
         else {
             cache = nil
@@ -182,7 +187,7 @@ internal struct StoreContext: StoreContextProtocol {
             override = value
         }
         else if let parent {
-            return await parent.refresh(atom, scoped: self)
+            return await parent.refresh(atom, scoped: scoped ?? self)
         }
         else {
             cache = nil
@@ -218,12 +223,12 @@ internal struct StoreContext: StoreContextProtocol {
             checkRelease(for: key)
         }
         else if let parent {
-            parent.reset(atom, scoped: self)
+            parent.reset(atom, scoped: scoped ?? self)
         }
     }
 
     func notifyUpdate(for keys: Set<AtomKey>, scoped: StoreContext?) {
-        parent?.notifyUpdate(for: keys, scoped: self)
+        parent?.notifyUpdate(for: keys, scoped: scoped ?? self)
 
         let store = getStore()
 
