@@ -8,9 +8,6 @@ struct MoviesScreen: View {
     @WatchState(SearchQueryAtom())
     var searchQuery
 
-    @ViewContext
-    var context
-
     @State
     var isShowingSearchScreen = false
 
@@ -45,9 +42,12 @@ struct MoviesScreen: View {
                     }
 
                     if let last = pages.last, last.hasNextPage {
-                        ProgressRow().task {
-                            await loader.loadNext()
-                        }
+                        ProgressRow()
+                            // NB: Since ProgressView placed in the List will not redisplay its indicator once it's hidden, here adds a random ID so that it's always regenerated.
+                            .id(UUID())
+                            .task {
+                                await loader.loadNext()
+                            }
                     }
                 }
             }
@@ -70,10 +70,7 @@ struct MoviesScreen: View {
             await loader.refresh()
         }
         .refreshable {
-            // NB: Implicitly capturing `self` causes memory leak with `refreshable`,
-            // and also capturing `loader` makes refresh doesn't work, so here reads
-            // `MovieLoader` via context.
-            await context.read(MovieLoaderAtom()).refresh()
+            await loader.refresh()
         }
         .background {
             NavigationLink(

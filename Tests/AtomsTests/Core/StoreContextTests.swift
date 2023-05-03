@@ -291,6 +291,44 @@ final class StoreContextTests: XCTestCase {
         XCTAssertTrue(state?.coordinator === newState?.coordinator)
     }
 
+    func testRelease() {
+        struct KeepAliveAtom<T: Hashable>: ValueAtom, KeepAlive, Hashable {
+            var value: T
+
+            func value(context: Context) -> T {
+                value
+            }
+        }
+
+        let store = AtomStore()
+        let context = StoreContext(store)
+
+        XCTContext.runActivity(named: "Normal atoms should be released.") { _ in
+            let atom = TestAtom(value: 0)
+            let key = AtomKey(atom)
+            let transaction = Transaction(key: key) {}
+
+            _ = context.watch(atom, in: transaction)
+            XCTAssertNotNil(store.state.caches[key])
+
+            context.reset(atom)
+            XCTAssertNil(store.state.caches[key])
+        }
+
+        XCTContext.runActivity(named: "KeepAlive atoms should not be released.") { _ in
+            let atom = KeepAliveAtom(value: 0)
+            let key = AtomKey(atom)
+            let transaction = Transaction(key: key) {}
+
+            _ = context.watch(atom, in: transaction)
+
+            XCTAssertNotNil(store.state.caches[key])
+
+            context.reset(atom)
+            XCTAssertNotNil(store.state.caches[key])
+        }
+    }
+
     func testObservers() {
         let store = AtomStore()
         let container = SubscriptionContainer()
