@@ -501,103 +501,171 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testObservers() {
-        let store = AtomStore()
         let container = SubscriptionContainer()
-        var snapshots = [Snapshot]()
-        let observer = Observer { snapshots.append($0) }
-        let context = StoreContext(store, observers: [observer])
         let atom0 = TestAtom(value: 0)
-        let key0 = AtomKey(atom0)
+        let atom1 = TestAtom(value: 1)
+        let store = AtomStore()
+        let scoped1Store = AtomStore()
+        let scoped2Store = AtomStore()
+
+        var scopedOverride = Overrides()
+        scopedOverride.insert(atom1) { _ in
+            100
+        }
+
+        var snapshots = [Snapshot]()
+        var scopedSnapshots = [Snapshot]()
+        let context = StoreContext(
+            store,
+            observers: [Observer { snapshots.append($0) }]
+        )
+        let scoped1Context = context.scoped(
+            store: scoped1Store,
+            overrides: Overrides(),
+            observers: []
+        )
+        let scoped2Context = scoped1Context.scoped(
+            store: scoped2Store,
+            overrides: scopedOverride,
+            observers: [Observer { scopedSnapshots.append($0) }]
+        )
 
         // New value.
 
-        _ = context.watch(atom0, container: container.wrapper) {}
+        _ = scoped2Context.watch(atom0, container: container.wrapper) {}
+        _ = scoped2Context.watch(atom1, container: container.wrapper) {}
+
+        let result0: [[AtomKey: AtomCache<TestAtom<Int>>?]] = [
+            [AtomKey(atom0): AtomCache(atom: atom0, value: 0)],  // Brand new value
+            [AtomKey(atom1): AtomCache(atom: atom1, value: 100)],
+        ]
 
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
-            [
-                [key0: AtomCache(atom: atom0, value: 0)]  // Brand new value
-            ]
+            result0
+        )
+        XCTAssertEqual(
+            scopedSnapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
+            result0
         )
 
         // Update.
 
-        context.reset(atom0)
+        scoped2Context.reset(atom0)
+        scoped2Context.reset(atom1)
+
+        let result1: [[AtomKey: AtomCache<TestAtom<Int>>?]] = [
+            [AtomKey(atom0): AtomCache(atom: atom0, value: 0)],  // Brand new value
+            [AtomKey(atom1): AtomCache(atom: atom1, value: 100)],
+            [AtomKey(atom0): AtomCache(atom: atom0, value: 0)],  // Reset
+            [AtomKey(atom1): AtomCache(atom: atom1, value: 100)],
+        ]
 
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
-            [
-                [key0: AtomCache(atom: atom0, value: 0)],  // Brand new value
-                [key0: AtomCache(atom: atom0, value: 0)],  // Reset
-            ]
+            result1
+        )
+        XCTAssertEqual(
+            scopedSnapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
+            result1
         )
 
         // Unsubscribe and release.
 
-        for subscription in container.wrapper.subscriptions.values {
-            subscription.unsubscribe()
-        }
+        container.wrapper.subscriptions[AtomKey(atom0)]?.unsubscribe()
+        container.wrapper.subscriptions[AtomKey(atom1)]?.unsubscribe()
+
+        let result2: [[AtomKey: AtomCache<TestAtom<Int>>?]] = [
+            [AtomKey(atom0): AtomCache(atom: atom0, value: 0)],  // Brand new value
+            [AtomKey(atom1): AtomCache(atom: atom1, value: 100)],
+            [AtomKey(atom0): AtomCache(atom: atom0, value: 0)],  // Reset
+            [AtomKey(atom1): AtomCache(atom: atom1, value: 100)],
+            [AtomKey(atom0): AtomCache(atom: atom0, value: 0)],  // Unsubscribed
+            [:],
+            [AtomKey(atom1): AtomCache(atom: atom1, value: 100)],
+            [:],  // Released
+        ]
 
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
+            result2
+        )
+        XCTAssertEqual(
+            scopedSnapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
+            result2
+        )
+    }
+
+    func testRestore() {
+        let container = SubscriptionContainer()
+        let store = AtomStore()
+        let context = StoreContext(store)
+        let atom0 = TestAtom(value: 0)
+        let atom1 = TestAtom(value: 1)
+        let atom2 = TestAtom(value: 2)
+
+        store.graph = Graph(
+            dependencies: [AtomKey(atom0): [AtomKey(atom1)]],
+            children: [AtomKey(atom1): [AtomKey(atom0)]]
+        )
+        store.state.caches = [
+            AtomKey(atom0): AtomCache(atom: atom0, value: 0),
+            AtomKey(atom1): AtomCache(atom: atom1, value: 1),
+        ]
+
+        let snapshot = context.snapshot()
+
+        store.graph = Graph()
+        store.state = StoreState()
+        store.state.caches = [
+            AtomKey(atom2): AtomCache(atom: atom0, value: 2)
+        ]
+
+        var updated = Set<AtomKey>()
+        let subscription0 = Subscription(notifyUpdate: { updated.insert(AtomKey(atom0)) }, unsubscribe: {})
+        let subscription1 = Subscription(notifyUpdate: { updated.insert(AtomKey(atom1)) }, unsubscribe: {})
+        let subscription2 = Subscription(notifyUpdate: { updated.insert(AtomKey(atom2)) }, unsubscribe: {})
+
+        store.state.subscriptions = [
+            AtomKey(atom0): [SubscriptionKey(container): subscription0],
+            AtomKey(atom1): [SubscriptionKey(container): subscription1],
+            AtomKey(atom2): [SubscriptionKey(container): subscription2],
+        ]
+
+        snapshot.restore()
+
+        // Notifies updated only for the subscriptions of the atoms that are restored.
+        XCTAssertEqual(updated, [AtomKey(atom0), AtomKey(atom1)])
+        XCTAssertEqual(
+            store.graph,
+            Graph(
+                dependencies: [AtomKey(atom0): [AtomKey(atom1)]],
+                children: [AtomKey(atom1): [AtomKey(atom0)]]
+            )
+        )
+        // Do not delete caches added after the snapshot was taken.
+        XCTAssertEqual(
+            store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
             [
-                [key0: AtomCache(atom: atom0, value: 0)],  // Brand new value
-                [key0: AtomCache(atom: atom0, value: 0)],  // Reset
-                [key0: AtomCache(atom: atom0, value: 0)],  // Unsubscribed
-                [:],  // Released
+                AtomKey(atom0): AtomCache(atom: atom0, value: 0),
+                AtomKey(atom1): AtomCache(atom: atom1, value: 1),
+                AtomKey(atom2): AtomCache(atom: atom0, value: 2),
             ]
         )
 
         // Restore with no subscriptions.
+        store.state.subscriptions.removeAll()
+        snapshot.restore()
 
-        snapshots[1].restore()
-
-        XCTAssertEqual(
-            store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
-            [:]
-        )
-
-        // Restore.
-        // - state must be removed.
-        // - update should notified only for the subscriptions of the restored atom.
-        // - dependencies that weren't used in the snapshot must be released.
-
-        let atom1 = TestAtom(value: 1)
-        let atom2 = TestAtom(value: 2)
-        let key1 = AtomKey(atom1)
-        let key2 = AtomKey(atom2)
-        var updatedSubscriptions = [AtomKey]()
-
-        _ = context.watch(atom0, container: container.wrapper) { updatedSubscriptions.append(key0) }
-        _ = context.watch(atom1, container: container.wrapper) { updatedSubscriptions.append(key1) }
-        _ = context.watch(atom2, in: Transaction(key: key0) {})
-
-        XCTAssertTrue(updatedSubscriptions.isEmpty)
-        XCTAssertEqual(
-            store.graph,
-            Graph(
-                dependencies: [key0: [key2]],
-                children: [key2: [key0]]
-            )
-        )
-        XCTAssertEqual(
-            store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
-            [
-                key0: AtomCache(atom: atom0, value: 0),
-                key1: AtomCache(atom: atom1, value: 1),
-                key2: AtomCache(atom: atom2, value: 2),
-            ]
-        )
-
-        snapshots[1].restore()
-
-        XCTAssertEqual(updatedSubscriptions, [key0])
         XCTAssertEqual(store.graph, Graph())
+
+        // Caches added after the snapshot was taken are not forcibly released by restore,
+        // but this is not a problem since the cache should originally be released
+        // when the subscription is released.
         XCTAssertEqual(
             store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
             [
-                key0: AtomCache(atom: atom0, value: 0),
-                key1: AtomCache(atom: atom1, value: 1),
+                AtomKey(atom2): AtomCache(atom: atom0, value: 2)
             ]
         )
     }
