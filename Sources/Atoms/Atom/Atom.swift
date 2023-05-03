@@ -23,14 +23,6 @@ public protocol Atom {
     /// with other atoms.
     typealias UpdatedContext = AtomUpdatedContext
 
-    /// A boolean value indicating whether the atom value should be preserved even if
-    /// no longer watched to.
-    ///
-    /// It's recommended to conform the ``KeepAlive`` to this atom, instead of overriding
-    /// this property to return `true`.
-    /// The default is `false`.
-    static var shouldKeepAlive: Bool { get }
-
     /// A unique value used to identify the atom internally.
     ///
     /// This key don't have to be unique with respect to other atoms in the entire application
@@ -70,10 +62,6 @@ public protocol Atom {
 }
 
 public extension Atom {
-    static var shouldKeepAlive: Bool {
-        false
-    }
-
     func makeCoordinator() -> Coordinator where Coordinator == Void {
         ()
     }

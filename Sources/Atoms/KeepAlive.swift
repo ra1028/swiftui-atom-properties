@@ -12,9 +12,3 @@
 /// ```
 ///
 public protocol KeepAlive where Self: Atom {}
-
-public extension KeepAlive {
-    static var shouldKeepAlive: Bool {
-        true
-    }
-}
