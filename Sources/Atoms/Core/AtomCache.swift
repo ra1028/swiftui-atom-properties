@@ -7,12 +7,6 @@ internal protocol AtomCacheProtocol: CustomStringConvertible {
 }
 
 internal extension AtomCacheProtocol {
-    var shouldKeepAlive: Bool {
-        Node.shouldKeepAlive
-    }
-}
-
-internal extension AtomCacheProtocol {
     var description: String {
         "\(value)"
     }
