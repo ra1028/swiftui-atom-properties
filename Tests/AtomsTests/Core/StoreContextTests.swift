@@ -302,7 +302,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
             [
-                [key0: AtomCache(atom: atom0, value: 0)] // Brand new value
+                [key0: AtomCache(atom: atom0, value: 0)]  // Brand new value
             ]
         )
 
@@ -313,8 +313,8 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
             [
-                [key0: AtomCache(atom: atom0, value: 0)], // Brand new value
-                [key0: AtomCache(atom: atom0, value: 0)], // Reset
+                [key0: AtomCache(atom: atom0, value: 0)],  // Brand new value
+                [key0: AtomCache(atom: atom0, value: 0)],  // Reset
             ]
         )
 
@@ -327,10 +327,10 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
             [
-                [key0: AtomCache(atom: atom0, value: 0)], // Brand new value
-                [key0: AtomCache(atom: atom0, value: 0)], // Reset
-                [key0: AtomCache(atom: atom0, value: 0)], // Unsubscribed
-                [:],                                      // Released
+                [key0: AtomCache(atom: atom0, value: 0)],  // Brand new value
+                [key0: AtomCache(atom: atom0, value: 0)],  // Reset
+                [key0: AtomCache(atom: atom0, value: 0)],  // Unsubscribed
+                [:],  // Released
             ]
         )
 
