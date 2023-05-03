@@ -71,10 +71,6 @@ internal struct StoreContext: StoreContextProtocol {
             update(atom: atom, for: key, value: value, cache: cache, scoped: scoped)
             checkRelease(for: key)
         }
-        else if overrides.hasValue(for: atom) {
-            // Do nothing if the atom is overridden in the current scope.
-            return
-        }
         else if let parent {
             return parent.set(value, for: atom, scoped: self)
         }
@@ -219,10 +215,6 @@ internal struct StoreContext: StoreContextProtocol {
             let newCache = makeNewCache(of: atom, for: key, override: override, scoped: scoped)
             update(atom: atom, for: key, value: newCache.value, cache: cache, scoped: scoped)
             checkRelease(for: key)
-        }
-        else if overrides.hasValue(for: atom) {
-            // Do nothing if the atom is overridden in the current scope.
-            return
         }
         else if let parent {
             parent.reset(atom, scoped: self)
