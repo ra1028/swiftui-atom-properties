@@ -4,20 +4,6 @@ import XCTest
 
 @MainActor
 final class AtomCacheTests: XCTestCase {
-    func testShouldKeepAlive() {
-        struct KeepAliveAtom: ValueAtom, KeepAlive, Hashable {
-            func value(context: Context) -> Int {
-                0
-            }
-        }
-
-        let cache0 = AtomCache(atom: TestValueAtom(value: 0))
-        let cache1 = AtomCache(atom: KeepAliveAtom())
-
-        XCTAssertFalse(cache0.shouldKeepAlive)
-        XCTAssertTrue(cache1.shouldKeepAlive)
-    }
-
     func testReset() {
         let store = AtomStore()
         let context = StoreContext(store)

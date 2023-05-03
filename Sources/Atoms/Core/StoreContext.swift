@@ -423,11 +423,10 @@ private extension StoreContext {
         //     1. It's not marked as `KeepAlive`.
         //     2. It has no downstream atoms.
         //     3. It has no subscriptions from views.
-        let shouldKeepAlive = store.state.caches[key]?.shouldKeepAlive ?? false
-        let shouldRelease =
-            !shouldKeepAlive
-            && (store.graph.children[key]?.isEmpty ?? true)
-            && (store.state.subscriptions[key]?.isEmpty ?? true)
+        let shouldKeepAlive = store.state.caches[key].map { $0 is any KeepAlive } ?? false
+        let isChildrenEmpty = store.graph.children[key]?.isEmpty ?? true
+        let isSubscriptionEmpty = store.state.subscriptions[key]?.isEmpty ?? true
+        let shouldRelease = !shouldKeepAlive && isChildrenEmpty && isSubscriptionEmpty
 
         guard shouldRelease else {
             return
