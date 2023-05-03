@@ -43,8 +43,8 @@ internal struct StoreContext: StoreContextProtocol {
         let key = AtomKey(atom)
         let override: Node.Loader.Value?
 
-        if let cache = peekCache(of: atom, for: key) {
-            checkRelease(for: key)
+        if let cache = peekCache(of: atom, for: key, scoped: scoped) {
+            checkRelease(for: key, scoped: scoped)
             return cache.value
         }
         else if let value = overrides.value(for: atom) {
@@ -58,8 +58,8 @@ internal struct StoreContext: StoreContextProtocol {
         }
 
         let cache = makeNewCache(of: atom, for: key, override: override, scoped: scoped)
-        notifyUpdateToObservers()
-        checkRelease(for: key)
+        notifyUpdateToObservers(scoped: scoped)
+        checkRelease(for: key, scoped: scoped)
         return cache.value
     }
 
@@ -67,9 +67,9 @@ internal struct StoreContext: StoreContextProtocol {
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node, scoped: StoreContext? = nil) {
         let key = AtomKey(atom)
 
-        if let cache = peekCache(of: atom, for: key) {
+        if let cache = peekCache(of: atom, for: key, scoped: scoped) {
             update(atom: atom, for: key, value: value, cache: cache, scoped: scoped)
-            checkRelease(for: key)
+            checkRelease(for: key, scoped: scoped)
         }
         else if let parent {
             return parent.set(value, for: atom, scoped: scoped ?? self)
@@ -86,7 +86,7 @@ internal struct StoreContext: StoreContextProtocol {
         let cache: AtomCache<Node>?
         let override: Node.Loader.Value?
 
-        if let oldCache = peekCache(of: atom, for: key) {
+        if let oldCache = peekCache(of: atom, for: key, scoped: scoped) {
             cache = oldCache
             override = nil
         }
@@ -110,7 +110,7 @@ internal struct StoreContext: StoreContextProtocol {
         store.graph.dependencies[transaction.key, default: []].insert(key)
 
         if isInserted || cache == nil {
-            notifyUpdateToObservers()
+            notifyUpdateToObservers(scoped: scoped)
         }
 
         return newCache.value
@@ -127,7 +127,7 @@ internal struct StoreContext: StoreContextProtocol {
         let cache: AtomCache<Node>?
         let override: Node.Loader.Value?
 
-        if let oldCache = peekCache(of: atom, for: key) {
+        if let oldCache = peekCache(of: atom, for: key, scoped: scoped) {
             cache = oldCache
             override = nil
         }
@@ -157,8 +157,8 @@ internal struct StoreContext: StoreContextProtocol {
 
             // Unsubscribe and release if it's no longer used.
             store.state.subscriptions[key]?.removeValue(forKey: container.key)
-            notifyUpdateToObservers()
-            checkRelease(for: key)
+            notifyUpdateToObservers(scoped: scoped)
+            checkRelease(for: key, scoped: scoped)
         }
         let isInserted = store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key) == nil
 
@@ -166,7 +166,7 @@ internal struct StoreContext: StoreContextProtocol {
         container.subscriptions[key] = subscription
 
         if isInserted || cache == nil {
-            notifyUpdateToObservers()
+            notifyUpdateToObservers(scoped: scoped)
         }
 
         return newCache.value
@@ -178,7 +178,7 @@ internal struct StoreContext: StoreContextProtocol {
         let cache: AtomCache<Node>?
         let override: Node.Loader.Value?
 
-        if let oldCache = peekCache(of: atom, for: key) {
+        if let oldCache = peekCache(of: atom, for: key, scoped: scoped) {
             cache = oldCache
             override = overrides.value(for: atom)
         }
@@ -208,7 +208,7 @@ internal struct StoreContext: StoreContextProtocol {
             update(atom: atom, for: key, value: value, cache: cache, scoped: scoped)
         }
 
-        checkRelease(for: key)
+        checkRelease(for: key, scoped: scoped)
         return value
     }
 
@@ -216,11 +216,11 @@ internal struct StoreContext: StoreContextProtocol {
     func reset(_ atom: some Atom, scoped: StoreContext? = nil) {
         let key = AtomKey(atom)
 
-        if let cache = peekCache(of: atom, for: key) {
+        if let cache = peekCache(of: atom, for: key, scoped: scoped) {
             let override = overrides.value(for: atom)
             let newCache = makeNewCache(of: atom, for: key, override: override, scoped: scoped)
             update(atom: atom, for: key, value: newCache.value, cache: cache, scoped: scoped)
-            checkRelease(for: key)
+            checkRelease(for: key, scoped: scoped)
         }
         else if let parent {
             parent.reset(atom, scoped: scoped ?? self)
@@ -243,7 +243,7 @@ internal struct StoreContext: StoreContextProtocol {
     }
 
     @usableFromInline
-    func snapshot() -> Snapshot {
+    func snapshot(scoped: StoreContext? = nil) -> Snapshot {
         let store = getStore()
         let graph = store.graph
         let caches = store.state.caches
@@ -271,11 +271,11 @@ internal struct StoreContext: StoreContextProtocol {
 
             for key in keys {
                 // Release if the atom is no longer used.
-                checkRelease(for: key)
+                checkRelease(for: key, scoped: scoped)
 
                 // Release dependencies that are no longer dependent.
                 if let dependencies = obsoletedDependencies[key] {
-                    checkReleaseDependencies(dependencies, for: key)
+                    checkReleaseDependencies(dependencies, for: key, scoped: scoped)
                 }
 
                 // Notify updates only for the subscriptions of restored atoms.
@@ -314,7 +314,7 @@ private extension StoreContext {
         for key: AtomKey,
         scoped: StoreContext?
     ) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
-        let state = getState(of: atom, for: key)
+        let state = getState(of: atom, for: key, scoped: scoped)
 
         // Invalidate dependencies and an ongoing transaction.
         let oldDependencies = invalidate(for: key)
@@ -324,7 +324,7 @@ private extension StoreContext {
             let obsoletedDependencies = oldDependencies.subtracting(dependencies)
 
             // Check if the dependencies that are no longer used and release them if possible.
-            checkReleaseDependencies(obsoletedDependencies, for: key)
+            checkReleaseDependencies(obsoletedDependencies, for: key, scoped: scoped)
         }
 
         // Register the transaction state so it can be terminated from anywhere.
@@ -335,7 +335,7 @@ private extension StoreContext {
             transaction: transaction,
             coordinator: state.coordinator
         ) { value, needsEnsureValueUpdate in
-            guard let cache = peekCache(of: atom, for: key) else {
+            guard let cache = peekCache(of: atom, for: key, scoped: scoped) else {
                 return
             }
 
@@ -373,7 +373,7 @@ private extension StoreContext {
         return cache
     }
 
-    func peekCache<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomCache<Node>? {
+    func peekCache<Node: Atom>(of atom: Node, for key: AtomKey, scoped: StoreContext?) -> AtomCache<Node>? {
         let store = getStore()
 
         guard let baseCache = store.state.caches[key] else {
@@ -395,14 +395,14 @@ private extension StoreContext {
             )
 
             // Release the invalid registration as a fallback.
-            release(for: key)
+            release(for: key, scoped: scoped)
             return nil
         }
 
         return cache
     }
 
-    func getState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Coordinator> {
+    func getState<Node: Atom>(of atom: Node, for key: AtomKey, scoped: StoreContext?) -> AtomState<Node.Coordinator> {
         let store = getStore()
 
         func makeState() -> AtomState<Node.Coordinator> {
@@ -431,7 +431,7 @@ private extension StoreContext {
             )
 
             // Release the invalid registration as a fallback.
-            release(for: key)
+            release(for: key, scoped: scoped)
             return makeState()
         }
 
@@ -463,7 +463,7 @@ private extension StoreContext {
         notifyUpdate(for: key, needsEnsureValueUpdate: needsEnsureValueUpdate, scoped: scoped)
 
         // Notify value update to observers.
-        notifyUpdateToObservers()
+        notifyUpdateToObservers(scoped: scoped)
 
         func notifyUpdated() {
             let context = AtomUpdatedContext(store: scoped ?? self)
@@ -507,19 +507,21 @@ private extension StoreContext {
         }
     }
 
-    func notifyUpdateToObservers() {
+    func notifyUpdateToObservers(scoped: StoreContext?) {
+        let observers = scoped?.observers ?? observers
+
         guard !observers.isEmpty else {
             return
         }
 
-        let snapshot = snapshot()
+        let snapshot = snapshot(scoped: scoped)
 
         for observer in observers {
             observer.onUpdate(snapshot)
         }
     }
 
-    func release(for key: AtomKey) {
+    func release(for key: AtomKey, scoped: StoreContext?) {
         let store = getStore()
 
         // Invalidate transactions, dependencies, and the atom state.
@@ -530,13 +532,13 @@ private extension StoreContext {
         store.state.subscriptions.removeValue(forKey: key)
 
         // Check if the dependencies are releasable.
-        checkReleaseDependencies(dependencies, for: key)
+        checkReleaseDependencies(dependencies, for: key, scoped: scoped)
 
         // Notify release.
-        notifyUpdateToObservers()
+        notifyUpdateToObservers(scoped: scoped)
     }
 
-    func checkRelease(for key: AtomKey) {
+    func checkRelease(for key: AtomKey, scoped: StoreContext?) {
         let store = getStore()
 
         // The condition under which an atom may be released are as follows:
@@ -552,16 +554,16 @@ private extension StoreContext {
             return
         }
 
-        release(for: key)
+        release(for: key, scoped: scoped)
     }
 
-    func checkReleaseDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey) {
+    func checkReleaseDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey, scoped: StoreContext?) {
         let store = getStore()
 
         // Recursively release dependencies while unlinking the dependent.
         for dependency in dependencies {
             store.graph.children[dependency]?.remove(key)
-            checkRelease(for: dependency)
+            checkRelease(for: dependency, scoped: scoped)
         }
     }
 
