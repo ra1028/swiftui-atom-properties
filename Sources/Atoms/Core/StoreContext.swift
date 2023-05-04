@@ -3,9 +3,8 @@ import Foundation
 @usableFromInline
 @MainActor
 internal struct StoreContext {
-    private let scope: Scope?
+    private let current: Scope
     private let observers: [Observer]
-    private let enablesAssertion: Bool
 
     nonisolated init(
         _ store: AtomStore? = nil,
@@ -14,44 +13,37 @@ internal struct StoreContext {
         enablesAssertion: Bool = false
     ) {
         self.init(
-            scope: store.map { store in
-                .current(
-                    store: store,
-                    overrides: overrides,
-                    parent: nil
-                )
-            },
-            observers: observers,
-            enablesAssertion: enablesAssertion
+            current: Scope(
+                store: store,
+                overrides: overrides,
+                parent: nil,
+                enablesAssertion: enablesAssertion
+            ),
+            observers: observers
         )
     }
 
     nonisolated private init(
-        scope: Scope?,
-        observers: [Observer] = [],
-        enablesAssertion: Bool
+        current: Scope,
+        observers: [Observer] = []
     ) {
-        self.scope = scope
-        self.enablesAssertion = enablesAssertion
+        self.current = current
         self.observers = observers
     }
 
     @usableFromInline
     func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        let scope = getScope()
-        return read(atom, scope: scope)
+        read(atom, scope: current)
     }
 
     @usableFromInline
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
-        let scope = getScope()
-        return set(value, for: atom, scope: scope)
+        set(value, for: atom, scope: current)
     }
 
     @usableFromInline
     func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
-        let scope = getScope()
-        return watch(atom, in: transaction, scope: scope)
+        watch(atom, in: transaction, scope: current)
     }
 
     @usableFromInline
@@ -60,26 +52,22 @@ internal struct StoreContext {
         container: SubscriptionContainer.Wrapper,
         notifyUpdate: @escaping () -> Void
     ) -> Node.Loader.Value {
-        let scope = getScope()
-        return watch(atom, container: container, notifyUpdate: notifyUpdate, scope: scope)
+        watch(atom, container: container, notifyUpdate: notifyUpdate, scope: current)
     }
 
     @usableFromInline
     func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
-        let scope = getScope()
-        return await refresh(atom, scope: scope)
+        await refresh(atom, scope: current)
     }
 
     @usableFromInline
     func reset(_ atom: some Atom) {
-        let scope = getScope()
-        return reset(atom, scope: scope)
+        reset(atom, scope: current)
     }
 
     @usableFromInline
     func snapshot() -> Snapshot {
-        let scope = getScope()
-        return snapshot(scope: scope)
+        snapshot(scope: current)
     }
 
     func scoped(
@@ -88,47 +76,18 @@ internal struct StoreContext {
         observers: [Observer]
     ) -> Self {
         Self(
-            scope: .current(
+            current: Scope(
                 store: store,
                 overrides: overrides,
-                parent: scope
+                parent: current,
+                enablesAssertion: current.enablesAssertion
             ),
-            observers: self.observers + observers,
-            enablesAssertion: enablesAssertion
+            observers: self.observers + observers
         )
     }
 }
 
 private extension StoreContext {
-    enum Scope {
-        indirect case current(
-            store: AtomStore,
-            overrides: Overrides,
-            parent: Scope?
-        )
-
-        var store: AtomStore {
-            switch self {
-            case .current(let store, _, _):
-                return store
-            }
-        }
-
-        var overrides: Overrides {
-            switch self {
-            case .current(_, let overrides, _):
-                return overrides
-            }
-        }
-
-        var parent: Scope? {
-            switch self {
-            case .current(_, _, let parent):
-                return parent
-            }
-        }
-    }
-
     func read<Node: Atom>(_ atom: Node, scope: Scope) -> Node.Loader.Value {
         let key = AtomKey(atom)
         let override: Node.Loader.Value?
@@ -613,10 +572,29 @@ private extension StoreContext {
             }
         }
     }
+}
 
-    func getScope() -> Scope {
-        if let scope {
-            return scope
+private final class Scope {
+    private(set) weak var weakStore: AtomStore?
+    let overrides: Overrides
+    let parent: Scope?
+    let enablesAssertion: Bool
+
+    init(
+        store: AtomStore?,
+        overrides: Overrides,
+        parent: Scope?,
+        enablesAssertion: Bool
+    ) {
+        self.weakStore = store
+        self.overrides = overrides
+        self.parent = parent
+        self.enablesAssertion = enablesAssertion
+    }
+
+    var store: AtomStore {
+        if let store = weakStore {
+            return store
         }
 
         assert(
@@ -671,10 +649,6 @@ private extension StoreContext {
             """
         )
 
-        return .current(
-            store: AtomStore(),
-            overrides: Overrides(),
-            parent: nil
-        )
+        return AtomStore()
     }
 }
