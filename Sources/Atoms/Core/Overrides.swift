@@ -1,7 +1,7 @@
-@MainActor
+@usableFromInline
 internal struct Overrides {
-    private var _entriesForNode = [AtomKey: any AtomOverrideProtocol]()
-    private var _entriesForType = [AtomTypeKey: any AtomOverrideProtocol]()
+    private var entriesForNode = [AtomKey: any AtomOverrideProtocol]()
+    private var entriesForType = [AtomTypeKey: any AtomOverrideProtocol]()
 
     nonisolated init() {}
 
@@ -10,7 +10,7 @@ internal struct Overrides {
         with value: @escaping (Node) -> Node.Loader.Value
     ) {
         let key = AtomKey(atom)
-        _entriesForNode[key] = AtomOverride(value: value)
+        entriesForNode[key] = AtomOverride(value: value)
     }
 
     mutating func insert<Node: Atom>(
@@ -18,12 +18,12 @@ internal struct Overrides {
         with value: @escaping (Node) -> Node.Loader.Value
     ) {
         let key = AtomTypeKey(atomType)
-        _entriesForType[key] = AtomOverride(value: value)
+        entriesForType[key] = AtomOverride(value: value)
     }
 
     func value<Node: Atom>(for atom: Node) -> Node.Loader.Value? {
         let key = AtomKey(atom)
-        let baseOverride = _entriesForNode[key] ?? _entriesForType[key.typeKey]
+        let baseOverride = entriesForNode[key] ?? entriesForType[key.typeKey]
 
         guard let baseOverride else {
             return nil

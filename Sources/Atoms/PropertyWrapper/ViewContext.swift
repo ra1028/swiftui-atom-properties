@@ -34,7 +34,7 @@ import SwiftUI
 @propertyWrapper
 public struct ViewContext: DynamicProperty {
     @StateObject
-    private var state: State
+    private var state = State()
 
     @Environment(\.store)
     private var _store
@@ -43,7 +43,6 @@ public struct ViewContext: DynamicProperty {
 
     /// Creates a view context.
     public init(fileID: String = #fileID, line: UInt = #line) {
-        _state = StateObject(wrappedValue: State())
         location = SourceLocation(fileID: fileID, line: line)
     }
 

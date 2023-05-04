@@ -50,9 +50,12 @@ import SwiftUI
 /// ```
 ///
 public struct AtomScope<Content: View>: View {
+    @StateObject
+    private var state = State()
     private let store: StoreContext?
-    private let content: Content
+    private var overrides = Overrides()
     private var observers = [Observer]()
+    private let content: Content
 
     @Environment(\.store)
     private var environmentStore
@@ -97,8 +100,42 @@ public struct AtomScope<Content: View>: View {
     public var body: some View {
         content.environment(
             \.store,
-            (store ?? environmentStore).scoped(observers: observers)
+            (store ?? environmentStore).scoped(
+                store: state.store,
+                overrides: overrides,
+                observers: observers
+            )
         )
+    }
+
+    /// Overrides the atom value with the given value.
+    ///
+    /// When accessing the overridden atom, this context will create and return the given value
+    /// instead of the atom value.
+    ///
+    /// - Parameters:
+    ///   - atom: An atom that to be overridden.
+    ///   - value: A value that to be used instead of the atom's value.
+    ///
+    /// - Returns: The self instance.
+    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
+        mutating { $0.overrides.insert(atom, with: value) }
+    }
+
+    /// Overrides the atom value with the given value.
+    ///
+    /// Instead of overriding the particular instance of atom, this method overrides any atom that
+    /// has the same metatype.
+    /// When accessing the overridden atom, this context will create and return the given value
+    /// instead of the atom value.
+    ///
+    /// - Parameters:
+    ///   - atomType: An atom type that to be overridden.
+    ///   - value: A value that to be used instead of the atom's value.
+    ///
+    /// - Returns: The self instance.
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
+        mutating { $0.overrides.insert(atomType, with: value) }
     }
 
     /// For debugging, observes updates with a snapshot that captures a specific set of values of atoms.
@@ -114,6 +151,11 @@ public struct AtomScope<Content: View>: View {
 }
 
 private extension AtomScope {
+    @MainActor
+    final class State: ObservableObject {
+        let store = AtomStore()
+    }
+
     func `mutating`(_ mutation: (inout Self) -> Void) -> Self {
         var view = self
         mutation(&view)

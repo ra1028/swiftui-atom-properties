@@ -44,7 +44,7 @@ import SwiftUI
 ///
 public struct AtomRoot<Content: View>: View {
     @StateObject
-    private var state: State
+    private var state = State()
     private var overrides = Overrides()
     private var observers = [Observer]()
     private let content: Content
@@ -53,7 +53,6 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Parameter content: The content that uses atoms.
     public init(@ViewBuilder content: () -> Content) {
-        self._state = StateObject(wrappedValue: State())
         self.content = content()
     }
 
