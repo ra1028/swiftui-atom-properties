@@ -5,6 +5,19 @@ import XCTest
 
 @MainActor
 final class StoreContextTests: XCTestCase {
+    func testStoreDeinit() {
+        let atom = TestAtom(value: 0)
+        let container = SubscriptionContainer()
+        var store: AtomStore? = AtomStore()
+        weak var storeRef = store
+        let context = StoreContext(store!)
+
+        XCTAssertEqual(context.watch(atom, container: container.wrapper) {}, 0)
+        XCTAssertNotNil(storeRef)
+        store = nil
+        XCTAssertNil(storeRef)
+    }
+
     func testRead() {
         let store = AtomStore()
         let context = StoreContext(store)
