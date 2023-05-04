@@ -1,14 +1,14 @@
 # ``Atoms``
 
-A Reactive Data-Binding and Dependency Injection Library for SwiftUI x Concurrency.
+A reactive data-binding and dependency injection library for SwiftUI x Concurrency
+
+## Additional Resources
+
+- [GitHub Repo](https://github.com/ra1028/swiftui-atom-properties)
 
 ## Overview
 
 SwiftUI Atom Properties offers practical capabilities to manage the complexity of modern apps. It effectively integrates the solution for both data-binding and dependency injection while allowing us to rapidly building an application.
-
-## Source Code
-
-<https://github.com/ra1028/swiftui-atom-properties>
 
 ## Topics
 
@@ -62,6 +62,7 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 ### Internal System
 
 - ``Atom``
+- ``AtomStore``
 - ``AtomModifier``
 - ``SelectModifier``
 - ``TaskPhaseModifier``
