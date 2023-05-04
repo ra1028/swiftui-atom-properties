@@ -1,5 +1,5 @@
 <h1 align="center">SwiftUI Atom Properties</h1>
-<p align="center">A Reactive Data-Binding and Dependency Injection Library</br>for SwiftUI x Concurrency</p>
+<p align="center">A reactive data-binding and dependency injection library</br>for SwiftUI x Concurrency</p>
 <p align="center"><a href="https://ra1028.github.io/swiftui-atom-properties/documentation/atoms">📔 API Reference</a></p>
 <p align="center">
   <a href="https://github.com/ra1028/swiftui-atom-properties/actions"><img alt="build" src="https://github.com/ra1028/swiftui-atom-properties/workflows/test/badge.svg"></a>
