@@ -26,6 +26,7 @@
   - [Context](#context)
   - [KeepAlive](#keepalive)
   - [Suspense](#suspense)
+  - [Override](#override)
   - [Testing](#testing)
   - [Debugging](#debugging)
   - [Preview](#preview)
@@ -1118,6 +1119,35 @@ struct NewsView: View {
     }
 }
 ```
+
+---
+
+### Override
+
+Values and states defined by atoms can be overridden in root or in any scope.  
+If you override an atom in [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot), it will override the values throughout the app, which is useful for dependency injection. In case you want to override an atom only in a limited scope, you might like to use [AtomScope](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomscope) instead to override as it substitutes the atom value only in that scope, which can be useful for injecting dependencies that are needed only for the scope or overriding state in certain views.
+
+```swift
+AtomRoot {
+    VStack {
+        CountStepper()
+
+        AtomScope {
+            CountDisplay()
+        }
+        .override(CounterAtom()) { _ in
+            // Overrides the count to be 456 only for the display content.
+            456
+        }
+    }
+}
+.override(CounterAtom()) { _ in
+    // Overrides the count to be 123 throughout the app.
+    123
+}
+```
+
+See [Testing](#testing) section for details on dependency injection on unit tests.
 
 ---
 
