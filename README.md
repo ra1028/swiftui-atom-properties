@@ -1128,73 +1128,22 @@ Values and states defined by atoms can be overridden in root or in any scope.
 If you override an atom in [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot), it will override the values throughout the app, which is useful for dependency injection. In case you want to override an atom only in a limited scope, you might like to use [AtomScope](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomscope) instead to override as it substitutes the atom value only in that scope, which can be useful for injecting dependencies that are needed only for the scope or overriding state in certain views.
 
 ```swift
-struct NumberAtom: StateAtom, Hashable {
-    func defaultValue(context: Context) -> Int {
-        1
-    }
-}
+AtomRoot {
+    VStack {
+        CountStepper()
 
-struct MultiplierAtom: ValueAtom, Hashable {
-    func value(context: Context) -> Int {
-        2
-    }
-}
-
-struct MultipliedNumberAtom: ValueAtom, Hashable {
-    func value(context: Context) -> Int {
-        let number = context.watch(NumberAtom())
-        let multiplier = context.watch(MultiplierAtom())
-        return number * multiplier
-    }
-}
-
-struct MultiplicationDisplay: View {
-    @WatchState(NumberAtom())
-    var number
-
-    @Watch(MultiplierAtom())
-    var multiplier
-
-    @Watch(MultipliedNumberAtom())
-    var multiplied
-
-    var body: some View {
-        Text("\(number) * \(multiplier) = \(multiplied)")
-    }
-}
-
-struct MultiplicationStepper: View {
-    @WatchState(NumberAtom())
-    var number
-
-    var body: some View {
-        Stepper(value: $number) {}
-    }
-}
-
-@main
-struct MultiplicationApp: App {
-    var body: some Scene {
-        WindowGroup {
-            AtomRoot {
-                VStack {
-                    MultiplicationStepper()
-
-                    AtomScope {
-                        MultiplicationDisplay()
-                    }
-                    .override(MultiplierAtom()) { _ in
-                        // Overrides the multiplier to be 5.
-                        5
-                    }
-                }
-            }
-            .override(NumberAtom()) { _ in
-                // Overrides the default number to be 1000.
-                1000
-            }
+        AtomScope {
+            CountDisplay()
+        }
+        .override(CounterAtom()) { _ in
+            // Overrides the count to be 456 only for the display content.
+            456
         }
     }
+}
+.override(CounterAtom()) { _ in
+    // Overrides the count to be 123 throughout the app.
+    123
 }
 ```
 
