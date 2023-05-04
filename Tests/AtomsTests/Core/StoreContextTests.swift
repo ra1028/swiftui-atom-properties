@@ -15,10 +15,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertNil(store.state.caches[AtomKey(atom)])
 
         store.state.caches[key] = AtomCache(atom: atom, value: 1)
-
         XCTAssertEqual(context.read(atom), 1)
-        XCTAssertNil(store.state.caches[key])
-        XCTAssertNil(store.state.states[key])
     }
 
     func testSet() {

@@ -1,200 +1,274 @@
 import Foundation
 
-@MainActor
-internal protocol StoreContextProtocol {
-    func read<Node: Atom>(_ atom: Node, scoped: StoreContext?) -> Node.Loader.Value
-    func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node, scoped: StoreContext?)
-    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction, scoped: StoreContext?) -> Node.Loader.Value
-    func watch<Node: Atom>(
-        _ atom: Node,
-        container: SubscriptionContainer.Wrapper,
-        scoped: StoreContext?,
-        notifyUpdate: @escaping () -> Void
-    ) -> Node.Loader.Value
-    func refresh<Node: Atom>(_ atom: Node, scoped: StoreContext?) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader
-    func reset(_ atom: some Atom, scoped: StoreContext?)
-    func notifyUpdate(for keys: Set<AtomKey>, scoped: StoreContext?)
-}
-
 @usableFromInline
-internal struct StoreContext: StoreContextProtocol {
-    private weak var weakStore: AtomStore?
-    private let parent: StoreContextProtocol?
-    private let overrides: Overrides
+@MainActor
+internal struct StoreContext {
+    private let scope: Scope?
     private let observers: [Observer]
     private let enablesAssertion: Bool
 
     nonisolated init(
         _ store: AtomStore? = nil,
-        parent: StoreContextProtocol? = nil,
         overrides: Overrides = Overrides(),
         observers: [Observer] = [],
         enablesAssertion: Bool = false
     ) {
-        self.weakStore = store
-        self.parent = parent
-        self.overrides = overrides
-        self.observers = observers
+        self.init(
+            scope: store.map { store in
+                .current(
+                    store: store,
+                    overrides: overrides,
+                    parent: nil
+                )
+            },
+            observers: observers,
+            enablesAssertion: enablesAssertion
+        )
+    }
+
+    nonisolated private init(
+        scope: Scope?,
+        observers: [Observer] = [],
+        enablesAssertion: Bool
+    ) {
+        self.scope = scope
         self.enablesAssertion = enablesAssertion
+        self.observers = observers
     }
 
     @usableFromInline
-    func read<Node: Atom>(_ atom: Node, scoped: StoreContext? = nil) -> Node.Loader.Value {
-        let key = AtomKey(atom)
-        let override: Node.Loader.Value?
-
-        if let cache = peekCache(of: atom, for: key, scoped: scoped) {
-            checkRelease(for: key, scoped: scoped)
-            return cache.value
-        }
-        else if let value = overrides.value(for: atom) {
-            override = value
-        }
-        else if let parent {
-            return parent.read(atom, scoped: scoped ?? self)
-        }
-        else {
-            override = nil
-        }
-
-        let cache = makeNewCache(of: atom, for: key, override: override, scoped: scoped)
-        notifyUpdateToObservers(scoped: scoped)
-        checkRelease(for: key, scoped: scoped)
-        return cache.value
+    func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
+        let scope = getScope()
+        return read(atom, scope: scope)
     }
 
     @usableFromInline
-    func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node, scoped: StoreContext? = nil) {
-        let key = AtomKey(atom)
-
-        if let cache = peekCache(of: atom, for: key, scoped: scoped) {
-            update(atom: atom, for: key, value: value, cache: cache, scoped: scoped)
-            checkRelease(for: key, scoped: scoped)
-        }
-        else if let parent {
-            return parent.set(value, for: atom, scoped: scoped ?? self)
-        }
+    func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
+        let scope = getScope()
+        return set(value, for: atom, scope: scope)
     }
 
     @usableFromInline
-    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction, scoped: StoreContext? = nil) -> Node.Loader.Value {
-        guard !transaction.isTerminated else {
-            return read(atom, scoped: scoped)
-        }
-
-        let key = AtomKey(atom)
-        let cache: AtomCache<Node>?
-        let override: Node.Loader.Value?
-
-        if let oldCache = peekCache(of: atom, for: key, scoped: scoped) {
-            cache = oldCache
-            override = nil
-        }
-        else if let value = overrides.value(for: atom) {
-            cache = nil
-            override = value
-        }
-        else if let parent {
-            return parent.watch(atom, in: transaction, scoped: scoped ?? self)
-        }
-        else {
-            cache = nil
-            override = nil
-        }
-
-        let store = getStore()
-        let newCache = cache ?? makeNewCache(of: atom, for: key, override: override, scoped: scoped)
-        let isInserted = store.graph.children[key, default: []].insert(transaction.key).inserted
-
-        // Add an `Edge` from the upstream to downstream.
-        store.graph.dependencies[transaction.key, default: []].insert(key)
-
-        if isInserted || cache == nil {
-            notifyUpdateToObservers(scoped: scoped)
-        }
-
-        return newCache.value
+    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
+        let scope = getScope()
+        return watch(atom, in: transaction, scope: scope)
     }
 
     @usableFromInline
     func watch<Node: Atom>(
         _ atom: Node,
         container: SubscriptionContainer.Wrapper,
-        scoped: StoreContext? = nil,
         notifyUpdate: @escaping () -> Void
     ) -> Node.Loader.Value {
+        let scope = getScope()
+        return watch(atom, container: container, notifyUpdate: notifyUpdate, scope: scope)
+    }
+
+    @usableFromInline
+    func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
+        let scope = getScope()
+        return await refresh(atom, scope: scope)
+    }
+
+    @usableFromInline
+    func reset(_ atom: some Atom) {
+        let scope = getScope()
+        return reset(atom, scope: scope)
+    }
+
+    @usableFromInline
+    func snapshot() -> Snapshot {
+        let scope = getScope()
+        return snapshot(scope: scope)
+    }
+
+    func scoped(
+        store: AtomStore,
+        overrides: Overrides,
+        observers: [Observer]
+    ) -> Self {
+        Self(
+            scope: .current(
+                store: store,
+                overrides: overrides,
+                parent: scope
+            ),
+            observers: self.observers + observers,
+            enablesAssertion: enablesAssertion
+        )
+    }
+}
+
+private extension StoreContext {
+    enum Scope {
+        indirect case current(
+            store: AtomStore,
+            overrides: Overrides,
+            parent: Scope?
+        )
+
+        var store: AtomStore {
+            switch self {
+            case .current(let store, _, _):
+                return store
+            }
+        }
+
+        var overrides: Overrides {
+            switch self {
+            case .current(_, let overrides, _):
+                return overrides
+            }
+        }
+
+        var parent: Scope? {
+            switch self {
+            case .current(_, _, let parent):
+                return parent
+            }
+        }
+    }
+
+    func read<Node: Atom>(_ atom: Node, scope: Scope) -> Node.Loader.Value {
+        let key = AtomKey(atom)
+        let override: Node.Loader.Value?
+
+        if let cache = peekCache(of: atom, for: key, scope: scope) {
+            return cache.value
+        }
+        else if let value = scope.overrides.value(for: atom) {
+            override = value
+        }
+        else if let parent = scope.parent {
+            return read(atom, scope: parent)
+        }
+        else {
+            override = nil
+        }
+
+        let cache = makeNewCache(of: atom, for: key, override: override, scope: scope)
+        notifyUpdateToObservers(scope: scope)
+        checkRelease(for: key, scope: scope)
+        return cache.value
+    }
+
+    func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node, scope: Scope) {
+        let key = AtomKey(atom)
+
+        if let cache = peekCache(of: atom, for: key, scope: scope) {
+            update(atom: atom, for: key, value: value, cache: cache, scope: scope)
+            checkRelease(for: key, scope: scope)
+        }
+        else if let parent = scope.parent {
+            return set(value, for: atom, scope: parent)
+        }
+    }
+
+    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction, scope: Scope) -> Node.Loader.Value {
+        guard !transaction.isTerminated else {
+            return read(atom)
+        }
+
         let key = AtomKey(atom)
         let cache: AtomCache<Node>?
         let override: Node.Loader.Value?
 
-        if let oldCache = peekCache(of: atom, for: key, scoped: scoped) {
+        if let oldCache = peekCache(of: atom, for: key, scope: scope) {
             cache = oldCache
             override = nil
         }
-        else if let value = overrides.value(for: atom) {
+        else if let value = scope.overrides.value(for: atom) {
             cache = nil
             override = value
         }
-        else if let parent {
-            return parent.watch(
-                atom,
-                container: container,
-                scoped: scoped ?? self,
-                notifyUpdate: notifyUpdate
-            )
+        else if let parent = scope.parent {
+            return watch(atom, in: transaction, scope: parent)
         }
         else {
             cache = nil
             override = nil
         }
 
-        let store = getStore()
-        let newCache = cache ?? makeNewCache(of: atom, for: key, override: override, scoped: scoped)
-        let subscription = Subscription(notifyUpdate: notifyUpdate) { [weak store] in
-            guard let store else {
-                return
-            }
+        let newCache = cache ?? makeNewCache(of: atom, for: key, override: override, scope: scope)
+        let isInserted = scope.store.graph.children[key, default: []].insert(transaction.key).inserted
 
-            // Unsubscribe and release if it's no longer used.
-            store.state.subscriptions[key]?.removeValue(forKey: container.key)
-            notifyUpdateToObservers(scoped: scoped)
-            checkRelease(for: key, scoped: scoped)
-        }
-        let isInserted = store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key) == nil
-
-        // Register the subscription to both the store and the container.
-        container.subscriptions[key] = subscription
+        // Add an `Edge` from the upstream to downstream.
+        scope.store.graph.dependencies[transaction.key, default: []].insert(key)
 
         if isInserted || cache == nil {
-            notifyUpdateToObservers(scoped: scoped)
+            notifyUpdateToObservers(scope: scope)
         }
 
         return newCache.value
     }
 
-    @usableFromInline
-    func refresh<Node: Atom>(_ atom: Node, scoped: StoreContext? = nil) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
+    func watch<Node: Atom>(
+        _ atom: Node,
+        container: SubscriptionContainer.Wrapper,
+        notifyUpdate: @escaping () -> Void,
+        scope: Scope
+    ) -> Node.Loader.Value {
         let key = AtomKey(atom)
         let cache: AtomCache<Node>?
         let override: Node.Loader.Value?
 
-        if let oldCache = peekCache(of: atom, for: key, scoped: scoped) {
+        if let oldCache = peekCache(of: atom, for: key, scope: scope) {
             cache = oldCache
-            override = overrides.value(for: atom)
+            override = nil
         }
-        else if let value = overrides.value(for: atom) {
+        else if let value = scope.overrides.value(for: atom) {
             cache = nil
             override = value
         }
-        else if let parent {
-            return await parent.refresh(atom, scoped: scoped ?? self)
+        else if let parent = scope.parent {
+            return watch(atom, container: container, notifyUpdate: notifyUpdate, scope: parent)
         }
         else {
             cache = nil
             override = nil
         }
 
-        let context = prepareTransaction(of: atom, for: key, scoped: scoped)
+        let newCache = cache ?? makeNewCache(of: atom, for: key, override: override, scope: scope)
+        let subscription = Subscription(notifyUpdate: notifyUpdate) {
+            // Unsubscribe and release if it's no longer used.
+            scope.store.state.subscriptions[key]?.removeValue(forKey: container.key)
+            notifyUpdateToObservers(scope: scope)
+            checkRelease(for: key, scope: scope)
+        }
+        let isInserted = scope.store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key) == nil
+
+        // Register the subscription to both the store and the container.
+        container.subscriptions[key] = subscription
+
+        if isInserted || cache == nil {
+            notifyUpdateToObservers(scope: scope)
+        }
+
+        return newCache.value
+    }
+
+    func refresh<Node: Atom>(_ atom: Node, scope: Scope) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
+        let key = AtomKey(atom)
+        let cache: AtomCache<Node>?
+        let override: Node.Loader.Value?
+
+        if let oldCache = peekCache(of: atom, for: key, scope: scope) {
+            cache = oldCache
+            override = scope.overrides.value(for: atom)
+        }
+        else if let value = scope.overrides.value(for: atom) {
+            cache = nil
+            override = value
+        }
+        else if let parent = scope.parent {
+            return await refresh(atom, scope: parent)
+        }
+        else {
+            cache = nil
+            override = nil
+        }
+
+        let context = prepareTransaction(of: atom, for: key, scope: scope)
         let value: Node.Loader.Value
 
         if let override {
@@ -205,148 +279,33 @@ internal struct StoreContext: StoreContextProtocol {
         }
 
         if let cache {
-            update(atom: atom, for: key, value: value, cache: cache, scoped: scoped)
+            update(atom: atom, for: key, value: value, cache: cache, scope: scope)
         }
 
-        checkRelease(for: key, scoped: scoped)
+        checkRelease(for: key, scope: scope)
         return value
     }
 
-    @usableFromInline
-    func reset(_ atom: some Atom, scoped: StoreContext? = nil) {
+    func reset(_ atom: some Atom, scope: Scope) {
         let key = AtomKey(atom)
 
-        if let cache = peekCache(of: atom, for: key, scoped: scoped) {
-            let override = overrides.value(for: atom)
-            let newCache = makeNewCache(of: atom, for: key, override: override, scoped: scoped)
-            update(atom: atom, for: key, value: newCache.value, cache: cache, scoped: scoped)
-            checkRelease(for: key, scoped: scoped)
+        if let cache = peekCache(of: atom, for: key, scope: scope) {
+            let override = scope.overrides.value(for: atom)
+            let newCache = makeNewCache(of: atom, for: key, override: override, scope: scope)
+            update(atom: atom, for: key, value: newCache.value, cache: cache, scope: scope)
+            checkRelease(for: key, scope: scope)
         }
-        else if let parent {
-            parent.reset(atom, scoped: scoped ?? self)
-        }
-    }
-
-    func notifyUpdate(for keys: Set<AtomKey>, scoped: StoreContext?) {
-        parent?.notifyUpdate(for: keys, scoped: scoped ?? self)
-
-        let store = getStore()
-
-        // Reset the atom value and then notify update to downstream atoms.
-        for key in keys {
-            guard let cache = store.state.caches[key] else {
-                continue
-            }
-
-            reset(cache.atom, scoped: scoped)
+        else if let parent = scope.parent {
+            reset(atom, scope: parent)
         }
     }
 
-    @usableFromInline
-    func snapshot(scoped: StoreContext? = nil) -> Snapshot {
-        let store = getStore()
-        let graph = store.graph
-        let caches = store.state.caches
-        let subscriptions = store.state.subscriptions
-
-        return Snapshot(
-            graph: graph,
-            caches: caches,
-            subscriptions: subscriptions
-        ) {
-            let store = getStore()
-            let keys = ContiguousArray(caches.keys)
-            var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
-
-            for key in keys {
-                let oldDependencies = store.graph.dependencies[key]
-                let newDependencies = graph.dependencies[key]
-
-                // Update atom values and the graph.
-                store.state.caches[key] = caches[key]
-                store.graph.dependencies[key] = newDependencies
-                store.graph.children[key] = graph.children[key]
-                obsoletedDependencies[key] = oldDependencies?.subtracting(newDependencies ?? [])
-            }
-
-            for key in keys {
-                // Release if the atom is no longer used.
-                checkRelease(for: key, scoped: scoped)
-
-                // Release dependencies that are no longer dependent.
-                if let dependencies = obsoletedDependencies[key] {
-                    checkReleaseDependencies(dependencies, for: key, scoped: scoped)
-                }
-
-                // Notify updates only for the subscriptions of restored atoms.
-                if let subscriptions = store.state.subscriptions[key] {
-                    for subscription in ContiguousArray(subscriptions.values) {
-                        subscription.notifyUpdate()
-                    }
-                }
-            }
+    func reset(for key: AtomKey, scope: Scope) {
+        if let cache = scope.store.state.caches[key] {
+            reset(cache.atom, scope: scope)
         }
-    }
-
-    func scoped(
-        store: AtomStore,
-        overrides: Overrides,
-        observers: [Observer]
-    ) -> Self {
-        Self(
-            store,
-            parent: StoreContext(
-                weakStore,
-                parent: parent,
-                overrides: self.overrides,
-                observers: self.observers + observers,
-                enablesAssertion: enablesAssertion
-            ),
-            overrides: overrides,
-            observers: self.observers + observers
-        )
-    }
-}
-
-private extension StoreContext {
-    func prepareTransaction<Node: Atom>(
-        of atom: Node,
-        for key: AtomKey,
-        scoped: StoreContext?
-    ) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
-        let state = getState(of: atom, for: key, scoped: scoped)
-
-        // Invalidate dependencies and an ongoing transaction.
-        let oldDependencies = invalidate(for: key)
-        let transaction = Transaction(key: key) {
-            let store = getStore()
-            let dependencies = store.graph.dependencies[key] ?? []
-            let obsoletedDependencies = oldDependencies.subtracting(dependencies)
-
-            // Check if the dependencies that are no longer used and release them if possible.
-            checkReleaseDependencies(obsoletedDependencies, for: key, scoped: scoped)
-        }
-
-        // Register the transaction state so it can be terminated from anywhere.
-        state.transaction = transaction
-
-        return AtomLoaderContext(
-            store: scoped ?? self,
-            transaction: transaction,
-            coordinator: state.coordinator
-        ) { value, needsEnsureValueUpdate in
-            guard let cache = peekCache(of: atom, for: key, scoped: scoped) else {
-                return
-            }
-
-            update(
-                atom: atom,
-                for: key,
-                value: value,
-                cache: cache,
-                needsEnsureValueUpdate: needsEnsureValueUpdate,
-                scoped: scoped
-            )
+        else if let parent = scope.parent {
+            reset(for: key, scope: parent)
         }
     }
 
@@ -354,10 +313,9 @@ private extension StoreContext {
         of atom: Node,
         for key: AtomKey,
         override: Node.Loader.Value?,
-        scoped: StoreContext?
+        scope: Scope
     ) -> AtomCache<Node> {
-        let store = getStore()
-        let context = prepareTransaction(of: atom, for: key, scoped: scoped)
+        let context = prepareTransaction(of: atom, for: key, scope: scope)
         let value: Node.Loader.Value
 
         if let override {
@@ -368,51 +326,60 @@ private extension StoreContext {
         }
 
         let cache = AtomCache(atom: atom, value: value)
-        store.state.caches[key] = cache
+        scope.store.state.caches[key] = cache
 
         return cache
     }
 
-    func peekCache<Node: Atom>(of atom: Node, for key: AtomKey, scoped: StoreContext?) -> AtomCache<Node>? {
-        let store = getStore()
+    func prepareTransaction<Node: Atom>(
+        of atom: Node,
+        for key: AtomKey,
+        scope: Scope
+    ) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
+        let state = getState(of: atom, for: key, scope: scope)
 
-        guard let baseCache = store.state.caches[key] else {
-            return nil
+        // Invalidate dependencies and an ongoing transaction.
+        let oldDependencies = invalidate(for: key, scope: scope)
+        let transaction = Transaction(key: key) {
+            let dependencies = scope.store.graph.dependencies[key] ?? []
+            let obsoletedDependencies = oldDependencies.subtracting(dependencies)
+
+            // Check if the dependencies that are no longer used and release them if possible.
+            checkReleaseDependencies(obsoletedDependencies, for: key, scope: scope)
         }
 
-        guard let cache = baseCache as? AtomCache<Node> else {
-            assertionFailure(
-                """
-                [Atoms]
-                The type of the given atom's value and the cache did not match.
-                There might be duplicate keys, make sure that the keys for all atom types are unique.
+        // Register the transaction state so it can be terminated from anywhere.
+        state.transaction = transaction
 
-                Atom: \(Node.self)
-                Key: \(type(of: atom.key))
-                Detected: \(type(of: baseCache))
-                Expected: AtomCache<\(Node.self)>
-                """
+        return AtomLoaderContext(
+            store: self,
+            transaction: transaction,
+            coordinator: state.coordinator
+        ) { value, needsEnsureValueUpdate in
+            guard let cache = peekCache(of: atom, for: key, scope: scope) else {
+                return
+            }
+
+            update(
+                atom: atom,
+                for: key,
+                value: value,
+                cache: cache,
+                needsEnsureValueUpdate: needsEnsureValueUpdate,
+                scope: scope
             )
-
-            // Release the invalid registration as a fallback.
-            release(for: key, scoped: scoped)
-            return nil
         }
-
-        return cache
     }
 
-    func getState<Node: Atom>(of atom: Node, for key: AtomKey, scoped: StoreContext?) -> AtomState<Node.Coordinator> {
-        let store = getStore()
-
+    func getState<Node: Atom>(of atom: Node, for key: AtomKey, scope: Scope) -> AtomState<Node.Coordinator> {
         func makeState() -> AtomState<Node.Coordinator> {
             let coordinator = atom.makeCoordinator()
             let state = AtomState(coordinator: coordinator)
-            store.state.states[key] = state
+            scope.store.state.states[key] = state
             return state
         }
 
-        guard let baseState = store.state.states[key] else {
+        guard let baseState = scope.store.state.states[key] else {
             return makeState()
         }
 
@@ -431,7 +398,7 @@ private extension StoreContext {
             )
 
             // Release the invalid registration as a fallback.
-            release(for: key, scoped: scoped)
+            release(for: key, scope: scope)
             return makeState()
         }
 
@@ -444,15 +411,14 @@ private extension StoreContext {
         value: Node.Loader.Value,
         cache: AtomCache<Node>,
         needsEnsureValueUpdate: Bool = false,
-        scoped: StoreContext?
+        scope: Scope
     ) {
-        let store = getStore()
         let oldValue = cache.value
         var cache = cache
 
         // Update the current value with the new value.
         cache.value = value
-        store.state.caches[key] = cache
+        scope.store.state.caches[key] = cache
 
         // Do not notify update if the new value and the old value are equivalent.
         if !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
@@ -460,13 +426,13 @@ private extension StoreContext {
         }
 
         // Notify update to the downstream atoms or views.
-        notifyUpdate(for: key, needsEnsureValueUpdate: needsEnsureValueUpdate, scoped: scoped)
+        notifyUpdate(for: key, needsEnsureValueUpdate: needsEnsureValueUpdate, scope: scope)
 
         // Notify value update to observers.
-        notifyUpdateToObservers(scoped: scoped)
+        notifyUpdateToObservers(scope: scope)
 
         func notifyUpdated() {
-            let context = AtomUpdatedContext(store: scoped ?? self)
+            let context = AtomUpdatedContext(store: self)
             atom.updated(newValue: value, oldValue: oldValue, context: context)
         }
 
@@ -481,105 +447,176 @@ private extension StoreContext {
         }
     }
 
-    func notifyUpdate(for key: AtomKey, needsEnsureValueUpdate: Bool, scoped: StoreContext?) {
-        let store = getStore()
-
+    func notifyUpdate(
+        for key: AtomKey,
+        needsEnsureValueUpdate: Bool,
+        scope: Scope
+    ) {
         // Notifying update to view subscriptions first.
-        if let subscriptions = store.state.subscriptions[key], !subscriptions.isEmpty {
+        if let subscriptions = scope.store.state.subscriptions[key], !subscriptions.isEmpty {
             for subscription in ContiguousArray(subscriptions.values) {
                 subscription.notifyUpdate()
             }
         }
 
-        if let children = store.graph.children[key], !children.isEmpty {
-            // At the timing when `ObservableObject/objectWillChange` emits, its properties
-            // have not yet been updated and are still old when dependent atoms read it.
-            // As a workaround, the update is executed in the next run loop
-            // so that the downstream atoms can receive the object that's already updated.
-            if needsEnsureValueUpdate {
-                RunLoop.current.perform {
-                    notifyUpdate(for: children, scoped: scoped)
-                }
-            }
-            else {
-                notifyUpdate(for: children, scoped: scoped)
-            }
-        }
-    }
-
-    func notifyUpdateToObservers(scoped: StoreContext?) {
-        let observers = scoped?.observers ?? observers
-
-        guard !observers.isEmpty else {
+        guard let children = scope.store.graph.children[key], !children.isEmpty else {
             return
         }
 
-        let snapshot = snapshot(scoped: scoped)
+        func notifyUpdate() {
+            for child in children {
+                // Reset the atom value and then notify update to downstream atoms.
+                reset(for: child, scope: scope)
+            }
+        }
 
-        for observer in observers {
-            observer.onUpdate(snapshot)
+        // At the timing when `ObservableObject/objectWillChange` emits, its properties
+        // have not yet been updated and are still old when dependent atoms read it.
+        // As a workaround, the update is executed in the next run loop
+        // so that the downstream atoms can receive the object that's already updated.
+        if needsEnsureValueUpdate {
+            RunLoop.current.perform {
+                notifyUpdate()
+            }
+        }
+        else {
+            notifyUpdate()
         }
     }
 
-    func release(for key: AtomKey, scoped: StoreContext?) {
-        let store = getStore()
+    func peekCache<Node: Atom>(of atom: Node, for key: AtomKey, scope: Scope) -> AtomCache<Node>? {
+        guard let baseCache = scope.store.state.caches[key] else {
+            return nil
+        }
 
-        // Invalidate transactions, dependencies, and the atom state.
-        let dependencies = invalidate(for: key)
-        store.graph.children.removeValue(forKey: key)
-        store.state.caches.removeValue(forKey: key)
-        store.state.states.removeValue(forKey: key)
-        store.state.subscriptions.removeValue(forKey: key)
+        guard let cache = baseCache as? AtomCache<Node> else {
+            assertionFailure(
+                """
+                [Atoms]
+                The type of the given atom's value and the cache did not match.
+                There might be duplicate keys, make sure that the keys for all atom types are unique.
 
-        // Check if the dependencies are releasable.
-        checkReleaseDependencies(dependencies, for: key, scoped: scoped)
+                Atom: \(Node.self)
+                Key: \(type(of: atom.key))
+                Detected: \(type(of: baseCache))
+                Expected: AtomCache<\(Node.self)>
+                """
+            )
 
-        // Notify release.
-        notifyUpdateToObservers(scoped: scoped)
+            // Release the invalid registration as a fallback.
+            release(for: key, scope: scope)
+            return nil
+        }
+
+        return cache
     }
 
-    func checkRelease(for key: AtomKey, scoped: StoreContext?) {
-        let store = getStore()
+    func invalidate(for key: AtomKey, scope: Scope) -> Set<AtomKey> {
+        // Remove the current transaction and then terminate to prevent it to watch new atoms
+        // or add new terminations.
+        // Then, temporarily remove dependencies but do not release them recursively here.
+        scope.store.state.states[key]?.transaction?.terminate()
+        return scope.store.graph.dependencies.removeValue(forKey: key) ?? []
+    }
 
+    func release(for key: AtomKey, scope: Scope) {
+        // Invalidate transactions, dependencies, and the atom state.
+        let dependencies = invalidate(for: key, scope: scope)
+        scope.store.graph.children.removeValue(forKey: key)
+        scope.store.state.caches.removeValue(forKey: key)
+        scope.store.state.states.removeValue(forKey: key)
+        scope.store.state.subscriptions.removeValue(forKey: key)
+
+        // Check if the dependencies are releasable.
+        checkReleaseDependencies(dependencies, for: key, scope: scope)
+
+        // Notify release.
+        notifyUpdateToObservers(scope: scope)
+    }
+
+    func checkRelease(for key: AtomKey, scope: Scope) {
         // The condition under which an atom may be released are as follows:
         //     1. It's not marked as `KeepAlive`.
         //     2. It has no downstream atoms.
         //     3. It has no subscriptions from views.
-        let shouldKeepAlive = store.state.caches[key].map { $0.atom is any KeepAlive } ?? false
-        let isChildrenEmpty = store.graph.children[key]?.isEmpty ?? true
-        let isSubscriptionEmpty = store.state.subscriptions[key]?.isEmpty ?? true
+        let shouldKeepAlive = scope.store.state.caches[key].map { $0.atom is any KeepAlive } ?? false
+        let isChildrenEmpty = scope.store.graph.children[key]?.isEmpty ?? true
+        let isSubscriptionEmpty = scope.store.state.subscriptions[key]?.isEmpty ?? true
         let shouldRelease = !shouldKeepAlive && isChildrenEmpty && isSubscriptionEmpty
 
         guard shouldRelease else {
             return
         }
 
-        release(for: key, scoped: scoped)
+        release(for: key, scope: scope)
     }
 
-    func checkReleaseDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey, scoped: StoreContext?) {
-        let store = getStore()
-
+    func checkReleaseDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey, scope: Scope) {
         // Recursively release dependencies while unlinking the dependent.
         for dependency in dependencies {
-            store.graph.children[dependency]?.remove(key)
-            checkRelease(for: dependency, scoped: scoped)
+            scope.store.graph.children[dependency]?.remove(key)
+            checkRelease(for: dependency, scope: scope)
         }
     }
 
-    func invalidate(for key: AtomKey) -> Set<AtomKey> {
-        let store = getStore()
+    func notifyUpdateToObservers(scope: Scope) {
+        guard !observers.isEmpty else {
+            return
+        }
 
-        // Remove the current transaction and then terminate to prevent it to watch new atoms
-        // or add new terminations.
-        // Then, temporarily remove dependencies but do not release them recursively here.
-        store.state.states[key]?.transaction?.terminate()
-        return store.graph.dependencies.removeValue(forKey: key) ?? []
+        let snapshot = snapshot(scope: scope)
+
+        for observer in observers {
+            observer.onUpdate(snapshot)
+        }
     }
 
-    func getStore() -> AtomStore {
-        if let store = weakStore {
-            return store
+    func snapshot(scope: Scope) -> Snapshot {
+        let graph = scope.store.graph
+        let caches = scope.store.state.caches
+        let subscriptions = scope.store.state.subscriptions
+
+        return Snapshot(
+            graph: graph,
+            caches: caches,
+            subscriptions: subscriptions
+        ) {
+            let keys = ContiguousArray(caches.keys)
+            var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
+
+            for key in keys {
+                let oldDependencies = scope.store.graph.dependencies[key]
+                let newDependencies = graph.dependencies[key]
+
+                // Update atom values and the graph.
+                scope.store.state.caches[key] = caches[key]
+                scope.store.graph.dependencies[key] = newDependencies
+                scope.store.graph.children[key] = graph.children[key]
+                obsoletedDependencies[key] = oldDependencies?.subtracting(newDependencies ?? [])
+            }
+
+            for key in keys {
+                // Release if the atom is no longer used.
+                checkRelease(for: key, scope: scope)
+
+                // Release dependencies that are no longer dependent.
+                if let dependencies = obsoletedDependencies[key] {
+                    checkReleaseDependencies(dependencies, for: key, scope: scope)
+                }
+
+                // Notify updates only for the subscriptions of restored atoms.
+                if let subscriptions = scope.store.state.subscriptions[key] {
+                    for subscription in ContiguousArray(subscriptions.values) {
+                        subscription.notifyUpdate()
+                    }
+                }
+            }
+        }
+    }
+
+    func getScope() -> Scope {
+        if let scope {
+            return scope
         }
 
         assert(
@@ -634,6 +671,10 @@ private extension StoreContext {
             """
         )
 
-        return AtomStore()
+        return .current(
+            store: AtomStore(),
+            overrides: Overrides(),
+            parent: nil
+        )
     }
 }
