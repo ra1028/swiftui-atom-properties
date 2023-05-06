@@ -54,8 +54,7 @@ struct VoiceMemoAction {
     func delete(at indexSet: IndexSet) {
         for index in indexSet {
             let voiceMemos = context.read(VoiceMemosAtom())
-            let viewModel = context.read(VoiceMemoRowViewModelAtom(voiceMemo: voiceMemos[index]))
-            viewModel.stopPlaying()
+            context[IsPlayingAtom(voiceMemo: voiceMemos[index])] = false
         }
 
         context[VoiceMemosAtom()].remove(atOffsets: indexSet)
