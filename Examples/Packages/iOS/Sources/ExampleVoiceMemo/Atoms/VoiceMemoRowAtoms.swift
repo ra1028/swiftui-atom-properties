@@ -42,22 +42,13 @@ struct PlayingElapsedTimeAtom: PublisherAtom {
 
     func publisher(context: Context) -> AnyPublisher<TimeInterval, Never> {
         let isPlaying = context.watch(IsPlayingAtom(voiceMemo: voiceMemo))
-        let startDate = context.watch(ValueGeneratorAtom()).date()
 
         guard isPlaying else {
             return Just(.zero).eraseToAnyPublisher()
         }
 
-        return Timer.publish(
-            every: 0.5,
-            tolerance: 0,
-            on: .main,
-            in: .common
-        )
-        .autoconnect()
-        .map { $0.timeIntervalSince(startDate) }
-        .prepend(.zero)
-        .eraseToAnyPublisher()
+        let startDate = context.watch(ValueGeneratorAtom()).date()
+        return context.read(TimerAtom(startDate: startDate, timeInterval: 0.5))
     }
 }
 

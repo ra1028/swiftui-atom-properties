@@ -10,13 +10,13 @@ struct VoiceMemo: Equatable {
     var title = ""
 }
 
-struct Record: Equatable {
+struct RecordingData: Equatable {
     var url: URL
     var date: Date
 }
 
 @MainActor
-struct VoiceMemoAction {
+struct VoiceMemoActions {
     let context: AtomContext
 
     func toggleRecording() {
@@ -24,7 +24,7 @@ struct VoiceMemoAction {
         let recordPermission = context.read(AudioRecordPermissionAtom())
 
         guard !isRecording else {
-            context[RecordAtom()] = nil
+            context[RecordingDataAtom()] = nil
             return
         }
 
@@ -44,7 +44,7 @@ struct VoiceMemoAction {
             let url = URL(fileURLWithPath: generator.temporaryDirectory())
                 .appendingPathComponent(generator.uuid().uuidString)
                 .appendingPathExtension("m4a")
-            context[RecordAtom()] = Record(url: url, date: date)
+            context[RecordingDataAtom()] = RecordingData(url: url, date: date)
 
         @unknown default:
             break
@@ -62,8 +62,8 @@ struct VoiceMemoAction {
 }
 
 struct VoiceMemoActionsAtom: ValueAtom, Hashable {
-    func value(context: Context) -> VoiceMemoAction {
-        VoiceMemoAction(context: context)
+    func value(context: Context) -> VoiceMemoActions {
+        VoiceMemoActions(context: context)
     }
 }
 
@@ -77,7 +77,7 @@ struct AudioRecorderAtom: ValueAtom, Hashable {
     func value(context: Context) -> AudioRecorderProtocol {
         AudioRecorder {
             context[IsRecordingFailedAtom()] = true
-            context[RecordAtom()] = nil
+            context[RecordingDataAtom()] = nil
         }
     }
 }
@@ -90,7 +90,7 @@ struct VoiceMemosAtom: StateAtom, KeepAlive, Hashable {
 
 struct IsRecordingAtom: ValueAtom, Hashable {
     func value(context: Context) -> Bool {
-        context.watch(RecordAtom()) != nil
+        context.watch(RecordingDataAtom()) != nil
     }
 }
 
@@ -113,21 +113,21 @@ struct AudioRecordPermissionAtom: ValueAtom, Hashable {
     }
 }
 
-struct RecordAtom: StateAtom, Hashable {
-    func defaultValue(context: Context) -> Record? {
+struct RecordingDataAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> RecordingData? {
         // Add the recorder atom as a depedency.
         context.watch(AudioRecorderAtom())
         return nil
     }
 
-    func updated(newValue: Record?, oldValue: Record?, context: UpdatedContext) {
+    func updated(newValue: RecordingData?, oldValue: RecordingData?, context: UpdatedContext) {
         let audioRecorder = context.read(AudioRecorderAtom())
         let audioSession = context.read(AudioSessionAtom())
 
-        if let recording = oldValue {
+        if let data = oldValue {
             let voiceMemo = VoiceMemo(
-                url: recording.url,
-                date: recording.date,
+                url: data.url,
+                date: data.date,
                 duration: audioRecorder.currentTime
             )
 
@@ -136,11 +136,11 @@ struct RecordAtom: StateAtom, Hashable {
             try? audioSession.setActive(false, options: [])
         }
 
-        if let recording = newValue {
+        if let data = newValue {
             do {
                 try audioSession.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
                 try audioSession.setActive(true, options: [])
-                try audioRecorder.record(url: recording.url)
+                try audioRecorder.record(url: data.url)
             }
             catch {
                 context[IsRecordingFailedAtom()] = true
@@ -152,21 +152,12 @@ struct RecordAtom: StateAtom, Hashable {
 struct RecordingElapsedTimeAtom: PublisherAtom, Hashable {
     func publisher(context: Context) -> AnyPublisher<TimeInterval, Never> {
         let isRecording = context.watch(IsRecordingAtom())
-        let startDate = context.watch(ValueGeneratorAtom()).date()
 
         guard isRecording else {
             return Just(.zero).eraseToAnyPublisher()
         }
 
-        return Timer.publish(
-            every: 1,
-            tolerance: 0,
-            on: .main,
-            in: .common
-        )
-        .autoconnect()
-        .map { $0.timeIntervalSince(startDate) }
-        .prepend(.zero)
-        .eraseToAnyPublisher()
+        let startDate = context.watch(ValueGeneratorAtom()).date()
+        return context.read(TimerAtom(startDate: startDate, timeInterval: 1))
     }
 }
