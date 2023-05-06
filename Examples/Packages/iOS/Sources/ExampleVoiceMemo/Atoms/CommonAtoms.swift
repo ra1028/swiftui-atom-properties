@@ -18,20 +18,3 @@ struct ValueGeneratorAtom: ValueAtom, Hashable {
         )
     }
 }
-
-struct TimerAtom: ValueAtom, Hashable {
-    var startDate: Date
-    var timeInterval: TimeInterval
-
-    func value(context: Context) -> AnyPublisher<TimeInterval, Never> {
-        Timer.publish(
-            every: timeInterval,
-            tolerance: 0,
-            on: .main,
-            in: .common
-        )
-        .autoconnect()
-        .map { $0.timeIntervalSince(startDate) }
-        .eraseToAnyPublisher()
-    }
-}

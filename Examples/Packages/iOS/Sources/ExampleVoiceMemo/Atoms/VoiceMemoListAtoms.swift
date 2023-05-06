@@ -115,7 +115,7 @@ struct AudioRecordPermissionAtom: ValueAtom, Hashable {
 
 struct RecordAtom: StateAtom, Hashable {
     func defaultValue(context: Context) -> Record? {
-        // Add recorder instance as a depedency.
+        // Add the recorder atom as a depedency.
         context.watch(AudioRecorderAtom())
         return nil
     }

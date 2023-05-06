@@ -12,7 +12,7 @@ struct IsPlayingAtom: StateAtom {
     }
 
     func defaultValue(context: Context) -> Bool {
-        // Add recorder instance as a depedency.
+        // Add the player atom as a depedency.
         context.watch(AudioPlayerAtom(voiceMemo: voiceMemo))
         return false
     }
