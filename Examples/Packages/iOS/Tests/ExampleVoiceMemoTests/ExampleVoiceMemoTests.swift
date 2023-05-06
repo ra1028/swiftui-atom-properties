@@ -1,3 +1,4 @@
+import AVFAudio
 import Atoms
 import Combine
 import XCTest
@@ -6,145 +7,214 @@ import XCTest
 
 @MainActor
 final class ExampleVoiceMemoTests: XCTestCase {
-    func testVoiceMemoListViewModelAtom() {
+    func testIsRecordingAtom() {
+        let context = AtomTestContext()
+        let atom = IsRecordingAtom()
+
+        context.override(RecordingDataAtom()) { _ in nil }
+        XCTAssertFalse(context.read(atom))
+
+        context.override(RecordingDataAtom()) { _ in .stub() }
+        XCTAssertTrue(context.read(atom))
+    }
+
+    func testRecordingDataAtom() {
+        let context = AtomTestContext()
+        let atom = RecordingDataAtom()
         let audioSession = MockAudioSession()
         let audioRecorder = MockAudioRecorder()
-        let audioPlayer = MockAudioPlayer()
-        let generator = Generator.stub()
-        let fileURL = URL(fileURLWithPath: generator.temporaryDirectory())
-            .appendingPathComponent(generator.uuid().uuidString)
-            .appendingPathExtension("m4a")
-        let timer = PassthroughSubject<TimeInterval, Never>()
-
-        audioSession.recordPermission = .undetermined
-        audioRecorder.currentTime = 100
-
-        let context = AtomTestContext()
+        let recordingData = RecordingData.stub()
 
         context.override(AudioSessionAtom()) { _ in audioSession }
         context.override(AudioRecorderAtom()) { _ in audioRecorder }
-        context.override(AudioPlayerAtom.self) { _ in audioPlayer }
-        context.override(GeneratorAtom()) { _ in generator }
-        context.override(TimerAtom.self) { _ in timer.eraseToAnyPublisher() }
 
-        let viewModel = context.watch(VoiceMemoListViewModelAtom())
-
-        XCTAssertEqual(viewModel.voiceMemos, [])
-        XCTAssertEqual(viewModel.audioRecorderPermission, .undetermined)
-        XCTAssertEqual(viewModel.elapsedTime, 0)
-        XCTAssertFalse(viewModel.isRecording)
+        XCTAssertNil(context.watch(atom))
+        XCTAssertTrue(context.watch(VoiceMemosAtom()).isEmpty)
         XCTAssertFalse(context.watch(IsRecordingFailedAtom()))
 
-        viewModel.toggleRecording()
+        context[atom] = recordingData
 
-        XCTAssertNotNil(audioSession.requestRecordPermissionResponse)
-
-        audioSession.recordPermission = .denied
-        viewModel.toggleRecording()
-
-        XCTAssertTrue(context.watch(IsRecordingFailedAtom()))
-
-        context[IsRecordingFailedAtom()] = false
-        audioSession.recordPermission = .granted
-        audioSession.requestRecordPermissionResponse?(true)
-        viewModel.toggleRecording()
-        timer.send(10)
-
-        XCTAssertTrue(viewModel.isRecording)
-        XCTAssertEqual(viewModel.audioRecorderPermission, .granted)
-        XCTAssertEqual(viewModel.elapsedTime, 10)
         XCTAssertEqual(audioSession.currentCategory, .playAndRecord)
         XCTAssertEqual(audioSession.currentMode, .default)
         XCTAssertEqual(audioSession.currentOptions, .defaultToSpeaker)
         XCTAssertTrue(audioSession.isActive)
         XCTAssertTrue(audioRecorder.isRecording)
+
+        context[atom] = nil
+
         XCTAssertEqual(
-            viewModel.currentRecording,
-            Recording(url: fileURL, date: generator.date())
+            context.watch(VoiceMemosAtom()),
+            [VoiceMemo(url: recordingData.url, date: recordingData.date, duration: audioRecorder.currentTime)]
         )
-
-        viewModel.toggleRecording()
-
-        let voiceMemo = VoiceMemo(
-            url: fileURL,
-            date: generator.date(),
-            duration: audioRecorder.currentTime
-        )
-
-        XCTAssertNil(viewModel.currentRecording)
-        XCTAssertFalse(viewModel.isRecording)
-        XCTAssertFalse(audioRecorder.isRecording)
         XCTAssertFalse(audioSession.isActive)
-        XCTAssertEqual(viewModel.voiceMemos, [voiceMemo])
+        XCTAssertFalse(audioRecorder.isRecording)
 
-        let rowViewModel = context.watch(VoiceMemoRowViewModelAtom(voiceMemo: voiceMemo))
+        audioRecorder.recordingError = URLError(.unknown)
+        context[atom] = recordingData
 
-        rowViewModel.togglePaying()
-
-        XCTAssertTrue(rowViewModel.isPlaying)
-
-        viewModel.delete([0])
-
-        XCTAssertFalse(rowViewModel.isPlaying)
-        XCTAssertEqual(viewModel.voiceMemos, [])
+        XCTAssertTrue(context.watch(IsRecordingFailedAtom()))
     }
 
-    func testVoiceMemoRowViewModelAtom() {
-        let audioPlayer = MockAudioPlayer()
-        let generator = Generator.stub()
-        let timer = PassthroughSubject<TimeInterval, Never>()
-        let voiceMemo = VoiceMemo(
-            url: URL(fileURLWithPath: "/tmp"),
-            date: Date(timeIntervalSince1970: 0),
-            duration: 0
+    func testRecordingElapsedTimeAtom() async {
+        let context = AtomTestContext()
+        let atom = RecordingElapsedTimeAtom()
+
+        context.override(IsRecordingAtom()) { _ in false }
+        context.override(ValueGeneratorAtom()) { _ in .stub() }
+        context.override(TimerAtom.self) { _ in Just(10).eraseToAnyPublisher() }
+
+        XCTAssertEqual(context.watch(atom), .suspending)
+
+        await context.waitUntilNextUpdate()
+
+        XCTAssertEqual(context.watch(atom), .success(.zero))
+
+        context.override(IsRecordingAtom()) { _ in true }
+        context.reset(IsRecordingAtom())
+
+        XCTAssertEqual(context.watch(atom), .suspending)
+
+        await context.waitUntilNextUpdate()
+
+        XCTAssertEqual(context.watch(atom), .success(10))
+    }
+
+    func testToggleRecording() {
+        let context = AtomTestContext()
+        let actions = VoiceMemoActions(context: context)
+        let audioSession = MockAudioSession()
+        let generator = ValueGenerator.stub()
+        var recordPermission = AVAudioSession.RecordPermission.undetermined
+
+        context.override(IsRecordingAtom()) { _ in false }
+        context.override(ValueGeneratorAtom()) { _ in generator }
+        context.override(AudioRecordPermissionAtom()) { _ in recordPermission }
+        context.override(AudioSessionAtom()) { _ in audioSession }
+
+        XCTAssertEqual(context.watch(AudioRecordPermissionAtom()), .undetermined)
+        XCTAssertFalse(context.watch(IsRecordingFailedAtom()))
+        XCTAssertNil(context.watch(RecordingDataAtom()))
+
+        actions.toggleRecording()
+        recordPermission = .denied
+        audioSession.requestRecordPermissionResponse!(true)
+
+        XCTAssertEqual(context.watch(AudioRecordPermissionAtom()), .denied)
+
+        actions.toggleRecording()
+
+        XCTAssertTrue(context.watch(IsRecordingFailedAtom()))
+
+        recordPermission = .granted
+        context.reset(AudioRecordPermissionAtom())
+        actions.toggleRecording()
+
+        XCTAssertEqual(
+            context.watch(RecordingDataAtom()),
+            RecordingData(
+                url: URL(fileURLWithPath: generator.temporaryDirectory())
+                    .appendingPathComponent(generator.uuid().uuidString)
+                    .appendingPathExtension("m4a"),
+                date: generator.date()
+            )
         )
 
+        context.override(IsRecordingAtom()) { _ in true }
+        actions.toggleRecording()
+
+        XCTAssertNil(context.watch(RecordingDataAtom()))
+    }
+
+    func testDelete() {
         let context = AtomTestContext()
+        let actions = VoiceMemoActions(context: context)
+        let voiceMemo = VoiceMemo.stub()
+
+        context.override(VoiceMemosAtom()) { _ in [voiceMemo] }
+        context.override(IsPlayingAtom.self) { _ in true }
+
+        XCTAssertEqual(context.watch(VoiceMemosAtom()), [voiceMemo])
+        XCTAssertTrue(context.watch(IsPlayingAtom(voiceMemo: voiceMemo)))
+
+        actions.delete(at: [0])
+
+        XCTAssertTrue(context.watch(VoiceMemosAtom()).isEmpty)
+        XCTAssertFalse(context.watch(IsPlayingAtom(voiceMemo: voiceMemo)))
+    }
+
+    func testIsPlayingAtom() {
+        let context = AtomTestContext()
+        let audioPlayer = MockAudioPlayer()
+        let voiceMemo = VoiceMemo.stub()
+        let atom = IsPlayingAtom(voiceMemo: voiceMemo)
 
         context.override(AudioPlayerAtom.self) { _ in audioPlayer }
-        context.override(GeneratorAtom()) { _ in generator }
-        context.override(TimerAtom.self) { _ in timer.eraseToAnyPublisher() }
 
-        let viewModel = context.watch(VoiceMemoRowViewModelAtom(voiceMemo: voiceMemo))
-
-        XCTAssertFalse(audioPlayer.isPlaying)
-        XCTAssertFalse(viewModel.isPlaying)
-        XCTAssertEqual(viewModel.elapsedTime, 0)
+        XCTAssertFalse(context.watch(atom))
         XCTAssertFalse(context.watch(IsPlaybackFailedAtom()))
 
-        viewModel.togglePaying()
-        timer.send(10)
+        context[atom] = true
 
         XCTAssertTrue(audioPlayer.isPlaying)
-        XCTAssertTrue(viewModel.isPlaying)
-        XCTAssertEqual(viewModel.elapsedTime, 10)
 
-        viewModel.stopPlaying()
+        context[atom] = false
 
         XCTAssertFalse(audioPlayer.isPlaying)
-        XCTAssertFalse(viewModel.isPlaying)
-        XCTAssertEqual(viewModel.elapsedTime, 0)
 
-        audioPlayer.playingError = URLError(.badURL)
-        viewModel.togglePaying()
+        audioPlayer.playingError = URLError(.unknown)
+        context[atom] = true
 
-        XCTAssertFalse(audioPlayer.isPlaying)
-        XCTAssertTrue(viewModel.isPlaying)
         XCTAssertTrue(context.watch(IsPlaybackFailedAtom()))
+    }
 
-        viewModel.togglePaying()
+    func testPlayingElapsedTimeAtom() async {
+        let context = AtomTestContext()
+        let voiceMemo = VoiceMemo.stub()
+        let atom = PlayingElapsedTimeAtom(voiceMemo: voiceMemo)
 
-        XCTAssertFalse(audioPlayer.isPlaying)
-        XCTAssertFalse(viewModel.isPlaying)
+        context.override(IsPlayingAtom.self) { _ in false }
+        context.override(ValueGeneratorAtom()) { _ in .stub() }
+        context.override(TimerAtom.self) { _ in Just(10).eraseToAnyPublisher() }
+
+        XCTAssertEqual(context.watch(atom), .suspending)
+
+        await context.waitUntilNextUpdate()
+
+        XCTAssertEqual(context.watch(atom), .success(.zero))
+
+        context.override(IsPlayingAtom.self) { _ in true }
+        context.reset(IsPlayingAtom(voiceMemo: voiceMemo))
+
+        XCTAssertEqual(context.watch(atom), .suspending)
+
+        await context.waitUntilNextUpdate()
+
+        XCTAssertEqual(context.watch(atom), .success(10))
     }
 }
 
-private extension Generator {
+private extension ValueGenerator {
     static func stub() -> Self {
-        Generator(
+        ValueGenerator(
             date: { Date(timeIntervalSince1970: 0) },
             uuid: { UUID(uuidString: "00000000-0000-0000-0000-000000000000")! },
             temporaryDirectory: { "/tmp" }
+        )
+    }
+}
+
+private extension RecordingData {
+    static func stub() -> Self {
+        RecordingData(url: URL(string: NSTemporaryDirectory())!, date: Date(timeIntervalSince1970: .zero))
+    }
+}
+
+private extension VoiceMemo {
+    static func stub() -> Self {
+        VoiceMemo(
+            url: URL(fileURLWithPath: "/tmp"),
+            date: Date(timeIntervalSince1970: 0),
+            duration: 0
         )
     }
 }

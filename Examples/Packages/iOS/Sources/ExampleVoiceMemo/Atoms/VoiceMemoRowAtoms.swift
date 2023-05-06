@@ -4,51 +4,24 @@ import Combine
 import Foundation
 import SwiftUI
 
-@MainActor
-final class VoiceMemoRowViewModel: ObservableObject {
-    @Published
-    private(set) var isPlaying = false {
-        didSet { togglePlayback() }
+struct IsPlayingAtom: StateAtom {
+    let voiceMemo: VoiceMemo
+
+    var key: some Hashable {
+        voiceMemo.url
     }
 
-    @Published
-    private(set) var elapsedTime: TimeInterval = 0
-
-    private let context: AtomContext
-    private let audioPlayer: AudioPlayerProtocol
-    private let voiceMemo: VoiceMemo
-    private var timerCancellable: Cancellable?
-
-    init(
-        context: AtomContext,
-        audioPlayer: AudioPlayerProtocol,
-        voiceMemo: VoiceMemo
-    ) {
-        self.context = context
-        self.audioPlayer = audioPlayer
-        self.voiceMemo = voiceMemo
+    func defaultValue(context: Context) -> Bool {
+        // Add the player atom as a depedency.
+        context.watch(AudioPlayerAtom(voiceMemo: voiceMemo))
+        return false
     }
 
-    func stopPlaying() {
-        isPlaying = false
-    }
+    func updated(newValue: Bool, oldValue: Bool, context: UpdatedContext) {
+        let audioPlayer = context.read(AudioPlayerAtom(voiceMemo: voiceMemo))
 
-    func togglePaying() {
-        isPlaying.toggle()
-    }
-
-    private func togglePlayback() {
-        guard isPlaying else {
-            timerCancellable = nil
-            elapsedTime = 0
+        guard newValue else {
             return audioPlayer.stop()
-        }
-
-        let startDate = context.read(GeneratorAtom()).date()
-        let timer = context.read(TimerAtom(startDate: startDate, timeInterval: 0.5))
-
-        timerCancellable = timer.sink { [weak self] elapsedTime in
-            self?.elapsedTime = elapsedTime
         }
 
         do {
@@ -60,37 +33,40 @@ final class VoiceMemoRowViewModel: ObservableObject {
     }
 }
 
-struct VoiceMemoRowViewModelAtom: ObservableObjectAtom {
+struct PlayingElapsedTimeAtom: PublisherAtom {
     let voiceMemo: VoiceMemo
 
-    var key: URL {
+    var key: some Hashable {
         voiceMemo.url
     }
 
-    func object(context: Context) -> VoiceMemoRowViewModel {
-        VoiceMemoRowViewModel(
-            context: context,
-            audioPlayer: context.watch(AudioPlayerAtom(voiceMemo: voiceMemo)),
-            voiceMemo: voiceMemo
-        )
+    func publisher(context: Context) -> AnyPublisher<TimeInterval, Never> {
+        let isPlaying = context.watch(IsPlayingAtom(voiceMemo: voiceMemo))
+
+        guard isPlaying else {
+            return Just(.zero).eraseToAnyPublisher()
+        }
+
+        let startDate = context.watch(ValueGeneratorAtom()).date()
+        return context.read(TimerAtom(startDate: startDate, timeInterval: 0.5))
     }
 }
 
 struct AudioPlayerAtom: ValueAtom {
     let voiceMemo: VoiceMemo
 
-    var key: URL {
+    var key: some Hashable {
         voiceMemo.url
     }
 
     func value(context: Context) -> AudioPlayerProtocol {
         AudioPlayer(
             onFinish: {
-                context.read(VoiceMemoRowViewModelAtom(voiceMemo: voiceMemo)).stopPlaying()
+                context[IsPlayingAtom(voiceMemo: voiceMemo)] = false
             },
             onFail: {
                 context[IsPlaybackFailedAtom()] = false
-                context.read(VoiceMemoRowViewModelAtom(voiceMemo: voiceMemo)).stopPlaying()
+                context[IsPlayingAtom(voiceMemo: voiceMemo)] = false
             }
         )
     }

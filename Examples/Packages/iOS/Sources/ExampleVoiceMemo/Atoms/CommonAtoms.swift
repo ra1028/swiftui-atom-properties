@@ -3,15 +3,15 @@ import Atoms
 import Combine
 import Foundation
 
-struct Generator {
+struct ValueGenerator {
     var date: () -> Date
     var uuid: () -> UUID
     var temporaryDirectory: () -> String
 }
 
-struct GeneratorAtom: ValueAtom, Hashable {
-    func value(context: Context) -> Generator {
-        Generator(
+struct ValueGeneratorAtom: ValueAtom, Hashable {
+    func value(context: Context) -> ValueGenerator {
+        ValueGenerator(
             date: Date.init,
             uuid: UUID.init,
             temporaryDirectory: NSTemporaryDirectory
@@ -32,6 +32,7 @@ struct TimerAtom: ValueAtom, Hashable {
         )
         .autoconnect()
         .map { $0.timeIntervalSince(startDate) }
+        .prepend(.zero)
         .eraseToAnyPublisher()
     }
 }

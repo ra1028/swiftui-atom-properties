@@ -132,7 +132,7 @@ If you like the principles, see the sample apps and the basic tutorial to learn 
 - [Map](Examples/Packages/iOS/Sources/ExampleMap)  
 <sub>A simple but effective app that demonstrates how to wrap a framework in this library.</sub>
 - [Voice Memo](Examples/Packages/iOS/Sources/ExampleVoiceMemo)  
-<sub>Demonstrates how to manage complex state with multiple dependencies using [MVVM pattern](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel) on an atom. Created with imitate [TCA's example](https://github.com/pointfreeco/swift-composable-architecture/tree/main/Examples/VoiceMemos).</sub>
+<sub>Demonstrates how to decompose and manage complex states and dependencies into compact atoms. Created to mimic the [TCA's example](https://github.com/pointfreeco/swift-composable-architecture/tree/main/Examples/VoiceMemos).</sub>
 - [Time Travel](Examples/Packages/iOS/Sources/ExampleTimeTravel)  
 <sub>A simple demo that demonstrates how to do [time travel debugging](https://en.wikipedia.org/wiki/Time_travel_debugging) with this library.</sub>
 
