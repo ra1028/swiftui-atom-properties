@@ -2,8 +2,20 @@ import Atoms
 import SwiftUI
 
 struct VoiceMemoListScreen: View {
-    @WatchStateObject(VoiceMemoListViewModelAtom())
-    var viewModel
+    @WatchState(VoiceMemosAtom())
+    var voiceMemos
+
+    @Watch(VoiceMemoActionsAtom())
+    var actions
+
+    @Watch(AudioRecordPermissionAtom())
+    var audioRecorderPermission
+
+    @Watch(RecordingElapsedTimeAtom())
+    var elapsedTimePhase
+
+    @Watch(IsRecordingAtom())
+    var isRecording
 
     @WatchState(IsRecordingFailedAtom())
     var isRecordingFailed
@@ -14,15 +26,17 @@ struct VoiceMemoListScreen: View {
     var body: some View {
         VStack {
             List {
-                ForEach($viewModel.voiceMemos, id: \.url) { $voiceMemo in
+                ForEach($voiceMemos, id: \.url) { $voiceMemo in
                     VoiceMemoRow(voiceMemo: $voiceMemo)
                 }
-                .onDelete { viewModel.delete($0) }
+                .onDelete { IndexSet in
+                    actions.delete(at: IndexSet)
+                }
             }
 
             VStack {
                 ZStack {
-                    switch viewModel.audioRecorderPermission {
+                    switch audioRecorderPermission {
                     case .undetermined, .granted:
                         Circle()
                             .foregroundColor(Color(.label))
@@ -30,12 +44,12 @@ struct VoiceMemoListScreen: View {
 
                         Button {
                             withAnimation(.spring()) {
-                                viewModel.toggleRecording()
+                                actions.toggleRecording()
                             }
                         } label: {
-                            RoundedRectangle(cornerRadius: viewModel.isRecording ? 4 : 35)
+                            RoundedRectangle(cornerRadius: isRecording ? 4 : 35)
                                 .foregroundColor(Color(.systemRed))
-                                .padding(viewModel.isRecording ? 18 : 2)
+                                .padding(isRecording ? 18 : 2)
                         }
                         .frame(width: 70, height: 70)
 
@@ -55,12 +69,14 @@ struct VoiceMemoListScreen: View {
                     }
                 }
 
-                if viewModel.isRecording, let formattedDuration = dateComponentsFormatter.string(from: viewModel.elapsedTime) {
+                let elapsedTime = elapsedTimePhase.value ?? .zero
+
+                if isRecording, let formattedDuration = dateComponentsFormatter.string(from: elapsedTime) {
                     Text(formattedDuration)
                         .font(.body.monospacedDigit().bold())
                         .foregroundColor(.white)
-                        .colorMultiply(Color(Int(viewModel.elapsedTime).isMultiple(of: 2) ? .systemRed : .label))
-                        .animation(.easeInOut(duration: 0.5), value: viewModel.elapsedTime)
+                        .colorMultiply(Color(Int(elapsedTime).isMultiple(of: 2) ? .systemRed : .label))
+                        .animation(.easeInOut(duration: 0.5), value: elapsedTime)
                 }
             }
             .padding()

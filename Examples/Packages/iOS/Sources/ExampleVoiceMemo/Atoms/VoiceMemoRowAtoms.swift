@@ -44,7 +44,7 @@ final class VoiceMemoRowViewModel: ObservableObject {
             return audioPlayer.stop()
         }
 
-        let startDate = context.read(GeneratorAtom()).date()
+        let startDate = context.read(ValueGeneratorAtom()).date()
         let timer = context.read(TimerAtom(startDate: startDate, timeInterval: 0.5))
 
         timerCancellable = timer.sink { [weak self] elapsedTime in
