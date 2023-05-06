@@ -9,12 +9,12 @@ import Foundation
 /// by this itself.
 @MainActor
 public struct AtomTestContext: AtomWatchableContext {
-    private let state: State
+    private let state = State()
+    private let location: SourceLocation
 
     /// Creates a new test context instance with fresh internal state.
     public init(fileID: String = #fileID, line: UInt = #line) {
-        let location = SourceLocation(fileID: fileID, line: line)
-        state = State(location: location)
+        location = SourceLocation(fileID: fileID, line: line)
     }
 
     /// A callback to perform when any of atoms watched by this context is updated.
@@ -104,7 +104,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     public func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        state.store.read(atom)
+        store.read(atom)
     }
 
     /// Sets the new value for the given writable atom.
@@ -126,7 +126,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
     public func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
-        state.store.set(value, for: atom)
+        store.set(value, for: atom)
     }
 
     /// Refreshes and then return the value associated with the given refreshable atom.
@@ -148,7 +148,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Returns: The value which completed refreshing associated with the given atom.
     @discardableResult
     public func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
-        await state.store.refresh(atom)
+        await store.refresh(atom)
     }
 
     /// Resets the value associated with the given atom, and then notify.
@@ -168,7 +168,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Parameter atom: An atom that associates the value.
     public func reset(_ atom: some Atom) {
-        state.store.reset(atom)
+        store.reset(atom)
     }
 
     /// Accesses the value associated with the given atom for reading and initialing watch to
@@ -190,7 +190,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Returns: The value associated with the given atom.
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        state.store.watch(atom, container: state.container) { [weak state] in
+        store.watch(atom, container: container) { [weak state] in
             state?.notifyUpdate()
         }
     }
@@ -214,7 +214,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Returns: The observable object associated with the given atom.
     @discardableResult
     public func watch<Node: ObservableObjectAtom>(_ atom: Node) -> Node.Loader.Value {
-        state.store.watch(atom, container: state.container) { [weak state] in
+        store.watch(atom, container: container) { [weak state] in
             // Ensures that the observable object is updated before notifying updates.
             RunLoop.current.perform { [weak state] in
                 state?.notifyUpdate()
@@ -229,7 +229,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     public func unwatch<Node: Atom>(_ atom: Node) {
         let key = AtomKey(atom)
-        state.container.subscriptions.removeValue(forKey: key)?.unsubscribe()
+        container.subscriptions.removeValue(forKey: key)?.unsubscribe()
     }
 
     /// Overrides the atom value with the given value.
@@ -261,30 +261,23 @@ public struct AtomTestContext: AtomWatchableContext {
 
 private extension AtomTestContext {
     final class State {
-        private let _store = AtomStore()
-        private let _container = SubscriptionContainer()
-
-        let location: SourceLocation
+        let store = AtomStore()
+        let container = SubscriptionContainer()
         let notifier = PassthroughSubject<Void, Never>()
         var overrides = Overrides()
         var onUpdate: (() -> Void)?
-
-        init(location: SourceLocation) {
-            self.location = location
-        }
-
-        var store: StoreContext {
-            StoreContext(_store, overrides: overrides)
-        }
-
-        @MainActor
-        var container: SubscriptionContainer.Wrapper {
-            _container.wrapper(location: location)
-        }
 
         func notifyUpdate() {
             onUpdate?()
             notifier.send()
         }
+    }
+
+    var store: StoreContext {
+        StoreContext(state.store, overrides: state.overrides)
+    }
+
+    var container: SubscriptionContainer.Wrapper {
+        state.container.wrapper(location: location)
     }
 }
