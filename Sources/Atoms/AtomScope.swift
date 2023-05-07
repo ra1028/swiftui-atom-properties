@@ -108,10 +108,12 @@ public struct AtomScope<Content: View>: View {
         )
     }
 
-    /// Overrides the atom value with the given value.
+    /// Override the atom value used in this scope with the given value.
     ///
     /// When accessing the overridden atom, this context will create and return the given value
     /// instead of the atom value.
+    ///
+    /// Note that unlike override by ``AtomRoot``, this will only override atoms used in this scope.
     ///
     /// - Parameters:
     ///   - atom: An atom that to be overridden.
@@ -122,12 +124,14 @@ public struct AtomScope<Content: View>: View {
         mutating { $0.overrides.insert(atom, with: value) }
     }
 
-    /// Overrides the atom value with the given value.
+    /// Override the atom value used in this scope with the given value.
     ///
     /// Instead of overriding the particular instance of atom, this method overrides any atom that
     /// has the same metatype.
     /// When accessing the overridden atom, this context will create and return the given value
     /// instead of the atom value.
+    ///
+    /// Note that unlike override by ``AtomRoot``, this will only override atoms used in this scope.
     ///
     /// - Parameters:
     ///   - atomType: An atom type that to be overridden.
@@ -138,9 +142,12 @@ public struct AtomScope<Content: View>: View {
         mutating { $0.overrides.insert(atomType, with: value) }
     }
 
-    /// For debugging, observes updates with a snapshot that captures a specific set of values of atoms.
+    /// For debugging purposes, each time there is a change in the internal state,
+    /// a snapshot is taken that captures the state of the atoms and their dependency graph
+    /// at that point in time.
     ///
-    /// Use this to monitor and debugging the atoms or for producing side effects.
+    /// Note that unlike observed by ``AtomRoot``, this is triggered only by internal state changes
+    /// caused by atoms use in this scope.
     ///
     /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
     ///
