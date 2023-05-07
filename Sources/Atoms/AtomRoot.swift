@@ -98,9 +98,9 @@ public struct AtomRoot<Content: View>: View {
         mutating { $0.overrides.insert(atomType, with: value) }
     }
 
-    /// For debugging, observes updates with a snapshot that captures a specific set of values of atoms.
-    ///
-    /// Use this to monitor and debugging the atoms or for producing side effects.
+    /// For debugging purposes, each time there is a change in the internal state,
+    /// a snapshot is taken that captures the state of the atoms and their dependency graph
+    /// at that point in time.
     ///
     /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
     ///
