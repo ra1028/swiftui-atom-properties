@@ -66,6 +66,42 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual((store.state.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 3)
     }
 
+    func testModify() {
+        let store = AtomStore()
+        let context = StoreContext(store)
+        let subscriptionKey = SubscriptionKey(SubscriptionContainer())
+        var updateCount = 0
+        let atom = TestStateAtom(defaultValue: 0)
+        let key = AtomKey(atom)
+
+        context.set(1, for: atom)
+        context.modify(atom) { $0 = 1 }
+
+        XCTAssertEqual(updateCount, 0)
+        XCTAssertNil(store.state.states[key])
+        XCTAssertNil(store.state.caches[key])
+
+        store.state.caches[key] = AtomCache(atom: atom, value: 0)
+        store.state.states[key] = AtomState(coordinator: atom.makeCoordinator())
+        store.state.subscriptions[key, default: [:]][subscriptionKey] = Subscription(
+            notifyUpdate: { updateCount += 1 },
+            unsubscribe: {}
+        )
+
+        context.modify(atom) { $0 = 2 }
+
+        XCTAssertEqual(updateCount, 1)
+        XCTAssertNil(store.state.states[key]?.transaction)
+        XCTAssertEqual((store.state.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 2)
+
+        context.modify(atom) { $0 = 3 }
+
+        XCTAssertEqual(updateCount, 2)
+        XCTAssertNotNil(store.state.states[key])
+        XCTAssertNil(store.state.states[key]?.transaction)
+        XCTAssertEqual((store.state.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 3)
+    }
+
     func testWatch() {
         let store = AtomStore()
         let context = StoreContext(store)
@@ -249,7 +285,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertTrue(store.state.caches.isEmpty)
     }
 
-    func testScopedObservers() {
+    func testScoped() {
         let store = AtomStore()
         let container = SubscriptionContainer()
         let atom = TestValueAtom(value: 0)
@@ -340,15 +376,17 @@ final class StoreContextTests: XCTestCase {
 
         XCTAssertEqual(context.watch(dependency1Atom, container: container.wrapper) {}, 0)
 
-        scoped1Context.set(1, for: dependency1Atom)
-
         // Shouldn't set value if the atom is overridden in the scope.
+        scoped1Context.set(1, for: dependency1Atom)
         XCTAssertEqual(context.read(dependency1Atom), 0)
 
-        context.set(1, for: dependency1Atom)
-        scoped1Context.reset(dependency1Atom)
+        // Shouldn't modify value if the atom is overridden in the scope.
+        scoped1Context.modify(dependency1Atom) { $0 = 1 }
+        XCTAssertEqual(context.read(dependency1Atom), 0)
 
         // Shouldn't reset value if the atom is overridden in the scope.
+        context.set(1, for: dependency1Atom)
+        scoped1Context.reset(dependency1Atom)
         XCTAssertEqual(context.read(dependency1Atom), 1)
 
         container.wrapper.subscriptions[AtomKey(dependency1Atom)]?.unsubscribe()
@@ -373,9 +411,21 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(scoped2Context.read(dependency2Atom), 100)
         XCTAssertEqual(context.read(atom), 120)
 
+        // Should modify the value and then propagate it to the dependent atoms..
+        scoped2Context.modify(dependency1Atom) { $0 = 40 }
+
+        // Shouldn't modify the value here because the atom is cached in the scoped store.
+        context.modify(dependency1Atom) { $0 = 50 }
+
+        // Should return overridden values.
+        XCTAssertEqual(scoped2Context.read(atom), 140)
+        XCTAssertEqual(scoped2Context.read(dependency1Atom), 40)
+        XCTAssertEqual(scoped2Context.read(dependency2Atom), 100)
+        XCTAssertEqual(context.read(atom), 140)
+
         do {
             let phase = await scoped2Context.refresh(publisherAtom)
-            XCTAssertEqual(phase, .success(120))
+            XCTAssertEqual(phase, .success(140))
         }
 
         // Should reset the value and then propagate it to the dependent atoms..
