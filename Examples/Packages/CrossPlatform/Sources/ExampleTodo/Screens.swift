@@ -22,11 +22,13 @@ struct TodoListScreen: View {
                     TodoItem(todo: todo)
                 }
                 .onDelete { indexSet in
-                    let todos = TodosAtom()
-                    let indices = indexSet.compactMap { index in
-                        context[todos].firstIndex(of: filteredTodos[index])
+                    let filtered = filteredTodos
+                    context.modify(TodosAtom()) { todos in
+                        let indices = indexSet.compactMap { index in
+                            todos.firstIndex(of: filtered[index])
+                        }
+                        todos.remove(atOffsets: IndexSet(indices))
                     }
-                    context[todos].remove(atOffsets: IndexSet(indices))
                 }
             }
         }
