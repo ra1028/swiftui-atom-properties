@@ -95,7 +95,7 @@ private extension StoreContext {
         if let cache = peekCache(of: atom, for: key, scope: scope) {
             return cache.value
         }
-        else if let value = scope.overrides.value(for: atom) {
+        else if let value = scope.overrides.value(atom, for: key) {
             override = value
         }
         else if let parent = scope.parent {
@@ -118,6 +118,10 @@ private extension StoreContext {
             update(atom: atom, for: key, value: value, cache: cache, scope: scope)
             checkRelease(for: key, scope: scope)
         }
+        else if scope.overrides.hasValue(for: key) {
+            // Do nothing if the atom is overridden.
+            return
+        }
         else if let parent = scope.parent {
             return set(value, for: atom, scope: parent)
         }
@@ -136,7 +140,7 @@ private extension StoreContext {
             cache = oldCache
             override = nil
         }
-        else if let value = scope.overrides.value(for: atom) {
+        else if let value = scope.overrides.value(atom, for: key) {
             cache = nil
             override = value
         }
@@ -175,7 +179,7 @@ private extension StoreContext {
             cache = oldCache
             override = nil
         }
-        else if let value = scope.overrides.value(for: atom) {
+        else if let value = scope.overrides.value(atom, for: key) {
             cache = nil
             override = value
         }
@@ -213,9 +217,9 @@ private extension StoreContext {
 
         if let oldCache = peekCache(of: atom, for: key, scope: scope) {
             cache = oldCache
-            override = scope.overrides.value(for: atom)
+            override = scope.overrides.value(atom, for: key)
         }
-        else if let value = scope.overrides.value(for: atom) {
+        else if let value = scope.overrides.value(atom, for: key) {
             cache = nil
             override = value
         }
@@ -249,10 +253,14 @@ private extension StoreContext {
         let key = AtomKey(atom)
 
         if let cache = peekCache(of: atom, for: key, scope: scope) {
-            let override = scope.overrides.value(for: atom)
+            let override = scope.overrides.value(atom, for: key)
             let newCache = makeNewCache(of: atom, for: key, override: override, scope: scope)
             update(atom: atom, for: key, value: newCache.value, cache: cache, scope: scope)
             checkRelease(for: key, scope: scope)
+        }
+        else if scope.overrides.hasValue(for: key) {
+            // Do nothing if the atom is overridden.
+            return
         }
         else if let parent = scope.parent {
             reset(atom, scope: parent)
