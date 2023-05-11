@@ -441,22 +441,39 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testCoordinator() {
-        struct TestAtom: ValueAtom, Hashable {
+        struct TestAtom: ValueAtom {
             final class Coordinator {}
+
+            var onValue: (Coordinator) -> Void
+            var onUpdated: (Coordinator) -> Void
+
+            var key: UniqueKey {
+                UniqueKey()
+            }
 
             func makeCoordinator() -> Coordinator {
                 Coordinator()
             }
 
             func value(context: Context) -> Int {
-                0
+                onValue(context.coordinator)
+                return 0
+            }
+
+            func updated(newValue: Int, oldValue: Int, context: UpdatedContext) {
+                onUpdated(context.coordinator)
             }
         }
 
         let store = AtomStore()
         let container = SubscriptionContainer()
         let context = StoreContext(store)
-        let atom = TestAtom()
+        var valueCoordinator: TestAtom.Coordinator?
+        var updatedCoordinator: TestAtom.Coordinator?
+        let atom = TestAtom(
+            onValue: { valueCoordinator = $0 },
+            onUpdated: { updatedCoordinator = $0 }
+        )
         let key = AtomKey(atom)
 
         _ = context.watch(atom, container: container.wrapper) {}
@@ -464,12 +481,16 @@ final class StoreContextTests: XCTestCase {
         let state = store.state.states[key] as? AtomState<TestAtom.Coordinator>
 
         XCTAssertNotNil(state?.coordinator)
+        XCTAssertIdentical(state?.coordinator, valueCoordinator)
+        XCTAssertNil(updatedCoordinator)
 
         context.reset(atom)
 
         let newState = store.state.states[key] as? AtomState<TestAtom.Coordinator>
 
-        XCTAssertTrue(state?.coordinator === newState?.coordinator)
+        XCTAssertIdentical(state?.coordinator, newState?.coordinator)
+        XCTAssertIdentical(newState?.coordinator, valueCoordinator)
+        XCTAssertIdentical(newState?.coordinator, updatedCoordinator)
     }
 
     func testRelease() {
