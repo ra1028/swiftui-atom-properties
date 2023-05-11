@@ -21,8 +21,11 @@ internal struct Overrides {
         entriesForType[key] = AtomOverride(value: value)
     }
 
-    func value<Node: Atom>(for atom: Node) -> Node.Loader.Value? {
-        let key = AtomKey(atom)
+    func hasValue(for key: AtomKey) -> Bool {
+        entriesForNode[key] != nil || entriesForType[key.typeKey] != nil
+    }
+
+    func value<Node: Atom>(_ atom: Node, for key: AtomKey) -> Node.Loader.Value? {
         let baseOverride = entriesForNode[key] ?? entriesForType[key.typeKey]
 
         guard let baseOverride else {
