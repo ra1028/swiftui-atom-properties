@@ -391,7 +391,8 @@ private extension StoreContext {
         notifyUpdateToObservers(scope: scope)
 
         func notifyUpdated() {
-            let context = AtomUpdatedContext(store: self)
+            let state = getState(of: atom, for: key, scope: scope)
+            let context = AtomUpdatedContext(store: self, coordinator: state.coordinator)
             atom.updated(newValue: value, oldValue: oldValue, context: context)
         }
 
