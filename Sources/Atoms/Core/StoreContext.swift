@@ -271,10 +271,6 @@ private extension StoreContext {
         if let cache = scope.store.state.caches[key] {
             reset(cache.atom, scope: scope)
         }
-        else if scope.overrides.hasValue(for: key) {
-            // Do nothing if the atom is overridden.
-            return
-        }
         else if let parent = scope.parent {
             reset(for: key, scope: parent)
         }

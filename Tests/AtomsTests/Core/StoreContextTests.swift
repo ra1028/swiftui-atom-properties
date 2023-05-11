@@ -249,7 +249,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertTrue(store.state.caches.isEmpty)
     }
 
-    func testScoped() {
+    func testScopedObservers() {
         let store = AtomStore()
         let container = SubscriptionContainer()
         let atom = TestValueAtom(value: 0)
@@ -337,6 +337,21 @@ final class StoreContextTests: XCTestCase {
             overrides: scoped2Overrides,
             observers: []
         )
+
+        XCTAssertEqual(context.watch(dependency1Atom, container: container.wrapper) {}, 0)
+
+        scoped1Context.set(1, for: dependency1Atom)
+
+        // Shouldn't set value if the atom is overridden in the scope.
+        XCTAssertEqual(context.read(dependency1Atom), 0)
+
+        context.set(1, for: dependency1Atom)
+        scoped1Context.reset(dependency1Atom)
+
+        // Shouldn't reset value if the atom is overridden in the scope.
+        XCTAssertEqual(context.read(dependency1Atom), 1)
+
+        container.wrapper.subscriptions[AtomKey(dependency1Atom)]?.unsubscribe()
 
         XCTAssertEqual(scoped2Context.watch(atom, container: container.wrapper) {}, 110)
         XCTAssertEqual(scoped2Context.watch(atom, in: transaction), 110)
