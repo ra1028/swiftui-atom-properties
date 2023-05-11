@@ -41,6 +41,27 @@ public protocol AtomContext {
     ///   - atom: An atom that associates the value.
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node)
 
+    /// Modifies the cached value of the given writable atom.
+    ///
+    /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
+    /// and assign a new value for the atom.
+    /// When you modify value, it notifies update to downstream atoms or views after all
+    /// the modification completed.
+    ///
+    /// ```swift
+    /// let context = ...
+    /// print(context.watch(TextAtom())) // Prints "Text"
+    /// context.modify(TextAtom()) { text in
+    ///     text.append(" modified")
+    /// }
+    /// print(context.read(TextAtom()))  // Prints "Text modified"
+    /// ```
+    ///
+    /// - Parameters
+    ///   - atom: An atom that associates the value.
+    ///   - body: A value modification body.
+    func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void)
+
     /// Refreshes and then return the value associated with the given refreshable atom.
     ///
     /// This method only accepts refreshable atoms such as types conforming to:

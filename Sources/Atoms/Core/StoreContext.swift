@@ -42,6 +42,11 @@ internal struct StoreContext {
     }
 
     @usableFromInline
+    func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void) {
+        modify(atom, scope: current, body: body)
+    }
+
+    @usableFromInline
     func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
         watch(atom, in: transaction, scope: current)
     }
@@ -124,6 +129,24 @@ private extension StoreContext {
         }
         else if let parent = scope.parent {
             return set(value, for: atom, scope: parent)
+        }
+    }
+
+    func modify<Node: StateAtom>(_ atom: Node, scope: Scope, body: (inout Node.Loader.Value) -> Void) {
+        let key = AtomKey(atom)
+
+        if let cache = peekCache(of: atom, for: key, scope: scope) {
+            var value = cache.value
+            body(&value)
+            update(atom: atom, for: key, value: value, cache: cache, scope: scope)
+            checkRelease(for: key, scope: scope)
+        }
+        else if scope.overrides.hasValue(for: key) {
+            // Do nothing if the atom is overridden.
+            return
+        }
+        else if let parent = scope.parent {
+            return modify(atom, scope: parent, body: body)
         }
     }
 
