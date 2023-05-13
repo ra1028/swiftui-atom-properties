@@ -1,7 +1,7 @@
 /// A loader protocol that represents an actual implementation of `ModifiedAtom`.
-public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader where Node.Loader.Value == Modifier.Value {
+public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader where Node.Loader.Value == Modifier.BaseValue {
     /// A type of value to provide.
-    public typealias Value = Modifier.ModifiedValue
+    public typealias Value = Modifier.Value
 
     /// A type to coordinate with the atom.
     public typealias Coordinator = Void
@@ -15,19 +15,19 @@ public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader
     }
 
     /// Returns a new value for the corresponding atom.
-    public func get(context: Context) -> Value {
+    public func value(context: Context) -> Value {
         let value = context.transaction { $0.watch(atom) }
-        return modifier.value(context: context, with: value)
+        return modifier.modify(value: value, context: context)
     }
 
-    /// Handles updates or cancellation of the passed value.
-    public func handle(context: Context, with value: Modifier.ModifiedValue) -> Modifier.ModifiedValue {
-        modifier.handle(context: context, with: value)
+    /// Associates given value and handle updates and cancellations.
+    public func associateOverridden(value: Value, context: Context) -> Value {
+        modifier.associateOverridden(value: value, context: context)
     }
 
     /// Returns a boolean value indicating whether it should notify updates to downstream
     /// by checking the equivalence of the given old value and new value.
-    public func shouldNotifyUpdate(newValue: Modifier.ModifiedValue, oldValue: Modifier.ModifiedValue) -> Bool {
-        modifier.shouldNotifyUpdate(newValue: newValue, oldValue: oldValue)
+    public func shouldUpdate(newValue: Value, oldValue: Value) -> Bool {
+        modifier.shouldUpdate(newValue: newValue, oldValue: oldValue)
     }
 }

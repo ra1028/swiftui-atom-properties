@@ -36,11 +36,11 @@ final class SelectModifierTests: XCTestCase {
         XCTAssertNotEqual(modifier0.key.hashValue, modifier1.key.hashValue)
     }
 
-    func testShouldNotifyUpdate() {
+    func testShouldUpdate() {
         let modifier = SelectModifier<String, Int>(keyPath: \.count)
 
-        XCTAssertFalse(modifier.shouldNotifyUpdate(newValue: 100, oldValue: 100))
-        XCTAssertTrue(modifier.shouldNotifyUpdate(newValue: 100, oldValue: 200))
+        XCTAssertFalse(modifier.shouldUpdate(newValue: 100, oldValue: 100))
+        XCTAssertTrue(modifier.shouldUpdate(newValue: 100, oldValue: 200))
     }
 
     func testValue() {
@@ -54,7 +54,7 @@ final class SelectModifierTests: XCTestCase {
             coordinator: (),
             update: { _, _ in }
         )
-        let value = modifier.value(context: context, with: 100)
+        let value = modifier.modify(value: 100, context: context)
 
         XCTAssertEqual(value, "100")
     }
@@ -71,7 +71,7 @@ final class SelectModifierTests: XCTestCase {
             update: { _, _ in }
         )
 
-        let value = modifier.handle(context: context, with: "100")
+        let value = modifier.associateOverridden(value: "100", context: context)
         XCTAssertEqual(value, "100")
     }
 }

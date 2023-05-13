@@ -42,7 +42,7 @@ final class TaskPhaseModifierTests: XCTestCase {
         )
 
         let task = Task { 100 }
-        let initialPhase = modifier.value(context: context, with: task)
+        let initialPhase = modifier.modify(value: task, context: context)
 
         XCTAssertEqual(initialPhase, .suspending)
 
@@ -63,7 +63,7 @@ final class TaskPhaseModifierTests: XCTestCase {
             update: { _, _ in }
         )
 
-        let phase = modifier.handle(context: context, with: .success(100))
+        let phase = modifier.associateOverridden(value: .success(100), context: context)
         XCTAssertEqual(phase, .success(100))
     }
 }

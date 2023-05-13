@@ -16,23 +16,23 @@ public struct ObservableObjectAtomLoader<Node: ObservableObjectAtom>: AtomLoader
     }
 
     /// Returns a new value for the corresponding atom.
-    public func get(context: Context) -> Value {
+    public func value(context: Context) -> Value {
         let object = context.transaction(atom.object)
-        return handle(context: context, with: object)
+        return associateOverridden(value: object, context: context)
     }
 
-    /// Handles updates or cancellation of the passed value.
-    public func handle(context: Context, with object: Value) -> Value {
-        let cancellable = object.objectWillChange.sink { [weak object] _ in
-            guard let object else {
+    /// Associates given value and handle updates and cancellations.
+    public func associateOverridden(value: Value, context: Context) -> Value {
+        let cancellable = value.objectWillChange.sink { [weak value] _ in
+            guard let value else {
                 return
             }
 
-            context.update(with: object, needsEnsureValueUpdate: true)
+            context.update(with: value, needsEnsureValueUpdate: true)
         }
 
         context.addTermination(cancellable.cancel)
 
-        return object
+        return value
     }
 }

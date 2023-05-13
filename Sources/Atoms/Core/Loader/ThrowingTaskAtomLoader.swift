@@ -19,17 +19,17 @@ public struct ThrowingTaskAtomLoader<Node: ThrowingTaskAtom>: AsyncAtomLoader {
     }
 
     /// Returns a new value for the corresponding atom.
-    public func get(context: Context) -> Value {
+    public func value(context: Context) -> Value {
         let task = Task {
             try await context.transaction(atom.value)
         }
-        return handle(context: context, with: task)
+        return associateOverridden(value: task, context: context)
     }
 
-    /// Handles updates or cancellation of the passed value.
-    public func handle(context: Context, with task: Value) -> Value {
-        context.addTermination(task.cancel)
-        return task
+    /// Associates given value and handle updates and cancellations.
+    public func associateOverridden(value: Value, context: Context) -> Value {
+        context.addTermination(value.cancel)
+        return value
     }
 
     /// Refreshes and awaits until the asynchronous is finished and returns a final value.
@@ -37,19 +37,19 @@ public struct ThrowingTaskAtomLoader<Node: ThrowingTaskAtom>: AsyncAtomLoader {
         let task = Task {
             try await context.transaction(atom.value)
         }
-        return await refresh(context: context, with: task)
+        return await refreshOverridden(value: task, context: context)
     }
 
     /// Refreshes and awaits for the passed value to be finished to yield values
     /// and returns a final value.
-    public func refresh(context: Context, with task: Value) async -> Value {
-        context.addTermination(task.cancel)
+    public func refreshOverridden(value: Value, context: Context) async -> Value {
+        context.addTermination(value.cancel)
 
         return await withTaskCancellationHandler {
-            _ = await task.result
-            return task
+            _ = await value.result
+            return value
         } onCancel: {
-            task.cancel()
+            value.cancel()
         }
     }
 }

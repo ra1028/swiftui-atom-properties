@@ -1,7 +1,7 @@
 /// An atom type that applies a modifier to an atom.
 ///
 /// Use ``Atom/modifier(_:)`` instead of using this atom directly.
-public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.Loader.Value == Modifier.Value {
+public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.Loader.Value == Modifier.BaseValue {
     /// A type representing the stable identity of this atom.
     public struct Key: Hashable {
         private let atomKey: Node.Key

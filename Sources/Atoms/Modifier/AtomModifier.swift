@@ -14,34 +14,34 @@ public protocol AtomModifier {
     /// A type representing the stable identity of this modifier.
     associatedtype Key: Hashable
 
-    /// A type of original value to be modified.
-    associatedtype Value
+    /// A type of base value to be modified.
+    associatedtype BaseValue
 
     /// A type of modified value to provide.
-    associatedtype ModifiedValue
+    associatedtype Value
 
     /// A type of the context structure that to interact with an atom store.
-    typealias Context = AtomLoaderContext<ModifiedValue, Void>
+    typealias Context = AtomLoaderContext<Value, Void>
 
     /// A unique value used to identify the modifier internally.
     var key: Key { get }
 
     /// Returns a new value for the corresponding atom.
     @MainActor
-    func value(context: Context, with value: Value) -> ModifiedValue
+    func modify(value: BaseValue, context: Context) -> Value
 
-    /// Handles updates or cancellation of the passed value.
+    /// Associates given value and handle updates and cancellations.
     @MainActor
-    func handle(context: Context, with value: ModifiedValue) -> ModifiedValue
+    func associateOverridden(value: Value, context: Context) -> Value
 
     /// Returns a boolean value indicating whether it should notify updates to downstream
     /// by checking the equivalence of the given old value and new value.
     @MainActor
-    func shouldNotifyUpdate(newValue: ModifiedValue, oldValue: ModifiedValue) -> Bool
+    func shouldUpdate(newValue: Value, oldValue: Value) -> Bool
 }
 
 public extension AtomModifier {
-    func shouldNotifyUpdate(newValue: ModifiedValue, oldValue: ModifiedValue) -> Bool {
+    func shouldUpdate(newValue: Value, oldValue: Value) -> Bool {
         true
     }
 }

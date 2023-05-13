@@ -13,7 +13,7 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
     }
 
     /// Returns a new value for the corresponding atom.
-    public func get(context: Context) -> Value {
+    public func value(context: Context) -> Value {
         let sequence = context.transaction(atom.sequence)
         let task = Task {
             do {
@@ -35,8 +35,8 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
         return .suspending
     }
 
-    /// Refreshes and awaits until the asynchronous is finished and returns a final value.
-    public func handle(context: Context, with value: Value) -> Value {
+    /// Associates given value and handle updates and cancellations.
+    public func associateOverridden(value: Value, context: Context) -> Value {
         value
     }
 
@@ -70,7 +70,7 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
 
     /// Refreshes and awaits for the passed value to be finished to yield values
     /// and returns a final value.
-    public func refresh(context: Context, with value: Value) async -> Value {
+    public func refreshOverridden(value: Value, context: Context) async -> Value {
         value
     }
 }

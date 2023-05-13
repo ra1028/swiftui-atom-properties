@@ -13,12 +13,12 @@ public struct StateAtomLoader<Node: StateAtom>: AtomLoader {
     }
 
     /// Returns a new value for the corresponding atom.
-    public func get(context: Context) -> Value {
+    public func value(context: Context) -> Value {
         context.transaction(atom.defaultValue)
     }
 
-    /// Handles updates or cancellation of the passed value.
-    public func handle(context: Context, with value: Value) -> Value {
+    /// Associates given value and handle updates and cancellations.
+    public func associateOverridden(value: Value, context: Context) -> Value {
         value
     }
 }

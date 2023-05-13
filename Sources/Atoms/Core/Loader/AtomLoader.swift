@@ -11,18 +11,18 @@ public protocol AtomLoader {
     typealias Context = AtomLoaderContext<Value, Coordinator>
 
     /// Returns a new value for the corresponding atom.
-    func get(context: Context) -> Value
+    func value(context: Context) -> Value
 
-    /// Handles updates or cancellation of the passed value.
-    func handle(context: Context, with value: Value) -> Value
+    /// Associates given value and handle updates and cancellations.
+    func associateOverridden(value: Value, context: Context) -> Value
 
     /// Returns a boolean value indicating whether it should notify updates to downstream
     /// by checking the equivalence of the given old value and new value.
-    func shouldNotifyUpdate(newValue: Value, oldValue: Value) -> Bool
+    func shouldUpdate(newValue: Value, oldValue: Value) -> Bool
 }
 
 public extension AtomLoader {
-    func shouldNotifyUpdate(newValue: Value, oldValue: Value) -> Bool {
+    func shouldUpdate(newValue: Value, oldValue: Value) -> Bool {
         true
     }
 }
@@ -35,7 +35,7 @@ public protocol RefreshableAtomLoader: AtomLoader {
 
     /// Refreshes and awaits for the passed value to be finished to yield values
     /// and returns a final value.
-    func refresh(context: Context, with value: Value) async -> Value
+    func refreshOverridden(value: Value, context: Context) async -> Value
 }
 
 /// A loader protocol that represents an actual implementation of the corresponding atom
