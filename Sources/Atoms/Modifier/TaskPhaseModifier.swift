@@ -26,8 +26,6 @@ public extension Atom where Loader: AsyncAtomLoader {
     /// }
     /// ```
     ///
-    /// This modifier converts the `Task` that the original atom provides into ``AsyncPhase``
-    /// and notifies its changes to downstream atoms and views.
     var phase: ModifiedAtom<Self, TaskPhaseModifier<Loader.Success, Loader.Failure>> {
         modifier(TaskPhaseModifier())
     }
@@ -38,7 +36,7 @@ public extension Atom where Loader: AsyncAtomLoader {
 ///
 /// Use ``Atom/phase`` instead of using this modifier directly.
 public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
-    /// A type of original value to be modified.
+    /// A type of base value to be modified.
     public typealias BaseValue = Task<Success, Failure>
 
     /// A type of modified value to provide.

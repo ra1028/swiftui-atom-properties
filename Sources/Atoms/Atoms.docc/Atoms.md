@@ -26,6 +26,7 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 ### Modifiers
 
 - ``Atom/select(_:)``
+- ``Atom/changes``
 - ``Atom/phase``
 
 ### Attributes
@@ -66,6 +67,7 @@ SwiftUI Atom Properties offers practical capabilities to manage the complexity o
 - ``AtomStore``
 - ``AtomModifier``
 - ``SelectModifier``
+- ``ChangesModifier``
 - ``TaskPhaseModifier``
 - ``AtomLoader``
 - ``RefreshableAtomLoader``

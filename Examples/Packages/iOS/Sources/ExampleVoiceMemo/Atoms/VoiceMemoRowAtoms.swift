@@ -41,7 +41,7 @@ struct PlayingElapsedTimeAtom: PublisherAtom {
     }
 
     func publisher(context: Context) -> AnyPublisher<TimeInterval, Never> {
-        let isPlaying = context.watch(IsPlayingAtom(voiceMemo: voiceMemo))
+        let isPlaying = context.watch(IsPlayingAtom(voiceMemo: voiceMemo).changes)
 
         guard isPlaying else {
             return Just(.zero).eraseToAnyPublisher()
