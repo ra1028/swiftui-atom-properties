@@ -151,7 +151,7 @@ struct RecordingDataAtom: StateAtom, Hashable {
 
 struct RecordingElapsedTimeAtom: PublisherAtom, Hashable {
     func publisher(context: Context) -> AnyPublisher<TimeInterval, Never> {
-        let isRecording = context.watch(IsRecordingAtom())
+        let isRecording = context.watch(IsRecordingAtom().changes)
 
         guard isRecording else {
             return Just(.zero).eraseToAnyPublisher()
