@@ -665,7 +665,7 @@ struct ContactView: View {
 
 Modifiers can be applied to an atom to produce a different versions of the original atom to make it more coding friendly or to reduce view re-computation for performance optimization.
 
-#### [select(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/select(_:))
+#### [select](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/select(_:))
 
 <details><summary><code>📖 Click to expand example code</code></summary>
 
@@ -694,6 +694,36 @@ struct CountDisplayView: View {
 |Output         |`T: Equatable`|
 |Compatible     |All atoms types. The selected property must be `Equatable` compliant.|
 |Use Case       |Performance optimization, Property scope restriction|
+
+#### [changes](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/changes)
+
+<details><summary><code>📖 Click to expand example code</code></summary>
+
+```swift
+struct CountAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> Int {
+        12345
+    }
+}
+
+struct CountDisplayView: View {
+    @Watch(CountAtom().changes)
+    var count  // : Int
+
+    var body: some View {
+        Text(count.description)
+    }
+}
+```
+
+</details>
+
+|               |Description|
+|:--------------|:----------|
+|Summary        |Prevents the atom from updating its child views or atoms when its new value is the same as its old value.|
+|Output         |`T: Equatable`|
+|Compatible     |All atom types that produce `Equatable` compliant value.|
+|Use Case       |Performance optimization|
 
 #### [phase](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/phase)
 
