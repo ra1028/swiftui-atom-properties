@@ -258,7 +258,7 @@ private extension StoreContext {
         let value: Node.Loader.Value
 
         if let override {
-            value = await atom._loader.refresh(context: context, with: override)
+            value = await atom._loader.refreshOverridden(value: override, context: context)
         }
         else {
             value = await atom._loader.refresh(context: context)
@@ -309,10 +309,10 @@ private extension StoreContext {
         let value: Node.Loader.Value
 
         if let override {
-            value = atom._loader.handle(context: context, with: override)
+            value = atom._loader.associateOverridden(value: override, context: context)
         }
         else {
-            value = atom._loader.get(context: context)
+            value = atom._loader.value(context: context)
         }
 
         let cache = AtomCache(atom: atom, value: value)
@@ -411,7 +411,7 @@ private extension StoreContext {
         scope.store.state.caches[key] = cache
 
         // Do not notify update if the new value and the old value are equivalent.
-        if !atom._loader.shouldNotifyUpdate(newValue: value, oldValue: oldValue) {
+        if !atom._loader.shouldUpdate(newValue: value, oldValue: oldValue) {
             return
         }
 

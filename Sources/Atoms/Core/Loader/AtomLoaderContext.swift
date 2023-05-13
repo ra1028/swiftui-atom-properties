@@ -1,13 +1,9 @@
 /// The context structure that to interact with an atom store.
 @MainActor
 public struct AtomLoaderContext<Value, Coordinator> {
-    @usableFromInline
     internal let _store: StoreContext
-    @usableFromInline
     internal let _transaction: Transaction
-    @usableFromInline
     internal let _coordinator: Coordinator
-    @usableFromInline
     internal let _update: @MainActor (Value, Bool) -> Void
 
     internal init(
@@ -20,6 +16,12 @@ public struct AtomLoaderContext<Value, Coordinator> {
         _transaction = transaction
         _coordinator = coordinator
         _update = update
+    }
+
+    internal var modifierContext: AtomModifierContext<Value> {
+        AtomModifierContext(transaction: _transaction) { value in
+            update(with: value)
+        }
     }
 
     internal func update(with value: Value, needsEnsureValueUpdate: Bool = false) {

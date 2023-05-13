@@ -38,8 +38,11 @@ public extension Atom where Loader: AsyncAtomLoader {
 ///
 /// Use ``Atom/phase`` instead of using this modifier directly.
 public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
+    /// A type of original value to be modified.
+    public typealias BaseValue = Task<Success, Failure>
+
     /// A type of modified value to provide.
-    public typealias ModifiedValue = AsyncPhase<Success, Failure>
+    public typealias Value = AsyncPhase<Success, Failure>
 
     /// A type representing the stable identity of this atom associated with an instance.
     public struct Key: Hashable {}
@@ -50,9 +53,9 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
     }
 
     /// Returns a new value for the corresponding atom.
-    public func value(context: Context, with task: Task<Success, Failure>) -> ModifiedValue {
+    public func modify(value: BaseValue, context: Context) -> Value {
         let task = Task {
-            let phase = await AsyncPhase(task.result)
+            let phase = await AsyncPhase(value.result)
 
             if !Task.isCancelled {
                 context.update(with: phase)
@@ -64,8 +67,8 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
         return .suspending
     }
 
-    /// Handles updates or cancellation of the passed value.
-    public func handle(context: Context, with value: ModifiedValue) -> ModifiedValue {
+    /// Associates given value and handle updates and cancellations.
+    public func associateOverridden(value: Value, context: Context) -> Value {
         value
     }
 }
