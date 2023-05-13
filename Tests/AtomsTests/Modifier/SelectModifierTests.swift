@@ -43,35 +43,23 @@ final class SelectModifierTests: XCTestCase {
         XCTAssertTrue(modifier.shouldUpdate(newValue: 100, oldValue: 200))
     }
 
-    func testValue() {
+    func testModify() {
         let atom = TestValueAtom(value: 0)
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
-        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomLoaderContext<String, Void>(
-            store: StoreContext(store),
-            transaction: transaction,
-            coordinator: (),
-            update: { _, _ in }
-        )
+        let context = AtomModifierContext<String>(transaction: transaction) { _ in }
         let value = modifier.modify(value: 100, context: context)
 
         XCTAssertEqual(value, "100")
     }
 
-    func testHanlde() {
+    func testAssociateOverridden() {
         let atom = TestValueAtom(value: 0)
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
-        let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomLoaderContext<String, Void>(
-            store: StoreContext(store),
-            transaction: transaction,
-            coordinator: (),
-            update: { _, _ in }
-        )
-
+        let context = AtomModifierContext<String>(transaction: transaction) { _ in }
         let value = modifier.associateOverridden(value: "100", context: context)
+
         XCTAssertEqual(value, "100")
     }
 }

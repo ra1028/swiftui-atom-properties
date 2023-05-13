@@ -17,12 +17,12 @@ public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader
     /// Returns a new value for the corresponding atom.
     public func value(context: Context) -> Value {
         let value = context.transaction { $0.watch(atom) }
-        return modifier.modify(value: value, context: context)
+        return modifier.modify(value: value, context: context.modifierContext)
     }
 
     /// Associates given value and handle updates and cancellations.
     public func associateOverridden(value: Value, context: Context) -> Value {
-        modifier.associateOverridden(value: value, context: context)
+        modifier.associateOverridden(value: value, context: context.modifierContext)
     }
 
     /// Returns a boolean value indicating whether it should notify updates to downstream
