@@ -84,11 +84,11 @@ public struct Snapshot: CustomStringConvertible {
                 }
             }
 
-            if let subscribers = subscriptions[key]?.keys {
-                for subscriber in subscribers {
-                    let label = "line:\(subscriber.location.line)".quoted
-                    statements.insert("\(subscriber.location.fileID.quoted) [style=filled]")
-                    statements.insert("\(key.description.quoted) -> \(subscriber.location.fileID.quoted) [label=\(label)]")
+            if let subscriptions = subscriptions[key]?.values {
+                for subscription in subscriptions {
+                    let label = "line:\(subscription.location.line)".quoted
+                    statements.insert("\(subscription.location.fileID.quoted) [style=filled]")
+                    statements.insert("\(key.description.quoted) -> \(subscription.location.fileID.quoted) [label=\(label)]")
                 }
             }
         }

@@ -34,7 +34,8 @@ final class StoreContextTests: XCTestCase {
     func testSet() {
         let store = AtomStore()
         let context = StoreContext(store)
-        let subscriptionKey = SubscriptionKey(SubscriptionContainer())
+        let token = SubscriptionKey.Token()
+        let subscriptionKey = SubscriptionKey(token: token)
         var updateCount = 0
         let atom = TestStateAtom(defaultValue: 0)
         let key = AtomKey(atom)
@@ -48,6 +49,7 @@ final class StoreContextTests: XCTestCase {
         store.state.caches[key] = AtomCache(atom: atom, value: 0)
         store.state.states[key] = AtomState(coordinator: atom.makeCoordinator())
         store.state.subscriptions[key, default: [:]][subscriptionKey] = Subscription(
+            location: SourceLocation(fileID: #file, line: #line),
             notifyUpdate: { updateCount += 1 },
             unsubscribe: {}
         )
@@ -69,7 +71,8 @@ final class StoreContextTests: XCTestCase {
     func testModify() {
         let store = AtomStore()
         let context = StoreContext(store)
-        let subscriptionKey = SubscriptionKey(SubscriptionContainer())
+        let token = SubscriptionKey.Token()
+        let subscriptionKey = SubscriptionKey(token: token)
         var updateCount = 0
         let atom = TestStateAtom(defaultValue: 0)
         let key = AtomKey(atom)
@@ -84,6 +87,7 @@ final class StoreContextTests: XCTestCase {
         store.state.caches[key] = AtomCache(atom: atom, value: 0)
         store.state.states[key] = AtomState(coordinator: atom.makeCoordinator())
         store.state.subscriptions[key, default: [:]][subscriptionKey] = Subscription(
+            location: SourceLocation(fileID: #file, line: #line),
             notifyUpdate: { updateCount += 1 },
             unsubscribe: {}
         )
@@ -144,7 +148,6 @@ final class StoreContextTests: XCTestCase {
         let store = AtomStore()
         let context = StoreContext(store)
         let container = SubscriptionContainer()
-        let subscriptionKey = SubscriptionKey(container)
         let atom = TestAtom()
         let dependency = DependencyAtom()
         let key = AtomKey(atom)
@@ -156,11 +159,11 @@ final class StoreContextTests: XCTestCase {
 
         XCTAssertEqual(initialValue, 0)
         XCTAssertNotNil(container.wrapper.subscriptions[key])
-        XCTAssertNotNil(store.state.subscriptions[key]?[subscriptionKey])
+        XCTAssertNotNil(store.state.subscriptions[key]?[container.wrapper.key])
         XCTAssertEqual((store.state.caches[key] as? AtomCache<TestAtom>)?.value, 0)
         XCTAssertEqual((store.state.caches[dependencyKey] as? AtomCache<DependencyAtom>)?.value, 0)
 
-        let subscription = store.state.subscriptions[key]?[subscriptionKey]
+        let subscription = store.state.subscriptions[key]?[container.wrapper.key]
         subscription?.notifyUpdate()
         subscription?.unsubscribe()
 
@@ -224,7 +227,8 @@ final class StoreContextTests: XCTestCase {
 
     func testSnapshot() {
         let store = AtomStore()
-        let subscriptionKey = SubscriptionKey(SubscriptionContainer())
+        let token = SubscriptionKey.Token()
+        let subscriptionKey = SubscriptionKey(token: token)
         let context = StoreContext(store)
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
@@ -242,11 +246,12 @@ final class StoreContextTests: XCTestCase {
             key0: AtomCache(atom: atom0, value: 0),
             key1: AtomCache(atom: atom1, value: 1),
         ]
+        let subscription = Subscription(location: SourceLocation(fileID: #file, line: #line), notifyUpdate: {}) {}
 
         store.graph = graph
         store.state.caches = caches
-        store.state.subscriptions[key0, default: [:]][subscriptionKey] = Subscription(notifyUpdate: {}, unsubscribe: {})
-        store.state.subscriptions[key1, default: [:]][subscriptionKey] = Subscription(notifyUpdate: {}, unsubscribe: {})
+        store.state.subscriptions[key0, default: [:]][subscriptionKey] = subscription
+        store.state.subscriptions[key1, default: [:]][subscriptionKey] = subscription
 
         let snapshot = context.snapshot()
 
@@ -736,12 +741,14 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testRestore() {
-        let container = SubscriptionContainer()
         let store = AtomStore()
         let context = StoreContext(store)
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
         let atom2 = TestAtom(value: 2)
+        let location = SourceLocation(fileID: #file, line: #line)
+        let token = SubscriptionKey.Token()
+        let subscriptionKey = SubscriptionKey(token: token)
 
         store.graph = Graph(
             dependencies: [AtomKey(atom0): [AtomKey(atom1)]],
@@ -761,14 +768,14 @@ final class StoreContextTests: XCTestCase {
         ]
 
         var updated = Set<AtomKey>()
-        let subscription0 = Subscription(notifyUpdate: { updated.insert(AtomKey(atom0)) }, unsubscribe: {})
-        let subscription1 = Subscription(notifyUpdate: { updated.insert(AtomKey(atom1)) }, unsubscribe: {})
-        let subscription2 = Subscription(notifyUpdate: { updated.insert(AtomKey(atom2)) }, unsubscribe: {})
+        let subscription0 = Subscription(location: location, notifyUpdate: { updated.insert(AtomKey(atom0)) }) {}
+        let subscription1 = Subscription(location: location, notifyUpdate: { updated.insert(AtomKey(atom1)) }) {}
+        let subscription2 = Subscription(location: location, notifyUpdate: { updated.insert(AtomKey(atom2)) }) {}
 
         store.state.subscriptions = [
-            AtomKey(atom0): [SubscriptionKey(container): subscription0],
-            AtomKey(atom1): [SubscriptionKey(container): subscription1],
-            AtomKey(atom2): [SubscriptionKey(container): subscription2],
+            AtomKey(atom0): [subscriptionKey: subscription0],
+            AtomKey(atom1): [subscriptionKey: subscription1],
+            AtomKey(atom2): [subscriptionKey: subscription2],
         ]
 
         snapshot.restore()

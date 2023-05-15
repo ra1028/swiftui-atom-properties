@@ -215,7 +215,10 @@ private extension StoreContext {
         }
 
         let newCache = cache ?? makeNewCache(of: atom, for: key, override: override, scope: scope)
-        let subscription = Subscription(notifyUpdate: notifyUpdate) {
+        let subscription = Subscription(
+            location: container.location,
+            notifyUpdate: notifyUpdate
+        ) {
             // Unsubscribe and release if it's no longer used.
             scope.store.state.subscriptions[key]?.removeValue(forKey: container.key)
             notifyUpdateToObservers(scope: scope)
