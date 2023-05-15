@@ -8,7 +8,7 @@ internal struct StoreContext {
 
     nonisolated init(
         _ store: AtomStore? = nil,
-        overrides: Overrides = Overrides(),
+        overrides: [OverrideKey: any AtomOverrideProtocol] = [:],
         observers: [Observer] = [],
         enablesAssertion: Bool = false
     ) {
@@ -77,7 +77,7 @@ internal struct StoreContext {
 
     func scoped(
         store: AtomStore,
-        overrides: Overrides,
+        overrides: [OverrideKey: any AtomOverrideProtocol],
         observers: [Observer]
     ) -> Self {
         Self(
@@ -95,13 +95,13 @@ internal struct StoreContext {
 private extension StoreContext {
     func read<Node: Atom>(_ atom: Node, scope: Scope) -> Node.Loader.Value {
         let key = AtomKey(atom)
-        let override: Node.Loader.Value?
+        let override: AtomOverride<Node>?
 
         if let cache = peekCache(of: atom, for: key, scope: scope) {
             return cache.value
         }
-        else if let value = scope.overrides.value(atom, for: key) {
-            override = value
+        else if let _override = peekOverride(of: atom, scope: scope) {
+            override = _override
         }
         else if let parent = scope.parent {
             return read(atom, scope: parent)
@@ -123,7 +123,7 @@ private extension StoreContext {
             update(atom: atom, for: key, value: value, cache: cache, scope: scope)
             checkRelease(for: key, scope: scope)
         }
-        else if scope.overrides.hasValue(for: key) {
+        else if isOverridden(atom, scope: scope) {
             // Do nothing if the atom is overridden.
             return
         }
@@ -141,7 +141,7 @@ private extension StoreContext {
             update(atom: atom, for: key, value: value, cache: cache, scope: scope)
             checkRelease(for: key, scope: scope)
         }
-        else if scope.overrides.hasValue(for: key) {
+        else if isOverridden(atom, scope: scope) {
             // Do nothing if the atom is overridden.
             return
         }
@@ -157,15 +157,15 @@ private extension StoreContext {
 
         let key = AtomKey(atom)
         let cache: AtomCache<Node>?
-        let override: Node.Loader.Value?
+        let override: AtomOverride<Node>?
 
         if let oldCache = peekCache(of: atom, for: key, scope: scope) {
             cache = oldCache
             override = nil
         }
-        else if let value = scope.overrides.value(atom, for: key) {
+        else if let _override = peekOverride(of: atom, scope: scope) {
             cache = nil
-            override = value
+            override = _override
         }
         else if let parent = scope.parent {
             return watch(atom, in: transaction, scope: parent)
@@ -196,15 +196,15 @@ private extension StoreContext {
     ) -> Node.Loader.Value {
         let key = AtomKey(atom)
         let cache: AtomCache<Node>?
-        let override: Node.Loader.Value?
+        let override: AtomOverride<Node>?
 
         if let oldCache = peekCache(of: atom, for: key, scope: scope) {
             cache = oldCache
             override = nil
         }
-        else if let value = scope.overrides.value(atom, for: key) {
+        else if let _override = peekOverride(of: atom, scope: scope) {
             cache = nil
-            override = value
+            override = _override
         }
         else if let parent = scope.parent {
             return watch(atom, container: container, notifyUpdate: notifyUpdate, scope: parent)
@@ -215,7 +215,10 @@ private extension StoreContext {
         }
 
         let newCache = cache ?? makeNewCache(of: atom, for: key, override: override, scope: scope)
-        let subscription = Subscription(notifyUpdate: notifyUpdate) {
+        let subscription = Subscription(
+            location: container.location,
+            notifyUpdate: notifyUpdate
+        ) {
             // Unsubscribe and release if it's no longer used.
             scope.store.state.subscriptions[key]?.removeValue(forKey: container.key)
             notifyUpdateToObservers(scope: scope)
@@ -236,15 +239,15 @@ private extension StoreContext {
     func refresh<Node: Atom>(_ atom: Node, scope: Scope) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         let key = AtomKey(atom)
         let cache: AtomCache<Node>?
-        let override: Node.Loader.Value?
+        let override: AtomOverride<Node>?
 
         if let oldCache = peekCache(of: atom, for: key, scope: scope) {
             cache = oldCache
-            override = scope.overrides.value(atom, for: key)
+            override = peekOverride(of: atom, scope: scope)
         }
-        else if let value = scope.overrides.value(atom, for: key) {
+        else if let _override = peekOverride(of: atom, scope: scope) {
             cache = nil
-            override = value
+            override = _override
         }
         else if let parent = scope.parent {
             return await refresh(atom, scope: parent)
@@ -258,7 +261,7 @@ private extension StoreContext {
         let value: Node.Loader.Value
 
         if let override {
-            value = await atom._loader.refreshOverridden(value: override, context: context)
+            value = await atom._loader.refreshOverridden(value: override.value(atom), context: context)
         }
         else {
             value = await atom._loader.refresh(context: context)
@@ -276,12 +279,12 @@ private extension StoreContext {
         let key = AtomKey(atom)
 
         if let cache = peekCache(of: atom, for: key, scope: scope) {
-            let override = scope.overrides.value(atom, for: key)
+            let override = peekOverride(of: atom, scope: scope)
             let newCache = makeNewCache(of: atom, for: key, override: override, scope: scope)
             update(atom: atom, for: key, value: newCache.value, cache: cache, scope: scope)
             checkRelease(for: key, scope: scope)
         }
-        else if scope.overrides.hasValue(for: key) {
+        else if isOverridden(atom, scope: scope) {
             // Do nothing if the atom is overridden.
             return
         }
@@ -302,14 +305,14 @@ private extension StoreContext {
     func makeNewCache<Node: Atom>(
         of atom: Node,
         for key: AtomKey,
-        override: Node.Loader.Value?,
+        override: AtomOverride<Node>?,
         scope: Scope
     ) -> AtomCache<Node> {
         let context = prepareTransaction(of: atom, for: key, scope: scope)
         let value: Node.Loader.Value
 
         if let override {
-            value = atom._loader.associateOverridden(value: override, context: context)
+            value = atom._loader.associateOverridden(value: override.value(atom), context: context)
         }
         else {
             value = atom._loader.value(context: context)
@@ -359,40 +362,6 @@ private extension StoreContext {
                 scope: scope
             )
         }
-    }
-
-    func getState<Node: Atom>(of atom: Node, for key: AtomKey, scope: Scope) -> AtomState<Node.Coordinator> {
-        func makeState() -> AtomState<Node.Coordinator> {
-            let coordinator = atom.makeCoordinator()
-            let state = AtomState(coordinator: coordinator)
-            scope.store.state.states[key] = state
-            return state
-        }
-
-        guard let baseState = scope.store.state.states[key] else {
-            return makeState()
-        }
-
-        guard let state = baseState as? AtomState<Node.Coordinator> else {
-            assertionFailure(
-                """
-                [Atoms]
-                The type of the given atom's value and the state did not match.
-                There might be duplicate keys, make sure that the keys for all atom types are unique.
-
-                Atom: \(Node.self)
-                Key: \(type(of: atom.key))
-                Detected: \(type(of: baseState))
-                Expected: AtomState<\(Node.Coordinator.self)>
-                """
-            )
-
-            // Release the invalid registration as a fallback.
-            release(for: key, scope: scope)
-            return makeState()
-        }
-
-        return state
     }
 
     func update<Node: Atom>(
@@ -475,6 +444,40 @@ private extension StoreContext {
         }
     }
 
+    func getState<Node: Atom>(of atom: Node, for key: AtomKey, scope: Scope) -> AtomState<Node.Coordinator> {
+        func makeState() -> AtomState<Node.Coordinator> {
+            let coordinator = atom.makeCoordinator()
+            let state = AtomState(coordinator: coordinator)
+            scope.store.state.states[key] = state
+            return state
+        }
+
+        guard let baseState = scope.store.state.states[key] else {
+            return makeState()
+        }
+
+        guard let state = baseState as? AtomState<Node.Coordinator> else {
+            assertionFailure(
+                """
+                [Atoms]
+                The type of the given atom's value and the state did not match.
+                There might be duplicate keys, make sure that the keys for all atom types are unique.
+
+                Atom: \(Node.self)
+                Key: \(type(of: atom.key))
+                Detected: \(type(of: baseState))
+                Expected: AtomState<\(Node.Coordinator.self)>
+                """
+            )
+
+            // Release the invalid registration as a fallback.
+            release(for: key, scope: scope)
+            return makeState()
+        }
+
+        return state
+    }
+
     func peekCache<Node: Atom>(of atom: Node, for key: AtomKey, scope: Scope) -> AtomCache<Node>? {
         guard let baseCache = scope.store.state.caches[key] else {
             return nil
@@ -500,6 +503,34 @@ private extension StoreContext {
         }
 
         return cache
+    }
+
+    func peekOverride<Node: Atom>(of atom: Node, scope: Scope) -> AtomOverride<Node>? {
+        let baseOverride = scope.overrides[OverrideKey(atom)] ?? scope.overrides[OverrideKey(Node.self)]
+
+        guard let baseOverride else {
+            return nil
+        }
+
+        guard let override = baseOverride as? AtomOverride<Node> else {
+            assertionFailure(
+                """
+                [Atoms]
+                Detected an illegal override.
+                There might be duplicate keys or logic failure.
+                Detected: \(type(of: baseOverride))
+                Expected: AtomOverride<\(Node.self)>
+                """
+            )
+
+            return nil
+        }
+
+        return override
+    }
+
+    func isOverridden<Node: Atom>(_ atom: Node, scope: Scope) -> Bool {
+        scope.overrides[OverrideKey(atom)] != nil || scope.overrides[OverrideKey(Node.self)] != nil
     }
 
     func invalidate(for key: AtomKey, scope: Scope) -> Set<AtomKey> {
@@ -608,13 +639,13 @@ private extension StoreContext {
 
 private final class Scope {
     private(set) weak var weakStore: AtomStore?
-    let overrides: Overrides
+    let overrides: [OverrideKey: any AtomOverrideProtocol]
     let parent: Scope?
     let enablesAssertion: Bool
 
     init(
         store: AtomStore?,
-        overrides: Overrides,
+        overrides: [OverrideKey: any AtomOverrideProtocol],
         parent: Scope?,
         enablesAssertion: Bool
     ) {

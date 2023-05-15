@@ -76,19 +76,19 @@ public struct Snapshot: CustomStringConvertible {
         var statements = Set<String>()
 
         for key in caches.keys {
-            statements.insert(key.description.quoted)
+            statements.insert(key.name.quoted)
 
             if let children = graph.children[key] {
                 for child in children {
-                    statements.insert("\(key.description.quoted) -> \(child.description.quoted)")
+                    statements.insert("\(key.name.quoted) -> \(child.name.quoted)")
                 }
             }
 
-            if let subscribers = subscriptions[key]?.keys {
-                for subscriber in subscribers {
-                    let label = "line:\(subscriber.location.line)".quoted
-                    statements.insert("\(subscriber.location.fileID.quoted) [style=filled]")
-                    statements.insert("\(key.description.quoted) -> \(subscriber.location.fileID.quoted) [label=\(label)]")
+            if let subscriptions = subscriptions[key]?.values {
+                for subscription in subscriptions {
+                    let label = "line:\(subscription.location.line)".quoted
+                    statements.insert("\(subscription.location.fileID.quoted) [style=filled]")
+                    statements.insert("\(key.name.quoted) -> \(subscription.location.fileID.quoted) [label=\(label)]")
                 }
             }
         }

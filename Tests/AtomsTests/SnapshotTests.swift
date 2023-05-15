@@ -48,8 +48,9 @@ final class SnapshotTests: XCTestCase {
         let key2 = AtomKey(atom2)
         let key3 = AtomKey(atom3)
         let location = SourceLocation(fileID: "Module/View.swift", line: 10)
-        let subscriber = SubscriptionKey(SubscriptionContainer(), location: location)
-        let subscription = Subscription(notifyUpdate: {}, unsubscribe: {})
+        let token = SubscriptionKey.Token()
+        let subscriber = SubscriptionKey(token: token)
+        let subscription = Subscription(location: location, notifyUpdate: {}, unsubscribe: {})
         let snapshot = Snapshot(
             graph: Graph(
                 dependencies: [

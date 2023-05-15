@@ -10,8 +10,6 @@ final class AtomKeyTests: XCTestCase {
 
         XCTAssertEqual(key0, key1)
         XCTAssertEqual(key0.hashValue, key1.hashValue)
-        XCTAssertEqual(key0.typeKey, key1.typeKey)
-        XCTAssertEqual(key0.typeKey.hashValue, key1.typeKey.hashValue)
     }
 
     func testKeyHashableForDifferentAtoms() {
@@ -22,8 +20,6 @@ final class AtomKeyTests: XCTestCase {
 
         XCTAssertNotEqual(key0, key1)
         XCTAssertNotEqual(key0.hashValue, key1.hashValue)
-        XCTAssertEqual(key0.typeKey, key1.typeKey)
-        XCTAssertEqual(key0.typeKey.hashValue, key1.typeKey.hashValue)
     }
 
     func testDictionaryKey() {
@@ -43,10 +39,10 @@ final class AtomKeyTests: XCTestCase {
         XCTAssertEqual(dictionary[key2], 300)
     }
 
-    func testDescription() {
+    func testName() {
         let atom = TestAtom(value: 0)
         let key = AtomKey(atom)
 
-        XCTAssertEqual(key.description, "TestAtom<Int>")
+        XCTAssertEqual(key.name, "TestAtom<Int>")
     }
 }
