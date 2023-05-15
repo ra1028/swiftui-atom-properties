@@ -598,11 +598,33 @@ final class StoreContextTests: XCTestCase {
             let transaction = Transaction(key: key) {}
 
             _ = context.watch(atom, in: transaction)
-
             XCTAssertNotNil(store.state.caches[key])
 
             context.reset(atom)
             XCTAssertNotNil(store.state.caches[key])
+        }
+
+        XCTContext.runActivity(named: "Overridden KeepAlive atoms should not be released.") { _ in
+            let atom = KeepAliveAtom(value: 0)
+            let token = ScopeKey.Token()
+            let scopeKey = ScopeKey(token: token)
+            let key = AtomKey(atom, overrideScopeKey: scopeKey)
+            let context = context.scoped(
+                overrides: [
+                    OverrideKey(atom): AtomOverride<KeepAliveAtom<Int>>(
+                        scopeKey: scopeKey,
+                        value: { _ in 10 }
+                    )
+                ],
+                observers: []
+            )
+            let transaction = Transaction(key: key) {}
+
+            _ = context.watch(atom, in: transaction)
+            XCTAssertNotNil(store.state.caches[key])
+
+            context.reset(atom)
+            XCTAssertNil(store.state.caches[key])
         }
     }
 

@@ -387,10 +387,10 @@ private extension StoreContext {
         let store = getStore()
 
         // The condition under which an atom may be released are as follows:
-        //     1. It's not marked as `KeepAlive`.
+        //     1. It's not marked as `KeepAlive` or is overridden.
         //     2. It has no downstream atoms.
         //     3. It has no subscriptions from views.
-        let shouldKeepAlive = store.state.caches[key].map { $0.atom is any KeepAlive } ?? false
+        let shouldKeepAlive = !key.isOverridden && store.state.caches[key].map { $0.atom is any KeepAlive } ?? false
         let isChildrenEmpty = store.graph.children[key]?.isEmpty ?? true
         let isSubscriptionEmpty = store.state.subscriptions[key]?.isEmpty ?? true
         let shouldRelease = !shouldKeepAlive && isChildrenEmpty && isSubscriptionEmpty
