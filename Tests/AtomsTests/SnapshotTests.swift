@@ -66,7 +66,8 @@ final class SnapshotTests: XCTestCase {
         struct Value4: Hashable {}
 
         let scopeToken = ScopeKey.Token()
-        let overrideScopeKey = ScopeKey(token: scopeToken)
+        let scopeKey = ScopeKey(token: scopeToken)
+        let scopeID = String(scopeKey.hashValue, radix: 36, uppercase: false)
         let atom0 = TestAtom(value: Value0())
         let atom1 = TestAtom(value: Value1())
         let atom2 = TestAtom(value: Value2())
@@ -76,7 +77,7 @@ final class SnapshotTests: XCTestCase {
         let key1 = AtomKey(atom1)
         let key2 = AtomKey(atom2)
         let key3 = AtomKey(atom3)
-        let key4 = AtomKey(atom4, overrideScopeKey: overrideScopeKey)
+        let key4 = AtomKey(atom4, overrideScopeKey: scopeKey)
         let location = SourceLocation(fileID: "Module/View.swift", line: 10)
         let subscriptionToken = SubscriptionKey.Token()
         let subscriber = SubscriptionKey(token: subscriptionToken)
@@ -124,8 +125,8 @@ final class SnapshotTests: XCTestCase {
               "TestAtom<Value2>" -> "TestAtom<Value3>"
               "TestAtom<Value3>"
               "TestAtom<Value3>" -> "Module/View.swift" [label="line:10"]
-              "TestAtom<Value4>"
-              "TestAtom<Value4>" -> "Module/View.swift" [label="line:10"]
+              "TestAtom<Value4>-override:\(scopeID)"
+              "TestAtom<Value4>-override:\(scopeID)" -> "Module/View.swift" [label="line:10"]
             }
             """
         )

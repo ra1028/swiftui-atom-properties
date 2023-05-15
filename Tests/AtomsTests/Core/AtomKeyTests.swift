@@ -39,10 +39,15 @@ final class AtomKeyTests: XCTestCase {
         XCTAssertEqual(dictionary[key2], 300)
     }
 
-    func testName() {
+    func testDescription() {
         let atom = TestAtom(value: 0)
-        let key = AtomKey(atom)
+        let token = ScopeKey.Token()
+        let scopeKey = ScopeKey(token: token)
+        let key0 = AtomKey(atom)
+        let key1 = AtomKey(atom, overrideScopeKey: scopeKey)
+        let scopeID = String(scopeKey.hashValue, radix: 36, uppercase: false)
 
-        XCTAssertEqual(key.name, "TestAtom<Int>")
+        XCTAssertEqual(key0.description, "TestAtom<Int>")
+        XCTAssertEqual(key1.description, "TestAtom<Int>-override:\(scopeID)")
     }
 }

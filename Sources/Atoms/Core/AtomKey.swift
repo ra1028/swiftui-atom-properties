@@ -1,11 +1,18 @@
-internal struct AtomKey: Hashable {
+internal struct AtomKey: Hashable, CustomStringConvertible {
     private let key: AnyHashable
     private let type: ObjectIdentifier
     private let overrideScopeKey: ScopeKey?
     private let getName: () -> String
 
-    var name: String {
-        getName()
+    var description: String {
+        if let overrideScopeKey {
+            let name = getName()
+            let id = String(overrideScopeKey.hashValue, radix: 36, uppercase: false)
+            return name + "-override:\(id)"
+        }
+        else {
+            return getName()
+        }
     }
 
     init<Node: Atom>(_ atom: Node, overrideScopeKey: ScopeKey?) {
