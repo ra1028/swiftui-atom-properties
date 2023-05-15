@@ -101,7 +101,6 @@ public struct AtomScope<Content: View>: View {
         content.environment(
             \.store,
             (store ?? environmentStore).scoped(
-                store: state.store,
                 overrides: overrides,
                 observers: observers
             )
@@ -121,7 +120,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides[OverrideKey(atom)] = AtomOverride(value: value) }
+        mutating { $0.overrides[OverrideKey(atom)] = AtomOverride(scopeKey: ScopeKey(token: state.token), value: value) }
     }
 
     /// Override the atom value used in this scope with the given value.
@@ -139,7 +138,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides[OverrideKey(atomType)] = AtomOverride(value: value) }
+        mutating { $0.overrides[OverrideKey(atomType)] = AtomOverride(scopeKey: ScopeKey(token: state.token), value: value) }
     }
 
     /// For debugging purposes, each time there is a change in the internal state,
@@ -160,7 +159,7 @@ public struct AtomScope<Content: View>: View {
 private extension AtomScope {
     @MainActor
     final class State: ObservableObject {
-        let store = AtomStore()
+        let token = ScopeKey.Token()
     }
 
     func `mutating`(_ mutation: (inout Self) -> Void) -> Self {

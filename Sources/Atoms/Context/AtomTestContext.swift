@@ -250,9 +250,8 @@ public struct AtomTestContext: AtomWatchableContext {
     /// It simulates cases where other atoms or views no longer watches to the atom.
     ///
     /// - Parameter atom: An atom that associates the value.
-    public func unwatch<Node: Atom>(_ atom: Node) {
-        let key = AtomKey(atom)
-        container.subscriptions.removeValue(forKey: key)?.unsubscribe()
+    public func unwatch(_ atom: some Atom) {
+        store.unwatch(atom, container: container)
     }
 
     /// Overrides the atom value with the given value.
@@ -264,7 +263,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atom: An atom that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) {
-        state.overrides[OverrideKey(atom)] = AtomOverride(value: value)
+        state.overrides[OverrideKey(atom)] = AtomOverride(scopeKey: ScopeKey(token: state.token), value: value)
     }
 
     /// Overrides the atom value with the given value.
@@ -278,13 +277,14 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atomType: An atom type that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) {
-        state.overrides[OverrideKey(atomType)] = AtomOverride(value: value)
+        state.overrides[OverrideKey(atomType)] = AtomOverride(scopeKey: ScopeKey(token: state.token), value: value)
     }
 }
 
 private extension AtomTestContext {
     final class State {
         let store = AtomStore()
+        let token = ScopeKey.Token()
         let container = SubscriptionContainer()
         let notifier = PassthroughSubject<Void, Never>()
         var overrides = [OverrideKey: any AtomOverrideProtocol]()
