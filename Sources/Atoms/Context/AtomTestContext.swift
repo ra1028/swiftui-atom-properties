@@ -33,7 +33,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
     ///     XCTAssertEqual(initialPhase, .suspending)
     ///
-    ///     let didUpdate = await context.waitUntilNextUpdate()
+    ///     let didUpdate = await context.waitForUpdate()
     ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
     ///
     ///     XCTAssertTure(didUpdate)
@@ -45,7 +45,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///                      the next update. The default timeout interval is `60`.
     /// - Returns: A boolean value indicating whether an update is done.
     @discardableResult
-    public func waitUntilNextUpdate(timeout interval: TimeInterval = 60) async -> Bool {
+    public func waitForUpdate(timeout interval: TimeInterval = 60) async -> Bool {
         let updates = AsyncStream<Void> { continuation in
             let cancellable = state.notifier.sink(
                 receiveCompletion: { completion in

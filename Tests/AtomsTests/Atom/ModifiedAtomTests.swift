@@ -34,7 +34,7 @@ final class ModifiedAtomTests: XCTestCase {
                 context[base] = "testtest"
             }
 
-            await context.waitUntilNextUpdate()
+            await context.waitForUpdate()
             XCTAssertEqual(context.watch(atom), 8)
         }
 

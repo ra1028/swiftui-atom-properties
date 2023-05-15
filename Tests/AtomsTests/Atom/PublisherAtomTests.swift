@@ -20,7 +20,7 @@ final class PublisherAtomTests: XCTestCase {
             // Value
             subject.send(0)
 
-            await context.waitUntilNextUpdate()
+            await context.waitForUpdate()
             XCTAssertEqual(context.watch(atom), .success(0))
         }
 
@@ -28,7 +28,7 @@ final class PublisherAtomTests: XCTestCase {
             // Error
             subject.send(completion: .failure(URLError(.badURL)))
 
-            await context.waitUntilNextUpdate()
+            await context.waitForUpdate()
             XCTAssertEqual(context.watch(atom), .failure(URLError(.badURL)))
         }
 
@@ -36,7 +36,7 @@ final class PublisherAtomTests: XCTestCase {
             // Send value after completion
             subject.send(1)
 
-            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 1)
             XCTAssertFalse(didUpdate)
         }
 
@@ -45,7 +45,7 @@ final class PublisherAtomTests: XCTestCase {
             context.unwatch(atom)
             subject.send(0)
 
-            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 1)
             XCTAssertFalse(didUpdate)
         }
 
@@ -54,7 +54,7 @@ final class PublisherAtomTests: XCTestCase {
             context.unwatch(atom)
             subject.send(completion: .failure(URLError(.badURL)))
 
-            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 1)
             XCTAssertFalse(didUpdate)
         }
 
@@ -143,13 +143,13 @@ final class PublisherAtomTests: XCTestCase {
         XCTAssertTrue(updatedValues.isEmpty)
 
         subject.send(0)
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         subject.send(1)
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         subject.send(2)
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         XCTAssertEqual(
             updatedValues,

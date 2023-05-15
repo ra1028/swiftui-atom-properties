@@ -60,12 +60,12 @@ final class ExampleMapTests: XCTestCase {
             observer.objectWillChange.send()
         }
 
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         XCTAssertEqual(context.watch(atom), .authorizedAlways)
 
         observer.objectWillChange.send()
-        let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+        let didUpdate = await context.waitForUpdate(timeout: 1)
 
         // Should not update if authorizationStatus is not changed.
         XCTAssertFalse(didUpdate)

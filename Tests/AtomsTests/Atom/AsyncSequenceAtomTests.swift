@@ -16,7 +16,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
         do {
             // Value
             pipe.continuation.yield(0)
-            await context.waitUntilNextUpdate()
+            await context.waitForUpdate()
 
             XCTAssertEqual(context.watch(atom).value, 0)
         }
@@ -24,7 +24,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
         do {
             // Failure
             pipe.continuation.finish(throwing: URLError(.badURL))
-            await context.waitUntilNextUpdate()
+            await context.waitForUpdate()
 
             XCTAssertEqual(context.watch(atom).error as? URLError, URLError(.badURL))
         }
@@ -32,7 +32,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
         do {
             // Yield value after finish
             pipe.continuation.yield(1)
-            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 1)
 
             XCTAssertFalse(didUpdate)
         }
@@ -43,7 +43,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
             context.unwatch(atom)
 
             pipe.continuation.yield(0)
-            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 1)
 
             XCTAssertFalse(didUpdate)
         }
@@ -54,7 +54,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
             context.unwatch(atom)
 
             pipe.continuation.finish(throwing: URLError(.badURL))
-            let didUpdate = await context.waitUntilNextUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 1)
 
             XCTAssertFalse(didUpdate)
         }
@@ -144,13 +144,13 @@ final class AsyncSequenceAtomTests: XCTestCase {
         XCTAssertTrue(updatedValues.isEmpty)
 
         pipe.continuation.yield(0)
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         pipe.continuation.yield(1)
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         pipe.continuation.yield(2)
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         XCTAssertEqual(
             updatedValues,

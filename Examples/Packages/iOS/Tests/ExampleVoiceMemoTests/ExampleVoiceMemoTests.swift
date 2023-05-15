@@ -65,7 +65,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
 
         XCTAssertEqual(context.watch(atom), .suspending)
 
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         XCTAssertEqual(context.watch(atom), .success(.zero))
 
@@ -74,7 +74,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
 
         XCTAssertEqual(context.watch(atom), .suspending)
 
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         XCTAssertEqual(context.watch(atom), .success(10))
     }
@@ -178,7 +178,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
 
         XCTAssertEqual(context.watch(atom), .suspending)
 
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         XCTAssertEqual(context.watch(atom), .success(.zero))
 
@@ -187,7 +187,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
 
         XCTAssertEqual(context.watch(atom), .suspending)
 
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         XCTAssertEqual(context.watch(atom), .success(10))
     }
