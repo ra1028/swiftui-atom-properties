@@ -264,7 +264,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atom: An atom that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) {
-        state.overrides.insert(atom, with: value)
+        state.overrides[OverrideKey(atom)] = AtomOverride(value: value)
     }
 
     /// Overrides the atom value with the given value.
@@ -278,7 +278,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atomType: An atom type that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) {
-        state.overrides.insert(atomType, with: value)
+        state.overrides[OverrideKey(atomType)] = AtomOverride(value: value)
     }
 }
 
@@ -287,7 +287,7 @@ private extension AtomTestContext {
         let store = AtomStore()
         let container = SubscriptionContainer()
         let notifier = PassthroughSubject<Void, Never>()
-        var overrides = Overrides()
+        var overrides = [OverrideKey: any AtomOverrideProtocol]()
         var onUpdate: (() -> Void)?
 
         func notifyUpdate() {

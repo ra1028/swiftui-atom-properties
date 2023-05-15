@@ -301,7 +301,7 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext(store, observers: [observer0])
         let scopedContext = context.scoped(
             store: store,
-            overrides: Overrides(),
+            overrides: [:],
             observers: [observer1]
         )
 
@@ -357,13 +357,13 @@ final class StoreContextTests: XCTestCase {
         let scoped1Store = AtomStore()
         let scoped2Store = AtomStore()
 
-        var scoped1Overrides = Overrides()
-        scoped1Overrides.insert(dependency1Atom) { _ in
+        var scoped1Overrides = [OverrideKey: any AtomOverrideProtocol]()
+        scoped1Overrides[OverrideKey(dependency1Atom)] = AtomOverride<TestDependency1Atom> { _ in
             10
         }
 
-        var scoped2Overrides = Overrides()
-        scoped2Overrides.insert(dependency2Atom) { _ in
+        var scoped2Overrides = [OverrideKey: any AtomOverrideProtocol]()
+        scoped2Overrides[OverrideKey(dependency2Atom)] = AtomOverride<TestDependency2Atom> { _ in
             100
         }
 
@@ -610,8 +610,8 @@ final class StoreContextTests: XCTestCase {
         let scoped1Store = AtomStore()
         let scoped2Store = AtomStore()
 
-        var scopedOverride = Overrides()
-        scopedOverride.insert(atom1) { _ in
+        var scopedOverride = [OverrideKey: any AtomOverrideProtocol]()
+        scopedOverride[OverrideKey(atom1)] = AtomOverride<TestAtom<Int>> { _ in
             100
         }
 
@@ -623,7 +623,7 @@ final class StoreContextTests: XCTestCase {
         )
         let scoped1Context = context.scoped(
             store: scoped1Store,
-            overrides: Overrides(),
+            overrides: [:],
             observers: []
         )
         let scoped2Context = scoped1Context.scoped(

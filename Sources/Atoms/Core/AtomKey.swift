@@ -1,14 +1,24 @@
-internal struct AtomKey: Hashable, CustomStringConvertible {
-    private let identifier: AnyHashable
+internal struct AtomKey: Hashable {
+    private let key: AnyHashable
+    private let type: ObjectIdentifier
+    private let getName: () -> String
 
-    let typeKey: AtomTypeKey
-
-    init<Node: Atom>(_ atom: Node) {
-        typeKey = AtomTypeKey(Node.self)
-        identifier = AnyHashable(atom.key)
+    var name: String {
+        getName()
     }
 
-    var description: String {
-        typeKey.description
+    init<Node: Atom>(_ atom: Node) {
+        key = AnyHashable(atom.key)
+        type = ObjectIdentifier(Node.self)
+        getName = { String(describing: Node.self) }
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(key)
+        hasher.combine(type)
+    }
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.key == rhs.key && lhs.type == rhs.type
     }
 }

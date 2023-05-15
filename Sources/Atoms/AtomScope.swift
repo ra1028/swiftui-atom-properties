@@ -53,7 +53,7 @@ public struct AtomScope<Content: View>: View {
     @StateObject
     private var state = State()
     private let store: StoreContext?
-    private var overrides = Overrides()
+    private var overrides = [OverrideKey: any AtomOverrideProtocol]()
     private var observers = [Observer]()
     private let content: Content
 
@@ -121,7 +121,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides.insert(atom, with: value) }
+        mutating { $0.overrides[OverrideKey(atom)] = AtomOverride(value: value) }
     }
 
     /// Override the atom value used in this scope with the given value.
@@ -139,7 +139,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides.insert(atomType, with: value) }
+        mutating { $0.overrides[OverrideKey(atomType)] = AtomOverride(value: value) }
     }
 
     /// For debugging purposes, each time there is a change in the internal state,
