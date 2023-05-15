@@ -51,7 +51,7 @@ final class ObservableObjectAtomTests: XCTestCase {
             }
 
             object.update()
-            await context.waitUntilNextUpdate()
+            await context.waitForUpdate()
 
             XCTAssertEqual(snapshot, 1)
         }
@@ -68,7 +68,7 @@ final class ObservableObjectAtomTests: XCTestCase {
             }
 
             object.update()
-            await context.waitUntilNextUpdate()
+            await context.waitForUpdate()
 
             XCTAssertEqual(updateCount, 1)
         }
@@ -86,7 +86,7 @@ final class ObservableObjectAtomTests: XCTestCase {
                 updateCount = object.updatedCount
             }
             object.update()
-            await context.waitUntilNextUpdate()
+            await context.waitForUpdate()
 
             XCTAssertTrue(object === overrideObject)
             XCTAssertEqual(updateCount, 1)
@@ -105,7 +105,7 @@ final class ObservableObjectAtomTests: XCTestCase {
                 updateCount = object.updatedCount
             }
             object.update()
-            await context.waitUntilNextUpdate()
+            await context.waitForUpdate()
 
             XCTAssertTrue(object === overrideObject)
             XCTAssertEqual(updateCount, 1)
@@ -123,7 +123,7 @@ final class ObservableObjectAtomTests: XCTestCase {
         XCTAssertTrue(updatedObjects.isEmpty)
         object.update()
 
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         XCTAssertEqual(updatedObjects.last?.updatedCount, 1)
     }

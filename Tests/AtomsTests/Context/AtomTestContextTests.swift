@@ -31,7 +31,7 @@ final class AtomTestContextTests: XCTestCase {
         XCTAssertTrue(isCalled)
     }
 
-    func testWaitUntilNextUpdate() async {
+    func testWaitForUpdate() async {
         let atom = TestStateAtom(defaultValue: 0)
         let context = AtomTestContext()
 
@@ -41,11 +41,11 @@ final class AtomTestContextTests: XCTestCase {
             context[atom] = 1
         }
 
-        let didUpdate0 = await context.waitUntilNextUpdate()
+        let didUpdate0 = await context.waitForUpdate()
 
         XCTAssertTrue(didUpdate0)
 
-        let didUpdate1 = await context.waitUntilNextUpdate(timeout: 1)
+        let didUpdate1 = await context.waitForUpdate(timeout: 1)
 
         XCTAssertFalse(didUpdate1)
     }

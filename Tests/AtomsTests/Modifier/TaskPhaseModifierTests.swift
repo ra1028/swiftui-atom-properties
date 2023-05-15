@@ -11,7 +11,7 @@ final class TaskPhaseModifierTests: XCTestCase {
 
         XCTAssertEqual(context.watch(atom.phase), .suspending)
 
-        await context.waitUntilNextUpdate(timeout: 1)
+        await context.waitForUpdate(timeout: 1)
 
         XCTAssertEqual(context.watch(atom.phase), .success(0))
     }

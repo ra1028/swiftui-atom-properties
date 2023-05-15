@@ -75,7 +75,7 @@ final class StateAtomTests: XCTestCase {
             context[Dependency1Atom()] = 0
         }
 
-        await context.waitUntilNextUpdate()
+        await context.waitForUpdate()
 
         let value2 = context.watch(TestAtom())
         XCTAssertEqual(value2, 0)
