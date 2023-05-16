@@ -32,7 +32,7 @@ final class SnapshotTests: XCTestCase {
             AtomKey(atom2, overrideScopeKey: scopeKey): AtomCache(atom: atom2, value: 20),
         ]
         let overrides = [
-            OverrideKey(atom2): AtomOverride<TestAtom<Int>>(scopeKey: scopeKey) { _ in 0 }
+            OverrideKey(atom2): AtomScopedOverride<TestAtom<Int>>(scopeKey: scopeKey) { _ in 0 }
         ]
         let snapshot = Snapshot(
             graph: Graph(),

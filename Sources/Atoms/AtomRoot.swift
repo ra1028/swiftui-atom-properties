@@ -60,12 +60,24 @@ public struct AtomRoot<Content: View>: View {
     public var body: some View {
         content.environment(
             \.store,
-            StoreContext(
+            .scoped(
                 state.store,
-                overrides: overrides,
-                observers: observers
+                scopeKey: ScopeKey(token: state.token),
+                observers: observers,
+                overrides: overrides
             )
         )
+    }
+
+    /// For debugging purposes, each time there is a change in the internal state,
+    /// a snapshot is taken that captures the state of the atoms and their dependency graph
+    /// at that point in time.
+    ///
+    /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
+    ///
+    /// - Returns: The self instance.
+    public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
+        mutating { $0.observers.append(Observer(onUpdate: onUpdate)) }
     }
 
     /// Overrides the atom value with the given value.
@@ -79,7 +91,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides[OverrideKey(atom)] = AtomOverride(scopeKey: ScopeKey(token: state.token), value: value) }
+        mutating { $0.overrides[OverrideKey(atom)] = AtomOverride(value: value) }
     }
 
     /// Overrides the atom value with the given value.
@@ -95,18 +107,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides[OverrideKey(atomType)] = AtomOverride(scopeKey: ScopeKey(token: state.token), value: value) }
-    }
-
-    /// For debugging purposes, each time there is a change in the internal state,
-    /// a snapshot is taken that captures the state of the atoms and their dependency graph
-    /// at that point in time.
-    ///
-    /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
-    ///
-    /// - Returns: The self instance.
-    public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
-        mutating { $0.observers.append(Observer(onUpdate: onUpdate)) }
+        mutating { $0.overrides[OverrideKey(atomType)] = AtomOverride(value: value) }
     }
 }
 

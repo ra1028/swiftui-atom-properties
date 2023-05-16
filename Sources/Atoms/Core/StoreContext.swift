@@ -4,20 +4,50 @@ import Foundation
 @MainActor
 internal struct StoreContext {
     private(set) weak var weakStore: AtomStore?
-    private let overrides: [OverrideKey: any AtomOverrideProtocol]
+    private let overrides: [OverrideKey: any AtomScopedOverrideProtocol]
     private let observers: [Observer]
     private let enablesAssertion: Bool
 
     nonisolated init(
         _ store: AtomStore? = nil,
-        overrides: [OverrideKey: any AtomOverrideProtocol] = [:],
         observers: [Observer] = [],
+        overrides: [OverrideKey: any AtomScopedOverrideProtocol] = [:],
         enablesAssertion: Bool = false
     ) {
         self.weakStore = store
-        self.overrides = overrides
         self.observers = observers
+        self.overrides = overrides
         self.enablesAssertion = enablesAssertion
+    }
+
+    static func scoped(
+        _ store: AtomStore,
+        scopeKey: ScopeKey,
+        observers: [Observer],
+        overrides: [OverrideKey: any AtomOverrideProtocol]
+    ) -> Self {
+        StoreContext(
+            store,
+            observers: observers,
+            overrides: overrides.mapValues { $0.scoped(key: scopeKey) },
+            enablesAssertion: false
+        )
+    }
+
+    func scoped(
+        key: ScopeKey,
+        observers: [Observer],
+        overrides: [OverrideKey: any AtomOverrideProtocol]
+    ) -> Self {
+        StoreContext(
+            weakStore,
+            observers: self.observers + observers,
+            overrides: self.overrides.merging(
+                overrides.lazy.map { ($0, $1.scoped(key: key)) },
+                uniquingKeysWith: { $1 }
+            ),
+            enablesAssertion: enablesAssertion
+        )
     }
 
     @usableFromInline
@@ -204,25 +234,13 @@ internal struct StoreContext {
             }
         }
     }
-
-    func scoped(
-        overrides: [OverrideKey: any AtomOverrideProtocol],
-        observers: [Observer]
-    ) -> Self {
-        StoreContext(
-            weakStore,
-            overrides: self.overrides.merging(overrides) { $1 },
-            observers: self.observers + observers,
-            enablesAssertion: enablesAssertion
-        )
-    }
 }
 
 private extension StoreContext {
     func makeNewCache<Node: Atom>(
         of atom: Node,
         for key: AtomKey,
-        override: AtomOverride<Node>?
+        override: AtomScopedOverride<Node>?
     ) -> AtomCache<Node> {
         let store = getStore()
         let context = prepareTransaction(of: atom, for: key)
@@ -424,21 +442,21 @@ private extension StoreContext {
         }
     }
 
-    func lookupOverride<Node: Atom>(of atom: Node) -> AtomOverride<Node>? {
+    func lookupOverride<Node: Atom>(of atom: Node) -> AtomScopedOverride<Node>? {
         let baseOverride = overrides[OverrideKey(atom)] ?? overrides[OverrideKey(Node.self)]
 
         guard let baseOverride else {
             return nil
         }
 
-        guard let override = baseOverride as? AtomOverride<Node> else {
+        guard let override = baseOverride as? AtomScopedOverride<Node> else {
             assertionFailure(
                 """
                 [Atoms]
                 Detected an illegal override.
                 There might be duplicate keys or logic failure.
                 Detected: \(type(of: baseOverride))
-                Expected: AtomOverride<\(Node.self)>
+                Expected: AtomScopedOverride<\(Node.self)>
                 """
             )
 

@@ -5,6 +5,65 @@ import XCTest
 
 @MainActor
 final class StoreContextTests: XCTestCase {
+    func testScopedConstructor() {
+        let store = AtomStore()
+        let token = ScopeKey.Token()
+        let scopeKey = ScopeKey(token: token)
+        let atom = TestAtom(value: 0)
+        let transaction = Transaction(key: AtomKey(atom)) {}
+        let context = StoreContext.scoped(
+            store,
+            scopeKey: scopeKey,
+            observers: [],
+            overrides: [
+                OverrideKey(atom): AtomOverride<TestAtom<Int>> { _ in
+                    10
+                }
+            ]
+        )
+
+        XCTAssertEqual(context.watch(atom, in: transaction), 10)
+        XCTAssertEqual(
+            store.graph.children,
+            [
+                AtomKey(atom, overrideScopeKey: scopeKey): [AtomKey(atom)]
+            ]
+        )
+        XCTAssertEqual(
+            store.graph.dependencies,
+            [
+                AtomKey(atom): [AtomKey(atom, overrideScopeKey: scopeKey)]
+            ]
+        )
+    }
+
+    func testScoped() {
+        let store = AtomStore()
+        let container = SubscriptionContainer()
+        let atom = TestValueAtom(value: 0)
+        var snapshots0 = [Snapshot]()
+        var snapshots1 = [Snapshot]()
+        let observer0 = Observer { snapshots0.append($0) }
+        let observer1 = Observer { snapshots1.append($0) }
+        let context = StoreContext(
+            store,
+            observers: [observer0]
+        )
+        let scopedContext = context.scoped(
+            key: ScopeKey(token: ScopeKey.Token()),
+            observers: [observer1],
+            overrides: [
+                OverrideKey(atom): AtomOverride<TestValueAtom<Int>> { _ in
+                    10
+                }
+            ]
+        )
+
+        XCTAssertEqual(scopedContext.watch(atom, container: container.wrapper) {}, 10)
+        XCTAssertFalse(snapshots0.isEmpty)
+        XCTAssertFalse(snapshots1.isEmpty)
+    }
+
     func testStoreDeinit() {
         let atom = TestAtom(value: 0)
         let container = SubscriptionContainer()
@@ -290,26 +349,6 @@ final class StoreContextTests: XCTestCase {
         XCTAssertTrue(store.state.caches.isEmpty)
     }
 
-    func testScoped() {
-        let store = AtomStore()
-        let container = SubscriptionContainer()
-        let atom = TestValueAtom(value: 0)
-        var snapshots0 = [Snapshot]()
-        var snapshots1 = [Snapshot]()
-        let observer0 = Observer { snapshots0.append($0) }
-        let observer1 = Observer { snapshots1.append($0) }
-        let context = StoreContext(store, observers: [observer0])
-        let scopedContext = context.scoped(
-            overrides: [:],
-            observers: [observer1]
-        )
-
-        _ = scopedContext.watch(atom, container: container.wrapper) {}
-
-        XCTAssertFalse(snapshots0.isEmpty)
-        XCTAssertFalse(snapshots1.isEmpty)
-    }
-
     func testScopedOverride() async {
         struct TestDependency1Atom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
@@ -359,23 +398,25 @@ final class StoreContextTests: XCTestCase {
         let scope2Key = ScopeKey(token: scope2Token)
 
         var scoped1Overrides = [OverrideKey: any AtomOverrideProtocol]()
-        scoped1Overrides[OverrideKey(dependency1Atom)] = AtomOverride<TestDependency1Atom>(scopeKey: scope1Key) { _ in
+        scoped1Overrides[OverrideKey(dependency1Atom)] = AtomOverride<TestDependency1Atom> { _ in
             10
         }
 
         var scoped2Overrides = [OverrideKey: any AtomOverrideProtocol]()
-        scoped2Overrides[OverrideKey(dependency2Atom)] = AtomOverride<TestDependency2Atom>(scopeKey: scope2Key) { _ in
+        scoped2Overrides[OverrideKey(dependency2Atom)] = AtomOverride<TestDependency2Atom> { _ in
             100
         }
 
         let context = StoreContext(store)
         let scoped1Context = context.scoped(
-            overrides: scoped1Overrides,
-            observers: []
+            key: scope1Key,
+            observers: [],
+            overrides: scoped1Overrides
         )
         let scoped2Context = scoped1Context.scoped(
-            overrides: scoped2Overrides,
-            observers: []
+            key: scope2Key,
+            observers: [],
+            overrides: scoped2Overrides
         )
 
         XCTAssertEqual(context.watch(dependency1Atom, container: container.wrapper) {}, 0)
@@ -610,13 +651,11 @@ final class StoreContextTests: XCTestCase {
             let scopeKey = ScopeKey(token: token)
             let key = AtomKey(atom, overrideScopeKey: scopeKey)
             let context = context.scoped(
+                key: scopeKey,
+                observers: [],
                 overrides: [
-                    OverrideKey(atom): AtomOverride<KeepAliveAtom<Int>>(
-                        scopeKey: scopeKey,
-                        value: { _ in 10 }
-                    )
-                ],
-                observers: []
+                    OverrideKey(atom): AtomOverride<KeepAliveAtom<Int>> { _ in 10 }
+                ]
             )
             let transaction = Transaction(key: key) {}
 
@@ -634,11 +673,13 @@ final class StoreContextTests: XCTestCase {
         let atom1 = TestAtom(value: 1)
         let atom2 = TestAtom(value: 2)
         let store = AtomStore()
+        let scope1Token = ScopeKey.Token()
         let scope2Token = ScopeKey.Token()
+        let scope1Key = ScopeKey(token: scope1Token)
         let scope2Key = ScopeKey(token: scope2Token)
 
         var scopedOverride = [OverrideKey: any AtomOverrideProtocol]()
-        scopedOverride[OverrideKey(atom1)] = AtomOverride<TestAtom<Int>>(scopeKey: scope2Key) { _ in
+        scopedOverride[OverrideKey(atom1)] = AtomOverride<TestAtom<Int>> { _ in
             100
         }
 
@@ -649,12 +690,14 @@ final class StoreContextTests: XCTestCase {
             observers: [Observer { snapshots.append($0) }]
         )
         let scoped1Context = context.scoped(
-            overrides: [:],
-            observers: []
+            key: scope1Key,
+            observers: [],
+            overrides: [:]
         )
         let scoped2Context = scoped1Context.scoped(
-            overrides: scopedOverride,
-            observers: [Observer { scopedSnapshots.append($0) }]
+            key: scope2Key,
+            observers: [Observer { scopedSnapshots.append($0) }],
+            overrides: scopedOverride
         )
 
         // New value

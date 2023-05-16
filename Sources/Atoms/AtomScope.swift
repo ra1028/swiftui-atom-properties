@@ -101,10 +101,25 @@ public struct AtomScope<Content: View>: View {
         content.environment(
             \.store,
             (store ?? environmentStore).scoped(
-                overrides: overrides,
-                observers: observers
+                key: ScopeKey(token: state.token),
+                observers: observers,
+                overrides: overrides
             )
         )
+    }
+
+    /// For debugging purposes, each time there is a change in the internal state,
+    /// a snapshot is taken that captures the state of the atoms and their dependency graph
+    /// at that point in time.
+    ///
+    /// Note that unlike observed by ``AtomRoot``, this is triggered only by internal state changes
+    /// caused by atoms use in this scope.
+    ///
+    /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
+    ///
+    /// - Returns: The self instance.
+    public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
+        mutating { $0.observers.append(Observer(onUpdate: onUpdate)) }
     }
 
     /// Override the atom value used in this scope with the given value.
@@ -120,7 +135,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides[OverrideKey(atom)] = AtomOverride(scopeKey: ScopeKey(token: state.token), value: value) }
+        mutating { $0.overrides[OverrideKey(atom)] = AtomOverride(value: value) }
     }
 
     /// Override the atom value used in this scope with the given value.
@@ -138,21 +153,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides[OverrideKey(atomType)] = AtomOverride(scopeKey: ScopeKey(token: state.token), value: value) }
-    }
-
-    /// For debugging purposes, each time there is a change in the internal state,
-    /// a snapshot is taken that captures the state of the atoms and their dependency graph
-    /// at that point in time.
-    ///
-    /// Note that unlike observed by ``AtomRoot``, this is triggered only by internal state changes
-    /// caused by atoms use in this scope.
-    ///
-    /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
-    ///
-    /// - Returns: The self instance.
-    public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
-        mutating { $0.observers.append(Observer(onUpdate: onUpdate)) }
+        mutating { $0.overrides[OverrideKey(atomType)] = AtomOverride(value: value) }
     }
 }
 
