@@ -1302,8 +1302,29 @@ AtomRoot {
 }
 ```
 
-Calling the [restore()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot/restore()) method of the obtained `Snapshot` will roll back to the states and dependency graph at that point in time to see what happened.  
+`@ViewContext` also supports restoring the values of atoms and the dependency graph captured at a point in time in a retrieved snapshot and its dependency graph so that you can investigate what happend.  
 The debugging technique is called [time travel debugging](https://en.wikipedia.org/wiki/Time_travel_debugging), and the example application [here](Examples/Packages/iOS/Sources/ExampleTimeTravel) demonstrates how it works.  
+
+```swift
+@ViewContext
+var context
+
+@State
+var snapshot: Snapshot?
+
+var body: some View {
+    VStack {
+        Button("Capture") {
+            snapshot = context.snapshot()
+        }
+        Button("Restore") {
+            if let snapshot {
+                context.restore(snapshot)
+            }
+        }
+    }
+}
+```
 
 In addition, [graphDescription()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot/graphdescription()) method returns a string, that represents the dependencies graph and where they are used, as a String in [graph description language DOT](https://graphviz.org/doc/info/lang.html).  
 This can be converted to an image using [Graphviz](https://graphviz.org), a graph visualization tool, to visually analyze information about the state of the application, as shown below.  
