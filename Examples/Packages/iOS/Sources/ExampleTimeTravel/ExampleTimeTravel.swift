@@ -78,6 +78,9 @@ struct TimeTravelDebug<Content: View>: View {
     @State
     var position = 0
 
+    @ViewContext
+    var context
+
     var body: some View {
         AtomScope {
             ZStack(alignment: .bottom) {
@@ -105,7 +108,7 @@ struct TimeTravelDebug<Content: View>: View {
                     set: { value in
                         Task { @MainActor in
                             position = Int(value)
-                            snapshots[position].restore()
+                            context.restore(snapshots[position])
                         }
                     }
                 ),

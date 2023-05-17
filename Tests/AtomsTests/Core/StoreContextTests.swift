@@ -284,19 +284,15 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(context.read(atom), 0)
     }
 
-    func testSnapshot() {
+    func testSnapshotAndRestore() {
         let store = AtomStore()
         let token = SubscriptionKey.Token()
         let subscriptionKey = SubscriptionKey(token: token)
         let context = StoreContext(store)
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
-        let atom2 = TestAtom(value: 2)
-        let atom3 = TestAtom(value: 3)
         let key0 = AtomKey(atom0)
         let key1 = AtomKey(atom1)
-        let key2 = AtomKey(atom2)
-        let key3 = AtomKey(atom3)
         let graph = Graph(
             dependencies: [key0: [key1]],
             children: [key1: [key0]]
@@ -319,34 +315,6 @@ final class StoreContextTests: XCTestCase {
             snapshot.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
             caches
         )
-
-        // Modify graph and caches to a form that atom2 & atom3 should be released.
-        store.graph = Graph(
-            dependencies: [key0: [key1, key2], key2: [key3]],
-            children: [key1: [key0], key2: [key0], key3: [key2]]
-        )
-        store.state.caches = [
-            key0: AtomCache(atom: atom0, value: 0),
-            key1: AtomCache(atom: atom1, value: 1),
-            key2: AtomCache(atom: atom2, value: 2),
-            key3: AtomCache(atom: atom3, value: 3),
-        ]
-
-        snapshot.restore()
-
-        XCTAssertEqual(store.graph, snapshot.graph)
-        XCTAssertEqual(
-            store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
-            snapshot.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> }
-        )
-
-        // Remove all subscriptions so all atoms should be released.
-        store.state.subscriptions = [:]
-
-        snapshot.restore()
-
-        XCTAssertEqual(store.graph, Graph())
-        XCTAssertTrue(store.state.caches.isEmpty)
     }
 
     func testScopedOverride() async {
@@ -898,7 +866,7 @@ final class StoreContextTests: XCTestCase {
             AtomKey(atom2): [subscriptionKey: subscription2],
         ]
 
-        snapshot.restore()
+        context.restore(snapshot)
 
         // Notifies updated only for the subscriptions of the atoms that are restored.
         XCTAssertEqual(updated, [AtomKey(atom0), AtomKey(atom1)])
@@ -921,7 +889,7 @@ final class StoreContextTests: XCTestCase {
 
         // Restore with no subscriptions.
         store.state.subscriptions.removeAll()
-        snapshot.restore()
+        context.restore(snapshot)
 
         XCTAssertEqual(store.graph, Graph())
 

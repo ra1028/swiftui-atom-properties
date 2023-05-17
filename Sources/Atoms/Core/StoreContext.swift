@@ -191,44 +191,44 @@ internal struct StoreContext {
     @usableFromInline
     func snapshot() -> Snapshot {
         let store = getStore()
-        let graph = store.graph
-        let caches = store.state.caches
-        let subscriptions = store.state.subscriptions
 
         return Snapshot(
-            graph: graph,
-            caches: caches,
-            subscriptions: subscriptions
-        ) {
-            let store = getStore()
-            let keys = ContiguousArray(caches.keys)
-            var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
+            graph: store.graph,
+            caches: store.state.caches,
+            subscriptions: store.state.subscriptions
+        )
+    }
 
-            for key in keys {
-                let oldDependencies = store.graph.dependencies[key]
-                let newDependencies = graph.dependencies[key]
+    @usableFromInline
+    func restore(_ snapshot: Snapshot) {
+        let store = getStore()
+        let keys = ContiguousArray(snapshot.caches.keys)
+        var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
 
-                // Update atom values and the graph.
-                store.state.caches[key] = caches[key]
-                store.graph.dependencies[key] = newDependencies
-                store.graph.children[key] = graph.children[key]
-                obsoletedDependencies[key] = oldDependencies?.subtracting(newDependencies ?? [])
+        for key in keys {
+            let oldDependencies = store.graph.dependencies[key]
+            let newDependencies = snapshot.graph.dependencies[key]
+
+            // Update atom values and the graph.
+            store.state.caches[key] = snapshot.caches[key]
+            store.graph.dependencies[key] = newDependencies
+            store.graph.children[key] = snapshot.graph.children[key]
+            obsoletedDependencies[key] = oldDependencies?.subtracting(newDependencies ?? [])
+        }
+
+        for key in keys {
+            // Release if the atom is no longer used.
+            checkRelease(for: key)
+
+            // Release dependencies that are no longer dependent.
+            if let dependencies = obsoletedDependencies[key] {
+                checkReleaseDependencies(dependencies, for: key)
             }
 
-            for key in keys {
-                // Release if the atom is no longer used.
-                checkRelease(for: key)
-
-                // Release dependencies that are no longer dependent.
-                if let dependencies = obsoletedDependencies[key] {
-                    checkReleaseDependencies(dependencies, for: key)
-                }
-
-                // Notify updates only for the subscriptions of restored atoms.
-                if let subscriptions = store.state.subscriptions[key] {
-                    for subscription in ContiguousArray(subscriptions.values) {
-                        subscription.notifyUpdate()
-                    }
+            // Notify updates only for the subscriptions of restored atoms.
+            if let subscriptions = store.state.subscriptions[key] {
+                for subscription in ContiguousArray(subscriptions.values) {
+                    subscription.notifyUpdate()
                 }
             }
         }

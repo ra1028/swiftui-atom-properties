@@ -3,18 +3,15 @@ public struct Snapshot: CustomStringConvertible {
     internal let graph: Graph
     internal let caches: [AtomKey: any AtomCacheProtocol]
     internal let subscriptions: [AtomKey: [SubscriptionKey: Subscription]]
-    private let _restore: @MainActor () -> Void
 
     internal init(
         graph: Graph,
         caches: [AtomKey: any AtomCacheProtocol],
-        subscriptions: [AtomKey: [SubscriptionKey: Subscription]],
-        restore: @MainActor @escaping () -> Void
+        subscriptions: [AtomKey: [SubscriptionKey: Subscription]]
     ) {
         self.graph = graph
         self.caches = caches
         self.subscriptions = subscriptions
-        self._restore = restore
     }
 
     /// A textual representation of this snapshot.
@@ -24,12 +21,6 @@ public struct Snapshot: CustomStringConvertible {
         - graph: \(graph)
         - caches: \(caches)
         """
-    }
-
-    /// Restores the atom values that are captured in this snapshot.
-    @MainActor
-    public func restore() {
-        _restore()
     }
 
     /// Lookup a value associated with the given atom from the set captured in this snapshot..

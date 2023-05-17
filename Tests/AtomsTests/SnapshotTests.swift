@@ -4,21 +4,6 @@ import XCTest
 
 @MainActor
 final class SnapshotTests: XCTestCase {
-    func testRestore() {
-        var isRestoreCalled = false
-        let snapshot = Snapshot(
-            graph: Graph(),
-            caches: [:],
-            subscriptions: [:]
-        ) {
-            isRestoreCalled = true
-        }
-
-        snapshot.restore()
-
-        XCTAssertTrue(isRestoreCalled)
-    }
-
     func testLookup() {
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
@@ -29,7 +14,7 @@ final class SnapshotTests: XCTestCase {
             graph: Graph(),
             caches: atomCache,
             subscriptions: [:]
-        ) {}
+        )
 
         XCTAssertEqual(snapshot.lookup(atom0), 0)
         XCTAssertNil(snapshot.lookup(atom1))
@@ -40,7 +25,7 @@ final class SnapshotTests: XCTestCase {
             graph: Graph(),
             caches: [:],
             subscriptions: [:]
-        ) {}
+        )
 
         XCTAssertEqual(snapshot.graphDescription(), "digraph {}")
     }
@@ -93,7 +78,7 @@ final class SnapshotTests: XCTestCase {
                 key3: [subscriber: subscription],
                 key4: [subscriber: subscription],
             ]
-        ) {}
+        )
 
         XCTAssertEqual(
             snapshot.graphDescription(),
