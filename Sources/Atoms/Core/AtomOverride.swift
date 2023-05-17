@@ -14,12 +14,12 @@ internal struct AtomOverride<Node: Atom>: AtomOverrideProtocol {
     }
 }
 
-/// As a workaround to the problem of not getting ScopeKey synchronously
-/// when the AtomRoot or AtomScope's override modifier is called, those modifiers
-/// temporarily register AtomOverride and convert them to AtomScopedOverride when
-/// their View body is evaluated. This is not ideal from a performance standpoint,
-/// so it will be improved as soon as an alternative way to grant per-scope keys
-/// independent of the SwiftUI lifecycle is came up.
+// As a workaround to the problem of not getting ScopeKey synchronously
+// when the AtomRoot or AtomScope's override modifier is called, those modifiers
+// temporarily register AtomOverride and convert them to AtomScopedOverride when
+// their View body is evaluated. This is not ideal from a performance standpoint,
+// so it will be improved as soon as an alternative way to grant per-scope keys
+// independent of the SwiftUI lifecycle is came up.
 internal protocol AtomScopedOverrideProtocol {
     var scopeKey: ScopeKey { get }
 }

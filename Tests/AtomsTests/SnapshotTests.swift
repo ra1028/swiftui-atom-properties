@@ -23,7 +23,7 @@ final class SnapshotTests: XCTestCase {
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
         let atomCache = [
-            AtomKey(atom0): AtomCache(atom: atom0, value: 0),
+            AtomKey(atom0): AtomCache(atom: atom0, value: 0)
         ]
         let snapshot = Snapshot(
             graph: Graph(),
