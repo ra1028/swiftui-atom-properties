@@ -198,8 +198,7 @@ internal struct StoreContext {
         return Snapshot(
             graph: graph,
             caches: caches,
-            subscriptions: subscriptions,
-            overrides: overrides
+            subscriptions: subscriptions
         ) {
             let store = getStore()
             let keys = ContiguousArray(caches.keys)

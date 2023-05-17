@@ -9,8 +9,7 @@ final class SnapshotTests: XCTestCase {
         let snapshot = Snapshot(
             graph: Graph(),
             caches: [:],
-            subscriptions: [:],
-            overrides: [:]
+            subscriptions: [:]
         ) {
             isRestoreCalled = true
         }
@@ -23,36 +22,24 @@ final class SnapshotTests: XCTestCase {
     func testLookup() {
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
-        let atom2 = TestAtom(value: 2)
-        let atom3 = TestAtom(value: 3)
-        let token = ScopeKey.Token()
-        let scopeKey = ScopeKey(token: token)
         let atomCache = [
             AtomKey(atom0): AtomCache(atom: atom0, value: 0),
-            AtomKey(atom2, overrideScopeKey: scopeKey): AtomCache(atom: atom2, value: 20),
-        ]
-        let overrides = [
-            OverrideKey(atom2): AtomScopedOverride<TestAtom<Int>>(scopeKey: scopeKey) { _ in 0 }
         ]
         let snapshot = Snapshot(
             graph: Graph(),
             caches: atomCache,
-            subscriptions: [:],
-            overrides: overrides
+            subscriptions: [:]
         ) {}
 
         XCTAssertEqual(snapshot.lookup(atom0), 0)
         XCTAssertNil(snapshot.lookup(atom1))
-        XCTAssertEqual(snapshot.lookup(atom2), 20)
-        XCTAssertNil(snapshot.lookup(atom3))
     }
 
     func testEmptyGraphDescription() {
         let snapshot = Snapshot(
             graph: Graph(),
             caches: [:],
-            subscriptions: [:],
-            overrides: [:]
+            subscriptions: [:]
         ) {}
 
         XCTAssertEqual(snapshot.graphDescription(), "digraph {}")
@@ -106,8 +93,7 @@ final class SnapshotTests: XCTestCase {
                 key2: [subscriber: subscription],
                 key3: [subscriber: subscription],
                 key4: [subscriber: subscription],
-            ],
-            overrides: [:]
+            ]
         ) {}
 
         XCTAssertEqual(

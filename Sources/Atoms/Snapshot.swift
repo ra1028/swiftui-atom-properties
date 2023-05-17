@@ -3,20 +3,17 @@ public struct Snapshot: CustomStringConvertible {
     internal let graph: Graph
     internal let caches: [AtomKey: any AtomCacheProtocol]
     internal let subscriptions: [AtomKey: [SubscriptionKey: Subscription]]
-    internal let overrides: [OverrideKey: any AtomScopedOverrideProtocol]
     private let _restore: @MainActor () -> Void
 
     internal init(
         graph: Graph,
         caches: [AtomKey: any AtomCacheProtocol],
         subscriptions: [AtomKey: [SubscriptionKey: Subscription]],
-        overrides: [OverrideKey: any AtomScopedOverrideProtocol],
         restore: @MainActor @escaping () -> Void
     ) {
         self.graph = graph
         self.caches = caches
         self.subscriptions = subscriptions
-        self.overrides = overrides
         self._restore = restore
     }
 
@@ -37,13 +34,14 @@ public struct Snapshot: CustomStringConvertible {
 
     /// Lookup a value associated with the given atom from the set captured in this snapshot..
     ///
+    /// Note that this does not look up overridden atoms.
+    ///
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The captured value associated with the given atom if it exists.
     @MainActor
     public func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
-        let override = overrides[OverrideKey(atom)] ?? overrides[OverrideKey(Node.self)]
-        let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
+        let key = AtomKey(atom, overrideScopeKey: nil)
         let cache = caches[key] as? AtomCache<Node>
         return cache?.value
     }
