@@ -10,9 +10,7 @@ internal struct AtomKey: Hashable, CustomStringConvertible {
 
     var description: String {
         if let overrideScopeKey {
-            let name = getName()
-            let id = String(overrideScopeKey.hashValue, radix: 36, uppercase: false)
-            return name + "-override:\(id)"
+            return getName() + "-override:\(overrideScopeKey.id)"
         }
         else {
             return getName()

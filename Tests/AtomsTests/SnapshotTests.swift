@@ -54,7 +54,6 @@ final class SnapshotTests: XCTestCase {
 
         let scopeToken = ScopeKey.Token()
         let scopeKey = ScopeKey(token: scopeToken)
-        let scopeID = String(scopeKey.hashValue, radix: 36, uppercase: false)
         let atom0 = TestAtom(value: Value0())
         let atom1 = TestAtom(value: Value1())
         let atom2 = TestAtom(value: Value2())
@@ -111,8 +110,8 @@ final class SnapshotTests: XCTestCase {
               "TestAtom<Value2>" -> "TestAtom<Value3>"
               "TestAtom<Value3>"
               "TestAtom<Value3>" -> "Module/View.swift" [label="line:10"]
-              "TestAtom<Value4>-override:\(scopeID)"
-              "TestAtom<Value4>-override:\(scopeID)" -> "Module/View.swift" [label="line:10"]
+              "TestAtom<Value4>-override:\(scopeKey.id)"
+              "TestAtom<Value4>-override:\(scopeKey.id)" -> "Module/View.swift" [label="line:10"]
             }
             """
         )
