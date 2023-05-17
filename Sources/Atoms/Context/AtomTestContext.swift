@@ -250,9 +250,8 @@ public struct AtomTestContext: AtomWatchableContext {
     /// It simulates cases where other atoms or views no longer watches to the atom.
     ///
     /// - Parameter atom: An atom that associates the value.
-    public func unwatch<Node: Atom>(_ atom: Node) {
-        let key = AtomKey(atom)
-        container.subscriptions.removeValue(forKey: key)?.unsubscribe()
+    public func unwatch(_ atom: some Atom) {
+        store.unwatch(atom, container: container)
     }
 
     /// Overrides the atom value with the given value.
@@ -285,6 +284,7 @@ public struct AtomTestContext: AtomWatchableContext {
 private extension AtomTestContext {
     final class State {
         let store = AtomStore()
+        let token = ScopeKey.Token()
         let container = SubscriptionContainer()
         let notifier = PassthroughSubject<Void, Never>()
         var overrides = [OverrideKey: any AtomOverrideProtocol]()
@@ -297,7 +297,12 @@ private extension AtomTestContext {
     }
 
     var store: StoreContext {
-        StoreContext(state.store, overrides: state.overrides)
+        .scoped(
+            state.store,
+            scopeKey: ScopeKey(token: state.token),
+            observers: [],
+            overrides: state.overrides
+        )
     }
 
     var container: SubscriptionContainer.Wrapper {

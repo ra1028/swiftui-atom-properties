@@ -34,12 +34,14 @@ public struct Snapshot: CustomStringConvertible {
 
     /// Lookup a value associated with the given atom from the set captured in this snapshot..
     ///
+    /// Note that this does not look up a overridden atom.
+    ///
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The captured value associated with the given atom if it exists.
     @MainActor
     public func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
-        let key = AtomKey(atom)
+        let key = AtomKey(atom, overrideScopeKey: nil)
         let cache = caches[key] as? AtomCache<Node>
         return cache?.value
     }
@@ -76,11 +78,11 @@ public struct Snapshot: CustomStringConvertible {
         var statements = Set<String>()
 
         for key in caches.keys {
-            statements.insert(key.name.quoted)
+            statements.insert(key.description.quoted)
 
             if let children = graph.children[key] {
                 for child in children {
-                    statements.insert("\(key.name.quoted) -> \(child.name.quoted)")
+                    statements.insert("\(key.description.quoted) -> \(child.description.quoted)")
                 }
             }
 
@@ -88,7 +90,7 @@ public struct Snapshot: CustomStringConvertible {
                 for subscription in subscriptions {
                     let label = "line:\(subscription.location.line)".quoted
                     statements.insert("\(subscription.location.fileID.quoted) [style=filled]")
-                    statements.insert("\(key.name.quoted) -> \(subscription.location.fileID.quoted) [label=\(label)]")
+                    statements.insert("\(key.description.quoted) -> \(subscription.location.fileID.quoted) [label=\(label)]")
                 }
             }
         }

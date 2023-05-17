@@ -6,7 +6,11 @@ import XCTest
 final class SnapshotTests: XCTestCase {
     func testRestore() {
         var isRestoreCalled = false
-        let snapshot = Snapshot(graph: Graph(), caches: [:], subscriptions: [:]) {
+        let snapshot = Snapshot(
+            graph: Graph(),
+            caches: [:],
+            subscriptions: [:]
+        ) {
             isRestoreCalled = true
         }
 
@@ -21,14 +25,22 @@ final class SnapshotTests: XCTestCase {
         let atomCache = [
             AtomKey(atom0): AtomCache(atom: atom0, value: 0)
         ]
-        let snapshot = Snapshot(graph: Graph(), caches: atomCache, subscriptions: [:]) {}
+        let snapshot = Snapshot(
+            graph: Graph(),
+            caches: atomCache,
+            subscriptions: [:]
+        ) {}
 
         XCTAssertEqual(snapshot.lookup(atom0), 0)
         XCTAssertNil(snapshot.lookup(atom1))
     }
 
     func testEmptyGraphDescription() {
-        let snapshot = Snapshot(graph: Graph(), caches: [:], subscriptions: [:]) {}
+        let snapshot = Snapshot(
+            graph: Graph(),
+            caches: [:],
+            subscriptions: [:]
+        ) {}
 
         XCTAssertEqual(snapshot.graphDescription(), "digraph {}")
     }
@@ -38,18 +50,23 @@ final class SnapshotTests: XCTestCase {
         struct Value1: Hashable {}
         struct Value2: Hashable {}
         struct Value3: Hashable {}
+        struct Value4: Hashable {}
 
+        let scopeToken = ScopeKey.Token()
+        let scopeKey = ScopeKey(token: scopeToken)
         let atom0 = TestAtom(value: Value0())
         let atom1 = TestAtom(value: Value1())
         let atom2 = TestAtom(value: Value2())
         let atom3 = TestAtom(value: Value3())
+        let atom4 = TestAtom(value: Value4())
         let key0 = AtomKey(atom0)
         let key1 = AtomKey(atom1)
         let key2 = AtomKey(atom2)
         let key3 = AtomKey(atom3)
+        let key4 = AtomKey(atom4, overrideScopeKey: scopeKey)
         let location = SourceLocation(fileID: "Module/View.swift", line: 10)
-        let token = SubscriptionKey.Token()
-        let subscriber = SubscriptionKey(token: token)
+        let subscriptionToken = SubscriptionKey.Token()
+        let subscriber = SubscriptionKey(token: subscriptionToken)
         let subscription = Subscription(location: location, notifyUpdate: {}, unsubscribe: {})
         let snapshot = Snapshot(
             graph: Graph(
@@ -69,10 +86,12 @@ final class SnapshotTests: XCTestCase {
                 key1: AtomCache(atom: atom1, value: Value1()),
                 key2: AtomCache(atom: atom2, value: Value2()),
                 key3: AtomCache(atom: atom3, value: Value3()),
+                key4: AtomCache(atom: atom4, value: Value4()),
             ],
             subscriptions: [
                 key2: [subscriber: subscription],
                 key3: [subscriber: subscription],
+                key4: [subscriber: subscription],
             ]
         ) {}
 
@@ -91,6 +110,8 @@ final class SnapshotTests: XCTestCase {
               "TestAtom<Value2>" -> "TestAtom<Value3>"
               "TestAtom<Value3>"
               "TestAtom<Value3>" -> "Module/View.swift" [label="line:10"]
+              "TestAtom<Value4>-override:\(scopeKey.id)"
+              "TestAtom<Value4>-override:\(scopeKey.id)" -> "Module/View.swift" [label="line:10"]
             }
             """
         )

@@ -121,6 +121,8 @@ final class AsyncSequenceAtomTests: XCTestCase {
             context.override(atom) { _ in .success(200) }
             pipe.reset()
 
+            XCTAssertEqual(context.watch(atom).value, 200)
+
             let phase = await context.refresh(atom)
 
             XCTAssertEqual(phase.value, 200)

@@ -118,8 +118,10 @@ final class PublisherAtomTests: XCTestCase {
             var updateCount = 0
             context.onUpdate = { updateCount += 1 }
             context.override(atom) { _ in .success(200) }
-
             subject.reset()
+
+            XCTAssertEqual(context.watch(atom).value, 200)
+
             let phase = await context.refresh(atom)
 
             XCTAssertEqual(phase.value, 200)

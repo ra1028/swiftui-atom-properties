@@ -57,6 +57,12 @@ final class ResettableSubject<Output, Failure: Error>: Publisher, Subject {
     }
 }
 
+extension AtomKey {
+    init(_ atom: some Atom) {
+        self.init(atom, overrideScopeKey: nil)
+    }
+}
+
 extension SubscriptionContainer {
     var wrapper: Wrapper {
         let location = SourceLocation(fileID: #fileID, line: #line)
