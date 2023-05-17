@@ -170,4 +170,14 @@ public struct AtomViewContext: AtomWatchableContext {
     public func snapshot() -> Snapshot {
         _store.snapshot()
     }
+
+    /// For debugging, restore atom values and the dependency graph captured at a point in time in the given snapshot.
+    ///
+    /// Atoms and their dependencies that are no longer subscribed to from anywhere are then released.
+    ///
+    /// - Parameter snapshot: A snapshot that captures specific set of values of atoms.
+    @inlinable
+    public func restore(_ snapshot: Snapshot) {
+        _store.restore(snapshot)
+    }
 }
