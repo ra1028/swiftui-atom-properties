@@ -72,7 +72,7 @@ internal struct StoreContext {
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
-            update(atom: atom, for: key, value: value, cache: cache)
+            update(atom: atom, for: key, value: value, cache: cache, order: .newValue)
             checkRelease(for: key)
         }
     }
@@ -85,7 +85,7 @@ internal struct StoreContext {
         if let cache = lookupCache(of: atom, for: key) {
             var value = cache.value
             body(&value)
-            update(atom: atom, for: key, value: value, cache: cache)
+            update(atom: atom, for: key, value: value, cache: cache, order: .newValue)
             checkRelease(for: key)
         }
     }
@@ -117,6 +117,7 @@ internal struct StoreContext {
     func watch<Node: Atom>(
         _ atom: Node,
         container: SubscriptionContainer.Wrapper,
+        requiresObjectUpdate: Bool,
         notifyUpdate: @escaping () -> Void
     ) -> Node.Loader.Value {
         let store = getStore()
@@ -126,6 +127,7 @@ internal struct StoreContext {
         let newCache = cache ?? makeNewCache(of: atom, for: key, override: override)
         let subscription = Subscription(
             location: container.location,
+            requiresObjectUpdate: requiresObjectUpdate,
             notifyUpdate: notifyUpdate
         ) {
             let store = getStore()
@@ -161,7 +163,7 @@ internal struct StoreContext {
         }
 
         if let cache = lookupCache(of: atom, for: key) {
-            update(atom: atom, for: key, value: value, cache: cache)
+            update(atom: atom, for: key, value: value, cache: cache, order: .newValue)
         }
 
         checkRelease(for: key)
@@ -176,7 +178,7 @@ internal struct StoreContext {
         if let cache = lookupCache(of: atom, for: key) {
             let override = lookupOverride(of: atom)
             let newCache = makeNewCache(of: atom, for: key, override: override)
-            update(atom: atom, for: key, value: newCache.value, cache: cache)
+            update(atom: atom, for: key, value: newCache.value, cache: cache, order: .newValue)
             checkRelease(for: key)
         }
     }
@@ -278,7 +280,7 @@ private extension StoreContext {
             store: self,
             transaction: transaction,
             coordinator: state.coordinator
-        ) { value, needsEnsureValueUpdate in
+        ) { value, order in
             guard let cache = lookupCache(of: atom, for: key) else {
                 return
             }
@@ -288,7 +290,7 @@ private extension StoreContext {
                 for: key,
                 value: value,
                 cache: cache,
-                needsEnsureValueUpdate: needsEnsureValueUpdate
+                order: order
             )
         }
     }
@@ -298,78 +300,62 @@ private extension StoreContext {
         for key: AtomKey,
         value: Node.Loader.Value,
         cache: AtomCache<Node>,
-        needsEnsureValueUpdate: Bool = false
+        order: UpdateOrder
     ) {
         let store = getStore()
         let oldValue = cache.value
-        var cache = cache
 
-        // Update the current value with the new value.
-        cache.value = value
-        store.state.caches[key] = cache
+        if case .newValue = order {
+            var cache = cache
+            cache.value = value
+            store.state.caches[key] = cache
+        }
 
         // Do not notify update if the new value and the old value are equivalent.
         if !atom._loader.shouldUpdate(newValue: value, oldValue: oldValue) {
             return
         }
 
-        // Notify update to the downstream atoms or views.
-        notifyUpdate(for: key, needsEnsureValueUpdate: needsEnsureValueUpdate)
+        // Notifying update to view subscriptions first.
+        if let subscriptions = store.state.subscriptions[key] {
+            for subscription in subscriptions.values {
+                if case .objectWillChange = order, subscription.requiresObjectUpdate {
+                    RunLoop.current.perform(subscription.notifyUpdate)
+                }
+                else {
+                    subscription.notifyUpdate()
+                }
+            }
+        }
 
-        // Notify value update to observers.
-        notifyUpdateToObservers()
+        func notifyUpdate() {
+            if let children = store.graph.children[key] {
+                for child in children {
+                    // Reset the atom value and then notify update to downstream atoms.
+                    if let cache = store.state.caches[child] {
+                        reset(cache.atom)
+                    }
+                }
+            }
 
-        func notifyUpdated() {
+            // Notify value update to observers.
+            notifyUpdateToObservers()
+
             let state = getState(of: atom, for: key)
             let context = AtomUpdatedContext(store: self, coordinator: state.coordinator)
             atom.updated(newValue: value, oldValue: oldValue, context: context)
         }
 
-        // Ensures the value is updated.
-        if needsEnsureValueUpdate {
-            RunLoop.current.perform {
-                notifyUpdated()
-            }
-        }
-        else {
-            notifyUpdated()
-        }
-    }
-
-    func notifyUpdate(for key: AtomKey, needsEnsureValueUpdate: Bool) {
-        let store = getStore()
-
-        // Notifying update to view subscriptions first.
-        if let subscriptions = store.state.subscriptions[key], !subscriptions.isEmpty {
-            for subscription in ContiguousArray(subscriptions.values) {
-                subscription.notifyUpdate()
-            }
-        }
-
-        guard let children = store.graph.children[key], !children.isEmpty else {
-            return
-        }
-
-        func notifyUpdate() {
-            for child in children {
-                // Reset the atom value and then notify update to downstream atoms.
-                if let cache = store.state.caches[child] {
-                    reset(cache.atom)
-                }
-            }
-        }
-
-        // At the timing when `ObservableObject/objectWillChange` emits, its properties
-        // have not yet been updated and are still old when dependent atoms read it.
-        // As a workaround, the update is executed in the next run loop
-        // so that the downstream atoms can receive the object that's already updated.
-        if needsEnsureValueUpdate {
-            RunLoop.current.perform {
-                notifyUpdate()
-            }
-        }
-        else {
+        switch order {
+        case .newValue:
             notifyUpdate()
+
+        case .objectWillChange:
+            // At the timing when `ObservableObject/objectWillChange` emits, its properties
+            // have not yet been updated and are still old when dependent atoms read it.
+            // As a workaround, the update is executed in the next run loop
+            // so that the downstream atoms can receive the object that's already updated.
+            RunLoop.current.perform(notifyUpdate)
         }
     }
 

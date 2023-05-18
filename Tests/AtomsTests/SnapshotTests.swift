@@ -52,7 +52,12 @@ final class SnapshotTests: XCTestCase {
         let location = SourceLocation(fileID: "Module/View.swift", line: 10)
         let subscriptionToken = SubscriptionKey.Token()
         let subscriber = SubscriptionKey(token: subscriptionToken)
-        let subscription = Subscription(location: location, notifyUpdate: {}, unsubscribe: {})
+        let subscription = Subscription(
+            location: location,
+            requiresObjectUpdate: false,
+            notifyUpdate: {},
+            unsubscribe: {}
+        )
         let snapshot = Snapshot(
             graph: Graph(
                 dependencies: [

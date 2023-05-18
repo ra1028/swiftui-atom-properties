@@ -9,6 +9,7 @@ final class SubscriptionContainerTests: XCTestCase {
         var unsubscribedCount = 0
         let subscription = Subscription(
             location: SourceLocation(fileID: #file, line: #line),
+            requiresObjectUpdate: false,
             notifyUpdate: {}
         ) {
             unsubscribedCount += 1
