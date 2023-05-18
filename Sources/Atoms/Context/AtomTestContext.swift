@@ -271,8 +271,8 @@ private extension AtomTestContext {
 
     var store: StoreContext {
         .scoped(
-            state.store,
-            scopeKey: ScopeKey(token: state.token),
+            key: ScopeKey(token: state.token),
+            store: state.store,
             observers: [],
             overrides: state.overrides
         )

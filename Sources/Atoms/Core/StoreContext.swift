@@ -21,15 +21,15 @@ internal struct StoreContext {
     }
 
     static func scoped(
-        _ store: AtomStore,
-        scopeKey: ScopeKey,
+        key: ScopeKey,
+        store: AtomStore,
         observers: [Observer],
         overrides: [OverrideKey: any AtomOverrideProtocol]
     ) -> Self {
         StoreContext(
             store,
             observers: observers,
-            overrides: overrides.mapValues { $0.scoped(key: scopeKey) },
+            overrides: overrides.mapValues { $0.scoped(key: key) },
             enablesAssertion: false
         )
     }

@@ -12,8 +12,8 @@ final class StoreContextTests: XCTestCase {
         let atom = TestAtom(value: 0)
         let transaction = Transaction(key: AtomKey(atom)) {}
         let context = StoreContext.scoped(
-            store,
-            scopeKey: scopeKey,
+            key: scopeKey,
+            store: store,
             observers: [],
             overrides: [
                 OverrideKey(atom): AtomOverride<TestAtom<Int>> { _ in
