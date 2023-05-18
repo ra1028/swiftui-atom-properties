@@ -176,7 +176,6 @@ internal struct StoreContext {
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
-            let override = lookupOverride(of: atom)
             let newCache = makeNewCache(of: atom, for: key, override: override)
             update(atom: atom, for: key, value: newCache.value, cache: cache, order: .newValue)
             checkRelease(for: key)
