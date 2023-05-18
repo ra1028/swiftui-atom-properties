@@ -154,6 +154,7 @@ public struct AtomViewContext: AtomWatchableContext {
         _store.watch(
             atom,
             container: _container,
+            requiresObjectUpdate: false,
             notifyUpdate: _notifyUpdate
         )
     }

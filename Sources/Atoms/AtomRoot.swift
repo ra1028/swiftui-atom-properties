@@ -61,8 +61,8 @@ public struct AtomRoot<Content: View>: View {
         content.environment(
             \.store,
             .scoped(
-                state.store,
-                scopeKey: ScopeKey(token: state.token),
+                key: ScopeKey(token: state.token),
+                store: state.store,
                 observers: observers,
                 overrides: overrides
             )
