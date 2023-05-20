@@ -65,7 +65,7 @@ extension AtomKey {
 
 extension SubscriptionContainer {
     var wrapper: Wrapper {
-        let location = SourceLocation(fileID: #fileID, line: #line)
+        let location = SourceLocation()
         return wrapper(location: location)
     }
 }

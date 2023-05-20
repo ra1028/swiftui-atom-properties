@@ -108,7 +108,7 @@ final class StoreContextTests: XCTestCase {
         store.state.caches[key] = AtomCache(atom: atom, value: 0)
         store.state.states[key] = AtomState(coordinator: atom.makeCoordinator())
         store.state.subscriptions[key, default: [:]][subscriptionKey] = Subscription(
-            location: SourceLocation(fileID: #file, line: #line),
+            location: SourceLocation(),
             requiresObjectUpdate: false,
             notifyUpdate: { updateCount += 1 },
             unsubscribe: {}
@@ -147,7 +147,7 @@ final class StoreContextTests: XCTestCase {
         store.state.caches[key] = AtomCache(atom: atom, value: 0)
         store.state.states[key] = AtomState(coordinator: atom.makeCoordinator())
         store.state.subscriptions[key, default: [:]][subscriptionKey] = Subscription(
-            location: SourceLocation(fileID: #file, line: #line),
+            location: SourceLocation(),
             requiresObjectUpdate: false,
             notifyUpdate: { updateCount += 1 },
             unsubscribe: {}
@@ -303,7 +303,7 @@ final class StoreContextTests: XCTestCase {
             key0: AtomCache(atom: atom0, value: 0),
             key1: AtomCache(atom: atom1, value: 1),
         ]
-        let subscription = Subscription(location: SourceLocation(fileID: #file, line: #line), requiresObjectUpdate: false, notifyUpdate: {}) {}
+        let subscription = Subscription(location: SourceLocation(), requiresObjectUpdate: false, notifyUpdate: {}) {}
 
         store.graph = graph
         store.state.caches = caches
@@ -836,7 +836,7 @@ final class StoreContextTests: XCTestCase {
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
         let atom2 = TestAtom(value: 2)
-        let location = SourceLocation(fileID: #file, line: #line)
+        let location = SourceLocation()
         let token = SubscriptionKey.Token()
         let subscriptionKey = SubscriptionKey(token: token)
 

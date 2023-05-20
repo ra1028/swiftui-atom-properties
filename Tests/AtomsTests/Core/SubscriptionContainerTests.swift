@@ -8,7 +8,7 @@ final class SubscriptionContainerTests: XCTestCase {
         var container: SubscriptionContainer? = SubscriptionContainer()
         var unsubscribedCount = 0
         let subscription = Subscription(
-            location: SourceLocation(fileID: #file, line: #line),
+            location: SourceLocation(),
             requiresObjectUpdate: false,
             notifyUpdate: {}
         ) {
@@ -28,7 +28,7 @@ final class SubscriptionContainerTests: XCTestCase {
     }
 
     func testWrapper() {
-        let location = SourceLocation(fileID: #file, line: #line)
+        let location = SourceLocation()
         let container0 = SubscriptionContainer()
         let container1 = container0
         let container2 = SubscriptionContainer()
