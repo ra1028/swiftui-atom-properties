@@ -55,8 +55,7 @@ final class SnapshotTests: XCTestCase {
         let subscription = Subscription(
             location: location,
             requiresObjectUpdate: false,
-            notifyUpdate: {},
-            unsubscribe: {}
+            notifyUpdate: {}
         )
         let snapshot = Snapshot(
             graph: Graph(

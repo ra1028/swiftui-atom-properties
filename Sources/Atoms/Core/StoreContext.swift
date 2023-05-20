@@ -61,7 +61,11 @@ internal struct StoreContext {
         else {
             let cache = makeNewCache(of: atom, for: key, override: override)
             notifyUpdateToObservers()
-            checkRelease(for: key)
+
+            if checkRelease(for: key) {
+                notifyUpdateToObservers()
+            }
+
             return cache.value
         }
     }
@@ -127,19 +131,14 @@ internal struct StoreContext {
             location: container.location,
             requiresObjectUpdate: requiresObjectUpdate,
             notifyUpdate: notifyUpdate
-        ) {
-            let store = getStore()
-            // Unsubscribe and release if it's no longer used.
-            store.state.subscriptions[key]?.removeValue(forKey: container.key)
-
-            if !checkRelease(for: key) {
-                notifyUpdateToObservers()
-            }
-        }
+        )
         let isInserted = store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key) == nil
 
         // Register the subscription to both the store and the container.
         container.subscriptions[key] = subscription
+        container.unsubscribe = { keys in
+            unsubscribe(keys, for: container.key)
+        }
 
         if isInserted || cache == nil {
             notifyUpdateToObservers()
@@ -165,8 +164,12 @@ internal struct StoreContext {
         if let cache = lookupCache(of: atom, for: key) {
             update(atom: atom, for: key, value: value, cache: cache, order: .newValue)
         }
+        else {
+            // Release the temporarily created state.
+            // Do not notify update to observers here because refresh doesn't create a new cache.
+            release(for: key)
+        }
 
-        checkRelease(for: key)
         return value
     }
 
@@ -185,7 +188,9 @@ internal struct StoreContext {
     func unwatch(_ atom: some Atom, container: SubscriptionContainer.Wrapper) {
         let override = lookupOverride(of: atom)
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
-        container.subscriptions.removeValue(forKey: key)?.unsubscribe()
+
+        container.subscriptions.removeValue(forKey: key)
+        unsubscribe([key], for: container.key)
     }
 
     @usableFromInline
@@ -222,7 +227,7 @@ internal struct StoreContext {
 
             // Release dependencies that are no longer dependent.
             if let dependencies = obsoletedDependencies[key] {
-                checkReleaseDependencies(dependencies, for: key)
+                detach(key, fromDependencies: dependencies)
             }
 
             // Notify updates only for the subscriptions of restored atoms.
@@ -232,6 +237,8 @@ internal struct StoreContext {
                 }
             }
         }
+
+        notifyUpdateToObservers()
     }
 }
 
@@ -266,8 +273,10 @@ private extension StoreContext {
             let dependencies = store.graph.dependencies[key] ?? []
             let obsoletedDependencies = oldDependencies.subtracting(dependencies)
 
-            // Check if the dependencies that are no longer used and release them if possible.
-            checkReleaseDependencies(obsoletedDependencies, for: key)
+            if !obsoletedDependencies.isEmpty {
+                detach(key, fromDependencies: obsoletedDependencies)
+                notifyUpdateToObservers()
+            }
         }
 
         // Register the transaction state so it can be terminated from anywhere.
@@ -357,6 +366,17 @@ private extension StoreContext {
         }
     }
 
+    func unsubscribe(_ keys: [AtomKey], for subscriptionKey: SubscriptionKey) {
+        let store = getStore()
+
+        for key in keys {
+            store.state.subscriptions[key]?.removeValue(forKey: subscriptionKey)
+            checkRelease(for: key)
+        }
+
+        notifyUpdateToObservers()
+    }
+
     func invalidate(for key: AtomKey) -> Set<AtomKey> {
         let store = getStore()
 
@@ -377,11 +397,7 @@ private extension StoreContext {
         store.state.states.removeValue(forKey: key)
         store.state.subscriptions.removeValue(forKey: key)
 
-        // Check if the dependencies are releasable.
-        checkReleaseDependencies(dependencies, for: key)
-
-        // Notify release.
-        notifyUpdateToObservers()
+        detach(key, fromDependencies: dependencies)
     }
 
     @discardableResult
@@ -405,10 +421,9 @@ private extension StoreContext {
         return true
     }
 
-    func checkReleaseDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey) {
+    func detach(_ key: AtomKey, fromDependencies dependencies: Set<AtomKey>) {
         let store = getStore()
 
-        // Recursively release dependencies while unlinking the dependent.
         for dependency in dependencies {
             store.graph.children[dependency]?.remove(key)
             checkRelease(for: dependency)
@@ -481,6 +496,7 @@ private extension StoreContext {
 
             // Release the invalid registration as a fallback.
             release(for: key)
+            notifyUpdateToObservers()
             return makeState()
         }
 
@@ -510,6 +526,7 @@ private extension StoreContext {
 
             // Release the invalid registration as a fallback.
             release(for: key)
+            notifyUpdateToObservers()
             return nil
         }
 
