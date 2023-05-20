@@ -73,7 +73,6 @@ internal struct StoreContext {
 
         if let cache = lookupCache(of: atom, for: key) {
             update(atom: atom, for: key, value: value, cache: cache, order: .newValue)
-            checkRelease(for: key)
         }
     }
 
@@ -86,7 +85,6 @@ internal struct StoreContext {
             var value = cache.value
             body(&value)
             update(atom: atom, for: key, value: value, cache: cache, order: .newValue)
-            checkRelease(for: key)
         }
     }
 
@@ -133,8 +131,10 @@ internal struct StoreContext {
             let store = getStore()
             // Unsubscribe and release if it's no longer used.
             store.state.subscriptions[key]?.removeValue(forKey: container.key)
-            notifyUpdateToObservers()
-            checkRelease(for: key)
+
+            if !checkRelease(for: key) {
+                notifyUpdateToObservers()
+            }
         }
         let isInserted = store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key) == nil
 
@@ -178,7 +178,6 @@ internal struct StoreContext {
         if let cache = lookupCache(of: atom, for: key) {
             let newCache = makeNewCache(of: atom, for: key, override: override)
             update(atom: atom, for: key, value: newCache.value, cache: cache, order: .newValue)
-            checkRelease(for: key)
         }
     }
 
@@ -385,7 +384,8 @@ private extension StoreContext {
         notifyUpdateToObservers()
     }
 
-    func checkRelease(for key: AtomKey) {
+    @discardableResult
+    func checkRelease(for key: AtomKey) -> Bool {
         let store = getStore()
 
         // The condition under which an atom may be released are as follows:
@@ -398,10 +398,11 @@ private extension StoreContext {
         lazy var shouldRelease = !shouldKeepAlive && isChildrenEmpty && isSubscriptionEmpty
 
         guard shouldRelease else {
-            return
+            return false
         }
 
         release(for: key)
+        return true
     }
 
     func checkReleaseDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey) {

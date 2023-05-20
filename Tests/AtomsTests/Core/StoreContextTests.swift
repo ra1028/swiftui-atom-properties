@@ -594,28 +594,28 @@ final class StoreContextTests: XCTestCase {
         XCTContext.runActivity(named: "Normal atoms should be released.") { _ in
             let atom = TestAtom(value: 0)
             let key = AtomKey(atom)
-            let transaction = Transaction(key: key) {}
+            let container = SubscriptionContainer()
 
-            _ = context.watch(atom, in: transaction)
+            _ = context.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {}
             XCTAssertNotNil(store.state.caches[key])
 
-            context.reset(atom)
+            context.unwatch(atom, container: container.wrapper)
             XCTAssertNil(store.state.caches[key])
         }
 
         XCTContext.runActivity(named: "KeepAlive atoms should not be released.") { _ in
             let atom = KeepAliveAtom(value: 0)
             let key = AtomKey(atom)
-            let transaction = Transaction(key: key) {}
+            let container = SubscriptionContainer()
 
-            _ = context.watch(atom, in: transaction)
+            _ = context.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {}
             XCTAssertNotNil(store.state.caches[key])
 
-            context.reset(atom)
+            context.unwatch(atom, container: container.wrapper)
             XCTAssertNotNil(store.state.caches[key])
         }
 
-        XCTContext.runActivity(named: "Overridden KeepAlive atoms should not be released.") { _ in
+        XCTContext.runActivity(named: "Overridden KeepAlive atoms should be released.") { _ in
             let atom = KeepAliveAtom(value: 0)
             let token = ScopeKey.Token()
             let scopeKey = ScopeKey(token: token)
@@ -627,12 +627,12 @@ final class StoreContextTests: XCTestCase {
                     OverrideKey(atom): AtomOverride<KeepAliveAtom<Int>> { _ in 10 }
                 ]
             )
-            let transaction = Transaction(key: key) {}
+            let container = SubscriptionContainer()
 
-            _ = context.watch(atom, in: transaction)
+            _ = context.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {}
             XCTAssertNotNil(store.state.caches[key])
 
-            context.reset(atom)
+            context.unwatch(atom, container: container.wrapper)
             XCTAssertNil(store.state.caches[key])
         }
     }
@@ -774,37 +774,16 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
             [
-                // Unsubscribe
-                [
-                    AtomKey(atom0): AtomCache(atom: atom0, value: 0),
-                    AtomKey(atom1, overrideScopeKey: scope2Key): AtomCache(atom: atom1, value: 100),
-                    AtomKey(atom1): AtomCache(atom: atom1, value: 1),
-                    AtomKey(atom2): AtomCache(atom: atom2, value: 2),
-                ],
-                // Release
                 [
                     AtomKey(atom1, overrideScopeKey: scope2Key): AtomCache(atom: atom1, value: 100),
                     AtomKey(atom1): AtomCache(atom: atom1, value: 1),
                     AtomKey(atom2): AtomCache(atom: atom2, value: 2),
                 ],
-                // Unsubscribe
-                [
-                    AtomKey(atom1, overrideScopeKey: scope2Key): AtomCache(atom: atom1, value: 100),
-                    AtomKey(atom1): AtomCache(atom: atom1, value: 1),
-                    AtomKey(atom2): AtomCache(atom: atom2, value: 2),
-                ],
-                // Release
                 [
 
                     AtomKey(atom1): AtomCache(atom: atom1, value: 1),
                     AtomKey(atom2): AtomCache(atom: atom2, value: 2),
                 ],
-                // Unsubscribe
-                [
-                    AtomKey(atom1): AtomCache(atom: atom1, value: 1),
-                    AtomKey(atom2): AtomCache(atom: atom2, value: 2),
-                ],
-                // Release
                 [
 
                     AtomKey(atom1): AtomCache(atom: atom1, value: 1)
@@ -814,18 +793,11 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(
             scopedSnapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
             [
-                // Unsubscribe
-                [
-                    AtomKey(atom1, overrideScopeKey: scope2Key): AtomCache(atom: atom1, value: 100),
-                    AtomKey(atom1): AtomCache(atom: atom1, value: 1),
-                    AtomKey(atom2): AtomCache(atom: atom2, value: 2),
-                ],
-                // Release
                 [
 
                     AtomKey(atom1): AtomCache(atom: atom1, value: 1),
                     AtomKey(atom2): AtomCache(atom: atom2, value: 2),
-                ],
+                ]
             ]
         )
     }
