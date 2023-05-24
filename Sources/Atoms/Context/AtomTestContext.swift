@@ -42,10 +42,10 @@ public struct AtomTestContext: AtomWatchableContext {
     /// ```
     ///
     /// - Parameter interval: The maximum timeout interval that this function can wait until
-    ///                      the next update. The default timeout interval is `10`.
+    ///                      the next update. The default timeout interval is nil.
     /// - Returns: A boolean value indicating whether an update is done.
     @discardableResult
-    public func waitForUpdate(timeout interval: TimeInterval = 10) async -> Bool {
+    public func waitForUpdate(timeout interval: TimeInterval? = nil) async -> Bool {
         let updates = AsyncStream<Void> { continuation in
             let cancellable = state.notifier.sink(
                 receiveCompletion: { completion in
@@ -77,9 +77,11 @@ public struct AtomTestContext: AtomWatchableContext {
                 return true
             }
 
-            group.addTask {
-                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
-                return false
+            if let interval {
+                group.addTask {
+                    try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                    return false
+                }
             }
 
             let didUpdate = await group.next() ?? false
