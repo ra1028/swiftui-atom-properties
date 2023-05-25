@@ -110,7 +110,7 @@ final class PublisherAtomTests: XCTestCase {
             let phase = await refreshTask.value
 
             XCTAssertEqual(phase, .success(1))
-            XCTAssertEqual(updateCount, 1)
+            XCTAssertEqual(updateCount, 0)
         }
 
         do {

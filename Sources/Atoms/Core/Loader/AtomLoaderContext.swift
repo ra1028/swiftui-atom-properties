@@ -1,10 +1,10 @@
 /// The context structure that to interact with an atom store.
 @MainActor
 public struct AtomLoaderContext<Value, Coordinator> {
-    internal let _store: StoreContext
-    internal let _transaction: Transaction
-    internal let _coordinator: Coordinator
-    internal let _update: @MainActor (Value, UpdateOrder) -> Void
+    internal let store: StoreContext
+    internal let transaction: Transaction
+    internal let coordinator: Coordinator
+    internal let update: @MainActor (Value, UpdateOrder) -> Void
 
     internal init(
         store: StoreContext,
@@ -12,35 +12,35 @@ public struct AtomLoaderContext<Value, Coordinator> {
         coordinator: Coordinator,
         update: @escaping @MainActor (Value, UpdateOrder) -> Void
     ) {
-        _store = store
-        _transaction = transaction
-        _coordinator = coordinator
-        _update = update
+        self.store = store
+        self.transaction = transaction
+        self.coordinator = coordinator
+        self.update = update
     }
 
     internal var modifierContext: AtomModifierContext<Value> {
-        AtomModifierContext(transaction: _transaction) { value in
+        AtomModifierContext(transaction: transaction) { value in
             update(with: value)
         }
     }
 
     internal func update(with value: Value, order: UpdateOrder = .newValue) {
-        _update(value, order)
+        update(value, order)
     }
 
     internal func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        _transaction.addTermination(termination)
+        transaction.addTermination(termination)
     }
 
     internal func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) -> T) -> T {
-        let context = AtomTransactionContext(store: _store, transaction: _transaction, coordinator: _coordinator)
-        defer { _transaction.commit() }
+        let context = AtomTransactionContext(store: store, transaction: transaction, coordinator: coordinator)
+        defer { transaction.commit() }
         return body(context)
     }
 
     internal func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) async throws -> T) async rethrows -> T {
-        let context = AtomTransactionContext(store: _store, transaction: _transaction, coordinator: _coordinator)
-        defer { _transaction.commit() }
+        let context = AtomTransactionContext(store: store, transaction: transaction, coordinator: coordinator)
+        defer { transaction.commit() }
         return try await body(context)
     }
 }

@@ -161,13 +161,16 @@ internal struct StoreContext {
             value = await atom._loader.refresh(context: context)
         }
 
-        if let cache = lookupCache(of: atom, for: key) {
-            update(atom: atom, for: key, value: value, cache: cache, order: .newValue)
-        }
-        else {
+        guard let cache = lookupCache(of: atom, for: key) else {
             // Release the temporarily created state.
             // Do not notify update to observers here because refresh doesn't create a new cache.
             release(for: key)
+            return value
+        }
+
+        // Notify update unless it's cancelled or terminated by other operations.
+        if !Task.isCancelled && !context.transaction.isTerminated {
+            update(atom: atom, for: key, value: value, cache: cache, order: .newValue)
         }
 
         return value
