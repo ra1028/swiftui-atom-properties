@@ -39,7 +39,7 @@
 
 <p align="center">
 
-|Reactive Data Binding|Effective Caching|Compile Safe Dependency Injection|
+|Reactive Data Binding|Effective Caching|Compile Safe</br>Dependency Injection|
 |:------------------------|:----------------|:--------------------------------|
 |Pieces of app data that can be accessed from anywhere propagate changes reactively.|Cache data during in use and recompute only when truly needed.|Successful compilation guarantees that dependency injection is ready.|
 
