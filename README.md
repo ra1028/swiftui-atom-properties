@@ -1,5 +1,5 @@
-<h1 align="center">SwiftUI Atom Properties</h1>
-<p align="center">A reactive data-binding and dependency injection library</br>for SwiftUI x Concurrency</p>
+<h1 align="center">Atoms</h1>
+<p align="center">Atomic approach state management and dependency injection for SwiftUI</p>
 <p align="center"><a href="https://ra1028.github.io/swiftui-atom-properties/documentation/atoms">📔 API Reference</a></p>
 <p align="center">
   <a href="https://github.com/ra1028/swiftui-atom-properties/actions"><img alt="build" src="https://github.com/ra1028/swiftui-atom-properties/workflows/test/badge.svg"></a>
@@ -14,22 +14,19 @@
 - [Introduction](#introduction)
 - [Examples](#examples)
 - [Getting Started](#getting-started)
-  - [Installation](#installation)
-  - [Requirements](#requirements)
   - [Documentation](#documentation)
-  - [Basic Tutorial](#basic-tutorial)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+- [Basic Tutorial](#basic-tutorial)
 - [Guides](#guides)
   - [AtomRoot](#atomroot)
   - [Atoms](#atoms)
   - [Modifiers](#modifiers)
+  - [Attributes](#attributes)
   - [Property Wrappers](#property-wrappers)
   - [Context](#context)
-  - [KeepAlive](#keepalive)
-  - [Suspense](#suspense)
-  - [Override](#override)
-  - [Testing](#testing)
-  - [Debugging](#debugging)
-  - [Preview](#preview)
+  - [Views](#views)
+  - [Techniques](#techniques)
   - [Advanced Usage](#advanced-usage)
   - [Dealing with Known SwiftUI Bugs](#dealing-with-known-swiftui-bugs)
 - [Contributing](#contributing)
@@ -42,39 +39,20 @@
 
 <p align="center">
 
-|Reactive Data Binding|Effective Data Caching|Compile Safe<br>Dependency Injection|
+|Reactive Data Binding|Effective Caching|Compile Safe Dependency Injection|
 |:------------------------|:----------------|:--------------------------------|
-|Pieces of app data that can be accessed from anywhere propagate changes reactively.|Recompute atom data and views only when truly needed, otherwise, it caches data until no longer used.|Successful compilation guarantees that dependency injection is ready.|
+|Pieces of app data that can be accessed from anywhere propagate changes reactively.|Cache data during in use and recompute only when truly needed.|Successful compilation guarantees that dependency injection is ready.|
 
 </p>
 
-SwiftUI Atom Properties offers practical capabilities to manage the complexity of modern apps. It effectively integrates the solution for both data-binding and dependency injection while allowing us to rapidly building an application.
-
-### Motivation
-
-SwiftUI offers a simple and understandable data-binding solution with built-in property wrappers but is a little uneasy for building middle to large-scale production apps. As a typical example, view data can only be shared by pushing it up to a common ancestor.  
-EnvironmentObject was hoped to be a solution to the problem, but it ended up with let us create a huge state-holder object being provided from the root of an app, so pure SwiftUI needs state-drilling from the root to descendants in any way, which not only makes code-splitting difficult but also causes gradual performance degradation due to the huge view-tree computation as the app grow up.  
-
-This library solves these problems by defining application data as distributed pieces called atoms, allowing data to be shared throughout the app as the source of truth. That said, an atom itself doesn't have an internal state, but rather retrieves the associated state from the context in which they are used, and ensures that the app is testable.  
-It manages a directed graph of atoms and propagates data changes transitively from upstream to downstream, such that it updates only the views that truly need update while preventing expensive data recomputation, resulting in effortlessly high performance and efficient memory use.  
+Atoms offers a simple but practical capability to tackle the complexity of modern apps. It effectively integrates the solution for both state management and dependency injection while allowing us to rapidly build an robust and testable application.  
+Building state by compositing atoms automatically optimizes rendering based on its dependency graph. This solves the problem of performance degradation caused by extra re-render which occurs before you realize.  
 
 <img src="assets/diagram.png" width=700>
 
-This approach guarantees the following principles:
-
-- Reactively reflects data changes.
-- Boilerplate-free interface where shared data has the same simple interface as SwiftUI built-ins.
-- Compatible with any other libraries like [TCA](https://github.com/pointfreeco/swift-composable-architecture).
-- Accelerates code-splitting by distributed & incremental state definition.
-- Ensures testable with capabilities of dependency injection.
-- Provides simplified interfaces for asynchronous process.
-- Swift Concurrency based thread-safety.
-
 ### Quick Overview
 
-To get a feel for this library, let's first look at the state management for a tiny counter app.  
-
-The `CounterAtom` in the example below represents the shared data of a mutable count value.
+- Declare your primitive atoms.
 
 ```swift
 struct CounterAtom: StateAtom, Hashable {
@@ -84,7 +62,7 @@ struct CounterAtom: StateAtom, Hashable {
 }
 ```
 
-Bind the atom to the view using `@WatchState` property wrapper so that it can obtain the value and write new values.
+- Bind the atom to your views.
 
 ```swift
 struct CountStepper: View {
@@ -97,8 +75,7 @@ struct CountStepper: View {
 }
 ```
 
-`@Watch` property wrapper obtains the atom value read-only.  
-Now that the app can share the state among multiple views without passing it down through initializer.
+- Share state across views without passing a Binding.
 
 ```swift
 struct CounterView: View {
@@ -113,8 +90,6 @@ struct CounterView: View {
     }
 }
 ```
-
-If you like the principles, see the sample apps and the basic tutorial to learn more about this library.
 
 ---
 
@@ -136,12 +111,17 @@ If you like the principles, see the sample apps and the basic tutorial to learn 
 - [Time Travel](Examples/Packages/iOS/Sources/ExampleTimeTravel)  
 <sub>A simple demo that demonstrates how to do [time travel debugging](https://en.wikipedia.org/wiki/Time_travel_debugging) with this library.</sub>
 
-Each example has test target to show how to test your atoms with dependency injection as well.  
+Each example has a test target too to demonstrate how to test your atoms with dependency injection.  
 Open `Examples/App.xcodeproj` and play around with it!
 
 ---
 
 ## Getting Started
+
+### Documentation
+
+- [API Reference](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms)
+- [Example apps](Examples)
 
 ### Requirements
 
@@ -164,7 +144,7 @@ import Atoms
 
 #### [Xcode Package Dependency](https://developer.apple.com/documentation/xcode/adding_package_dependencies_to_your_app)
 
-From Xcode menu: `File` > `Swift Packages` > `Add Package Dependency`
+From Xcode menu: `File` > `Swift Packages...`
 
 ```text
 https://github.com/ra1028/swiftui-atom-properties
@@ -186,20 +166,11 @@ And then, include "Atoms" as a dependency for your target:
 ]),
 ```
 
-### Documentation
-
-- [API Reference](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms)
-- [Example apps](Examples)
-
 ---
 
-### Basic Tutorial
+## Basic Tutorial
 
-In this tutorial, we are going to create a simple todo app as an example. This app will support:
-
-- Create todo items
-- Edit todo items
-- Filter todo items
+In this tutorial, we are going to create a simple todo app as an example. This app will support to create/edit/filter todo items.  
 
 Every view that uses atom must have an `AtomRoot` somewhere in the ancestor. In SwiftUI lifecycle apps, it's recommended to put it right under `WindowGroup`.
 
@@ -216,7 +187,7 @@ struct TodoApp: App {
 }
 ```
 
-First, define a todo structure and an enum to filter todo list, and declare state with `StateAtom` that represents a mutable value.
+First, define a todo entity and an enum that represents filtering methods, and declare an atom with `StateAtom` that represents a mutable state.
 
 ```swift
 struct Todo {
@@ -244,7 +215,7 @@ struct FilterAtom: StateAtom, Hashable {
 
 The `FilteredTodosAtom` below represents the derived data that combines the above two atoms. You can think of derived data as the output of passing values to a pure function that derives a new value from the depending values.  
 
-When dependent data changes, the derived data reactively updates, and the output value is cached until it truly needs to be updated, so don't need to worry about low performance due to the filter function being called each time the view recomputes.
+When dependent data changes, the derived data reactively updates, and the output value is cached until it truly needs to be updated, so you don't need to worry about low performance due to the filter function being called each time the view recomputes.
 
 ```swift
 struct FilteredTodosAtom: ValueAtom, Hashable {
@@ -261,7 +232,7 @@ struct FilteredTodosAtom: ValueAtom, Hashable {
 }
 ```
 
-To create a new todo item, you need to access to a writable value that update the value of `TodosAtom` we defined previously. We can use `@WatchState` property wrapper to obtain a read-write access to it.
+To create a new todo item, you need to access to a writable value that update the value of `TodosAtom` you defined previously.  
 
 ```swift
 struct TodoCreator: View {
@@ -305,7 +276,7 @@ struct TodoFilters: View {
 }
 ```
 
-Next, create a view to display and edit individual todo items.
+Next, create a view to display a todo item. It also supports editing the item.
 
 ```swift
 struct TodoItem: View {
@@ -343,8 +314,7 @@ struct TodoItem: View {
 }
 ```
 
-Use `@Watch` to obtain the value of `FilteredTodosAtom` read-only. It updates to any of the dependent atoms are propagated to this view, and it re-render the todo list.  
-Finally, assemble the views we've created so far and complete.
+Finally, assemble the views you've created so far and complete.
 
 ```swift
 struct TodoList: View {
@@ -364,7 +334,7 @@ struct TodoList: View {
 }
 ```
 
-That is the basics for building apps using SwiftUI Atom Properties, but even asynchronous processes and more complex state management can be settled according to the same steps.  
+That is the basics for building apps using Atoms, but even asynchronous processes and more complex state management can be settled according to the same steps.  
 See [Guides](#guides) section for more detail. Also, the [Examples](Examples) directory has several projects to explore concrete usage.
 
 ---
@@ -378,8 +348,7 @@ To look into the APIs in more detail, visit the [API referrence](https://ra1028.
 
 ### [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot)
 
-Provides a store object which manages the state of atoms to view-tree through environment values.  
-It must be the root of any views to manage atoms used throughout the application.
+This view allows descendant views to use atoms. It must be the root of any views throughout the application.
 
 ```swift
 @main
@@ -421,7 +390,13 @@ In order to provide the best interface and effective data-binding for the type o
 
 #### [ValueAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/valueatom)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|           |Description|
+|:----------|:----------|
+|Summary    |Provides a read-only value.|
+|Output     |`T`|
+|Use Case   |Computed property, Derived data, Dependency injection|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct LocaleAtom: ValueAtom, Hashable {
@@ -442,15 +417,15 @@ struct LocaleView: View {
 
 </details>
 
-|           |Description|
-|:----------|:----------|
-|Summary    |Provides a read-only value.|
-|Output     |`T`|
-|Use Case   |Computed property, Derived data, Dependency injection|
-
 #### [StateAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/stateatom)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|           |Description|
+|:----------|:----------|
+|Summary    |Provides a read-write data.|
+|Output     |`T`|
+|Use Case   |Mutable data, Derived data|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct CounterAtom: StateAtom, Hashable {
@@ -471,15 +446,15 @@ struct CounterView: View {
 
 </details>
 
-|           |Description|
-|:----------|:----------|
-|Summary    |Provides a read-write data.|
-|Output     |`T`|
-|Use Case   |Mutable data, Derived data|
-
 #### [TaskAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/taskatom)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|           |Description|
+|:----------|:----------|
+|Summary    |Initiates a non-throwing `Task` from the given `async` function.|
+|Output     |`Task<T, Never>`|
+|Use Case   |Non-throwing asynchronous operation e.g. Expensive calculation|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct FetchUserAtom: TaskAtom, Hashable {
@@ -502,15 +477,15 @@ struct UserView: View {
 
 </details>
 
-|           |Description|
-|:----------|:----------|
-|Summary    |Initiates a non-throwing `Task` from the given `async` function.|
-|Output     |`Task<T, Never>`|
-|Use Case   |Non-throwing asynchronous operation e.g. Expensive calculation|
-
 #### [ThrowingTaskAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/throwingtaskatom)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|           |Description|
+|:----------|:----------|
+|Summary    |Initiates a throwing `Task` from the given `async throws` function.|
+|Output     |`Task<T, Error>`|
+|Use Case   |Throwing asynchronous operation e.g. API call|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct FetchMoviesAtom: ThrowingTaskAtom, Hashable {
@@ -539,15 +514,15 @@ struct MoviesView: View {
 
 </details>
 
-|           |Description|
-|:----------|:----------|
-|Summary    |Initiates a throwing `Task` from the given `async throws` function.|
-|Output     |`Task<T, Error>`|
-|Use Case   |Throwing asynchronous operation e.g. API call|
-
 #### [AsyncSequenceAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/asyncsequenceatom)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|           |Description|
+|:----------|:----------|
+|Summary    |Provides a `AsyncPhase` value that represents asynchronous, sequential elements of the given `AsyncSequence`.|
+|Output     |`AsyncPhase<T, Error>`|
+|Use Case   |Handle multiple asynchronous values e.g. web-sockets|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct NotificationAtom: AsyncSequenceAtom, Hashable {
@@ -576,15 +551,15 @@ struct NotificationView: View {
 
 </details>
 
-|           |Description|
-|:----------|:----------|
-|Summary    |Provides a `AsyncPhase` value that represents asynchronous, sequential elements of the given `AsyncSequence`.|
-|Output     |`AsyncPhase<T, Error>`|
-|Use Case   |Handle multiple asynchronous values e.g. web-sockets|
-
 #### [PublisherAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/publisheratom)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|             |Description|
+|:------------|:----------|
+|Summary      |Provides a `AsyncPhase` value that represents sequence of values of the given `Publisher`.|
+|Output       |`AsyncPhase<T, E: Error>`|
+|Use Case     |Handle single or multiple asynchronous value(s) e.g. API call|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct TimerAtom: PublisherAtom, Hashable {
@@ -609,15 +584,15 @@ struct TimerView: View {
 
 </details>
 
-|             |Description|
-|:------------|:----------|
-|Summary      |Provides a `AsyncPhase` value that represents sequence of values of the given `Publisher`.|
-|Output       |`AsyncPhase<T, E: Error>`|
-|Use Case     |Handle single or multiple asynchronous value(s) e.g. API call|
-
 #### [ObservableObjectAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/observableobjectatom)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|           |Description|
+|:----------|:----------|
+|Summary    |Instantiates an observable object.|
+|Output     |`T: ObservableObject`|
+|Use Case   |Mutable complex state object|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 class Contact: ObservableObject {
@@ -653,12 +628,6 @@ struct ContactView: View {
 
 </details>
 
-|           |Description|
-|:----------|:----------|
-|Summary    |Instantiates an observable object.|
-|Output     |`T: ObservableObject`|
-|Use Case   |Mutable complex state object|
-
 ---
 
 ### Modifiers
@@ -667,7 +636,14 @@ Modifiers can be applied to an atom to produce a different versions of the origi
 
 #### [select](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/select(_:))
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|               |Description|
+|:--------------|:----------|
+|Summary        |Selects a partial property with the specified key path from the original atom. The selected property doesn't notify updates if the new value is equivalent to the old value.|
+|Output         |`T: Equatable`|
+|Compatible     |All atoms types. The selected property must be `Equatable` compliant.|
+|Use Case       |Performance optimization, Property scope restriction|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct CountAtom: StateAtom, Hashable {
@@ -688,16 +664,16 @@ struct CountDisplayView: View {
 
 </details>
 
-|               |Description|
-|:--------------|:----------|
-|Summary        |Selects a partial property with the specified key path from the original atom. The selected property doesn't notify updates if the new value is equivalent to the old value.|
-|Output         |`T: Equatable`|
-|Compatible     |All atoms types. The selected property must be `Equatable` compliant.|
-|Use Case       |Performance optimization, Property scope restriction|
-
 #### [changes](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/changes)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|               |Description|
+|:--------------|:----------|
+|Summary        |Prevents the atom from updating its child views or atoms when its new value is the same as its old value.|
+|Output         |`T: Equatable`|
+|Compatible     |All atom types that produce `Equatable` compliant value.|
+|Use Case       |Performance optimization|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct CountAtom: StateAtom, Hashable {
@@ -718,16 +694,16 @@ struct CountDisplayView: View {
 
 </details>
 
-|               |Description|
-|:--------------|:----------|
-|Summary        |Prevents the atom from updating its child views or atoms when its new value is the same as its old value.|
-|Output         |`T: Equatable`|
-|Compatible     |All atom types that produce `Equatable` compliant value.|
-|Use Case       |Performance optimization|
-
 #### [phase](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/phase)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|               |Description|
+|:--------------|:----------|
+|Summary        |Converts the `Task` that the original atom provides into `AsyncPhase`.|
+|Output         |`AsyncPhase<T, E: Error>`|
+|Compatible     |`TaskAtom`, `ThrowingTaskAtom`|
+|Use Case       |Consume asynchronous result as `AsyncPhase`|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct FetchWeatherAtom: ThrowingTaskAtom, Hashable {
@@ -757,12 +733,29 @@ struct WeatherReportView: View {
 
 </details>
 
-|               |Description|
-|:--------------|:----------|
-|Summary        |Converts the `Task` that the original atom provides into `AsyncPhase`.|
-|Output         |`AsyncPhase<T, E: Error>`|
-|Compatible     |`TaskAtom`, `ThrowingTaskAtom`|
-|Use Case       |Consume asynchronous result as `AsyncPhase`|
+---
+
+### Attributes
+
+The attributes allow control over how the atoms essentially work, for example, cache control of the state.
+
+#### [KeepAlive](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/keepalive)
+
+`KeepAlive` allows the atom to preserve its data even if it's no longer watched to from anywhere.  
+
+<details><summary><code>📖 Expand to see example</code></summary>
+
+In the example case below, once master data is obtained from the server, it can be cached in memory until the app process terminates.
+
+```swift
+struct FetchMasterDataAtom: ThrowingTaskAtom, KeepAlive, Hashable {
+    func value(context: Context) async throws -> MasterData {
+        try await fetchMasterData()
+    }
+}
+```
+
+</details>
 
 ---
 
@@ -773,7 +766,12 @@ By retrieving the atom through these property wrappers, the internal system mark
 
 #### [@Watch](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/watch)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|               |Description|
+|:--------------|:----------|
+|Summary        |This property wrapper is similar to `@State` or `@Environment`, but is always read-only. It recomputes the view with value changes.|
+|Compatible     |All atom types|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct UserNameAtom: StateAtom, Hashable {
@@ -794,14 +792,14 @@ struct UserNameDisplayView: View {
 
 </details>
 
-|               |Description|
-|:--------------|:----------|
-|Summary        |This property wrapper is similar to `@State` or `@Environment`, but is always read-only. It recomputes the view with value changes.|
-|Compatible     |All atom types|
-
 #### [@WatchState](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/watchstate)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|               |Description|
+|:--------------|:----------|
+|Summary        |This property wrapper is read-write as the same interface as `@State`. It recomputes the view with data changes. You can get a `Binding` to the value using `$` prefix.|
+|Compatible     |`StateAtom`|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct UserNameAtom: StateAtom, Hashable {
@@ -827,14 +825,14 @@ struct UserNameInputView: View {
 
 </details>
 
-|               |Description|
-|:--------------|:----------|
-|Summary        |This property wrapper is read-write as the same interface as `@State`. It recomputes the view with data changes. You can get a `Binding` to the value using `$` prefix.|
-|Compatible     |`StateAtom`|
-
 #### [@WatchStateObject](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/watchstateobject)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+|               |Description|
+|:--------------|:----------|
+|Summary        |This property wrapper has the same interface as `@StateObject` and `@ObservedObject`. It recomputes the view when the observable object updates. You can get a `Binding` to one of the observable object's properties using `$` prefix.|
+|Compatible     |`ObservableObjectAtom`|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 class Counter: ObservableObject {
@@ -869,14 +867,26 @@ struct CounterView: View {
 
 </details>
 
-|               |Description|
-|:--------------|:----------|
-|Summary        |This property wrapper has the same interface as `@StateObject` and `@ObservedObject`. It recomputes the view when the observable object updates. You can get a `Binding` to one of the observable object's properties using `$` prefix.|
-|Compatible     |`ObservableObjectAtom`|
-
 #### [@ViewContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/viewcontext)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+Unlike the property wrappers described the above, this property wrapper is not intended to bind single atom. It provides an `AtomViewContext` to the view, allowing for more functional control of atoms.  
+For instance, the following controls can only be done through the context.  
+
+- `refresh(_:)` operator that to reset an asynchronous atom value and wait for its completion.
+
+```swift
+await context.refresh(FetchMoviesAtom())
+```
+
+- `reset(_:)` operator that to clear the current atom value.
+
+```swift
+context.reset(CounterAtom())
+```
+
+The context also provides a flexible solution for passing dynamic parameters to atom's initializer. See [Context](#context) section for more detail.
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct FetchBookAtom: ThrowingTaskAtom, Hashable {
@@ -907,23 +917,6 @@ struct BookView: View {
 
 </details>
 
-Unlike the property wrappers described the above, this property wrapper is not intended to bind single atom. It provides an `AtomViewContext` to the view, allowing for more functional control of atoms.  
-For instance, the following controls can only be done through the context.  
-
-- `refresh(_:)` operator that to reset an asynchronous atom value and wait for its completion.
-
-```swift
-await context.refresh(FetchMoviesAtom())
-```
-
-- `reset(_:)` operator that to clear the current atom value.
-
-```swift
-context.reset(CounterAtom())
-```
-
-The context also provides a flexible solution for passing dynamic parameters to atom's initializer. See [Context](#context) section for more detail.
-
 ---
 
 ### Context
@@ -946,7 +939,13 @@ The APIs described in each section below are their own specific functionality de
 
 #### [AtomViewContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext)
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+A context available through the `@ViewContext` property wrapper when using atoms from a view.
+
+|API|Use|
+|:--|:--|
+|[snapshot()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/snapshot())|For debugging, takes a snapshot that captures specific set of values of atoms.|
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct SearchQueryAtom: StateAtom, Hashable {
@@ -1018,15 +1017,16 @@ struct BooksView: View {
 
 </details>
 
-A context available through the `@ViewContext` property wrapper when using atoms from a view.
+#### [AtomTransactionContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext)
+
+A context passed as a parameter to the primary function of each atom type.  
+This context type has a `coordinator` property that preserves an instance from the time an atom is used and initialized until it is unused and cleaned up, so it can be used to cache values or as a lifecycle for an atom.  
 
 |API|Use|
 |:--|:--|
-|[snapshot()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/snapshot())|For debugging, takes a snapshot that captures specific set of values of atoms.|
+|[coordinator](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext/coordinator)|The atom’s associated coordinator that preservess a state until the atom will no longer be used.|
 
-#### [AtomTransactionContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext)
-
-<details><summary><code>📖 Click to expand example code</code></summary>
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct LocationManagerAtom: ValueAtom, Hashable {
@@ -1053,16 +1053,18 @@ struct CoordinateAtom: ValueAtom, Hashable {
 
 </details>
 
-A context passed as a parameter to the primary function of each atom type.  
-This context type has a `coordinator` property that preserves an instance from the time an atom is used and initialized until it is unused and cleaned up, so it can be used to cache values or as a lifecycle for an atom.  
+#### [AtomTestContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext)
+
+A context that can simulate any scenarios in which atoms are used from a view or another atom and provides a comprehensive means of testing.
 
 |API|Use|
 |:--|:--|
-|[coordinator](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext/coordinator)|The atom’s associated coordinator that preservess a state until the atom will no longer be used.|
+|[unwatch(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/unwatch(_:))|Simulates a scenario in which the atom is no longer watched.|
+|[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-1ce4h)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
+|[waitForUpdate(timeout:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/waitforupdate(timeout:))|Waits until any of atoms watched through this context is updated.|
+|[onUpdate](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/onupdate)|Sets a closure that notifies there has been an update to one of the atoms.|
 
-#### [AtomTestContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext)
-
-<details><summary><code>📖 Click to expand example code</code></summary>
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 protocol APIClientProtocol {
@@ -1103,33 +1105,27 @@ class FetchMusicsTests: XCTestCase {
 
 </details>
 
-A context that can simulate any scenarios in which atoms are used from a view or another atom and provides a comprehensive means of testing.
-
-|API|Use|
-|:--|:--|
-|[unwatch(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/unwatch(_:))|Simulates a scenario in which the atom is no longer watched.|
-|[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-1ce4h)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
-|[waitForUpdate(timeout:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/waitforupdate(timeout:))|Waits until any of atoms watched through this context is updated.|
-|[onUpdate](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/onupdate)|Sets a closure that notifies there has been an update to one of the atoms.|
-
 ---
 
-### [KeepAlive](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/keepalive)
+### Views
 
-`KeepAlive` allows the atom to preserve its data even if it's no longer watched to from anywhere.  
-In the example case below, once master data is obtained from the server, it can be cached in memory until the app process terminates.
+#### [AtomScope](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomscope)
+
+`AtomScope` allows you to monitor changes or override atoms used in descendant views. Unlike `AtomRoot`, they affect only those in scope.  
+See the [Override](#override) and [Debugging](#debugging) sections for specific uses.  
 
 ```swift
-struct FetchMasterDataAtom: ThrowingTaskAtom, KeepAlive, Hashable {
-    func value(context: Context) async throws -> MasterData {
-        try await fetchMasterData()
+AtomScope {
+    CounterView()
+}
+.observe { snapshot in
+    if let count = snapshot.lookup(CounterAtom()) {
+        print(count)
     }
 }
 ```
 
----
-
-### [Suspense](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/suspense)
+#### [Suspense](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/suspense)
 
 `Suspense` awaits the resulting value of the given `Task` and displays the content depending on its phase.  
 Optionally, you can pass `suspending` content to be displayed until the task completes, and pass `catch` content to be displayed if the task fails.  
@@ -1153,10 +1149,12 @@ struct NewsView: View {
 
 ---
 
-### Override
+### Techniques
+
+#### Override
 
 Values and states defined by atoms can be overridden in root or in any scope.  
-If you override an atom in [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot), it will override the values throughout the app, which is useful for dependency injection. In case you want to override an atom only in a limited scope, you might like to use [AtomScope](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomscope) instead to override as it substitutes the atom value only in that scope, which can be useful for injecting dependencies that are needed only for the scope or overriding state in certain views.
+If you override an atom in [AtomRoot](#atomroot), it will override the values throughout the app, which is useful for dependency injection. In case you want to override an atom only in a limited scope, you might like to use [AtomScope](#atomscope) instead to override as it substitutes the atom value only in that scope, which can be useful for injecting dependencies that are needed only for the scope or overriding state in certain views.
 
 ```swift
 AtomRoot {
@@ -1180,9 +1178,7 @@ AtomRoot {
 
 See [Testing](#testing) section for details on dependency injection on unit tests.
 
----
-
-### Testing
+#### Testing
 
 This library naturally integrates dependency injection and data-binding to provide a comprehensive means of testing. It allows you to test per small atom such that you can keep writing simple test cases per smallest unit of state without compose all states into a huge object and supposing complex integration test scenarios.  
 In order to fully test your app, this library guarantees the following principles:
@@ -1269,9 +1265,7 @@ class FetchBookTests: XCTestCase {
 }
 ```
 
----
-
-### Debugging
+#### Debugging
 
 This library defines a Directed Acyclic Graph (DAG) internally to centrally manage atom states, making it easy to analyze its dependencies and where they are (or are not) being used.  
 There are the following two ways to get a [Snapshot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/snapshot) of the dependency graph at a given point in time.  
@@ -1290,7 +1284,7 @@ var debugButton: some View {
 }
 ```
 
-Or, you can observe all updates of atoms and always continue to receive `Snapshots` at that point in time through `observe(_:)` modifier of [AtomRoot](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomroot) or [AtomScope](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomscope).  
+Or, you can observe all updates of atoms and always continue to receive `Snapshots` at that point in time through `observe(_:)` modifier of [AtomRoot](#atomroot) or [AtomScope](#atomscope).  
 Note that observing in `AtomRoot` will receive all atom updates that happened in the whole app, but observing in `AtomScope` will only receive atoms used in the descendant views.  
 
 ```swift
@@ -1346,9 +1340,7 @@ digraph {
 }
 ```
 
----
-
-### Preview
+#### Preview
 
 Even in SwiftUI previews, the view must have an `AtomRoot` somewhere in the ancestor. However, since This library offers the new solution for dependency injection, you don't need to do painful DI each time you create previews anymore. You can to override the atoms that you really want to inject substitutions.
 
@@ -1371,7 +1363,9 @@ struct NewsList_Preview: PreviewProvider {
 
 #### Use atoms without watching
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+The `read(_:)` function is a way to get the data of an atom without having watch to and receiving future updates of it. It's commonly used inside functions triggered by call-to-actions.
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct TextAtom: StateAtom, Hashable {
@@ -1394,11 +1388,11 @@ struct TextCopyView: View {
 
 </details>
 
-The `read(_:)` function is a way to get the data of an atom without having watch to and receiving future updates of it. It's commonly used inside functions triggered by call-to-actions.
-
 #### Dynamically initiate atom families
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+Each atom must have a unique `key` to be uniquely associated with its value. As described in the [Atoms](#atoms) section, it is automatically synthesized by conforming to `Hashable`, but with explicitly specifying a `key` allowing you to pass arbitrary external parameters to the atom. It is commonly used, for example, to retrieve user information associated with a dynamically specified ID from a server.
+
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct FetchUserAtom: ThrowingTaskAtom {
@@ -1436,11 +1430,11 @@ struct UserView: View {
 
 </details>
 
-Each atom must have a unique `key` to be uniquely associated with its value. As described in the [Atoms](#atoms) section, it is automatically synthesized by conforming to `Hashable`, but with explicitly specifying a `key` allowing you to pass arbitrary external parameters to the atom. It is commonly used, for example, to retrieve user information associated with a dynamically specified ID from a server.
+#### Use atoms inside objects
 
-#### Use atoms from objects
+You can pass a context to your object and interact with other atoms at any asynchronous timing. However, in that case, when the `watch` is called, it end up with the object instance itself will be re-created with fresh data. Therefore, you can explicitly prevent the use of the `watch` by passing it as `AtomContext` type.
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct MessageLoaderAtom: ObservableObjectAtom, Hashable {
@@ -1483,11 +1477,12 @@ class MessageLoader: ObservableObject {
 
 </details>
 
-You can pass a context to your object and interact with other atoms at any asynchronous timing. However, in that case, when the `watch` is called, it end up with the object instance itself will be re-created with fresh data. Therefore, you can explicitly prevent the use of the `watch` by passing it as `AtomContext` type.
+#### Side effects
 
-#### Manage side-effects
+All atom types can optionally implement [`updated(newValue:oldValue:context:)`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/updated(newvalue:oldvalue:context:)-7kvo0) method to manage arbitrary side-effects of value updates, such as state persistence, state synchronization, logging, and etc.  
+In the above example, the initial state of the atom is retrieved from UserDefaults, and when the user updates the state, the value is reflected into UserDefaults as a side effect.
 
-<details><summary><code>📖 Click to expand example code</code></summary>
+<details><summary><code>📖 Expand to see example</code></summary>
 
 ```swift
 struct PersistentCounterAtom: StateAtom, Hashable {
@@ -1505,14 +1500,14 @@ struct PersistentCounterAtom: StateAtom, Hashable {
 
 </details>
 
-All atom types can optionally implement [`updated(newValue:oldValue:context:`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/updated(newvalue:oldvalue:context:)-7kvo0) method to manage arbitrary side-effects of value updates, such as state persistence, state synchronization, logging, and etc.  
-In the above example, the initial state of the atom is retrieved from UserDefaults, and when the user updates the state, the value is reflected into UserDefaults as a side effect.
-
 ---
 
 ### Dealing with Known SwiftUI Bugs
 
 #### Modal presentation causes assertionFailure when dismissing it (Fixed in iOS15)
+
+Unfortunately, SwiftUI has a bug in iOS14 or lower where the `EnvironmentValue` is removed from a screen presented with `.sheet` just before dismissing it. Since this library is designed based on `EnvironmentValue`, this bug end up triggering the friendly `assertionFailure` that is added so that developers can easily aware of forgotten `AtomRoot` implementation.  
+As a workaround, `AtomScope` has the ability to explicitly inherit the store through `AtomViewContext` from the parent view.
 
 <details><summary><code>💡 Click to expand workaround</code></summary>
 
@@ -1539,10 +1534,13 @@ struct RootView: View {
 
 </details>
 
-Unfortunately, SwiftUI has a bug in iOS14 or lower where the `EnvironmentValue` is removed from a screen presented with `.sheet` just before dismissing it. Since this library is designed based on `EnvironmentValue`, this bug end up triggering the friendly `assertionFailure` that is added so that developers can easily aware of forgotten `AtomRoot` implementation.  
-As a workaround, `AtomScope` has the ability to explicitly inherit the store through `AtomViewContext` from the parent view.
-
 #### Some SwiftUI modifiers cause memory leak (Fixed in iOS16)
+
+In iOS 15 or lower, some modifiers in SwiftUI seem to cause an internal memory leak if it captures `self` implicitly or explicitly. To avoid that bug, make sure that `self` is not captured when using those modifiers.  
+Below are the list of modifiers I found that cause memory leaks:
+
+- [`refreshable(action:)`](https://developer.apple.com/documentation/SwiftUI/View/refreshable(action:))
+- [`onSubmit(of:_:)`](https://developer.apple.com/documentation/swiftui/view/onsubmit(of:_:))
 
 <details><summary><code>💡 Click to expand workaround</code></summary>
 
@@ -1569,12 +1567,6 @@ var isShowingSearchScreen = false
 ```
 
 </details>
-
-In iOS 15 or lower, some modifiers in SwiftUI seem to cause an internal memory leak if it captures `self` implicitly or explicitly. To avoid that bug, make sure that `self` is not captured when using those modifiers.  
-Below are the list of modifiers I found that cause memory leaks:
-
-- [`refreshable(action:)`](https://developer.apple.com/documentation/SwiftUI/View/refreshable(action:))
-- [`onSubmit(of:_:)`](https://developer.apple.com/documentation/swiftui/view/onsubmit(of:_:))
 
 ---
 

@@ -6,7 +6,7 @@ import SwiftUI
 ///
 /// ```swift
 /// AtomScope {
-///     MyView()
+///     CounterView()
 /// }
 /// .observe { snapshot in
 ///     if let count = snapshot.lookup(CounterAtom()) {
