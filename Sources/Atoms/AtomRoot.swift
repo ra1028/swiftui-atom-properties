@@ -44,16 +44,19 @@ import SwiftUI
 ///
 public struct AtomRoot<Content: View>: View {
     @StateObject
-    private var state = State()
+    private var state: State
     private var overrides = [OverrideKey: any AtomOverrideProtocol]()
     private var observers = [Observer]()
     private let content: Content
 
-    /// Creates an atom root with the specified content that will be allowed to use atoms.
+    /// Creates an atom root with the specified store and content that will be allowed to use atoms.
+    ///
+    /// - Parameter store: The atom store.
     ///
     /// - Parameter content: The content that uses atoms.
-    public init(@ViewBuilder content: () -> Content) {
+    public init(store: AtomStore = AtomStore(), @ViewBuilder content: () -> Content) {
         self.content = content()
+        _state = StateObject(wrappedValue: State(store: store))
     }
 
     /// The content and behavior of the view.
@@ -114,8 +117,12 @@ public struct AtomRoot<Content: View>: View {
 private extension AtomRoot {
     @MainActor
     final class State: ObservableObject {
-        let store = AtomStore()
+        let store: AtomStore
         let token = ScopeKey.Token()
+        
+        init(store: AtomStore = AtomStore()) {
+            self.store = store
+        }
     }
 
     func `mutating`(_ mutation: (inout Self) -> Void) -> Self {
