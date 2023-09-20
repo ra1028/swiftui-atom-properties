@@ -19,6 +19,8 @@ docs:
 	$(PACKAGE) \
 	  --allow-writing-to-directory docs \
 	  generate-documentation \
+	  --include-extended-types \
+	  --experimental-skip-synthesized-symbols \
 	  --product Atoms \
 	  --disable-indexing \
 	  --transform-for-static-hosting \
@@ -30,4 +32,6 @@ docs-preview:
 	$(PACKAGE) \
 	  --disable-sandbox \
 	  preview-documentation \
+	  --include-extended-types \
+	  --experimental-skip-synthesized-symbols \
 	  --product Atoms
