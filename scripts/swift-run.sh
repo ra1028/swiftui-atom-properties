@@ -29,7 +29,7 @@ if [[ ! -f $BIN || $checksum != $(cat $CHECKSUM_FILE 2>/dev/null) ]]; then
 
     if [[ -e ${SWIFT_PACKAGE_RESOURCES:-} ]]; then
         echo "Copying $SWIFT_PACKAGE_RESOURCES..."
-        cp -R $SWIFT_PACKAGE_RESOURCES $BIN_DIR
+        cp -Rf $SWIFT_PACKAGE_RESOURCES $BIN_DIR
     fi
 
     echo "$checksum" >"$CHECKSUM_FILE"
