@@ -3,7 +3,7 @@
 set -eu
 
 function swift_build() {
-    SWIFTUI_ATOM_PROPERTIES_DEVELOPMENT=1 swift build -c release --only-use-versions-from-resolved-file $@
+    SWIFTUI_ATOM_PROPERTIES_DEVELOPMENT=1 swift build -c release $@
 }
 
 PACKAGE=$1
