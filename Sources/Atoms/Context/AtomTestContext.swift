@@ -23,8 +23,8 @@ public struct AtomTestContext: AtomWatchableContext {
         nonmutating set { state.onUpdate = newValue }
     }
 
-    /// Waits until any of atoms watched through this context is updated for up to
-    /// the specified timeout, and then return a boolean value indicating whether an update is done.
+    /// Waits until any of the atoms watched through this context have been updated for up to the
+    /// specified timeout, and then returns a boolean value indicating whether an update is done.
     ///
     /// ```swift
     /// func testAsyncUpdate() async {
@@ -41,45 +41,86 @@ public struct AtomTestContext: AtomWatchableContext {
     /// }
     /// ```
     ///
-    /// - Parameter interval: The maximum timeout interval that this function can wait until
-    ///                      the next update. The default timeout interval is nil.
+    /// - Parameter duration: The maximum duration that this function can wait until
+    ///                       the next update. The default timeout interval is nil.
     /// - Returns: A boolean value indicating whether an update is done.
     @discardableResult
-    public func waitForUpdate(timeout interval: TimeInterval? = nil) async -> Bool {
-        let updates = AsyncStream<Void> { continuation in
-            let cancellable = state.notifier.sink(
-                receiveCompletion: { completion in
-                    continuation.finish()
-                },
-                receiveValue: {
-                    continuation.yield()
-                }
-            )
+    public func waitForUpdate(timeout duration: TimeInterval? = nil) async -> Bool {
+        await withTaskGroup(of: Bool.self) { group in
+            let updates = state.makeUpdateStream()
 
-            continuation.onTermination = { termination in
-                switch termination {
-                case .cancelled:
-                    cancellable.cancel()
-
-                case .finished:
-                    break
-
-                @unknown default:
-                    break
-                }
-            }
-        }
-
-        return await withTaskGroup(of: Bool.self) { group in
-            group.addTask {
+            group.addTask { @MainActor in
                 var iterator = updates.makeAsyncIterator()
                 await iterator.next()
                 return true
             }
 
-            if let interval {
+            if let duration {
                 group.addTask {
-                    try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                    try? await Task.sleep(seconds: duration)
+                    return false
+                }
+            }
+
+            let didUpdate = await group.next() ?? false
+            group.cancelAll()
+
+            return didUpdate
+        }
+    }
+
+    /// Waits until the given predicate returns true when any of the atoms watched through
+    /// this context have been updated for up to the specified timeout, and then returns
+    /// a boolean value indicating whether an update is done.
+    ///
+    /// ```swift
+    /// func testAsyncUpdate() async {
+    ///     let context = AtomTestContext()
+    ///
+    ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
+    ///     XCTAssertEqual(initialPhase, .suspending)
+    ///
+    ///     let didUpdate = await context.wait {
+    ///         context.read(AsyncCalculationAtom().phase).isSuccess
+    ///     }
+    ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
+    ///
+    ///     XCTAssertTure(didUpdate)
+    ///     XCTAssertEqual(currentPhase, .success(123))
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - duration: The maximum duration that this function can wait until
+    ///               the next update. The default timeout interval is nil.
+    ///   - predicate: A predicate that determines when to stop waiting.
+    ///
+    /// - Returns: A boolean value indicating whether an update is done.
+    @discardableResult
+    public func wait(
+        timeout duration: TimeInterval? = nil,
+        until predicate: @MainActor @escaping () -> Bool
+    ) async -> Bool {
+        await withTaskGroup(of: Bool.self) { group in
+            let updates = state.makeUpdateStream()
+
+            group.addTask { @MainActor in
+                guard !predicate() else {
+                    return false
+                }
+
+                for await _ in updates {
+                    if predicate() {
+                        return true
+                    }
+                }
+
+                return false
+            }
+
+            if let duration {
+                group.addTask {
+                    try? await Task.sleep(seconds: duration)
                     return false
                 }
             }
@@ -261,9 +302,36 @@ private extension AtomTestContext {
         let store = AtomStore()
         let token = ScopeKey.Token()
         let container = SubscriptionContainer()
-        let notifier = PassthroughSubject<Void, Never>()
         var overrides = [OverrideKey: any AtomOverrideProtocol]()
         var onUpdate: (() -> Void)?
+
+        private let notifier = PassthroughSubject<Void, Never>()
+
+        func makeUpdateStream() -> AsyncStream<Void> {
+            AsyncStream { continuation in
+                let cancellable = notifier.sink(
+                    receiveCompletion: { _ in
+                        continuation.finish()
+                    },
+                    receiveValue: {
+                        continuation.yield()
+                    }
+                )
+
+                continuation.onTermination = { termination in
+                    switch termination {
+                    case .cancelled:
+                        cancellable.cancel()
+
+                    case .finished:
+                        break
+
+                    @unknown default:
+                        break
+                    }
+                }
+            }
+        }
 
         func notifyUpdate() {
             onUpdate?()
