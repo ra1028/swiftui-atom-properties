@@ -50,7 +50,7 @@ final class AtomTestContextTests: XCTestCase {
         XCTAssertFalse(didUpdate1)
     }
 
-    func testWaitUntil() async {
+    func testWaitFor() async {
         let atom = TestStateAtom(defaultValue: 0)
         let context = AtomTestContext()
 
@@ -63,26 +63,26 @@ final class AtomTestContextTests: XCTestCase {
             }
         }
 
-        let didUpdate0 = await context.wait {
-            context.read(atom) == 0
+        let didUpdate0 = await context.wait(for: atom) {
+            $0 == 0
         }
 
         XCTAssertFalse(didUpdate0)
 
-        let didUpdate1 = await context.wait {
-            context.read(atom) == 3
+        let didUpdate1 = await context.wait(for: atom) {
+            $0 == 3
         }
 
         XCTAssertTrue(didUpdate1)
 
-        let didUpdate2 = await context.wait(timeout: 1) {
-            context.read(atom) == 100
+        let didUpdate2 = await context.wait(for: atom, timeout: 1) {
+            $0 == 100
         }
 
         XCTAssertFalse(didUpdate2)
 
-        let didUpdate3 = await context.wait {
-            context.read(atom) == 3
+        let didUpdate3 = await context.wait(for: atom) {
+            $0 == 3
         }
 
         XCTAssertFalse(didUpdate3)

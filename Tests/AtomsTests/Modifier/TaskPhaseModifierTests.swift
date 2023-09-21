@@ -6,14 +6,14 @@ import XCTest
 @MainActor
 final class TaskPhaseModifierTests: XCTestCase {
     func testPhase() async {
-        let atom = TestTaskAtom(value: 0)
+        let atom = TestTaskAtom(value: 0).phase
         let context = AtomTestContext()
 
-        XCTAssertEqual(context.watch(atom.phase), .suspending)
+        XCTAssertEqual(context.watch(atom), .suspending)
 
-        await context.waitForUpdate(timeout: 1)
+        await context.wait(for: atom, until: \.isSuccess)
 
-        XCTAssertEqual(context.watch(atom.phase), .success(0))
+        XCTAssertEqual(context.watch(atom), .success(0))
     }
 
     func testKey() {

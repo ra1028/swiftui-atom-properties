@@ -69,9 +69,8 @@ public struct AtomTestContext: AtomWatchableContext {
         }
     }
 
-    /// Waits until the given predicate returns true when any of the atoms watched through
-    /// this context have been updated for up to the specified timeout, and then returns
-    /// a boolean value indicating whether an update is done.
+    /// Waits for the given atom until it will be a certain state up to the specified timeout,
+    /// and then returns a boolean value indicating whether an update is done.
     ///
     /// ```swift
     /// func testAsyncUpdate() async {
@@ -80,9 +79,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
     ///     XCTAssertEqual(initialPhase, .suspending)
     ///
-    ///     let didUpdate = await context.wait {
-    ///         context.read(AsyncCalculationAtom().phase).isSuccess
-    ///     }
+    ///     let didUpdate = await context.wait(for: AsyncCalculationAtom().phase, until: \.isSuccess)
     ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
     ///
     ///     XCTAssertTure(didUpdate)
@@ -91,26 +88,29 @@ public struct AtomTestContext: AtomWatchableContext {
     /// ```
     ///
     /// - Parameters:
+    ///   - atom: An atom that this method waits updating to a certain state.
     ///   - duration: The maximum duration that this function can wait until
     ///               the next update. The default timeout interval is nil.
     ///   - predicate: A predicate that determines when to stop waiting.
     ///
     /// - Returns: A boolean value indicating whether an update is done.
+    ///
     @discardableResult
-    public func wait(
+    public func wait<Node: Atom>(
+        for atom: Node,
         timeout duration: TimeInterval? = nil,
-        until predicate: @MainActor @escaping () -> Bool
+        until predicate: @MainActor @escaping (Node.Loader.Value) -> Bool
     ) async -> Bool {
         await withTaskGroup(of: Bool.self) { group in
             let updates = state.makeUpdateStream()
 
             group.addTask { @MainActor in
-                guard !predicate() else {
+                guard !predicate(read(atom)) else {
                     return false
                 }
 
                 for await _ in updates {
-                    if predicate() {
+                    if predicate(read(atom)) {
                         return true
                     }
                 }

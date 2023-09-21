@@ -16,7 +16,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
         do {
             // Value
             pipe.continuation.yield(0)
-            await context.waitForUpdate()
+            await context.wait(for: atom, until: \.isSuccess)
 
             XCTAssertEqual(context.watch(atom).value, 0)
         }
@@ -24,7 +24,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
         do {
             // Failure
             pipe.continuation.finish(throwing: URLError(.badURL))
-            await context.waitForUpdate()
+            await context.wait(for: atom, until: \.isFailure)
 
             XCTAssertEqual(context.watch(atom).error as? URLError, URLError(.badURL))
         }
