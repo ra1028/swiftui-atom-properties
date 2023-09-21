@@ -110,7 +110,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
 
             let phase = await refreshTask.value
 
-            XCTAssertEqual(phase.value, 1)
+            XCTAssertTrue(phase.isSuspending)
             XCTAssertEqual(updateCount, 0)
         }
 
