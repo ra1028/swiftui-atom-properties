@@ -23,7 +23,7 @@ public struct AtomTestContext: AtomWatchableContext {
         nonmutating set { state.onUpdate = newValue }
     }
 
-    /// Waits until any of the atoms watched through this context have been updated for up to the
+    /// Waits until any of the atoms watched through this context have been updated up to the
     /// specified timeout, and then returns a boolean value indicating whether an update is done.
     ///
     /// ```swift
