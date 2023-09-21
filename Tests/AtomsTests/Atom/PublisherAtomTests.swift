@@ -20,7 +20,7 @@ final class PublisherAtomTests: XCTestCase {
             // Value
             subject.send(0)
 
-            await context.waitForUpdate()
+            await context.wait(for: atom, until: \.isSuccess)
             XCTAssertEqual(context.watch(atom), .success(0))
         }
 
@@ -28,7 +28,7 @@ final class PublisherAtomTests: XCTestCase {
             // Error
             subject.send(completion: .failure(URLError(.badURL)))
 
-            await context.waitForUpdate()
+            await context.wait(for: atom, until: \.isFailure)
             XCTAssertEqual(context.watch(atom), .failure(URLError(.badURL)))
         }
 

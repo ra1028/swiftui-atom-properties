@@ -72,7 +72,7 @@ final class AtomLoaderContextTests: XCTestCase {
         ) { _, _ in }
 
         await context.transaction { _ in
-            try? await Task.sleep(nanoseconds: 0)
+            try? await Task.sleep(seconds: 0)
         }
 
         XCTAssertTrue(isCommitted)
