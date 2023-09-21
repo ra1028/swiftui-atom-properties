@@ -15,7 +15,7 @@ env:
 jobs:
   test:
     name: Test
-    runs-on: macos-13-xl
+    runs-on: macos-13
     strategy:
       matrix:
         platform:
@@ -36,7 +36,7 @@ jobs:
 
   validation:
     name: Validation
-    runs-on: macos-13-xl
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v2
       - name: Show environments

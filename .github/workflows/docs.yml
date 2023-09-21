@@ -13,7 +13,7 @@ env:
 jobs:
   publish-docs:
     name: Publish Documentation
-    runs-on: macos-13-xl
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v2
       - name: Build docs
