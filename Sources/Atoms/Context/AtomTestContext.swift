@@ -99,7 +99,7 @@ public struct AtomTestContext: AtomWatchableContext {
     public func wait<Node: Atom>(
         for atom: Node,
         timeout duration: TimeInterval? = nil,
-        until predicate: @MainActor @escaping (Node.Loader.Value) -> Bool
+        until predicate: @escaping (Node.Loader.Value) -> Bool
     ) async -> Bool {
         await withTaskGroup(of: Bool.self) { group in
             let updates = state.makeUpdateStream()
