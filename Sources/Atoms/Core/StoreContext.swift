@@ -365,7 +365,9 @@ private extension StoreContext {
             // have not yet been updated and are still old when dependent atoms read it.
             // As a workaround, the update is executed in the next run loop
             // so that the downstream atoms can receive the object that's already updated.
-            RunLoop.current.perform(notifyUpdate)
+            RunLoop.current.perform {
+                notifyUpdate()
+            }
         }
     }
 

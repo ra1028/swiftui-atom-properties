@@ -49,7 +49,9 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
 
             do {
                 for try await element in sequence {
-                    phase = .success(element)
+                    if !Task.isCancelled {
+                        phase = .success(element)
+                    }
                 }
             }
             catch {

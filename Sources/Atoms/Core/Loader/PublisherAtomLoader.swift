@@ -42,7 +42,9 @@ public struct PublisherAtomLoader<Node: PublisherAtom>: RefreshableAtomLoader {
             var phase = Value.suspending
 
             for await result in results {
-                phase = AsyncPhase(result)
+                if !Task.isCancelled {
+                    phase = AsyncPhase(result)
+                }
             }
 
             return phase
