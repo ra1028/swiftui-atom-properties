@@ -102,15 +102,24 @@ public struct AtomTestContext: AtomWatchableContext {
         until predicate: @escaping (Node.Loader.Value) -> Bool
     ) async -> Bool {
         await withTaskGroup(of: Bool.self) { group in
+            @MainActor
+            func check() -> Bool {
+                guard let value = lookup(atom) else {
+                    return false
+                }
+
+                return predicate(value)
+            }
+
             let updates = state.makeUpdateStream()
 
             group.addTask { @MainActor in
-                guard !predicate(read(atom)) else {
+                guard !check() else {
                     return false
                 }
 
                 for await _ in updates {
-                    if predicate(read(atom)) {
+                    if check() {
                         return true
                     }
                 }
@@ -261,6 +270,25 @@ public struct AtomTestContext: AtomWatchableContext {
         }
     }
 
+    /// Returns the already cached value associated with a given atom without side effects.
+    ///
+    /// This method returns the value only when it is already cached, otherwise, it returns `nil`.
+    /// It has no side effects such as the creation of new values or watching to atoms.
+    ///
+    /// ```swift
+    /// let context = AtomTestContext()
+    /// if let text = context.lookup(TextAtom()) {
+    ///     print(text)  // Prints the cached value associated with `TextAtom`.
+    /// }
+    /// ```
+    ///
+    /// - Parameter atom: An atom that associates the value.
+    ///
+    /// - Returns: The already cached value associated with the given atom.
+    public func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
+        store.lookup(atom)
+    }
+
     /// Unwatches the given atom and do not receive any more updates of it.
     ///
     /// It simulates cases where other atoms or views no longer watches to the atom.
@@ -298,6 +326,7 @@ public struct AtomTestContext: AtomWatchableContext {
 }
 
 private extension AtomTestContext {
+    @MainActor
     final class State {
         let store = AtomStore()
         let token = ScopeKey.Token()

@@ -188,6 +188,15 @@ internal struct StoreContext {
     }
 
     @usableFromInline
+    func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
+        let override = lookupOverride(of: atom)
+        let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
+        let cache = lookupCache(of: atom, for: key)
+
+        return cache?.value
+    }
+
+    @usableFromInline
     func unwatch(_ atom: some Atom, container: SubscriptionContainer.Wrapper) {
         let override = lookupOverride(of: atom)
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
