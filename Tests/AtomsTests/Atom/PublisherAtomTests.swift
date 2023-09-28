@@ -36,7 +36,7 @@ final class PublisherAtomTests: XCTestCase {
             // Send value after completion
             subject.send(1)
 
-            let didUpdate = await context.waitForUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 0.1)
             XCTAssertFalse(didUpdate)
         }
 
@@ -45,7 +45,7 @@ final class PublisherAtomTests: XCTestCase {
             context.unwatch(atom)
             subject.send(0)
 
-            let didUpdate = await context.waitForUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 0.1)
             XCTAssertFalse(didUpdate)
         }
 
@@ -54,7 +54,7 @@ final class PublisherAtomTests: XCTestCase {
             context.unwatch(atom)
             subject.send(completion: .failure(URLError(.badURL)))
 
-            let didUpdate = await context.waitForUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 0.1)
             XCTAssertFalse(didUpdate)
         }
 

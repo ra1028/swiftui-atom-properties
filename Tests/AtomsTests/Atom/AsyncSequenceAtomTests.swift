@@ -32,7 +32,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
         do {
             // Yield value after finish
             pipe.continuation.yield(1)
-            let didUpdate = await context.waitForUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 0.1)
 
             XCTAssertFalse(didUpdate)
         }
@@ -43,7 +43,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
             context.unwatch(atom)
 
             pipe.continuation.yield(0)
-            let didUpdate = await context.waitForUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 0.1)
 
             XCTAssertFalse(didUpdate)
         }
@@ -54,7 +54,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
             context.unwatch(atom)
 
             pipe.continuation.finish(throwing: URLError(.badURL))
-            let didUpdate = await context.waitForUpdate(timeout: 1)
+            let didUpdate = await context.waitForUpdate(timeout: 0.1)
 
             XCTAssertFalse(didUpdate)
         }

@@ -25,14 +25,19 @@ jobs:
           - watchos
     steps:
       - uses: actions/checkout@v2
-      - name: Test product
-        run: scripts/test.sh product ${{ matrix.platform }}
-      - name: Test example iOS
-        if: matrix.platform == 'ios'
-        run: scripts/test.sh example-ios ${{ matrix.platform }}
+      - name: Test library
+        run: scripts/test.sh library ${{ matrix.platform }}
       - name: Test example cross platform
-        if: matrix.platform == 'ios' || matrix.platform == 'macos' || matrix.platform == 'tvos'
+        if: matrix.platform == 'macos' || matrix.platform == 'tvos'
         run: scripts/test.sh example-cross-platform ${{ matrix.platform }}
+
+  test_examples:
+    name: Test iOS examples
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test example iOS
+        run: scripts/test.sh example-ios ios
 
   validation:
     name: Validation

@@ -45,7 +45,7 @@ final class AtomTestContextTests: XCTestCase {
 
         XCTAssertTrue(didUpdate0)
 
-        let didUpdate1 = await context.waitForUpdate(timeout: 1)
+        let didUpdate1 = await context.waitForUpdate(timeout: 0.1)
 
         XCTAssertFalse(didUpdate1)
     }
@@ -58,7 +58,7 @@ final class AtomTestContextTests: XCTestCase {
 
         for i in 0..<3 {
             Task {
-                try? await Task.sleep(seconds: Double(i))
+                try? await Task.sleep(seconds: Double(i) / 10)
                 context[atom] += 1
             }
         }
@@ -75,7 +75,7 @@ final class AtomTestContextTests: XCTestCase {
 
         XCTAssertTrue(didUpdate1)
 
-        let didUpdate2 = await context.wait(for: atom, timeout: 1) {
+        let didUpdate2 = await context.wait(for: atom, timeout: 0.1) {
             $0 == 100
         }
 
