@@ -1,4 +1,4 @@
-// swift-tools-version:5.6
+// swift-tools-version:5.8
 
 import PackageDescription
 
@@ -7,10 +7,10 @@ let atoms = Target.Dependency.product(name: "Atoms", package: "swiftui-atom-prop
 let package = Package(
     name: "CrossPlatformExamples",
     platforms: [
-        .iOS(.v14),
-        .macOS(.v11),
-        .tvOS(.v14),
-        .watchOS(.v7),
+        .iOS(.v16),
+        .macOS(.v13),
+        .tvOS(.v16),
+        .watchOS(.v9),
     ],
     products: [
         .library(name: "CrossPlatformApp", targets: ["CrossPlatformApp"])

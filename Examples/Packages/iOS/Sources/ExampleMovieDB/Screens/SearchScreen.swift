@@ -47,7 +47,7 @@ struct SearchScreen: View {
 struct SearchScreen_Preview: PreviewProvider {
     static var previews: some View {
         AtomRoot {
-            NavigationView {
+            NavigationStack {
                 SearchScreen()
             }
         }

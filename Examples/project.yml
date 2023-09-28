@@ -1,15 +1,21 @@
 name: App
+
+deploymentTarget:
+  iOS: 16.0
+  macOS: 13.0
+  tvOS: 16.0
+
 options:
   bundleIdPrefix: com.ryo.swiftui-atom-properties.examples
   createIntermediateGroups: true
-settingGroups:
-  app:
-    CODE_SIGNING_REQUIRED: NO
-    CODE_SIGN_IDENTITY: "-"
-    CODE_SIGN_STYLE: Manual
-    OTHER_SWIFT_FLAGS:
-      - -Xfrontend
-      - -enable-actor-data-race-checks
+
+settings:
+  CODE_SIGNING_REQUIRED: NO
+  CODE_SIGN_IDENTITY: "-"
+  CODE_SIGN_STYLE: Manual
+  OTHER_SWIFT_FLAGS:
+    - -Xfrontend
+    - -enable-actor-data-race-checks
 
 targetTemplates:
   App:
@@ -24,15 +30,6 @@ targetTemplates:
         NSMicrophoneUsageDescription: Example Usage
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-    settings:
-      groups:
-        - app
-
-schemes:
-  iOS:
-    build:
-      targets:
-        iOS: all
 
 packages:
   iOSApp:
@@ -46,7 +43,6 @@ targets:
     templates:
       - App
     platform: iOS
-    deploymentTarget: 16.0
     dependencies:
       - package: iOSApp
     sources:
@@ -56,13 +52,8 @@ targets:
     templates:
       - App
     platform:
-      - iOS
       - macOS
       - tvOS
-    deploymentTarget:
-      iOS: 14.0
-      macOS: 11.0
-      tvOS: 14.0
     dependencies:
       - package: CrossPlatformApp
     sources:
