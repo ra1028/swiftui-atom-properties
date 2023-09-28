@@ -1,4 +1,4 @@
-// swift-tools-version:5.6
+// swift-tools-version:5.8
 
 import PackageDescription
 
@@ -7,7 +7,7 @@ let atoms = Target.Dependency.product(name: "Atoms", package: "swiftui-atom-prop
 let package = Package(
     name: "iOSExamples",
     platforms: [
-        .iOS(.v15)
+        .iOS(.v16)
     ],
     products: [
         .library(name: "iOSApp", targets: ["iOSApp"])

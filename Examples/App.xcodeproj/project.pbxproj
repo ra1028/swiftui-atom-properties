@@ -9,9 +9,7 @@
 /* Begin PBXBuildFile section */
 		1005C4AC9120BA9DA0689543 /* CrossPlatform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452C2B75E438AB4621F094DF /* CrossPlatform.swift */; };
 		1107A8B553508AB86E1F5BBB /* CrossPlatformApp in Frameworks */ = {isa = PBXBuildFile; productRef = A708E16BF51AE12E22A59212 /* CrossPlatformApp */; };
-		1459D71BEC087400D12B5A1A /* CrossPlatform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452C2B75E438AB4621F094DF /* CrossPlatform.swift */; };
 		22426BE1FC37FDA1A0F3DDE4 /* iOSApp in Frameworks */ = {isa = PBXBuildFile; productRef = DED302B138966E5FE400892D /* iOSApp */; };
-		5D37D62CADEB9C38C6530412 /* CrossPlatformApp in Frameworks */ = {isa = PBXBuildFile; productRef = 7EB322283CC635090E3D4ABA /* CrossPlatformApp */; };
 		83B07647E2C4BC457F6A4AD4 /* iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA500C4AECAAC64CB3CF447 /* iOS.swift */; };
 		D23E13D8439A165AB04F574E /* CrossPlatform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452C2B75E438AB4621F094DF /* CrossPlatform.swift */; };
 		FC3C5D2718645D5C1288E80E /* CrossPlatformApp in Frameworks */ = {isa = PBXBuildFile; productRef = E6D0E7940B1382E3FCA5A833 /* CrossPlatformApp */; };
@@ -24,7 +22,6 @@
 		7700279A8EA052C81A41C049 /* CrossPlatform */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CrossPlatform; path = Packages/CrossPlatform; sourceTree = SOURCE_ROOT; };
 		A62E7924E6736516B102BF53 /* iOS */ = {isa = PBXFileReference; lastKnownFileType = folder; name = iOS; path = Packages/iOS; sourceTree = SOURCE_ROOT; };
 		B0EB7D420C3AF1A10913B76C /* CrossPlatform.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CrossPlatform.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		BF4C75EF9327ACB06A605EF0 /* CrossPlatform.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CrossPlatform.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CDA500C4AECAAC64CB3CF447 /* iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOS.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -34,14 +31,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				FC3C5D2718645D5C1288E80E /* CrossPlatformApp in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		3EAE4F08F648865C06EDCA89 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				5D37D62CADEB9C38C6530412 /* CrossPlatformApp in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -94,7 +83,6 @@
 		E9C3DB3EC6D7655028A9C0D3 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				BF4C75EF9327ACB06A605EF0 /* CrossPlatform.app */,
 				B0EB7D420C3AF1A10913B76C /* CrossPlatform.app */,
 				553572CFE97AE83E420D2F2A /* CrossPlatform.app */,
 				1A46847C164D474B7B747BC0 /* iOS.app */,
@@ -122,25 +110,6 @@
 			);
 			productName = CrossPlatform_macOS;
 			productReference = B0EB7D420C3AF1A10913B76C /* CrossPlatform.app */;
-			productType = "com.apple.product-type.application";
-		};
-		2FD64E9E837D5E32A289BD7E /* CrossPlatform_iOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 57C40505120062DC9D984E56 /* Build configuration list for PBXNativeTarget "CrossPlatform_iOS" */;
-			buildPhases = (
-				0CA6F0A722C314119B1C42B7 /* Sources */,
-				3EAE4F08F648865C06EDCA89 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = CrossPlatform_iOS;
-			packageProductDependencies = (
-				7EB322283CC635090E3D4ABA /* CrossPlatformApp */,
-			);
-			productName = CrossPlatform_iOS;
-			productReference = BF4C75EF9327ACB06A605EF0 /* CrossPlatform.app */;
 			productType = "com.apple.product-type.application";
 		};
 		BCC0364CCD17BA05FD5B35BD /* CrossPlatform_tvOS */ = {
@@ -193,9 +162,6 @@
 					0B9FD0BB6D9928064433FF9B = {
 						ProvisioningStyle = Manual;
 					};
-					2FD64E9E837D5E32A289BD7E = {
-						ProvisioningStyle = Manual;
-					};
 					BCC0364CCD17BA05FD5B35BD = {
 						ProvisioningStyle = Manual;
 					};
@@ -216,7 +182,6 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				2FD64E9E837D5E32A289BD7E /* CrossPlatform_iOS */,
 				0B9FD0BB6D9928064433FF9B /* CrossPlatform_macOS */,
 				BCC0364CCD17BA05FD5B35BD /* CrossPlatform_tvOS */,
 				E002849B581BDA9D70A3A4C9 /* iOS */,
@@ -225,14 +190,6 @@
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		0CA6F0A722C314119B1C42B7 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				1459D71BEC087400D12B5A1A /* CrossPlatform.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		45830C9A5E17EEEBAD5BB38C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -264,18 +221,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = "App/Info-iOS.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
-				);
-				OTHER_SWIFT_FLAGS = (
-					"-Xfrontend",
-					"-enable-actor-data-race-checks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.iOS";
 				SDKROOT = iphoneos;
@@ -287,45 +237,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "App/Info-CrossPlatform_macOS.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				OTHER_SWIFT_FLAGS = (
-					"-Xfrontend",
-					"-enable-actor-data-race-checks",
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-macOS";
+				PRODUCT_NAME = CrossPlatform;
 				SDKROOT = macosx;
-			};
-			name = Debug;
-		};
-		506F696D4250374A465EBDA4 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
-				INFOPLIST_FILE = "App/Info-CrossPlatform_iOS.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				OTHER_SWIFT_FLAGS = (
-					"-Xfrontend",
-					"-enable-actor-data-race-checks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-iOS";
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -333,18 +253,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = "App/Info-iOS.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
-				);
-				OTHER_SWIFT_FLAGS = (
-					"-Xfrontend",
-					"-enable-actor-data-race-checks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.iOS";
 				SDKROOT = iphoneos;
@@ -385,6 +298,9 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -399,6 +315,10 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = (
+					"-Xfrontend",
+					"-enable-actor-data-race-checks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
@@ -410,21 +330,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "App/Info-CrossPlatform_macOS.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				OTHER_SWIFT_FLAGS = (
-					"-Xfrontend",
-					"-enable-actor-data-race-checks",
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-macOS";
+				PRODUCT_NAME = CrossPlatform;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -434,22 +347,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
 				INFOPLIST_FILE = "App/Info-CrossPlatform_tvOS.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				OTHER_SWIFT_FLAGS = (
-					"-Xfrontend",
-					"-enable-actor-data-race-checks",
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-tvOS";
+				PRODUCT_NAME = CrossPlatform;
 				SDKROOT = appletvos;
 				TARGETED_DEVICE_FAMILY = 3;
-				TVOS_DEPLOYMENT_TARGET = 14.0;
 			};
 			name = Debug;
 		};
@@ -458,22 +364,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
 				INFOPLIST_FILE = "App/Info-CrossPlatform_tvOS.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				OTHER_SWIFT_FLAGS = (
-					"-Xfrontend",
-					"-enable-actor-data-race-checks",
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-tvOS";
+				PRODUCT_NAME = CrossPlatform;
 				SDKROOT = appletvos;
 				TARGETED_DEVICE_FAMILY = 3;
-				TVOS_DEPLOYMENT_TARGET = 14.0;
 			};
 			name = Release;
 		};
@@ -510,6 +409,9 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -531,35 +433,16 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_SWIFT_FLAGS = (
+					"-Xfrontend",
+					"-enable-actor-data-race-checks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
-		};
-		FF655E13C80540E744681F8B /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Manual;
-				INFOPLIST_FILE = "App/Info-CrossPlatform_iOS.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				OTHER_SWIFT_FLAGS = (
-					"-Xfrontend",
-					"-enable-actor-data-race-checks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ryo.swiftui-atom-properties.examples.CrossPlatform-iOS";
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
@@ -569,15 +452,6 @@
 			buildConfigurations = (
 				AA68C62E73C222617BA55DCD /* Debug */,
 				EF7DEC50716629B4CAF47EAF /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		57C40505120062DC9D984E56 /* Build configuration list for PBXNativeTarget "CrossPlatform_iOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				506F696D4250374A465EBDA4 /* Debug */,
-				FF655E13C80540E744681F8B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -612,10 +486,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		7EB322283CC635090E3D4ABA /* CrossPlatformApp */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = CrossPlatformApp;
-		};
 		A708E16BF51AE12E22A59212 /* CrossPlatformApp */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CrossPlatformApp;
