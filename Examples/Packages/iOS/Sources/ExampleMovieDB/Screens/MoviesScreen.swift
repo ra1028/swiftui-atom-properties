@@ -72,15 +72,11 @@ struct MoviesScreen: View {
         .refreshable {
             await loader.refresh()
         }
-        .background {
-            NavigationLink(
-                isActive: $isShowingSearchScreen,
-                destination: SearchScreen.init,
-                label: EmptyView.init
-            )
-        }
         .sheet(item: $selectedMovie) { movie in
             DetailScreen(movie: movie)
+        }
+        .navigationDestination(isPresented: $isShowingSearchScreen) {
+            SearchScreen()
         }
     }
 
@@ -102,7 +98,7 @@ struct MoviesScreen: View {
 struct MoviesScreen_Preview: PreviewProvider {
     static var previews: some View {
         AtomRoot {
-            NavigationView {
+            NavigationStack {
                 MoviesScreen()
             }
         }

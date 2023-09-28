@@ -10,7 +10,7 @@ public struct CrossPlatformApp: App {
     public var body: some Scene {
         WindowGroup {
             AtomRoot {
-                NavigationView {
+                NavigationStack {
                     List {
                         NavigationLink("🔢 Counter") {
                             ExampleCounter()
@@ -26,10 +26,6 @@ public struct CrossPlatformApp: App {
                         .listStyle(.insetGrouped)
                     #endif
                 }
-
-                #if os(iOS)
-                    .navigationViewStyle(.stack)
-                #endif
             }
         }
     }

@@ -14,7 +14,7 @@ public struct iOSApp: App {
     public var body: some Scene {
         WindowGroup {
             AtomRoot {
-                NavigationView {
+                NavigationStack {
                     List {
                         NavigationLink("🔢 Counter") {
                             ExampleCounter()
@@ -43,7 +43,6 @@ public struct iOSApp: App {
                     .navigationTitle("Examples")
                     .listStyle(.insetGrouped)
                 }
-                .navigationViewStyle(.stack)
             }
             .observe { snapshot in
                 print(snapshot.graphDescription())
