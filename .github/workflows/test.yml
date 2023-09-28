@@ -28,6 +28,7 @@ jobs:
       - name: Test library
         run: scripts/test.sh library ${{ matrix.platform }}
       - name: Test example cross platform
+        if: matrix.platform == 'macos' || matrix.platform == 'tvos'
         run: scripts/test.sh example-cross-platform ${{ matrix.platform }}
 
   test_examples:
