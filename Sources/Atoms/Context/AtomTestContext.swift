@@ -9,8 +9,10 @@ import Foundation
 /// by this itself.
 @MainActor
 public struct AtomTestContext: AtomWatchableContext {
-    private let state = State()
     private let location: SourceLocation
+
+    @usableFromInline
+    internal let _state = State()
 
     /// Creates a new test context instance with fresh internal state.
     public init(fileID: String = #fileID, line: UInt = #line) {
@@ -18,9 +20,10 @@ public struct AtomTestContext: AtomWatchableContext {
     }
 
     /// A callback to perform when any of atoms watched by this context is updated.
+    @inlinable
     public var onUpdate: (() -> Void)? {
-        get { state.onUpdate }
-        nonmutating set { state.onUpdate = newValue }
+        get { _state.onUpdate }
+        nonmutating set { _state.onUpdate = newValue }
     }
 
     /// Waits until any of the atoms watched through this context have been updated up to the
@@ -44,10 +47,11 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter duration: The maximum duration that this function can wait until
     ///                       the next update. The default timeout interval is nil.
     /// - Returns: A boolean value indicating whether an update is done.
+    @inlinable
     @discardableResult
     public func waitForUpdate(timeout duration: TimeInterval? = nil) async -> Bool {
         await withTaskGroup(of: Bool.self) { group in
-            let updates = state.makeUpdateStream()
+            let updates = _state.makeUpdateStream()
 
             group.addTask { @MainActor in
                 var iterator = updates.makeAsyncIterator()
@@ -95,6 +99,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Returns: A boolean value indicating whether an update is done.
     ///
+    @inlinable
     @discardableResult
     public func wait<Node: Atom>(
         for atom: Node,
@@ -111,7 +116,7 @@ public struct AtomTestContext: AtomWatchableContext {
                 return predicate(value)
             }
 
-            let updates = state.makeUpdateStream()
+            let updates = _state.makeUpdateStream()
 
             group.addTask { @MainActor in
                 guard !check() else {
@@ -155,8 +160,9 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value associated with the given atom.
+    @inlinable
     public func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        store.read(atom)
+        _store.read(atom)
     }
 
     /// Sets the new value for the given writable atom.
@@ -177,8 +183,9 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
+    @inlinable
     public func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
-        store.set(value, for: atom)
+        _store.set(value, for: atom)
     }
 
     /// Modifies the cached value of the given writable atom.
@@ -200,8 +207,9 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters
     ///   - atom: An atom that associates the value.
     ///   - body: A value modification body.
+    @inlinable
     public func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void) {
-        store.modify(atom, body: body)
+        _store.modify(atom, body: body)
     }
 
     /// Refreshes and then return the value associated with the given refreshable atom.
@@ -221,9 +229,10 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
+    @inlinable
     @discardableResult
     public func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
-        await store.refresh(atom)
+        await _store.refresh(atom)
     }
 
     /// Resets the value associated with the given atom, and then notify.
@@ -242,8 +251,9 @@ public struct AtomTestContext: AtomWatchableContext {
     /// ```
     ///
     /// - Parameter atom: An atom that associates the value.
+    @inlinable
     public func reset(_ atom: some Atom) {
-        store.reset(atom)
+        _store.reset(atom)
     }
 
     /// Accesses the value associated with the given atom for reading and initialing watch to
@@ -263,10 +273,11 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value associated with the given atom.
+    @inlinable
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        store.watch(atom, container: container, requiresObjectUpdate: true) { [weak state] in
-            state?.notifyUpdate()
+        _store.watch(atom, container: _container, requiresObjectUpdate: true) { [weak _state] in
+            _state?.notifyUpdate()
         }
     }
 
@@ -285,8 +296,9 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The already cached value associated with the given atom.
+    @inlinable
     public func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
-        store.lookup(atom)
+        _store.lookup(atom)
     }
 
     /// Unwatches the given atom and do not receive any more updates of it.
@@ -294,8 +306,9 @@ public struct AtomTestContext: AtomWatchableContext {
     /// It simulates cases where other atoms or views no longer watches to the atom.
     ///
     /// - Parameter atom: An atom that associates the value.
+    @inlinable
     public func unwatch(_ atom: some Atom) {
-        store.unwatch(atom, container: container)
+        _store.unwatch(atom, container: _container)
     }
 
     /// Overrides the atom value with the given value.
@@ -306,8 +319,9 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters:
     ///   - atom: An atom that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
+    @inlinable
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) {
-        state.overrides[OverrideKey(atom)] = AtomOverride(value: value)
+        _state.overrides[OverrideKey(atom)] = AtomOverride(value: value)
     }
 
     /// Overrides the atom value with the given value.
@@ -320,22 +334,30 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters:
     ///   - atomType: An atom type that to be overridden.
     ///   - value: A value that to be used instead of the atom's value.
+    @inlinable
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) {
-        state.overrides[OverrideKey(atomType)] = AtomOverride(value: value)
+        _state.overrides[OverrideKey(atomType)] = AtomOverride(value: value)
     }
 }
 
-private extension AtomTestContext {
+internal extension AtomTestContext {
+    @usableFromInline
     @MainActor
     final class State {
+        @usableFromInline
         let store = AtomStore()
         let token = ScopeKey.Token()
         let container = SubscriptionContainer()
+
+        @usableFromInline
         var overrides = [OverrideKey: any AtomOverrideProtocol]()
+
+        @usableFromInline
         var onUpdate: (() -> Void)?
 
         private let notifier = PassthroughSubject<Void, Never>()
 
+        @usableFromInline
         func makeUpdateStream() -> AsyncStream<Void> {
             AsyncStream { continuation in
                 let cancellable = notifier.sink(
@@ -362,22 +384,25 @@ private extension AtomTestContext {
             }
         }
 
+        @usableFromInline
         func notifyUpdate() {
             onUpdate?()
             notifier.send()
         }
     }
 
-    var store: StoreContext {
+    @usableFromInline
+    var _store: StoreContext {
         .scoped(
-            key: ScopeKey(token: state.token),
-            store: state.store,
+            key: ScopeKey(token: _state.token),
+            store: _state.store,
             observers: [],
-            overrides: state.overrides
+            overrides: _state.overrides
         )
     }
 
-    var container: SubscriptionContainer.Wrapper {
-        state.container.wrapper(location: location)
+    @usableFromInline
+    var _container: SubscriptionContainer.Wrapper {
+        _state.container.wrapper(location: location)
     }
 }
