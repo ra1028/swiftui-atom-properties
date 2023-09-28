@@ -23,7 +23,7 @@ watchos)
 esac
 
 case $TARGET in
-product)
+library)
     xcodebuild test -scheme swiftui-atom-properties -destination platform="$platform"
     ;;
 example-ios)
