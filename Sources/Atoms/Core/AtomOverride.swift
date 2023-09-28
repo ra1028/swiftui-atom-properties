@@ -1,3 +1,4 @@
+@usableFromInline
 internal protocol AtomOverrideProtocol {
     associatedtype Node: Atom
 
@@ -6,9 +7,17 @@ internal protocol AtomOverrideProtocol {
     func scoped(key: ScopeKey) -> any AtomScopedOverrideProtocol
 }
 
+@usableFromInline
 internal struct AtomOverride<Node: Atom>: AtomOverrideProtocol {
+    @usableFromInline
     let value: (Node) -> Node.Loader.Value
 
+    @usableFromInline
+    init(value: @escaping (Node) -> Node.Loader.Value) {
+        self.value = value
+    }
+
+    @usableFromInline
     func scoped(key: ScopeKey) -> any AtomScopedOverrideProtocol {
         AtomScopedOverride<Node>(scopeKey: key, value: value)
     }
@@ -20,6 +29,7 @@ internal struct AtomOverride<Node: Atom>: AtomOverrideProtocol {
 // their View body is evaluated. This is not ideal from a performance standpoint,
 // so it will be improved as soon as an alternative way to grant per-scope keys
 // independent of the SwiftUI lifecycle is came up.
+@usableFromInline
 internal protocol AtomScopedOverrideProtocol {
     var scopeKey: ScopeKey { get }
 }

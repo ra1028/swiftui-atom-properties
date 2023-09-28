@@ -1,3 +1,4 @@
+@usableFromInline
 internal struct ScopeKey: Hashable {
     final class Token {}
 
