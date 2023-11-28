@@ -270,7 +270,7 @@ final class StoreContextTests: XCTestCase {
         }
 
         XCTAssertEqual(initialValue, 0)
-        XCTAssertNotNil(container!.wrapper.subscriptions[key])
+        XCTAssertTrue(container!.wrapper.subscribingKeys.contains(key))
         XCTAssertNotNil(store.state.subscriptions[key]?[container!.wrapper.key])
         XCTAssertEqual((store.state.caches[key] as? AtomCache<TestAtom>)?.value, 0)
         XCTAssertEqual((store.state.caches[dependencyKey] as? AtomCache<DependencyAtom>)?.value, 0)

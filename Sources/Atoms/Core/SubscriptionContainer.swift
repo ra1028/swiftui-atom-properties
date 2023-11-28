@@ -1,14 +1,14 @@
 @usableFromInline
 @MainActor
 internal final class SubscriptionContainer {
-    private var subscriptions = [AtomKey: Subscription]()
-    private var unsubscribe: (([AtomKey]) -> Void)?
+    private var subscribingKeys = Set<AtomKey>()
+    private var unsubscribe: ((Set<AtomKey>) -> Void)?
     private let token = SubscriptionKey.Token()
 
     nonisolated init() {}
 
     deinit {
-        unsubscribe?(Array(subscriptions.keys))
+        unsubscribe?(subscribingKeys)
     }
 
     func wrapper(location: SourceLocation) -> Wrapper {
@@ -25,12 +25,12 @@ internal extension SubscriptionContainer {
         let key: SubscriptionKey
         let location: SourceLocation
 
-        var subscriptions: [AtomKey: Subscription] {
-            get { container?.subscriptions ?? [:] }
-            nonmutating set { container?.subscriptions = newValue }
+        var subscribingKeys: Set<AtomKey> {
+            get { container?.subscribingKeys ?? [] }
+            nonmutating set { container?.subscribingKeys = newValue }
         }
 
-        var unsubscribe: (([AtomKey]) -> Void)? {
+        var unsubscribe: ((Set<AtomKey>) -> Void)? {
             get { container?.unsubscribe }
             nonmutating set { container?.unsubscribe = newValue }
         }
