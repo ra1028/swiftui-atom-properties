@@ -55,4 +55,18 @@ final class AtomUpdatedContextTests: XCTestCase {
 
         XCTAssertEqual(context.read(dependency), 0)
     }
+
+    func testLookup() {
+        let atom = TestValueAtom(value: 100)
+        let store = AtomStore()
+        let storeContext = StoreContext(store)
+        let context = AtomUpdatedContext(store: storeContext, coordinator: ())
+        let transaction = Transaction(key: AtomKey(atom)) {}
+
+        XCTAssertNil(context.lookup(atom))
+
+        _ = storeContext.watch(atom, in: transaction)
+
+        XCTAssertEqual(context.lookup(atom), 100)
+    }
 }

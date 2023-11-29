@@ -89,6 +89,23 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom), 200)
     }
 
+    func testLookup() {
+        let atom = TestValueAtom(value: 100)
+        let store = AtomStore()
+        let container = SubscriptionContainer()
+        let context = AtomViewContext(
+            store: StoreContext(store),
+            container: container.wrapper,
+            notifyUpdate: {}
+        )
+
+        XCTAssertNil(context.lookup(atom))
+
+        context.watch(atom)
+
+        XCTAssertEqual(context.lookup(atom), 100)
+    }
+
     func testSnapshot() {
         let store = AtomStore()
         let container = SubscriptionContainer()

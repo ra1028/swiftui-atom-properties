@@ -154,4 +154,23 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         _store.watch(atom, in: _transaction)
     }
+
+    /// Returns the already cached value associated with a given atom without side effects.
+    ///
+    /// This method returns the value only when it is already cached, otherwise, it returns `nil`.
+    /// It has no side effects such as the creation of new values or watching to atoms.
+    ///
+    /// ```swift
+    /// let context = ...
+    /// if let text = context.lookup(TextAtom()) {
+    ///     print(text)  // Prints the cached value associated with `TextAtom`.
+    /// }
+    /// ```
+    ///
+    /// - Parameter atom: An atom that associates the value.
+    ///
+    /// - Returns: The already cached value associated with the given atom.
+    public func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
+        _store.lookup(atom)
+    }
 }
