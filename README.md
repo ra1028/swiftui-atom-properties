@@ -933,6 +933,7 @@ Context is a structure for using and interacting with atom values from views or 
 |[state](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomwatchablecontext/state(_:))|Gets a binding to the atom state.|
 |[refresh](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/refresh(_:))|Reset an atom and await until asynchronous operation is complete.|
 |[reset](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/reset(_:))|Reset an atom to the default value or a first output.|
+|[lookup](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/lookup(_:))|Lookup an already cached atom value.|
 
 There are the following types context as different contextual environments.  
 The APIs described in each section below are their own specific functionality depending on the environment in which it is used, in addition to the above common APIs.  
