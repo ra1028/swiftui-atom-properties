@@ -170,6 +170,36 @@ internal struct StoreContext {
     }
 
     @usableFromInline
+    func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value {
+        let override = lookupOverride(of: atom)
+        let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
+        let state = getState(of: atom, for: key)
+        let value: Node.Loader.Value
+
+        if let override {
+            value = override.value(atom)
+        }
+        else {
+            let context = AtomUpdatedContext(store: self, coordinator: state.coordinator)
+            value = await atom.refresh(context: context)
+        }
+
+        guard let cache = lookupCache(of: atom, for: key) else {
+            // Release the temporarily created state.
+            // Do not notify update to observers here because refresh doesn't create a new cache.
+            release(for: key)
+            return value
+        }
+
+        // Notify update unless it's cancelled or terminated by other operations.
+        if let transaction = state.transaction, !Task.isCancelled && !transaction.isTerminated {
+            update(atom: atom, for: key, value: value, cache: cache, order: .newValue)
+        }
+
+        return value
+    }
+
+    @usableFromInline
     func reset(_ atom: some Atom) {
         let override = lookupOverride(of: atom)
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)

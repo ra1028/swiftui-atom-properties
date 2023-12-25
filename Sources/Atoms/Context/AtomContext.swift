@@ -79,8 +79,12 @@ public protocol AtomContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
+    @_disfavoredOverload
     @discardableResult
     func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader
+
+    @discardableResult
+    func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value
 
     /// Resets the value associated with the given atom, and then notify.
     ///

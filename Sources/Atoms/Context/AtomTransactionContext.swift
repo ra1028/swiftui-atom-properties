@@ -106,8 +106,15 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
     @inlinable
+    @_disfavoredOverload
     @discardableResult
     public func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
+        await _store.refresh(atom)
+    }
+
+    @inlinable
+    @discardableResult
+    public func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value {
         await _store.refresh(atom)
     }
 
