@@ -2,7 +2,7 @@ import Atoms
 import SwiftUI
 
 struct SearchScreen: View {
-    @Watch(SearchMoviesAtom())
+    @Watch(SearchMoviesAtom().phase)
     var movies
 
     @ViewContext
@@ -36,7 +36,7 @@ struct SearchScreen: View {
         .navigationTitle("Search Results")
         .listStyle(.insetGrouped)
         .refreshable {
-            await context.refresh(SearchMoviesAtom())
+            await context.refresh(SearchMoviesAtom().phase)
         }
         .sheet(item: $selectedMovie) { movie in
             DetailScreen(movie: movie)

@@ -40,7 +40,7 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
         value
     }
 
-    /// Refreshes and awaits for the passed value to be finished to yield values
+    /// Refreshes and waits for the passed value to finish outputting values
     /// and returns a final value.
     public func refresh(context: Context) async -> Value {
         let sequence = context.transaction(atom.sequence)
@@ -70,9 +70,9 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
         }
     }
 
-    /// Refreshes and awaits for the passed value to be finished to yield values
+    /// Refreshes and waits for the passed value to finish outputting values
     /// and returns a final value.
-    public func refreshOverridden(value: Value, context: Context) async -> Value {
+    public func refresh(overridden value: Value, context: Context) async -> Value {
         value
     }
 }

@@ -221,10 +221,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(store.graph.children, [dependency0Key: [key]])
         XCTAssertEqual((store.state.caches[dependency0Key] as? AtomCache<TestStateAtom<Int>>)?.value, 0)
         XCTAssertNotNil(store.state.states[dependency0Key])
-        XCTAssertEqual(
-            snapshots.map { $0.caches.mapValues { $0.value as? Int } },
-            [[dependency0Key: 0]]
-        )
+        XCTAssertTrue(snapshots.flatMap(\.caches).isEmpty)
 
         snapshots.removeAll()
         transaction.terminate()

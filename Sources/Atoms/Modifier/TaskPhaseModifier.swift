@@ -35,7 +35,7 @@ public extension Atom where Loader: AsyncAtomLoader {
 /// representation ``AsyncPhase`` that changes overtime.
 ///
 /// Use ``Atom/phase`` instead of using this modifier directly.
-public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
+public struct TaskPhaseModifier<Success, Failure: Error>: RefreshableAtomModifier {
     /// A type of base value to be modified.
     public typealias BaseValue = Task<Success, Failure>
 
@@ -67,6 +67,24 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AtomModifier {
 
     /// Associates given value and handle updates and cancellations.
     public func associateOverridden(value: Value, context: Context) -> Value {
+        value
+    }
+
+    /// Refreshes and waits for the passed original value to finish outputting values
+    /// and returns a final value.
+    public func refresh(modifying value: BaseValue, context: Context) async -> Value {
+        context.addTermination(value.cancel)
+
+        return await withTaskCancellationHandler {
+            await AsyncPhase(value.result)
+        } onCancel: {
+            value.cancel()
+        }
+    }
+
+    /// Refreshes and waits for the passed value to finish outputting values
+    /// and returns a final value.
+    public func refresh(overridden value: Value, context: Context) async -> Value {
         value
     }
 }

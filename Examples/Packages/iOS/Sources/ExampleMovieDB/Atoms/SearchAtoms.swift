@@ -7,19 +7,15 @@ struct SearchQueryAtom: StateAtom, Hashable {
     }
 }
 
-struct SearchMoviesAtom: PublisherAtom, Hashable {
-    func publisher(context: Context) -> AnyPublisher<[Movie], Error> {
+struct SearchMoviesAtom: ThrowingTaskAtom, Hashable {
+    func value(context: Context) async throws -> [Movie] {
         let api = context.watch(APIClientAtom())
         let query = context.watch(SearchQueryAtom())
 
-        if query.isEmpty {
-            return Just([])
-                .setFailureType(to: Error.self)
-                .eraseToAnyPublisher()
+        guard !query.isEmpty else {
+            return []
         }
 
-        return api.getSearchMovies(query: query)
-            .map(\.results)
-            .eraseToAnyPublisher()
+        return try await api.getSearchMovies(query: query).results
     }
 }
