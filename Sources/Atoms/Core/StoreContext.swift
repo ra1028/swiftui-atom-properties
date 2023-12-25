@@ -101,16 +101,11 @@ internal struct StoreContext {
         let store = getStore()
         let override = lookupOverride(of: atom)
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
-        let cache = lookupCache(of: atom, for: key)
-        let newCache = cache ?? makeNewCache(of: atom, for: key, override: override)
-        let isNew = store.graph.children[key, default: []].insert(transaction.key).inserted
+        let newCache = lookupCache(of: atom, for: key) ?? makeNewCache(of: atom, for: key, override: override)
 
         // Add an `Edge` from the upstream to downstream.
         store.graph.dependencies[transaction.key, default: []].insert(key)
-
-        if isNew || cache == nil {
-            notifyUpdateToObservers()
-        }
+        store.graph.children[key, default: []].insert(transaction.key)
 
         return newCache.value
     }
@@ -125,21 +120,20 @@ internal struct StoreContext {
         let store = getStore()
         let override = lookupOverride(of: atom)
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
-        let cache = lookupCache(of: atom, for: key)
-        let newCache = cache ?? makeNewCache(of: atom, for: key, override: override)
+        let newCache = lookupCache(of: atom, for: key) ?? makeNewCache(of: atom, for: key, override: override)
         let subscription = Subscription(
             location: container.location,
             requiresObjectUpdate: requiresObjectUpdate,
             notifyUpdate: notifyUpdate
         )
+        let isNewSubscription = container.subscribingKeys.insert(key).inserted
 
         store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key)
         container.unsubscribe = { keys in
             unsubscribe(keys, for: container.key)
         }
-        let isNew = container.subscribingKeys.insert(key).inserted
 
-        if isNew || cache == nil {
+        if isNewSubscription {
             notifyUpdateToObservers()
         }
 
@@ -238,7 +232,10 @@ internal struct StoreContext {
 
             // Release dependencies that are no longer dependent.
             if let dependencies = obsoletedDependencies[key] {
-                detach(key, fromDependencies: dependencies)
+                for dependency in ContiguousArray(dependencies) {
+                    store.graph.children[dependency]?.remove(key)
+                    checkRelease(for: dependency)
+                }
             }
 
             // Notify updates only for the subscriptions of restored atoms.
@@ -277,21 +274,36 @@ private extension StoreContext {
     }
 
     func prepareTransaction<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
-        // Invalidate dependencies and an ongoing transaction.
-        let oldDependencies = invalidate(for: key)
+        let store = getStore()
+        let state = getState(of: atom, for: key)
+
+        // Terminate the ongoing transaction first.
+        state.transaction?.terminate()
+
+        // Remove current dependencies.
+        let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
+
+        // Detatch the atom from its dependencies.
+        for dependency in ContiguousArray(oldDependencies) {
+            store.graph.children[dependency]?.remove(key)
+        }
+
         let transaction = Transaction(key: key) {
             let store = getStore()
             let dependencies = store.graph.dependencies[key] ?? []
             let obsoletedDependencies = oldDependencies.subtracting(dependencies)
+            let newDependencies = dependencies.subtracting(oldDependencies)
 
-            if !obsoletedDependencies.isEmpty {
-                detach(key, fromDependencies: obsoletedDependencies)
+            for dependency in ContiguousArray(obsoletedDependencies) {
+                checkRelease(for: dependency)
+            }
+
+            if !obsoletedDependencies.isEmpty || !newDependencies.isEmpty {
                 notifyUpdateToObservers()
             }
         }
 
         // Register the transaction state so it can be terminated from anywhere.
-        let state = getState(of: atom, for: key)
         state.transaction = transaction
 
         return AtomLoaderContext(
@@ -336,7 +348,7 @@ private extension StoreContext {
 
         // Notifying update to view subscriptions first.
         if let subscriptions = store.state.subscriptions[key] {
-            for subscription in subscriptions.values {
+            for subscription in ContiguousArray(subscriptions.values) {
                 if case .objectWillChange = order, subscription.requiresObjectUpdate {
                     RunLoop.current.perform(subscription.notifyUpdate)
                 }
@@ -348,7 +360,7 @@ private extension StoreContext {
 
         func notifyUpdate() {
             if let children = store.graph.children[key] {
-                for child in children {
+                for child in ContiguousArray(children) {
                     // Reset the atom value and then notify update to downstream atoms.
                     if let cache = store.state.caches[child] {
                         reset(cache.atom)
@@ -390,27 +402,22 @@ private extension StoreContext {
         notifyUpdateToObservers()
     }
 
-    func invalidate(for key: AtomKey) -> Set<AtomKey> {
-        let store = getStore()
-
-        // Remove the current transaction and then terminate to prevent it to watch new atoms
-        // or add new terminations.
-        // Then, temporarily remove dependencies but do not release them recursively here.
-        store.state.states[key]?.transaction?.terminate()
-        return store.graph.dependencies.removeValue(forKey: key) ?? []
-    }
-
     func release(for key: AtomKey) {
-        let store = getStore()
-
         // Invalidate transactions, dependencies, and the atom state.
-        let dependencies = invalidate(for: key)
+        let store = getStore()
+        let dependencies = store.graph.dependencies.removeValue(forKey: key)
+        let state = store.state.states.removeValue(forKey: key)
         store.graph.children.removeValue(forKey: key)
         store.state.caches.removeValue(forKey: key)
-        store.state.states.removeValue(forKey: key)
         store.state.subscriptions.removeValue(forKey: key)
+        state?.transaction?.terminate()
 
-        detach(key, fromDependencies: dependencies)
+        if let dependencies {
+            for dependency in ContiguousArray(dependencies) {
+                store.graph.children[dependency]?.remove(key)
+                checkRelease(for: dependency)
+            }
+        }
     }
 
     @discardableResult
@@ -432,15 +439,6 @@ private extension StoreContext {
 
         release(for: key)
         return true
-    }
-
-    func detach(_ key: AtomKey, fromDependencies dependencies: Set<AtomKey>) {
-        let store = getStore()
-
-        for dependency in dependencies {
-            store.graph.children[dependency]?.remove(key)
-            checkRelease(for: dependency)
-        }
     }
 
     func notifyUpdateToObservers() {

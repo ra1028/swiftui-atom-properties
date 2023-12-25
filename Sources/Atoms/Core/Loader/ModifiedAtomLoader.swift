@@ -31,3 +31,17 @@ public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader
         modifier.shouldUpdate(newValue: newValue, oldValue: oldValue)
     }
 }
+
+extension ModifiedAtomLoader: RefreshableAtomLoader where Node.Loader: RefreshableAtomLoader, Modifier: RefreshableAtomModifier {
+    public func refresh(context: Context) async -> Value {
+        let value = await context.transaction { context in
+            await context.refresh(atom)
+            return context.watch(atom)
+        }
+        return await modifier.refresh(modifying: value, context: context.modifierContext)
+    }
+
+    public func refreshOverridden(value: Value, context: Context) async -> Value {
+        await modifier.refresh(overridden: value, context: context.modifierContext)
+    }
+}

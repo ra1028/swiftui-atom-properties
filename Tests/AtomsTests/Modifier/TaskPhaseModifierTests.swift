@@ -54,15 +54,14 @@ final class TaskPhaseModifierTests: XCTestCase {
     }
 
     func testRefresh() async {
-        let parentAtom = TestTaskAtom(value: 0)
-        let atom = parentAtom.phase
+        let atom = TestTaskAtom(value: 0).phase
         let context = AtomTestContext()
 
         XCTAssertEqual(context.watch(atom), .suspending)
 
-        await context.wait(for: atom, until: \.isSuccess)
-        await context.refresh(parentAtom)
+        let phase = await context.refresh(atom)
 
+        XCTAssertEqual(phase, .success(0))
         XCTAssertEqual(context.watch(atom), .success(0))
     }
 }

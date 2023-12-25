@@ -45,3 +45,10 @@ public extension AtomModifier {
         true
     }
 }
+
+public protocol RefreshableAtomModifier: AtomModifier {
+    @MainActor
+    func refresh(modifying value: BaseValue, context: Context) async -> Value
+    @MainActor
+    func refresh(overridden value: Value, context: Context) async -> Value
+}
