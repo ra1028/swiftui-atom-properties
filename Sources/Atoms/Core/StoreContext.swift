@@ -180,7 +180,7 @@ internal struct StoreContext {
             value = override.value(atom)
         }
         else {
-            let context = AtomUpdatedContext(store: self, coordinator: state.coordinator)
+            let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
             value = await atom.refresh(context: context)
         }
 
@@ -402,7 +402,7 @@ private extension StoreContext {
             notifyUpdateToObservers()
 
             let state = getState(of: atom, for: key)
-            let context = AtomUpdatedContext(store: self, coordinator: state.coordinator)
+            let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
             atom.updated(newValue: value, oldValue: oldValue, context: context)
         }
 

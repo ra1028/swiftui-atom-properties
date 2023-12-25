@@ -60,7 +60,7 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``AtomTransactionContext``
 - ``AtomViewContext``
 - ``AtomTestContext``
-- ``AtomUpdatedContext``
+- ``AtomCurrentContext``
 - ``AtomModifierContext``
 
 ### Internal System

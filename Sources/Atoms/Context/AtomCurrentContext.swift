@@ -1,6 +1,6 @@
 /// A context structure that to read, set, and otherwise interacting with atoms.
 @MainActor
-public struct AtomUpdatedContext<Coordinator>: AtomContext {
+public struct AtomCurrentContext<Coordinator>: AtomContext {
     @usableFromInline
     internal let _store: StoreContext
 
