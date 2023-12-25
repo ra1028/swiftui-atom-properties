@@ -30,10 +30,10 @@ public extension AtomLoader {
 /// A loader protocol that represents an actual implementation of the corresponding atom
 /// that provides values asynchronously.
 public protocol RefreshableAtomLoader: AtomLoader {
-    /// Refreshes and awaits until the asynchronous is finished and returns a final value.
+    /// Refreshes and waits until the asynchronous process is finished and returns a final value.
     func refresh(context: Context) async -> Value
 
-    /// Refreshes and awaits for the passed value to be finished to yield values
+    /// Refreshes and waits for the passed value to finish outputting values
     /// and returns a final value.
     func refreshOverridden(value: Value, context: Context) async -> Value
 }

@@ -70,6 +70,8 @@ public struct TaskPhaseModifier<Success, Failure: Error>: RefreshableAtomModifie
         value
     }
 
+    /// Refreshes and waits for the passed original value to finish outputting values
+    /// and returns a final value.
     public func refresh(modifying value: BaseValue, context: Context) async -> Value {
         context.addTermination(value.cancel)
 
@@ -80,6 +82,8 @@ public struct TaskPhaseModifier<Success, Failure: Error>: RefreshableAtomModifie
         }
     }
 
+    /// Refreshes and waits for the passed value to finish outputting values
+    /// and returns a final value.
     public func refresh(overridden value: Value, context: Context) async -> Value {
         value
     }

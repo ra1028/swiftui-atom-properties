@@ -33,6 +33,7 @@ public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader
 }
 
 extension ModifiedAtomLoader: RefreshableAtomLoader where Node.Loader: RefreshableAtomLoader, Modifier: RefreshableAtomModifier {
+    /// Refreshes and waits until the asynchronous process is finished and returns a final value.
     public func refresh(context: Context) async -> Value {
         let value = await context.transaction { context in
             await context.refresh(atom)
@@ -41,6 +42,8 @@ extension ModifiedAtomLoader: RefreshableAtomLoader where Node.Loader: Refreshab
         return await modifier.refresh(modifying: value, context: context.modifierContext)
     }
 
+    /// Refreshes and waits for the passed value to finish outputting values
+    /// and returns a final value.
     public func refreshOverridden(value: Value, context: Context) async -> Value {
         await modifier.refresh(overridden: value, context: context.modifierContext)
     }

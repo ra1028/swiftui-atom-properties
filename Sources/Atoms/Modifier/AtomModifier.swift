@@ -8,8 +8,7 @@ public extension Atom {
     }
 }
 
-/// A modifier that you apply to an atom, producing a  different version
-/// of the original value.
+/// A modifier that you apply to an atom, producing a new value modified from the original value.
 public protocol AtomModifier {
     /// A type representing the stable identity of this modifier.
     associatedtype Key: Hashable
@@ -46,9 +45,16 @@ public extension AtomModifier {
     }
 }
 
+/// A modifier that you apply to an atom, producing a new value modified from the original value,
+/// and waits until it has finished outputting values.
 public protocol RefreshableAtomModifier: AtomModifier {
+    /// Refreshes and waits for the passed original value to finish outputting values
+    /// and returns a final value.
     @MainActor
     func refresh(modifying value: BaseValue, context: Context) async -> Value
+
+    /// Refreshes and waits for the passed value to finish outputting values
+    /// and returns a final value.
     @MainActor
     func refresh(overridden value: Value, context: Context) async -> Value
 }
