@@ -8,7 +8,7 @@ protocol APIClientProtocol {
     func getTopRated(page: Int) async throws -> PagedResponse<Movie>
     func getUpcoming(page: Int) async throws -> PagedResponse<Movie>
     func getCredits(movieID: Int) async throws -> Credits
-    func getSearchMovies(query: String) -> Future<PagedResponse<Movie>, Error>  // Use Publisher as an example.
+    func getSearchMovies(query: String) async throws -> PagedResponse<Movie>
 }
 
 struct APIClient: APIClientProtocol {
@@ -30,7 +30,7 @@ struct APIClient: APIClientProtocol {
             imageBaseURL
             .appendingPathComponent(size.rawValue)
             .appendingPathComponent(path)
-        let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad, timeoutInterval: 10)
+        let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad, timeoutInterval: 5)
         let (data, _) = try await session.data(for: request)
         return UIImage(data: data) ?? UIImage()
     }
@@ -57,24 +57,6 @@ struct APIClient: APIClientProtocol {
 
     func getSearchMovies(query: String) async throws -> PagedResponse<Movie> {
         try await get(path: "search/movie", parameters: ["query": query])
-    }
-
-    func getSearchMovies(query: String) -> Future<PagedResponse<Movie>, Error> {
-        Future { fulfill in
-            Task {
-                do {
-                    let response = try await get(
-                        PagedResponse<Movie>.self,
-                        path: "search/movie",
-                        parameters: ["query": query]
-                    )
-                    fulfill(.success(response))
-                }
-                catch {
-                    fulfill(.failure(error))
-                }
-            }
-        }
     }
 }
 
@@ -142,9 +124,7 @@ final class MockAPIClient: APIClientProtocol {
         try creditsResponse.get()
     }
 
-    func getSearchMovies(query: String) -> Future<PagedResponse<Movie>, Error> {
-        Future { fulfill in
-            fulfill(self.searchMoviesResponse)
-        }
+    func getSearchMovies(query: String) async throws -> PagedResponse<Movie> {
+        try searchMoviesResponse.get()
     }
 }
