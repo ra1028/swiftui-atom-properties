@@ -148,7 +148,7 @@ internal struct StoreContext {
         let value: Node.Loader.Value
 
         if let override {
-            value = await atom._loader.refreshOverridden(value: override.value(atom), context: context)
+            value = await atom._loader.refresh(overridden: override.value(atom), context: context)
         }
         else {
             value = await atom._loader.refresh(context: context)

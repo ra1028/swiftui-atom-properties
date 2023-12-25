@@ -35,7 +35,7 @@ public protocol RefreshableAtomLoader: AtomLoader {
 
     /// Refreshes and waits for the passed value to finish outputting values
     /// and returns a final value.
-    func refreshOverridden(value: Value, context: Context) async -> Value
+    func refresh(overridden value: Value, context: Context) async -> Value
 }
 
 /// A loader protocol that represents an actual implementation of the corresponding atom

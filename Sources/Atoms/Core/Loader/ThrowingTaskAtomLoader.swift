@@ -37,12 +37,12 @@ public struct ThrowingTaskAtomLoader<Node: ThrowingTaskAtom>: AsyncAtomLoader {
         let task = Task {
             try await context.transaction(atom.value)
         }
-        return await refreshOverridden(value: task, context: context)
+        return await refresh(overridden: task, context: context)
     }
 
     /// Refreshes and waits for the passed value to finish outputting values
     /// and returns a final value.
-    public func refreshOverridden(value: Value, context: Context) async -> Value {
+    public func refresh(overridden value: Value, context: Context) async -> Value {
         context.addTermination(value.cancel)
 
         return await withTaskCancellationHandler {

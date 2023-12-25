@@ -72,7 +72,7 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
 
     /// Refreshes and waits for the passed value to finish outputting values
     /// and returns a final value.
-    public func refreshOverridden(value: Value, context: Context) async -> Value {
+    public func refresh(overridden value: Value, context: Context) async -> Value {
         value
     }
 }

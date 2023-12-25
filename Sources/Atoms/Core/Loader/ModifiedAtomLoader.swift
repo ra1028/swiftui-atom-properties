@@ -44,7 +44,7 @@ extension ModifiedAtomLoader: RefreshableAtomLoader where Node.Loader: Refreshab
 
     /// Refreshes and waits for the passed value to finish outputting values
     /// and returns a final value.
-    public func refreshOverridden(value: Value, context: Context) async -> Value {
+    public func refresh(overridden value: Value, context: Context) async -> Value {
         await modifier.refresh(overridden: value, context: context.modifierContext)
     }
 }
