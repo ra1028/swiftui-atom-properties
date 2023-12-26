@@ -1,6 +1,6 @@
 /// A context structure that to read, set, and otherwise interacting with atoms.
 @MainActor
-public struct AtomUpdatedContext<Coordinator>: AtomContext {
+public struct AtomCurrentContext<Coordinator>: AtomContext {
     @usableFromInline
     internal let _store: StoreContext
 
@@ -97,9 +97,32 @@ public struct AtomUpdatedContext<Coordinator>: AtomContext {
     /// - Parameter atom: An atom that associates the value.
     ///
     /// - Returns: The value which completed refreshing associated with the given atom.
-    @discardableResult
     @inlinable
+    @_disfavoredOverload
+    @discardableResult
     public func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
+        await _store.refresh(atom)
+    }
+
+    /// Refreshes and then return the value associated with the given refreshable atom.
+    ///
+    /// This method only accepts atoms that conform to ``Refreshable`` protocol.
+    /// It refreshes the value with the custom refresh behavior, so the caller can await until
+    /// the value completes the update.
+    /// Note that it can be used only in a context that supports concurrency.
+    ///
+    /// ```swift
+    /// let context = ...
+    /// let value = await context.refresh(CustomRefreshableAtom())
+    /// print(value)
+    /// ```
+    ///
+    /// - Parameter atom: An atom that associates the value.
+    ///
+    /// - Returns: The value which completed refreshing associated with the given atom.
+    @inlinable
+    @discardableResult
+    public func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value {
         await _store.refresh(atom)
     }
 

@@ -76,6 +76,23 @@ struct TestTaskAtom<T: Sendable>: TaskAtom {
     }
 }
 
+struct TestCustomRefreshableAtom<Publisher: Combine.Publisher>: PublisherAtom, Refreshable {
+    var makePublisher: () -> Publisher
+    var refresh: () -> AsyncPhase<Publisher.Output, Publisher.Failure>
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
+
+    func publisher(context: Context) -> Publisher {
+        makePublisher()
+    }
+
+    func refresh(context: RefreshContext) async -> AsyncPhase<Publisher.Output, Publisher.Failure> {
+        refresh()
+    }
+}
+
 struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom {
     var getResult: () -> Result<Success, Error>
     var onUpdated: ((Task<Success, Error>, Task<Success, Error>) -> Void)?
