@@ -1,3 +1,4 @@
+import Combine
 import XCTest
 
 @testable import Atoms
@@ -35,7 +36,7 @@ final class AtomViewContextTests: XCTestCase {
     }
 
     func testRefresh() async {
-        let atom = TestTaskAtom(value: 100)
+        let atom = TestPublisherAtom { Just(100) }
         let store = AtomStore()
         let container = SubscriptionContainer()
         let context = AtomViewContext(
@@ -44,11 +45,34 @@ final class AtomViewContextTests: XCTestCase {
             notifyUpdate: {}
         )
 
-        context.watch(atom)
+        XCTAssertTrue(context.watch(atom).isSuspending)
 
         let value = await context.refresh(atom).value
 
         XCTAssertEqual(value, 100)
+        XCTAssertEqual(context.watch(atom).value, 100)
+    }
+
+    func testCustomRefresh() async {
+        let atom = TestCustomRefreshableAtom {
+            Just(100)
+        } refresh: {
+            .success(200)
+        }
+        let store = AtomStore()
+        let container = SubscriptionContainer()
+        let context = AtomViewContext(
+            store: StoreContext(store),
+            container: container.wrapper,
+            notifyUpdate: {}
+        )
+
+        XCTAssertTrue(context.watch(atom).isSuspending)
+
+        let value = await context.refresh(atom).value
+
+        XCTAssertEqual(value, 200)
+        XCTAssertEqual(context.watch(atom).value, 200)
     }
 
     func testReset() {

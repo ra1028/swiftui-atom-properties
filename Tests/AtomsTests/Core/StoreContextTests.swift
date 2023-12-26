@@ -296,33 +296,116 @@ final class StoreContextTests: XCTestCase {
     func testRefresh() async {
         let store = AtomStore()
         let container = SubscriptionContainer()
-        let atom = TestPublisherAtom(makePublisher: { Just(0) })
+        let atom = TestPublisherAtom { Just(0) }
         let key = AtomKey(atom)
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let context = StoreContext(store, observers: [observer])
 
-        let value0 = await context.refresh(atom).value
-        XCTAssertEqual(value0, 0)
+        let phase0 = await context.refresh(atom)
+        XCTAssertEqual(phase0.value, 0)
         XCTAssertNil(store.state.caches[key])
         XCTAssertNil(store.state.states[key])
         XCTAssertTrue(snapshots.isEmpty)
 
         var updateCount = 0
-        _ = context.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {
+        let phase1 = context.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {
             updateCount += 1
         }
 
+        XCTAssertTrue(phase1.isSuspending)
+
         snapshots.removeAll()
-        let value1 = await context.refresh(atom).value
-        XCTAssertEqual(value1, 0)
-        XCTAssertNotNil(store.state.caches[key])
+
+        let phase2 = await context.refresh(atom)
+        XCTAssertEqual(phase2.value, 0)
         XCTAssertNotNil(store.state.states[key])
         XCTAssertEqual((store.state.caches[key] as? AtomCache<TestPublisherAtom<Just<Int>>>)?.value, .success(0))
         XCTAssertEqual(updateCount, 1)
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0.value as? AsyncPhase<Int, Never> } },
             [[key: .success(0)]]
+        )
+
+        let scopeKey = ScopeKey(token: ScopeKey.Token())
+        let overrideAtomKey = AtomKey(atom, overrideScopeKey: scopeKey)
+        let scopedContext = context.scoped(
+            key: scopeKey,
+            observers: [],
+            overrides: [
+                OverrideKey(atom): AtomOverride<TestPublisherAtom<Just<Int>>> { _ in .success(1) }
+            ]
+        )
+
+        let phase3 = scopedContext.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {}
+        XCTAssertEqual(phase3.value, 1)
+
+        let phase4 = await scopedContext.refresh(atom)
+        XCTAssertEqual(phase4.value, 1)
+        XCTAssertNotNil(store.state.states[overrideAtomKey])
+        XCTAssertEqual(
+            (store.state.caches[overrideAtomKey] as? AtomCache<TestPublisherAtom<Just<Int>>>)?.value,
+            .success(0)
+        )
+    }
+
+    func testCustomRefresh() async {
+        let store = AtomStore()
+        let container = SubscriptionContainer()
+        let atom = TestCustomRefreshableAtom {
+            Just(0)
+        } refresh: {
+            .success(1)
+        }
+        let key = AtomKey(atom)
+        var snapshots = [Snapshot]()
+        let observer = Observer { snapshots.append($0) }
+        let context = StoreContext(store, observers: [observer])
+
+        let phase0 = await context.refresh(atom)
+        XCTAssertEqual(phase0.value, 1)
+        XCTAssertNil(store.state.caches[key])
+        XCTAssertNil(store.state.states[key])
+        XCTAssertTrue(snapshots.isEmpty)
+
+        var updateCount = 0
+        let phase1 = context.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {
+            updateCount += 1
+        }
+
+        XCTAssertTrue(phase1.isSuspending)
+
+        snapshots.removeAll()
+
+        let phase2 = await context.refresh(atom)
+        XCTAssertEqual(phase2.value, 1)
+        XCTAssertNotNil(store.state.states[key])
+        XCTAssertEqual((store.state.caches[key] as? AtomCache<TestCustomRefreshableAtom<Just<Int>>>)?.value, .success(1))
+        XCTAssertEqual(updateCount, 1)
+        XCTAssertEqual(
+            snapshots.map { $0.caches.mapValues { $0.value as? AsyncPhase<Int, Never> } },
+            [[key: .success(1)]]
+        )
+
+        let scopeKey = ScopeKey(token: ScopeKey.Token())
+        let overrideAtomKey = AtomKey(atom, overrideScopeKey: scopeKey)
+        let scopedContext = context.scoped(
+            key: scopeKey,
+            observers: [],
+            overrides: [
+                OverrideKey(atom): AtomOverride<TestCustomRefreshableAtom<Just<Int>>> { _ in .success(2) }
+            ]
+        )
+
+        let phase3 = scopedContext.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {}
+        XCTAssertEqual(phase3.value, 2)
+
+        let phase4 = await scopedContext.refresh(atom)
+        XCTAssertEqual(phase4.value, 2)
+        XCTAssertNotNil(store.state.states[overrideAtomKey])
+        XCTAssertEqual(
+            (store.state.caches[overrideAtomKey] as? AtomCache<TestCustomRefreshableAtom<Just<Int>>>)?.value,
+            .success(2)
         )
     }
 

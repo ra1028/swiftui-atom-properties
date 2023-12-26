@@ -1,3 +1,4 @@
+import Combine
 import XCTest
 
 @testable import Atoms
@@ -28,13 +29,25 @@ final class AtomCurrentContextTests: XCTestCase {
     }
 
     func testRefresh() async {
-        let atom = TestTaskAtom(value: 100)
+        let atom = TestPublisherAtom { Just(100) }
         let store = AtomStore()
         let context = AtomCurrentContext(store: StoreContext(store), coordinator: ())
-
         let value = await context.refresh(atom).value
 
         XCTAssertEqual(value, 100)
+    }
+
+    func testCustomRefresh() async {
+        let atom = TestCustomRefreshableAtom {
+            Just(100)
+        } refresh: {
+            .success(200)
+        }
+        let store = AtomStore()
+        let context = AtomCurrentContext(store: StoreContext(store), coordinator: ())
+        let value = await context.refresh(atom).value
+
+        XCTAssertEqual(value, 200)
     }
 
     func testReset() {
