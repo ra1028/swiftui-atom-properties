@@ -19,7 +19,6 @@ public protocol Atom {
     /// with other atoms.
     typealias Context = AtomTransactionContext<Coordinator>
 
-    // NOTE: This typealias could not be compiled if defined as `AtomCurrentContext<Coordinator>` at this point Swift version 5.7.2.
     /// A type of the context structure that to read, set, and otherwise interacting
     /// with other atoms.
     typealias UpdatedContext = AtomCurrentContext<Loader.Coordinator>

@@ -1,7 +1,7 @@
-/// A marker protocol that indicates that the value of atoms conform with this protocol
-/// will continue to be retained even after they are no longer watched to.
+/// An attribute protocol to allow the value of an atom to continue being retained
+/// even after they are no longer watched to.
 ///
-/// Note that this protocol doesn't apply to overridden atoms.
+/// Note that overridden atoms are not retained even with this attribute.
 ///
 /// ## Example
 ///

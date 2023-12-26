@@ -768,7 +768,7 @@ It gives custom refresh behavior to ValueAtom which is inherently unable to refr
 ```swift
 struct RandomIntAtom: ValueAtom, Refreshable, Hashable {
     func value(context: Context) -> Int {
-        .random(in: 0..<100)
+        0
     }
 
     func refresh(context: RefreshContext) async -> Int {
