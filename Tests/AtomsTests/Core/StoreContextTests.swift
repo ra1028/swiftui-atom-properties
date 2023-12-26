@@ -345,7 +345,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertNotNil(store.state.states[overrideAtomKey])
         XCTAssertEqual(
             (store.state.caches[overrideAtomKey] as? AtomCache<TestPublisherAtom<Just<Int>>>)?.value,
-            .success(0)
+            .success(1)
         )
     }
 
