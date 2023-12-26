@@ -757,6 +757,56 @@ struct FetchMasterDataAtom: ThrowingTaskAtom, KeepAlive, Hashable {
 
 </details>
 
+#### [Refreshable](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/refreshable)
+
+`Refreshable` allows you to implement a custom refreshable behavior to an atom.
+
+<details><summary><code>📖 Expand to see example</code></summary>
+
+It gives custom refresh behavior to ValueAtom which is inherently unable to refresh.  
+
+```swift
+struct RandomIntAtom: ValueAtom, Refreshable, Hashable {
+    func value(context: Context) -> Int {
+        .random(in: 0..<100)
+    }
+
+    func refresh(context: RefreshContext) async -> Int {
+        try? await Task.sleep(nanoseconds: 3 * 1_000_000_000)
+        return .random(in: 0..<100)
+    }
+}
+```
+
+It's also useful when you want to expose a converted value of an atom as another atom with having refresh ability while keeping the original one private visibility.  
+In this example, `FetchMoviesPhaseAtom` transparently exposes the value of `FetchMoviesTaskAtom` as AsyncPhase so that the error can be handled easily inside the atom, and `Refreshable` gives refreshing ability to `FetchMoviesPhaseAtom` itself.  
+
+```swift
+private struct FetchMoviesTaskAtom: ThrowingTaskAtom, Hashable {
+    func value(context: Context) async throws -> [Movies] {
+        try await fetchMovies()
+    }
+}
+
+struct FetchMoviesPhaseAtom: ValueAtom, Refreshable, Hashable {
+    func value(context: Context) -> AsyncPhase<[Movies], Error> {
+        context.watch(FetchMoviesTaskAtom().phase)
+    }
+
+    func refresh(context: RefreshContext) async -> AsyncPhase<[Movies], Error> {
+        await context.refresh(FetchMoviesTaskAtom().phase)
+    }
+
+    func updated(newValue: AsyncPhase<[Movies], Error>, oldValue: AsyncPhase<[Movies], Error>, context: UpdatedContext) {
+        if case .failure = newValue {
+            print("Failed to fetch movies.")
+        }
+    }
+}
+```
+
+</details>
+
 ---
 
 ### Property Wrappers
