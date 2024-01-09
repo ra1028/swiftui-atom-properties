@@ -981,7 +981,7 @@ Context is a structure for using and interacting with atom values from views or 
 |[modify](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/modify(_:body:))|Modifies the cached atom value.|
 |[subscript[]](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/subscript(_:))|Read-write access for applying mutating methods.|
 |[state](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomwatchablecontext/state(_:))|Gets a binding to the atom state.|
-|[refresh](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/refresh(_:))|Reset an atom and await until asynchronous operation is complete.|
+|[refresh](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/refresh(_:)-1gb3a)|Produce a new value of the atom after waiting until asynchronous operation is complete.|
 |[reset](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/reset(_:))|Reset an atom to the default value or a first output.|
 
 There are the following types context as different contextual environments.  
@@ -1110,7 +1110,7 @@ A context that can simulate any scenarios in which atoms are used from a view or
 |API|Use|
 |:--|:--|
 |[unwatch(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/unwatch(_:))|Simulates a scenario in which the atom is no longer watched.|
-|[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-1ce4h)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
+|[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-40pb3)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
 |[waitForUpdate(timeout:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/waitforupdate(timeout:))|Waits until any of the atoms watched through this context have been updated.|
 |[wait(for:timeout:until:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/wait(for:timeout:until:))|Waits for the given atom until it will be a certain state.|
 |[onUpdate](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/onupdate)|Sets a closure that notifies there has been an update to one of the atoms.|
@@ -1530,7 +1530,7 @@ class MessageLoader: ObservableObject {
 
 #### Side effects
 
-All atom types can optionally implement [`updated(newValue:oldValue:context:)`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/updated(newvalue:oldvalue:context:)-7kvo0) method to manage arbitrary side-effects of value updates, such as state persistence, state synchronization, logging, and etc.  
+All atom types can optionally implement [`updated(newValue:oldValue:context:)`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/updated(newvalue:oldvalue:context:)-98n6k) method to manage arbitrary side-effects of value updates, such as state persistence, state synchronization, logging, and etc.  
 In the above example, the initial state of the atom is retrieved from UserDefaults, and when the user updates the state, the value is reflected into UserDefaults as a side effect.
 
 <details><summary><code>📖 Expand to see example</code></summary>
