@@ -45,7 +45,7 @@
 
 </p>
 
-Atoms offers a simple but practical capability to tackle the complexity of modern apps. It effectively integrates the solution for both state management and dependency injection while allowing us to rapidly build an robust and testable application.  
+Atoms offer a simple but practical capability to tackle the complexity of modern apps. It effectively integrates the solution for both state management and dependency injection while allowing us to rapidly build a robust and testable application.  
 Building state by compositing atoms automatically optimizes rendering based on its dependency graph. This solves the problem of performance degradation caused by extra re-render which occurs before you realize.  
 
 <img src="assets/diagram.png" width=700>
