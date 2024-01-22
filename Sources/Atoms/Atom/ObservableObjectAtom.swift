@@ -57,8 +57,8 @@ public protocol ObservableObjectAtom: Atom {
     /// The observable object that returned from this method is managed internally and notifies
     /// its updates to downstream atoms and views that watches this atom.
     ///
-    /// - Parameter context: A context structure that to read, watch, and otherwise
-    ///                      interacting with other atoms.
+    /// - Parameter context: A context structure to read, watch, and otherwise
+    ///                      interact with other atoms.
     ///
     /// - Returns: An observable object that notifies its updates over time.
     @MainActor

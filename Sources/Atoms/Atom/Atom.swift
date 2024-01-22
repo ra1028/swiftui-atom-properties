@@ -1,9 +1,9 @@
 /// Declares that a type can produce a value that can be accessed from everywhere.
 ///
 /// The value produced by an atom is created only when the atom is watched from somewhere,
-/// and is immediately released when no longer watched to.
+/// and is immediately released when no longer watched.
 ///
-/// If the atom value needs to be preserved even if no longer watched to, you can consider
+/// If the atom value needs to be preserved even if no longer watched, you can consider
 /// conform the ``KeepAlive`` protocol to the atom.
 public protocol Atom {
     /// A type representing the stable identity of this atom.
@@ -15,11 +15,11 @@ public protocol Atom {
     /// A type to coordinate with the atom.
     associatedtype Coordinator = Void
 
-    /// A type of the context structure that to read, watch, and otherwise interacting
+    /// A type of the context structure to read, watch, and otherwise interact
     /// with other atoms.
     typealias Context = AtomTransactionContext<Coordinator>
 
-    /// A type of the context structure that to read, set, and otherwise interacting
+    /// A type of the context structure to read, set, and otherwise interact
     /// with other atoms.
     typealias UpdatedContext = AtomCurrentContext<Loader.Coordinator>
 
@@ -49,8 +49,8 @@ public protocol Atom {
     /// - Parameters:
     ///   - newValue: A new value after update.
     ///   - oldValue: An old value before update.
-    ///   - context: A context structure that to read, set, and otherwise
-    ///              interacting with other atoms.
+    ///   - context: A context structure to read, set, and otherwise
+    ///              interact with other atoms.
     @MainActor
     func updated(newValue: Loader.Value, oldValue: Loader.Value, context: UpdatedContext)
 

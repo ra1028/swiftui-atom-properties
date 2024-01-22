@@ -48,14 +48,14 @@ public protocol AsyncSequenceAtom: Atom {
     /// The type of asynchronous sequence that this atom manages.
     associatedtype Sequence: AsyncSequence
 
-    /// Creates an asynchronous sequence that to be started when this atom is actually used.
+    /// Creates an asynchronous sequence to be started when this atom is actually used.
     ///
     /// The sequence that is produced by this method must be instantiated anew each time this method
     /// is called. Otherwise, it could throw a fatal error because Swift Concurrency  doesn't allow
     /// single `AsyncSequence` instance to be shared between multiple locations.
     ///
-    /// - Parameter context: A context structure that to read, watch, and otherwise
-    ///                      interacting with other atoms.
+    /// - Parameter context: A context structure to read, watch, and otherwise
+    ///                      interact with other atoms.
     ///
     /// - Returns: An asynchronous sequence that produces asynchronous, sequential elements.
     @MainActor
