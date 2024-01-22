@@ -155,7 +155,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
         _store.reset(atom)
     }
 
-    /// Accesses the value associated with the given atom for reading and initializes watch to
+    /// Accesses the value associated with the given atom for reading and initiates watch to
     /// receive its updates.
     ///
     /// This method returns a value for the given atom and initiates watching the atom so that

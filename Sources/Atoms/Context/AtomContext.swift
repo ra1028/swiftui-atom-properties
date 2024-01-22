@@ -137,7 +137,7 @@ public extension AtomContext {
 /// - SeeAlso: ``AtomTestContext``
 @MainActor
 public protocol AtomWatchableContext: AtomContext {
-    /// Accesses the value associated with the given atom for reading and initializes watch to
+    /// Accesses the value associated with the given atom for reading and initiates watch to
     /// receive its updates.
     ///
     /// This method returns a value for the given atom and initiates watching the atom so that
