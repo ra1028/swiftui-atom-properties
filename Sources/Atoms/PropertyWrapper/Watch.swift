@@ -2,7 +2,7 @@ import SwiftUI
 
 /// A property wrapper type that can watch and read-only access to the given atom.
 ///
-/// When the view accesses ``wrappedValue``, it starts watching to the atom, and when the atom value
+/// It starts watching the atom when the view accesses the ``wrappedValue``, and when the atom value
 /// changes, the view invalidates its appearance and recomputes the body.
 ///
 /// See also ``WatchState`` to write value of ``StateAtom`` and ``WatchStateObject`` to receive updates of
@@ -28,7 +28,7 @@ public struct Watch<Node: Atom>: DynamicProperty {
     @ViewContext
     private var context
 
-    /// Creates a watch with the atom that to be watched.
+    /// Creates a watch with the atom to be watched.
     public init(_ atom: Node, fileID: String = #fileID, line: UInt = #line) {
         self.atom = atom
         self._context = ViewContext(fileID: fileID, line: line)
@@ -39,7 +39,7 @@ public struct Watch<Node: Atom>: DynamicProperty {
     /// This property provides primary access to the value's data. However, you don't
     /// access ``wrappedValue`` directly. Instead, you use the property variable created
     /// with the `@Watch` attribute.
-    /// Accessing to this property starts watching to the atom.
+    /// Accessing to this property starts watching the atom.
     public var wrappedValue: Node.Loader.Value {
         context.watch(atom)
     }

@@ -1,10 +1,10 @@
 import Combine
 import SwiftUI
 
-/// A property wrapper type that provides a context structure that to read, watch, and otherwise
-/// interacting with atoms from views.
+/// A property wrapper type that provides a context structure to read, watch, and otherwise
+/// interact with atoms from views.
 ///
-/// Through the provided context, the view can read, write, or some other interactions to atoms.
+/// Through the provided context, the view can read, write, or perform other interactions with atoms.
 /// If the view watches an atom through the context, the view invalidates its appearance and recompute
 /// the body when the atom value updates.
 ///
