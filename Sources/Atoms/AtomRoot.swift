@@ -86,8 +86,8 @@ public struct AtomRoot<Content: View>: View {
     /// instead of the atom value.
     ///
     /// - Parameters:
-    ///   - atom: An atom that to be overridden.
-    ///   - value: A value that to be used instead of the atom's value.
+    ///   - atom: An atom to be overridden.
+    ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
@@ -102,8 +102,8 @@ public struct AtomRoot<Content: View>: View {
     /// instead of the atom value.
     ///
     /// - Parameters:
-    ///   - atomType: An atom type that to be overridden.
-    ///   - value: A value that to be used instead of the atom's value.
+    ///   - atomType: An atom type to be overridden.
+    ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {

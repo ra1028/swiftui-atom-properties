@@ -392,7 +392,7 @@ private extension StoreContext {
         func notifyUpdate() {
             if let children = store.graph.children[key] {
                 for child in ContiguousArray(children) {
-                    // Reset the atom value and then notify update to downstream atoms.
+                    // Reset the atom value and then notifies update to downstream atoms.
                     if let cache = store.state.caches[child] {
                         reset(cache.atom)
                     }

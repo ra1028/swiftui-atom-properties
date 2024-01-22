@@ -7,7 +7,7 @@ public protocol AtomLoader {
     /// A type to coordinate with the atom.
     associatedtype Coordinator
 
-    /// The context structure that to interact with an atom store.
+    /// The context structure to interact with an atom store.
     typealias Context = AtomLoaderContext<Value, Coordinator>
 
     /// Returns a new value for the corresponding atom.
