@@ -95,7 +95,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameters:
     ///   - atom: An atom expecting an update to a certain state.
     ///   - duration: The maximum duration that this function can wait until
-    ///               the next update. The default timeout interval is `nil` 
+    ///               the next update. The default timeout interval is `nil`
     ///               which indicates no timeout.
     ///   - predicate: A predicate that determines when to stop waiting.
     ///
