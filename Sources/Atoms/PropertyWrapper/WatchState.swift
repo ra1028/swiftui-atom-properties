@@ -59,7 +59,7 @@ public struct WatchState<Node: StateAtom>: DynamicProperty {
     ///
     /// Use the projected value to pass a binding value down a view hierarchy.
     /// To get the ``projectedValue``, prefix the property variable with `$`.
-    /// Accessing to this property itself doesn't starts watching the atom, but does when
+    /// Accessing this property itself does not start watching the atom, but does when
     /// the view accesses to the getter of the binding.
     public var projectedValue: Binding<Node.Loader.Value> {
         context.state(atom)

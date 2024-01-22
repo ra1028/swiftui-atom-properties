@@ -82,7 +82,7 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     /// This property provides primary access to the value's data. However, you don't
     /// access ``wrappedValue`` directly. Instead, you use the property variable created
     /// with the `@WatchStateObject` attribute.
-    /// Accessing to this property starts watching the atom.
+    /// Accessing this property starts watching the atom.
     public var wrappedValue: Node.Loader.Value {
         context.watch(atom)
     }
