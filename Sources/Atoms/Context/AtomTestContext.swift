@@ -1,12 +1,12 @@
 import Combine
 import Foundation
 
-/// A context structure that to read, watch, and otherwise interacting with atoms in testing.
+/// A context structure to read, watch, and otherwise interact with atoms in testing.
 ///
 /// This context has a store that manages the state of atoms, so it can be used to test individual
 /// atoms or their interactions with other atoms without depending on the SwiftUI view tree.
 /// Furthermore, unlike other contexts, it is possible to override or observe changes in atoms
-/// by this itself.
+/// through this context.
 @MainActor
 public struct AtomTestContext: AtomWatchableContext {
     private let location: SourceLocation
@@ -14,12 +14,12 @@ public struct AtomTestContext: AtomWatchableContext {
     @usableFromInline
     internal let _state = State()
 
-    /// Creates a new test context instance with fresh internal state.
+    /// Creates a new test context instance with a fresh internal state.
     public init(fileID: String = #fileID, line: UInt = #line) {
         location = SourceLocation(fileID: fileID, line: line)
     }
 
-    /// A callback to perform when any of atoms watched by this context is updated.
+    /// A callback to perform when any of the atoms watched by this context is updated.
     @inlinable
     public var onUpdate: (() -> Void)? {
         get { _state.onUpdate }
@@ -27,7 +27,7 @@ public struct AtomTestContext: AtomWatchableContext {
     }
 
     /// Waits until any of the atoms watched through this context have been updated up to the
-    /// specified timeout, and then returns a boolean value indicating whether an update is done.
+    /// specified timeout, and then returns a boolean value indicating whether an update has happened.
     ///
     /// ```swift
     /// func testAsyncUpdate() async {
@@ -45,8 +45,9 @@ public struct AtomTestContext: AtomWatchableContext {
     /// ```
     ///
     /// - Parameter duration: The maximum duration that this function can wait until
-    ///                       the next update. The default timeout interval is nil.
-    /// - Returns: A boolean value indicating whether an update is done.
+    ///                       the next update. The default timeout interval is `nil`
+    ///                       which indicates no timeout.
+    /// - Returns: A boolean value indicating whether an update has happened.
     @inlinable
     @discardableResult
     public func waitForUpdate(timeout duration: TimeInterval? = nil) async -> Bool {
@@ -73,8 +74,8 @@ public struct AtomTestContext: AtomWatchableContext {
         }
     }
 
-    /// Waits for the given atom until it will be a certain state up to the specified timeout,
-    /// and then returns a boolean value indicating whether an update is done.
+    /// Waits for the given atom until it will be in a certain state within a specified timeout,
+    /// and then returns a boolean value indicating whether an update has happened.
     ///
     /// ```swift
     /// func testAsyncUpdate() async {
@@ -92,9 +93,10 @@ public struct AtomTestContext: AtomWatchableContext {
     /// ```
     ///
     /// - Parameters:
-    ///   - atom: An atom that this method waits updating to a certain state.
+    ///   - atom: An atom expecting an update to a certain state.
     ///   - duration: The maximum duration that this function can wait until
-    ///               the next update. The default timeout interval is nil.
+    ///               the next update. The default timeout interval is `nil` 
+    ///               which indicates no timeout.
     ///   - predicate: A predicate that determines when to stop waiting.
     ///
     /// - Returns: A boolean value indicating whether an update is done.
@@ -146,10 +148,10 @@ public struct AtomTestContext: AtomWatchableContext {
         }
     }
 
-    /// Accesses the value associated with the given atom without watching to it.
+    /// Accesses the value associated with the given atom without watching it.
     ///
-    /// This method returns a value for the given atom. Even if you access to a value with this method,
-    /// it doesn't initiating watch the atom, so if none of other atoms or views is watching as well,
+    /// This method returns a value for the given atom. Accessing the atom value with this method
+    /// does not initiate watching the atom, so if none of the other atoms or views are watching,
     /// the value will not be cached.
     ///
     /// ```swift
@@ -168,8 +170,8 @@ public struct AtomTestContext: AtomWatchableContext {
     /// Sets the new value for the given writable atom.
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
-    /// and assign a new value for the atom.
-    /// When you assign a new value, it notifies update immediately to downstream atoms or views.
+    /// and assigns a new value for the atom.
+    /// When you assign a new value, it immediately notifies update to downstream atoms or views.
     ///
     /// - SeeAlso: ``AtomTestContext/subscript``
     ///
@@ -180,7 +182,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// print(context.read(TextAtom()))  // Prints "New text"
     /// ```
     ///
-    /// - Parameters
+    /// - Parameters:
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
     @inlinable
@@ -191,9 +193,9 @@ public struct AtomTestContext: AtomWatchableContext {
     /// Modifies the cached value of the given writable atom.
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
-    /// and assign a new value for the atom.
-    /// When you modify value, it notifies update to downstream atoms or views after all
-    /// the modification completed.
+    /// and assigns a new value for the atom.
+    /// When you modify the value, it notifies update to downstream atoms or views after all
+    /// modifications are completed.
     ///
     /// ```swift
     /// let context = ...
@@ -204,7 +206,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// print(context.read(TextAtom()))  // Prints "Text modified"
     /// ```
     ///
-    /// - Parameters
+    /// - Parameters:
     ///   - atom: An atom that associates the value.
     ///   - body: A value modification body.
     @inlinable
@@ -212,23 +214,23 @@ public struct AtomTestContext: AtomWatchableContext {
         _store.modify(atom, body: body)
     }
 
-    /// Refreshes and then return the value associated with the given refreshable atom.
+    /// Refreshes and then returns the value associated with the given refreshable atom.
     ///
     /// This method only accepts refreshable atoms such as types conforming to:
     /// ``TaskAtom``, ``ThrowingTaskAtom``, ``AsyncSequenceAtom``, ``PublisherAtom``.
-    /// It refreshes the value for the given atom and then return, so the caller can await until
-    /// the value completes the update.
+    /// It refreshes the value for the given atom and then returns, so the caller can await until
+    /// the atom completes the update.
     /// Note that it can be used only in a context that supports concurrency.
     ///
     /// ```swift
     /// let context = AtomTestContext()
     /// let image = await context.refresh(AsyncImageDataAtom()).value
-    /// print(image) // Prints the data obtained through network.
+    /// print(image) // Prints the data obtained through the network.
     /// ```
     ///
     /// - Parameter atom: An atom that associates the value.
     ///
-    /// - Returns: The value which completed refreshing associated with the given atom.
+    /// - Returns: The value after the refreshing associated with the given atom is completed.
     @inlinable
     @_disfavoredOverload
     @discardableResult
@@ -236,11 +238,11 @@ public struct AtomTestContext: AtomWatchableContext {
         await _store.refresh(atom)
     }
 
-    /// Refreshes and then return the value associated with the given refreshable atom.
+    /// Refreshes and then returns the value associated with the given refreshable atom.
     ///
     /// This method only accepts atoms that conform to ``Refreshable`` protocol.
     /// It refreshes the value with the custom refresh behavior, so the caller can await until
-    /// the value completes the update.
+    /// the atom completes the update.
     /// Note that it can be used only in a context that supports concurrency.
     ///
     /// ```swift
@@ -251,17 +253,17 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Parameter atom: An atom that associates the value.
     ///
-    /// - Returns: The value which completed refreshing associated with the given atom.
+    /// - Returns: The value after the refreshing associated with the given atom is completed.
     @inlinable
     @discardableResult
     public func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value {
         await _store.refresh(atom)
     }
 
-    /// Resets the value associated with the given atom, and then notify.
+    /// Resets the value associated with the given atom, and then notifies.
     ///
-    /// This method resets a value for the given atom, and then notify update to the downstream
-    /// atoms and views. Thereafter, if any of other atoms or views is watching the atom, a newly
+    /// This method resets the value for the given atom and then notifies update to the downstream
+    /// atoms and views. Thereafter, if any other atoms or views are watching the atom, a newly
     /// generated value will be produced.
     ///
     /// ```swift
@@ -279,13 +281,13 @@ public struct AtomTestContext: AtomWatchableContext {
         _store.reset(atom)
     }
 
-    /// Accesses the value associated with the given atom for reading and initialing watch to
+    /// Accesses the value associated with the given atom for reading and initializes watch to
     /// receive its updates.
     ///
-    /// This method returns a value for the given atom and initiate watching the atom so that
-    /// the current context to get updated when the atom notifies updates.
-    /// The value associated with the atom is cached until it is no longer watched to or until
-    /// it is updated.
+    /// This method returns a value for the given atom and initiates watching the atom so that
+    /// the current context gets updated when the atom notifies updates.
+    /// The value associated with the atom is cached until it is no longer watched or until
+    /// it is updated with a new value.
     ///
     /// ```swift
     /// let context = AtomTestContext()
@@ -307,7 +309,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// Returns the already cached value associated with a given atom without side effects.
     ///
     /// This method returns the value only when it is already cached, otherwise, it returns `nil`.
-    /// It has no side effects such as the creation of new values or watching to atoms.
+    /// It has no side effects such as the creation of new values or watching atoms.
     ///
     /// ```swift
     /// let context = AtomTestContext()
@@ -340,8 +342,8 @@ public struct AtomTestContext: AtomWatchableContext {
     /// instead of the atom value.
     ///
     /// - Parameters:
-    ///   - atom: An atom that to be overridden.
-    ///   - value: A value that to be used instead of the atom's value.
+    ///   - atom: An atom to be overridden.
+    ///   - value: A value to be used instead of the atom's value.
     @inlinable
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) {
         _state.overrides[OverrideKey(atom)] = AtomOverride(value: value)
@@ -355,8 +357,8 @@ public struct AtomTestContext: AtomWatchableContext {
     /// instead of the atom value.
     ///
     /// - Parameters:
-    ///   - atomType: An atom type that to be overridden.
-    ///   - value: A value that to be used instead of the atom's value.
+    ///   - atomType: An atom type to be overridden.
+    ///   - value: A value to be used instead of the atom's value.
     @inlinable
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) {
         _state.overrides[OverrideKey(atomType)] = AtomOverride(value: value)

@@ -1,14 +1,14 @@
 import SwiftUI
 
-/// A context structure that to read, write, and otherwise interacting with atoms.
+/// A context structure to read, write, and otherwise interact with atoms.
 ///
 /// - SeeAlso: ``AtomWatchableContext``
 @MainActor
 public protocol AtomContext {
-    /// Accesses the value associated with the given atom without watching to it.
+    /// Accesses the value associated with the given atom without watching it.
     ///
-    /// This method returns a value for the given atom. Even if you access to a value with this method,
-    /// it doesn't initiating watch the atom, so if none of other atoms or views is watching as well,
+    /// This method returns a value for the given atom. Accessing the atom value with this method
+    /// does not initiate watching the atom, so if none of the other atoms or views are watching,
     /// the value will not be cached.
     ///
     /// ```swift
@@ -24,8 +24,8 @@ public protocol AtomContext {
     /// Sets the new value for the given writable atom.
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
-    /// and assign a new value for the atom.
-    /// When you assign a new value, it notifies update immediately to downstream atoms or views.
+    /// and assigns a new value for the atom.
+    /// When you assign a new value, it immediately notifies update to downstream atoms or views.
     ///
     /// - SeeAlso: ``AtomContext/subscript``
     ///
@@ -36,7 +36,7 @@ public protocol AtomContext {
     /// print(context.read(TextAtom()))  // Prints "New text"
     /// ```
     ///
-    /// - Parameters
+    /// - Parameters:
     ///   - value: A value to be set.
     ///   - atom: An atom that associates the value.
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node)
@@ -44,9 +44,9 @@ public protocol AtomContext {
     /// Modifies the cached value of the given writable atom.
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
-    /// and assign a new value for the atom.
-    /// When you modify value, it notifies update to downstream atoms or views after all
-    /// the modification completed.
+    /// and assigns a new value for the atom.
+    /// When you modify the value, it notifies update to downstream atoms or views after all
+    /// modifications are completed.
     ///
     /// ```swift
     /// let context = ...
@@ -57,28 +57,28 @@ public protocol AtomContext {
     /// print(context.read(TextAtom()))  // Prints "Text modified"
     /// ```
     ///
-    /// - Parameters
+    /// - Parameters:
     ///   - atom: An atom that associates the value.
     ///   - body: A value modification body.
     func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void)
 
-    /// Refreshes and then return the value associated with the given refreshable atom.
+    /// Refreshes and then returns the value associated with the given refreshable atom.
     ///
     /// This method only accepts refreshable atoms such as types conforming to:
     /// ``TaskAtom``, ``ThrowingTaskAtom``, ``AsyncSequenceAtom``, ``PublisherAtom``.
-    /// It refreshes the value for the given atom and then return, so the caller can await until
-    /// the value completes the update.
+    /// It refreshes the value for the given atom and then returns, so the caller can await until
+    /// the atom completes the update.
     /// Note that it can be used only in a context that supports concurrency.
     ///
     /// ```swift
     /// let context = ...
     /// let image = await context.refresh(AsyncImageDataAtom()).value
-    /// print(image) // Prints the data obtained through network.
+    /// print(image) // Prints the data obtained through the network.
     /// ```
     ///
     /// - Parameter atom: An atom that associates the value.
     ///
-    /// - Returns: The value which completed refreshing associated with the given atom.
+    /// - Returns: The value after the refreshing associated with the given atom is completed.
     @_disfavoredOverload
     @discardableResult
     func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader
@@ -86,10 +86,10 @@ public protocol AtomContext {
     @discardableResult
     func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value
 
-    /// Resets the value associated with the given atom, and then notify.
+    /// Resets the value associated with the given atom, and then notifies.
     ///
-    /// This method resets a value for the given atom, and then notify update to the downstream
-    /// atoms and views. Thereafter, if any of other atoms or views is watching the atom, a newly
+    /// This method resets the value for the given atom and then notifies update to the downstream
+    /// atoms and views. Thereafter, if any other atoms or views are watching the atom, a newly
     /// generated value will be produced.
     ///
     /// ```swift
@@ -109,9 +109,9 @@ public extension AtomContext {
     /// Accesses the value associated with the given read-write atom for mutating.
     ///
     /// This subscript only accepts read-write atoms such as types conforming to ``StateAtom``,
-    /// and returns the value or assign a new value for the atom.
-    /// When you assign a new value, it notifies update immediately to downstream atoms or views,
-    /// but it doesn't start watching the given atom only by getting the value.
+    /// and returns the value or assigns a new value for the atom.
+    /// When you assign a new value, it immediately notifies update to downstream atoms or views,
+    /// but it doesn't start watching the atom.
     ///
     /// ```swift
     /// let context = ...
@@ -130,20 +130,20 @@ public extension AtomContext {
     }
 }
 
-/// A context structure that to read, watch, and otherwise interacting with atoms.
+/// A context structure to read, watch, and otherwise interact with atoms.
 ///
 /// - SeeAlso: ``AtomViewContext``
 /// - SeeAlso: ``AtomTransactionContext``
 /// - SeeAlso: ``AtomTestContext``
 @MainActor
 public protocol AtomWatchableContext: AtomContext {
-    /// Accesses the value associated with the given atom for reading and initialing watch to
+    /// Accesses the value associated with the given atom for reading and initializes watch to
     /// receive its updates.
     ///
-    /// This method returns a value for the given atom and initiate watching the atom so that
-    /// the current context to get updated when the atom notifies updates.
-    /// The value associated with the atom is cached until it is no longer watched to or until
-    /// it is updated.
+    /// This method returns a value for the given atom and initiates watching the atom so that
+    /// the current context gets updated when the atom notifies updates.
+    /// The value associated with the atom is cached until it is no longer watched or until
+    /// it is updated with a new value.
     ///
     /// ```swift
     /// let context = ...
@@ -161,10 +161,10 @@ public extension AtomWatchableContext {
     /// Creates a `Binding` that accesses the value associated with the given read-write atom.
     ///
     /// This method only accepts read-write atoms such as types conforming to ``StateAtom``,
-    /// and returns a binding that accesses the value or assign a new value for the atom.
+    /// and returns a binding that accesses the value or assigns a new value for the atom.
     /// When you set a new value to the `wrappedValue` property of the binding, it assigns the value
-    /// to the atom, and then notifies update immediately to downstream atoms or views.
-    /// Note that the binding initiates wathing the given atom when you get a value through the
+    /// to the atom, and immediately notifies update to downstream atoms or views.
+    /// Note that the binding initiates watching the given atom when the value is accessed through the
     /// `wrappedValue` property.
     ///
     /// ```swift
