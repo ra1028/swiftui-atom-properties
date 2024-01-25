@@ -25,7 +25,7 @@ public protocol AtomContext {
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
     /// and assigns a new value for the atom.
-    /// When you assign a new value, it immediately notifies update to downstream atoms or views.
+    /// When you assign a new value, it immediately notifies downstream atoms or views.
     ///
     /// - SeeAlso: ``AtomContext/subscript``
     ///
@@ -45,7 +45,7 @@ public protocol AtomContext {
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
     /// and assigns a new value for the atom.
-    /// When you modify the value, it notifies update to downstream atoms or views after all
+    /// When you modify the value, it notifies downstream atoms or views after all
     /// modifications are completed.
     ///
     /// ```swift
@@ -88,7 +88,7 @@ public protocol AtomContext {
 
     /// Resets the value associated with the given atom, and then notifies.
     ///
-    /// This method resets the value for the given atom and then notifies update to the downstream
+    /// This method resets the value for the given atom and then notifies downstream
     /// atoms and views. Thereafter, if any other atoms or views are watching the atom, a newly
     /// generated value will be produced.
     ///
@@ -110,7 +110,7 @@ public extension AtomContext {
     ///
     /// This subscript only accepts read-write atoms such as types conforming to ``StateAtom``,
     /// and returns the value or assigns a new value for the atom.
-    /// When you assign a new value, it immediately notifies update to downstream atoms or views,
+    /// When you assign a new value, it immediately notifies downstream atoms or views,
     /// but it doesn't start watching the atom.
     ///
     /// ```swift
@@ -163,7 +163,7 @@ public extension AtomWatchableContext {
     /// This method only accepts read-write atoms such as types conforming to ``StateAtom``,
     /// and returns a binding that accesses the value or assigns a new value for the atom.
     /// When you set a new value to the `wrappedValue` property of the binding, it assigns the value
-    /// to the atom, and immediately notifies update to downstream atoms or views.
+    /// to the atom, and immediately notifies downstream atoms or views.
     /// Note that the binding initiates watching the given atom when the value is accessed through the
     /// `wrappedValue` property.
     ///

@@ -38,7 +38,7 @@ public struct AtomCurrentContext<Coordinator>: AtomContext {
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
     /// and assigns a new value for the atom.
-    /// When you assign a new value, it immediately notifies update to downstream atoms or views.
+    /// When you assign a new value, it immediately notifies downstream atoms or views.
     ///
     /// - SeeAlso: ``AtomViewContext/subscript``
     ///
@@ -60,7 +60,7 @@ public struct AtomCurrentContext<Coordinator>: AtomContext {
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
     /// and assigns a new value for the atom.
-    /// When you modify the value, it notifies update to downstream atoms or views after all
+    /// When you modify the value, it notifies downstream atoms or views after all
     /// modifications are completed.
     ///
     /// ```swift
@@ -128,7 +128,7 @@ public struct AtomCurrentContext<Coordinator>: AtomContext {
 
     /// Resets the value associated with the given atom, and then notifies.
     ///
-    /// This method resets the value for the given atom and then notifies update to the downstream
+    /// This method resets the value for the given atom and then notifies downstream
     /// atoms and views. Thereafter, if any other atoms or views are watching the atom, a newly
     /// generated value will be produced.
     ///
