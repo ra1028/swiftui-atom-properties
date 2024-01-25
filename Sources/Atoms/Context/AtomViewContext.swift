@@ -1,6 +1,6 @@
 /// A context structure to read, watch, and otherwise interact with atoms.
 ///
-/// When an atom is watchedthrough this context, and that atom is updated,
+/// When an atom is watched through this context, and that atom is updated,
 /// the view where this context is used will be rebuilt.
 @MainActor
 public struct AtomViewContext: AtomWatchableContext {
@@ -44,7 +44,7 @@ public struct AtomViewContext: AtomWatchableContext {
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
     /// and assigns a new value for the atom.
-    /// When you assign a new value, it immediately notifies downstream atoms or views.
+    /// When you assign a new value, it immediately notifies downstream atoms and views.
     ///
     /// - SeeAlso: ``AtomViewContext/subscript``
     ///
@@ -67,7 +67,7 @@ public struct AtomViewContext: AtomWatchableContext {
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
     /// and assigns a new value for the atom.
-    /// When you modify the value, it notifies downstream atoms or views after all
+    /// When you modify the value, it notifies downstream atoms and views after all
     /// modifications are completed.
     ///
     /// ```swift

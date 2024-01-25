@@ -1,6 +1,6 @@
 /// A context structure to read, watch, and otherwise interact with atoms.
 ///
-/// When an atom is watchedthrough this context, and that atom is updated,
+/// When an atom is watched through this context, and that atom is updated,
 /// the value of the atom where this context is provided will be updated transitively.
 @MainActor
 public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
@@ -45,7 +45,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
     /// and assigns a new value for the atom.
-    /// When you assign a new value, it immediately notifies downstream atoms or views.
+    /// When you assign a new value, it immediately notifies downstream atoms and views.
     ///
     /// - SeeAlso: ``AtomTransactionContext/subscript``
     ///
@@ -68,7 +68,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     ///
     /// This method only accepts writable atoms such as types conforming to ``StateAtom``,
     /// and assigns a new value for the atom.
-    /// When you modify the value, it notifies downstream atoms or views after all
+    /// When you modify the value, it notifies downstream atoms and views after all
     /// modifications are completed.
     ///
     /// ```swift
