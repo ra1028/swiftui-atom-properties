@@ -16,7 +16,7 @@ public protocol AtomLoader {
     /// Associates given value and handle updates and cancellations.
     func associateOverridden(value: Value, context: Context) -> Value
 
-    /// Returns a boolean value indicating whether it should notify updates to downstream
+    /// Returns a boolean value indicating whether it should notify updates downstream
     /// by checking the equivalence of the given old value and new value.
     func shouldUpdate(newValue: Value, oldValue: Value) -> Bool
 }
