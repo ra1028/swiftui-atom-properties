@@ -37,7 +37,7 @@ public struct WatchState<Node: StateAtom>: DynamicProperty {
     @ViewContext
     private var context
 
-    /// Creates a watch with the atom to be watched.
+    /// Creates an instance with the atom to watch.
     public init(_ atom: Node, fileID: String = #fileID, line: UInt = #line) {
         self.atom = atom
         self._context = ViewContext(fileID: fileID, line: line)
