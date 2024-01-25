@@ -1,6 +1,6 @@
 /// A context structure to read, watch, and otherwise interact with atoms.
 ///
-/// When an atom watching is initiated through this context, and that atom is updated,
+/// When an atom is watchedthrough this context, and that atom is updated,
 /// the view where this context is used will be rebuilt.
 @MainActor
 public struct AtomViewContext: AtomWatchableContext {
@@ -32,7 +32,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// print(context.read(TextAtom()))  // Prints the current value associated with `TextAtom`.
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to read.
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
@@ -57,7 +57,7 @@ public struct AtomViewContext: AtomWatchableContext {
     ///
     /// - Parameters:
     ///   - value: A value to be set.
-    ///   - atom: An atom that associates the value.
+    ///   - atom: A writable atom to update.
     @inlinable
     public func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         _store.set(value, for: atom)
@@ -80,7 +80,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// ```
     ///
     /// - Parameters:
-    ///   - atom: An atom that associates the value.
+    ///   - atom: A writable atom to modify.
     ///   - body: A value modification body.
     @inlinable
     public func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void) {
@@ -101,7 +101,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// print(image) // Prints the data obtained through the network.
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to refresh.
     ///
     /// - Returns: The value after the refreshing associated with the given atom is completed.
     @inlinable
@@ -124,7 +124,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// print(value)
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to refresh.
     ///
     /// - Returns: The value after the refreshing associated with the given atom is completed.
     @inlinable
@@ -148,7 +148,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// print(context.read(TextAtom())) // Prints "Text"
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to reset.
     @inlinable
     public func reset(_ atom: some Atom) {
         _store.reset(atom)
@@ -168,7 +168,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// print(text) // Prints the current value associated with `TextAtom`.
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to watch.
     ///
     /// - Returns: The value associated with the given atom.
     @discardableResult

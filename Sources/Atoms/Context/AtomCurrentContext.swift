@@ -26,7 +26,7 @@ public struct AtomCurrentContext<Coordinator>: AtomContext {
     /// print(context.read(TextAtom()))  // Prints the current value associated with `TextAtom`.
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to read.
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
@@ -50,7 +50,7 @@ public struct AtomCurrentContext<Coordinator>: AtomContext {
     ///
     /// - Parameters:
     ///   - value: A value to be set.
-    ///   - atom: An atom that associates the value.
+    ///   - atom: A writable atom to update.
     @inlinable
     public func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         _store.set(value, for: atom)
@@ -73,7 +73,7 @@ public struct AtomCurrentContext<Coordinator>: AtomContext {
     /// ```
     ///
     /// - Parameters:
-    ///   - atom: An atom that associates the value.
+    ///   - atom: A writable atom to modify.
     ///   - body: A value modification body.
     @inlinable
     public func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void) {
@@ -94,7 +94,7 @@ public struct AtomCurrentContext<Coordinator>: AtomContext {
     /// print(image) // Prints the data obtained through the network.
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to refresh.
     ///
     /// - Returns: The value after the refreshing associated with the given atom is completed.
     @inlinable
@@ -117,7 +117,7 @@ public struct AtomCurrentContext<Coordinator>: AtomContext {
     /// print(value)
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to refresh.
     ///
     /// - Returns: The value after the refreshing associated with the given atom is completed.
     @inlinable
@@ -140,7 +140,7 @@ public struct AtomCurrentContext<Coordinator>: AtomContext {
     /// print(context.read(TextAtom())) // Prints "Text"
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to reset.
     @inlinable
     public func reset(_ atom: some Atom) {
         _store.reset(atom)

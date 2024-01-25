@@ -16,7 +16,7 @@ public protocol AtomContext {
     /// print(context.read(TextAtom()))  // Prints the current value associated with ``TextAtom``.
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to read.
     ///
     /// - Returns: The value associated with the given atom.
     func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value
@@ -38,7 +38,7 @@ public protocol AtomContext {
     ///
     /// - Parameters:
     ///   - value: A value to be set.
-    ///   - atom: An atom that associates the value.
+    ///   - atom: A writable atom to update.
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node)
 
     /// Modifies the cached value of the given writable atom.
@@ -58,7 +58,7 @@ public protocol AtomContext {
     /// ```
     ///
     /// - Parameters:
-    ///   - atom: An atom that associates the value.
+    ///   - atom: A writable atom to modify.
     ///   - body: A value modification body.
     func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void)
 
@@ -76,7 +76,7 @@ public protocol AtomContext {
     /// print(image) // Prints the data obtained through the network.
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to refresh.
     ///
     /// - Returns: The value after the refreshing associated with the given atom is completed.
     @_disfavoredOverload
@@ -101,7 +101,7 @@ public protocol AtomContext {
     /// print(context.read(TextAtom())) // Prints "Text"
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to reset.
     func reset(_ atom: some Atom)
 }
 
@@ -121,7 +121,7 @@ public extension AtomContext {
     /// print(context[TextAtom()])       // Prints "New text is mutated!"
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to read or write.
     ///
     /// - Returns: The value associated with the given atom.
     subscript<Node: StateAtom>(_ atom: Node) -> Node.Loader.Value {
@@ -150,7 +150,7 @@ public protocol AtomWatchableContext: AtomContext {
     /// print(context.watch(TextAtom())) // Prints the current value associated with `TextAtom`.
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to watch.
     ///
     /// - Returns: The value associated with the given atom.
     @discardableResult
@@ -175,7 +175,7 @@ public extension AtomWatchableContext {
     /// print(binding.wrappedValue) // Prints "New text is mutated!"
     /// ```
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to create binding for.
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
