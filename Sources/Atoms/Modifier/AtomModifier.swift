@@ -33,7 +33,7 @@ public protocol AtomModifier {
     @MainActor
     func associateOverridden(value: Value, context: Context) -> Value
 
-    /// Returns a boolean value indicating whether it should notify updates to downstream
+    /// Returns a boolean value indicating whether it should notify updates downstream
     /// by checking the equivalence of the given old value and new value.
     @MainActor
     func shouldUpdate(newValue: Value, oldValue: Value) -> Bool

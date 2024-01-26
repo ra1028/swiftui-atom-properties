@@ -19,7 +19,7 @@ public struct AtomModifierContext<Value> {
         _update(value)
     }
 
-    /// Add a termination action to be performed when atom value is updated or released.
+    /// Adds a termination action to be performed when the atom value is updated or released.
     ///
     /// - Parameter termination: A termination action.
     public func addTermination(_ termination: @MainActor @escaping () -> Void) {

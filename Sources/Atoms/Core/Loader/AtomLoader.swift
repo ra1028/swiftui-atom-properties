@@ -7,7 +7,7 @@ public protocol AtomLoader {
     /// A type to coordinate with the atom.
     associatedtype Coordinator
 
-    /// The context structure that to interact with an atom store.
+    /// The context structure to interact with an atom store.
     typealias Context = AtomLoaderContext<Value, Coordinator>
 
     /// Returns a new value for the corresponding atom.
@@ -16,7 +16,7 @@ public protocol AtomLoader {
     /// Associates given value and handle updates and cancellations.
     func associateOverridden(value: Value, context: Context) -> Value
 
-    /// Returns a boolean value indicating whether it should notify updates to downstream
+    /// Returns a boolean value indicating whether it should notify updates downstream
     /// by checking the equivalence of the given old value and new value.
     func shouldUpdate(newValue: Value, oldValue: Value) -> Bool
 }

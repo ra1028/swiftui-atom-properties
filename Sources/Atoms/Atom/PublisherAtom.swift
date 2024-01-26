@@ -41,14 +41,14 @@ public protocol PublisherAtom: Atom {
     /// The type of publisher that this atom manages.
     associatedtype Publisher: Combine.Publisher
 
-    /// Creates a publisher that to be subscribed when this atom is actually used.
+    /// Creates a publisher to be subscribed when this atom is actually used.
     ///
     /// The publisher that is produced by this method must be instantiated anew each time this method
     /// is called. Otherwise, a cold publisher which has internal state can get result to produce
     /// non-reproducible results when it is newly subscribed.
     ///
-    /// - Parameter context: A context structure that to read, watch, and otherwise
-    ///                      interacting with other atoms.
+    /// - Parameter context: A context structure to read, watch, and otherwise
+    ///                      interact with other atoms.
     ///
     /// - Returns: A publisher that produces a sequence of values over time.
     @MainActor

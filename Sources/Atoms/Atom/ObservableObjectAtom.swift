@@ -3,7 +3,7 @@ import Combine
 /// An atom type that instantiates an observable object.
 ///
 /// When published properties of the observable object provided through this atom changes, it
-/// notifies updates to downstream atoms and views that watches this atom.
+/// notifies updates to downstream atoms and views that are watching this atom.
 /// In case you want to get another atom value from the context later by methods in that
 /// observable object, you can pass it as ``AtomContext``.
 ///
@@ -55,10 +55,10 @@ public protocol ObservableObjectAtom: Atom {
     /// Creates an observed object when this atom is actually used.
     ///
     /// The observable object that returned from this method is managed internally and notifies
-    /// its updates to downstream atoms and views that watches this atom.
+    /// its updates to downstream atoms and views are watching this atom.
     ///
-    /// - Parameter context: A context structure that to read, watch, and otherwise
-    ///                      interacting with other atoms.
+    /// - Parameter context: A context structure to read, watch, and otherwise
+    ///                      interact with other atoms.
     ///
     /// - Returns: An observable object that notifies its updates over time.
     @MainActor

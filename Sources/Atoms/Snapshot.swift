@@ -27,7 +27,7 @@ public struct Snapshot: CustomStringConvertible {
     ///
     /// Note that this does not look up a overridden atom.
     ///
-    /// - Parameter atom: An atom that associates the value.
+    /// - Parameter atom: An atom to lookup.
     ///
     /// - Returns: The captured value associated with the given atom if it exists.
     @MainActor

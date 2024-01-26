@@ -30,13 +30,13 @@ public protocol StateAtom: Atom {
     /// The type of state value that this atom produces.
     associatedtype Value
 
-    /// Creates a default value of the state that to be provided via this atom.
+    /// Creates a default value of the state to be provided via this atom.
     ///
     /// The value returned from this method will be the default state value. When this atom is reset,
     /// the state will revert to this value.
     ///
-    /// - Parameter context: A context structure that to read, watch, and otherwise
-    ///                      interacting with other atoms.
+    /// - Parameter context: A context structure to read, watch, and otherwise
+    ///                      interact with other atoms.
     ///
     /// - Returns: A default value of state.
     @MainActor

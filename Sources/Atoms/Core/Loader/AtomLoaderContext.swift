@@ -1,4 +1,4 @@
-/// The context structure that to interact with an atom store.
+/// The context structure to interact with an atom store.
 @MainActor
 public struct AtomLoaderContext<Value, Coordinator> {
     internal let store: StoreContext

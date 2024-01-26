@@ -45,7 +45,7 @@
 
 </p>
 
-Atoms offers a simple but practical capability to tackle the complexity of modern apps. It effectively integrates the solution for both state management and dependency injection while allowing us to rapidly build an robust and testable application.  
+Atoms offer a simple but practical capability to tackle the complexity of modern apps. It effectively integrates the solution for both state management and dependency injection while allowing us to rapidly build a robust and testable application.  
 Building state by compositing atoms automatically optimizes rendering based on its dependency graph. This solves the problem of performance degradation caused by extra re-render which occurs before you realize.  
 
 <img src="assets/diagram.png" width=700>
@@ -741,7 +741,7 @@ The attributes allow control over how the atoms essentially work, for example, c
 
 #### [KeepAlive](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/keepalive)
 
-`KeepAlive` allows the atom to preserve its data even if it's no longer watched to from anywhere.  
+`KeepAlive` allows the atom to preserve its data even if it's no longer watched from anywhere.  
 
 <details><summary><code>📖 Expand to see example</code></summary>
 
@@ -922,13 +922,13 @@ struct CounterView: View {
 Unlike the property wrappers described the above, this property wrapper is not intended to bind single atom. It provides an `AtomViewContext` to the view, allowing for more functional control of atoms.  
 For instance, the following controls can only be done through the context.  
 
-- `refresh(_:)` operator that to reset an asynchronous atom value and wait for its completion.
+- `refresh(_:)` operator to reset an asynchronous atom value and wait for its completion.
 
 ```swift
 await context.refresh(FetchMoviesAtom())
 ```
 
-- `reset(_:)` operator that to clear the current atom value.
+- `reset(_:)` operator to clear the current atom value.
 
 ```swift
 context.reset(CounterAtom())
@@ -1240,7 +1240,7 @@ In order to fully test your app, this library guarantees the following principle
 
 In the test case, you first create an `AtomTestContext` instance that behaves similarly to other context types. The context allows for flexible reproduction of expected scenarios for testing using the control functions described in the [Context](#context) section.  
 In addition, it's able to replace the atom value with test-friendly dependencies with `override` function. It helps you to write a reproducible & stable testing.  
-Since atom needs to be used from the main actor to guarantee thread-safety, `XCTestCase` class that to test atoms should have `@MainActor` attribute.
+Since atom needs to be used from the main actor to guarantee thread-safety, `XCTestCase` class that tests atoms should have `@MainActor` attribute.
 
 <details><summary>Click to expand the classes to be tested</summary>
 

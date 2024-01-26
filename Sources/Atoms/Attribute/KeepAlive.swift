@@ -1,5 +1,5 @@
 /// An attribute protocol to allow the value of an atom to continue being retained
-/// even after they are no longer watched to.
+/// even after they are no longer watched.
 ///
 /// Note that overridden atoms are not retained even with this attribute.
 ///

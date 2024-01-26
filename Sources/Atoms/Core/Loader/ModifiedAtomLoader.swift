@@ -25,7 +25,7 @@ public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader
         modifier.associateOverridden(value: value, context: context.modifierContext)
     }
 
-    /// Returns a boolean value indicating whether it should notify updates to downstream
+    /// Returns a boolean value indicating whether it should notify updates downstream
     /// by checking the equivalence of the given old value and new value.
     public func shouldUpdate(newValue: Value, oldValue: Value) -> Bool {
         modifier.shouldUpdate(newValue: newValue, oldValue: oldValue)

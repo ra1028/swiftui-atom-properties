@@ -16,7 +16,7 @@
 /// ```
 ///
 public protocol Refreshable where Self: Atom {
-    /// A type of the context structure that to read, set, and otherwise interacting
+    /// A type of the context structure to read, set, and otherwise interact
     /// with other atoms.
     typealias RefreshContext = AtomCurrentContext<Loader.Coordinator>
 
@@ -25,7 +25,7 @@ public protocol Refreshable where Self: Atom {
     /// The value returned by this method will be cached as a new value when
     /// this atom is refreshed.
     ///
-    /// - Parameter context: A context structure that to read, set, and otherwise interacting
+    /// - Parameter context: A context structure to read, set, and otherwise interact
     ///                      with other atoms.
     ///
     /// - Returns: A refreshed value.
