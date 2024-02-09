@@ -20,7 +20,7 @@
 - [Basic Tutorial](#basic-tutorial)
 - [Guides](#guides)
   - [AtomRoot](#atomroot)
-  - [Atoms](#atoms)
+  - [Atoms](#atoms-1)
   - [Modifiers](#modifiers)
   - [Attributes](#attributes)
   - [Property Wrappers](#property-wrappers)
