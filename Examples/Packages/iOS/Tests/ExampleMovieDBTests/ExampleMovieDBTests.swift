@@ -3,8 +3,8 @@ import XCTest
 
 @testable import ExampleMovieDB
 
-@MainActor
 final class ExampleMovieDBTests: XCTestCase {
+    @MainActor
     func testImageAtom() async {
         let apiClient = MockAPIClient()
         let atom = ImageAtom(path: "", size: .original)
@@ -29,6 +29,7 @@ final class ExampleMovieDBTests: XCTestCase {
         XCTAssertEqual(failurePhase.error as? URLError, error)
     }
 
+    @MainActor
     func testMovieLoader() async {
         let apiClient = MockAPIClient()
         let atom = MovieLoaderAtom()
@@ -61,6 +62,7 @@ final class ExampleMovieDBTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testMyListAtom() {
         let atom = MyListAtom()
         let context = AtomTestContext()
@@ -80,6 +82,7 @@ final class ExampleMovieDBTests: XCTestCase {
         XCTAssertEqual(context.watch(atom).movies, [.stub(id: 1)])
     }
 
+    @MainActor
     func testIsInMyListAtom() {
         let context = AtomTestContext()
 
@@ -89,6 +92,7 @@ final class ExampleMovieDBTests: XCTestCase {
         XCTAssertFalse(context.watch(IsInMyListAtom(movie: .stub(id: 1))))
     }
 
+    @MainActor
     func testCastsAtom() async {
         let apiClient = MockAPIClient()
         let atom = CastsAtom(movieID: 0)
@@ -113,6 +117,7 @@ final class ExampleMovieDBTests: XCTestCase {
         XCTAssertEqual(failurePhase.error as? URLError, error)
     }
 
+    @MainActor
     func testSearchMoviesAtom() async throws {
         let apiClient = MockAPIClient()
         let atom = SearchMoviesAtom()

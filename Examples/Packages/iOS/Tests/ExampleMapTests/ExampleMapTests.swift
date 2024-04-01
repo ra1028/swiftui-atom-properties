@@ -4,8 +4,8 @@ import XCTest
 
 @testable import ExampleMap
 
-@MainActor
 final class ExampleMapTests: XCTestCase {
+    @MainActor
     func testLocationObserverAtom() {
         let atom = LocationObserverAtom()
         let context = AtomTestContext()
@@ -25,6 +25,7 @@ final class ExampleMapTests: XCTestCase {
         XCTAssertFalse(manager.isUpdatingLocation)
     }
 
+    @MainActor
     func testCoordinateAtom() {
         let atom = CoordinateAtom()
         let context = AtomTestContext()
@@ -40,6 +41,7 @@ final class ExampleMapTests: XCTestCase {
         XCTAssertEqual(context.watch(atom)?.longitude, 2)
     }
 
+    @MainActor
     func testAuthorizationStatusAtom() async {
         let atom = AuthorizationStatusAtom()
         let manager = MockLocationManager()

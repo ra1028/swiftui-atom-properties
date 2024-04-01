@@ -3,8 +3,8 @@ import XCTest
 
 @testable import ExampleTimeTravel
 
-@MainActor
 final class ExampleTimeTravelTests: XCTestCase {
+    @MainActor
     func testTextAtom() {
         let context = AtomTestContext()
         let atom = InputStateAtom()
