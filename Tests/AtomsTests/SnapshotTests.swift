@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class SnapshotTests: XCTestCase {
+    @MainActor
     func testLookup() {
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)

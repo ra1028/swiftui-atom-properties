@@ -2,7 +2,6 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class ObservableObjectAtomTests: XCTestCase {
     @MainActor
     final class TestObject: ObservableObject {
@@ -30,6 +29,7 @@ final class ObservableObjectAtomTests: XCTestCase {
         }
     }
 
+    @MainActor
     func test() async {
         let atom = TestAtom()
         let context = AtomTestContext()
@@ -112,6 +112,7 @@ final class ObservableObjectAtomTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testUpdated() async {
         var updatedObjects = [TestObject]()
         let atom = TestAtom { object, _ in

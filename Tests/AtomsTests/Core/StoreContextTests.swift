@@ -3,8 +3,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class StoreContextTests: XCTestCase {
+    @MainActor
     func testScopedConstructor() {
         let store = AtomStore()
         let token = ScopeKey.Token()
@@ -37,6 +37,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testScoped() {
         let store = AtomStore()
         let container = SubscriptionContainer()
@@ -64,6 +65,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertFalse(snapshots1.isEmpty)
     }
 
+    @MainActor
     func testStoreDeinit() {
         let atom = TestAtom(value: 0)
         let container = SubscriptionContainer()
@@ -77,6 +79,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertNil(storeRef)
     }
 
+    @MainActor
     func testRead() {
         let store = AtomStore()
         let atom = TestAtom(value: 0)
@@ -111,6 +114,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertTrue(snapshots.isEmpty)
     }
 
+    @MainActor
     func testSet() {
         let store = AtomStore()
         let token = SubscriptionKey.Token()
@@ -157,6 +161,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testModify() {
         let store = AtomStore()
         let token = SubscriptionKey.Token()
@@ -203,6 +208,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testWatch() {
         let store = AtomStore()
         let atom = TestAtom(value: 0)
@@ -239,6 +245,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testWatchFromView() {
         struct DependencyAtom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
@@ -293,6 +300,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testRefresh() async {
         let store = AtomStore()
         let container = SubscriptionContainer()
@@ -349,6 +357,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testCustomRefresh() async {
         let store = AtomStore()
         let container = SubscriptionContainer()
@@ -409,6 +418,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testReset() {
         let store = AtomStore()
         let container = SubscriptionContainer()
@@ -439,6 +449,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testUnwatch() {
         let store = AtomStore()
         let container = SubscriptionContainer()
@@ -456,6 +467,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testSnapshotAndRestore() {
         let store = AtomStore()
         let token = SubscriptionKey.Token()
@@ -489,6 +501,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testScopedOverride() async {
         struct TestDependency1Atom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
@@ -696,6 +709,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testCoordinator() {
         struct TestAtom: ValueAtom {
             final class Coordinator {}
@@ -749,6 +763,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertIdentical(newState?.coordinator, updatedCoordinator)
     }
 
+    @MainActor
     func testRelease() {
         struct KeepAliveAtom<T: Hashable>: ValueAtom, KeepAlive, Hashable {
             var value: T
@@ -807,6 +822,7 @@ final class StoreContextTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testObservers() {
         let container = SubscriptionContainer()
         let atom0 = TestAtom(value: 0)
@@ -972,6 +988,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testRestore() {
         let store = AtomStore()
         let context = StoreContext(store)
@@ -1048,6 +1065,7 @@ final class StoreContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testComplexDependencies() async {
         enum Phase {
             case first

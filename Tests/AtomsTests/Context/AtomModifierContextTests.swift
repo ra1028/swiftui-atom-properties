@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class AtomModifierContextTests: XCTestCase {
+    @MainActor
     func testUpdate() {
         let atom = TestValueAtom(value: 0)
         let transaction = Transaction(key: AtomKey(atom)) {}
@@ -17,6 +17,7 @@ final class AtomModifierContextTests: XCTestCase {
         XCTAssertEqual(updatedValue, 1)
     }
 
+    @MainActor
     func testAddTermination() {
         let atom = TestValueAtom(value: 0)
         let transaction = Transaction(key: AtomKey(atom)) {}

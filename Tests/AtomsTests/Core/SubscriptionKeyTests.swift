@@ -2,7 +2,6 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class SubscriptionKeyTests: XCTestCase {
     func testKeyHashableForSameToken() {
         let token = SubscriptionKey.Token()

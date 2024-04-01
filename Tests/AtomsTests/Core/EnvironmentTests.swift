@@ -3,8 +3,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class EnvironmentTests: XCTestCase {
+    @MainActor
     func testStore() {
         let store = AtomStore()
         let atom = TestValueAtom(value: 0)

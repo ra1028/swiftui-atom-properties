@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class ChangesModifierTests: XCTestCase {
+    @MainActor
     func testChanges() {
         let atom = TestStateAtom(defaultValue: "")
         let context = AtomTestContext()
@@ -27,6 +27,7 @@ final class ChangesModifierTests: XCTestCase {
         XCTAssertEqual(updatedCount, 1)
     }
 
+    @MainActor
     func testKey() {
         let modifier = ChangesModifier<Int>()
 
@@ -34,6 +35,7 @@ final class ChangesModifierTests: XCTestCase {
         XCTAssertEqual(modifier.key.hashValue, modifier.key.hashValue)
     }
 
+    @MainActor
     func testShouldUpdate() {
         let modifier = ChangesModifier<Int>()
 
@@ -41,6 +43,7 @@ final class ChangesModifierTests: XCTestCase {
         XCTAssertTrue(modifier.shouldUpdate(newValue: 100, oldValue: 200))
     }
 
+    @MainActor
     func testModify() {
         let atom = TestValueAtom(value: 0)
         let modifier = ChangesModifier<Int>()
@@ -51,6 +54,7 @@ final class ChangesModifierTests: XCTestCase {
         XCTAssertEqual(value, 100)
     }
 
+    @MainActor
     func testAssociateOverridden() {
         let atom = TestValueAtom(value: 0)
         let modifier = ChangesModifier<Int>()
