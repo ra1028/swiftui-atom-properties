@@ -1240,7 +1240,7 @@ In order to fully test your app, this library guarantees the following principle
 
 In the test case, you first create an `AtomTestContext` instance that behaves similarly to other context types. The context allows for flexible reproduction of expected scenarios for testing using the control functions described in the [Context](#context) section.  
 In addition, it's able to replace the atom value with test-friendly dependencies with `override` function. It helps you to write a reproducible & stable testing.  
-Since atom needs to be used from the main actor to guarantee thread-safety, `XCTestCase` class that tests atoms should have `@MainActor` attribute.
+Since atom needs to be used from the main actor to guarantee thread-safety, functions that tests atoms should have `@MainActor` attribute.
 
 <details><summary>Click to expand the classes to be tested</summary>
 
@@ -1293,8 +1293,8 @@ struct FetchBookAtom: ThrowingTaskAtom, Hashable {
 
 ```swift
 
-@MainActor
 class FetchBookTests: XCTestCase {
+    @MainActor
     func testFetch() async throws {
         let context = AtomTestContext()
         let api = MockAPIClient()
