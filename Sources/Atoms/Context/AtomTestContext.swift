@@ -173,7 +173,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// and assigns a new value for the atom.
     /// When you assign a new value, it immediately notifies downstream atoms and views.
     ///
-    /// - SeeAlso: ``AtomTestContext/subscript``
+    /// - SeeAlso: ``AtomTestContext/subscript(_:)``
     ///
     /// ```swift
     /// let context = AtomTestContext()

@@ -27,7 +27,7 @@ public protocol AtomContext {
     /// and assigns a new value for the atom.
     /// When you assign a new value, it immediately notifies downstream atoms and views.
     ///
-    /// - SeeAlso: ``AtomContext/subscript``
+    /// - SeeAlso: ``AtomContext/subscript(_:)``
     ///
     /// ```swift
     /// let context = ...
