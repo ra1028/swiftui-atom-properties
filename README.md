@@ -805,6 +805,38 @@ struct FetchMoviesPhaseAtom: ValueAtom, Refreshable, Hashable {
 }
 ```
 
+
+#### [Resettable](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/resettable)
+
+`Resettable` allows you to implement additional reset behavior to an atom.
+
+<details><summary><code>📖 Expand to see example</code></summary>
+
+It adds custom reset behavior to an Atom that will be executed prior to new cache generation.
+
+It's useful when need to handle reset side-effects or when utilizing private atom from other atoms.
+  
+In following example, `RandomIntAtom` generates a random value using private `RandomNumberGeneratorAtom`, and `Resettable` gives ability to reset `RandomNumberGeneratorAtom` with new randomizer seed.
+
+```swift
+struct RandomIntAtom: ValueAtom, Resettable, Hashable {
+    func value(context: Context) -> Int {
+        let generator = context.watch(RandomNumberGeneratorAtom())
+        return .random(in: 0..<100, using: $generator)
+    }
+
+    func reset(context: ResetContext) {
+        context.reset(RandomNumberGeneratorAtom())
+    }
+}
+
+private struct RandomNumberGeneratorAtom: ValueAtom, Hashable {
+    func value(context: Context) -> SystemRandomNumberGenerator {
+        SystemRandomNumberGenerator()
+    }
+}
+```
+
 </details>
 
 ---
