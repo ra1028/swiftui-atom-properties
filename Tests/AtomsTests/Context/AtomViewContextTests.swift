@@ -96,6 +96,35 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.read(atom), 0)
     }
 
+    func testCustomReset() {
+        let store = AtomStore()
+        let container = SubscriptionContainer()
+        let context = AtomViewContext(
+            store: StoreContext(store),
+            container: container.wrapper,
+            notifyUpdate: {}
+        )
+        
+        let atom = TestStateAtom(defaultValue: 0)
+        let resettableAtom = TestCustomResettableAtom(defaultValue: 0) { context in
+            context[atom] = 300
+        }
+
+        XCTAssertEqual(context.watch(atom), 0)
+        XCTAssertEqual(context.watch(resettableAtom), 0)
+
+        context[atom] = 100
+        context[resettableAtom] = 200
+
+        XCTAssertEqual(context.watch(atom), 100)
+        XCTAssertEqual(context.watch(resettableAtom), 200)
+
+        context.reset(resettableAtom)
+
+        XCTAssertEqual(context.watch(atom), 300)
+        XCTAssertEqual(context.watch(resettableAtom), 0)
+    }
+
     func testWatch() {
         let atom = TestStateAtom(defaultValue: 100)
         let store = AtomStore()

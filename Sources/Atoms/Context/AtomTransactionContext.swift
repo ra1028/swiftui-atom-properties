@@ -142,6 +142,29 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     ///
     /// ```swift
     /// let context = ...
+    /// print(context.watch(ResettableTextAtom())) // Prints "Text"
+    /// context[ResettableTextAtom()] = "New text"
+    /// print(context.read(ResettableTextAtom())) // Prints "New text"
+    /// context.reset(ResettableTextAtom())
+    /// print(context.read(ResettableTextAtom())) // Prints "Text"
+    /// ```
+    ///
+    /// - Parameter atom: An atom to reset.
+    @inlinable
+    @_disfavoredOverload
+    public func reset<Node: Atom>(_ atom: Node) {
+        _store.reset(atom)
+    }
+
+    /// Resets the value associated with the given atom, and then notifies.
+    ///
+    /// This method only accepts atoms that conform to ``Resettable`` protocol.
+    /// This method resets the value for the given atom and then notifies downstream
+    /// atoms and views. Thereafter, if any other atoms or views are watching the atom, a newly
+    /// generated value will be produced.
+    ///
+    /// ```swift
+    /// let context = ...
     /// print(context.watch(TextAtom())) // Prints "Text"
     /// context[TextAtom()] = "New text"
     /// print(context.read(TextAtom())) // Prints "New text"
@@ -151,7 +174,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     ///
     /// - Parameter atom: An atom to reset.
     @inlinable
-    public func reset(_ atom: some Atom) {
+    public func reset<Node: Resettable>(_ atom: Node) {
         _store.reset(atom)
     }
 
