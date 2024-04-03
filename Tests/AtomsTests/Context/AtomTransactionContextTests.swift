@@ -79,7 +79,7 @@ final class AtomTransactionContextTests: XCTestCase {
 
         XCTAssertEqual(context.read(dependency), 0)
     }
-    
+
     func testCustomReset() {
         let transactionAtom = TestValueAtom(value: 0)
         let atom = TestStateAtom(defaultValue: 0)
@@ -89,7 +89,7 @@ final class AtomTransactionContextTests: XCTestCase {
 
         let store = AtomStore()
         let transaction = Transaction(key: AtomKey(transactionAtom)) {}
-        let context = AtomTransactionContext(store:  StoreContext(store), transaction: transaction, coordinator: ())
+        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
 
         XCTAssertEqual(context.watch(atom), 0)
         XCTAssertEqual(context.watch(resettableAtom), 0)

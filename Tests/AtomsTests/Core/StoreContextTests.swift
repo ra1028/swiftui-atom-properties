@@ -438,11 +438,11 @@ final class StoreContextTests: XCTestCase {
             [[key: 0]]
         )
     }
-    
+
     func testCustomReset() {
         var updateCount = 0
         var resetCount = 0
-        
+
         let store = AtomStore()
         let container = SubscriptionContainer()
         let resettableAtom = TestCustomResettableAtom(defaultValue: 0) { context in

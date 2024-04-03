@@ -281,7 +281,7 @@ public struct AtomTestContext: AtomWatchableContext {
     public func reset<Node: Atom>(_ atom: Node) {
         _store.reset(atom)
     }
-    
+
     /// Resets the value associated with the given atom, and then notifies.
     ///
     /// This method only accepts atoms that conform to ``Resettable`` protocol.

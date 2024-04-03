@@ -103,7 +103,7 @@ public protocol AtomContext {
     ///
     /// - Parameter atom: An atom to reset.
     func reset<Node: Atom>(_ atom: Node)
-    
+
     /// Resets the value associated with the given atom, and then notifies.
     ///
     /// This method only accepts atoms that conform to ``Resettable`` protocol.

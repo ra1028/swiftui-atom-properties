@@ -104,7 +104,7 @@ final class AtomViewContextTests: XCTestCase {
             container: container.wrapper,
             notifyUpdate: {}
         )
-        
+
         let atom = TestStateAtom(defaultValue: 0)
         let resettableAtom = TestCustomResettableAtom(defaultValue: 0) { context in
             context[atom] = 300
