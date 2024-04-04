@@ -457,7 +457,7 @@ final class StoreContextTests: XCTestCase {
 
         let store = AtomStore()
         let container = SubscriptionContainer()
-        
+
         let atom = TestCustomResettableAtom(
             defaultValue: { _ in
                 valueCount += 1
