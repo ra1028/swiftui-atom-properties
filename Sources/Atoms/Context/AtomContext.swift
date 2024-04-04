@@ -102,6 +102,7 @@ public protocol AtomContext {
     /// ```
     ///
     /// - Parameter atom: An atom to reset.
+    @_disfavoredOverload
     func reset<Node: Atom>(_ atom: Node)
 
     /// Resets the value associated with the given atom, and then notifies.
