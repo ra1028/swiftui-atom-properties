@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class TransactionTests: XCTestCase {
+    @MainActor
     func testCommit() {
         let key = AtomKey(TestValueAtom(value: 0))
         var commitCount = 0
@@ -18,6 +18,7 @@ final class TransactionTests: XCTestCase {
         XCTAssertEqual(commitCount, 1)
     }
 
+    @MainActor
     func testAddTermination() {
         let key = AtomKey(TestValueAtom(value: 0))
         let transaction = Transaction(key: key) {}
@@ -29,6 +30,7 @@ final class TransactionTests: XCTestCase {
         XCTAssertEqual(transaction.terminations.count, 2)
     }
 
+    @MainActor
     func testTerminate() {
         let key = AtomKey(TestValueAtom(value: 0))
         var isCommitted = false

@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class ThrowingTaskAtomTests: XCTestCase {
+    @MainActor
     func test() async throws {
         var result = Result<Int, Error>.success(0)
         let atom = TestThrowingTaskAtom { result }
@@ -56,6 +56,7 @@ final class ThrowingTaskAtomTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testRefresh() async throws {
         var result = Result<Int, Error>.success(0)
         let atom = TestThrowingTaskAtom { result }
@@ -123,6 +124,7 @@ final class ThrowingTaskAtomTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testReleaseDependencies() async throws {
         struct DependencyAtom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
@@ -157,6 +159,7 @@ final class ThrowingTaskAtomTests: XCTestCase {
         XCTAssertEqual(dependencyValue, 0)
     }
 
+    @MainActor
     func testUpdated() {
         var updatedTaskHashValues = [Int]()
         let atom = TestThrowingTaskAtom {

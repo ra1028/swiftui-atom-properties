@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class ModifiedAtomTests: XCTestCase {
+    @MainActor
     func testKey() {
         let base = TestAtom(value: 0)
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
@@ -17,6 +17,7 @@ final class ModifiedAtomTests: XCTestCase {
         XCTAssertNotEqual(AnyHashable(atom.key).hashValue, AnyHashable(base.key).hashValue)
     }
 
+    @MainActor
     func testValue() async {
         let base = TestStateAtom(defaultValue: "test")
         let modifier = SelectModifier<String, Int>(keyPath: \.count)

@@ -3,8 +3,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class TaskPhaseModifierTests: XCTestCase {
+    @MainActor
     func testPhase() async {
         let atom = TestTaskAtom(value: 0).phase
         let context = AtomTestContext()
@@ -23,6 +23,7 @@ final class TaskPhaseModifierTests: XCTestCase {
         XCTAssertEqual(modifier.key.hashValue, modifier.key.hashValue)
     }
 
+    @MainActor
     func testModify() {
         let atom = TestValueAtom(value: 0)
         let modifier = TaskPhaseModifier<Int, Never>()
@@ -43,6 +44,7 @@ final class TaskPhaseModifierTests: XCTestCase {
         XCTAssertEqual(phase, .success(100))
     }
 
+    @MainActor
     func testAssociateOverridden() {
         let atom = TestValueAtom(value: 0)
         let modifier = TaskPhaseModifier<Int, Never>()
@@ -53,6 +55,7 @@ final class TaskPhaseModifierTests: XCTestCase {
         XCTAssertEqual(phase, .success(100))
     }
 
+    @MainActor
     func testRefresh() async {
         let atom = TestTaskAtom(value: 0).phase
         let context = AtomTestContext()

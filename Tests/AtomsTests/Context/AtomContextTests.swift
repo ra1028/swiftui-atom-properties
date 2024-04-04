@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class AtomContextTests: XCTestCase {
+    @MainActor
     func testSubscript() {
         let atom = TestStateAtom(defaultValue: 0)
         let context: AtomWatchableContext = AtomTestContext()
@@ -15,6 +15,7 @@ final class AtomContextTests: XCTestCase {
         XCTAssertEqual(context[atom], 100)
     }
 
+    @MainActor
     func testState() {
         let atom = TestStateAtom(defaultValue: 0)
         let context: AtomWatchableContext = AtomTestContext()

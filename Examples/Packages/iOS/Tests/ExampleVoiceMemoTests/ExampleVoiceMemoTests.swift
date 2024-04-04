@@ -5,8 +5,8 @@ import XCTest
 
 @testable import ExampleVoiceMemo
 
-@MainActor
 final class ExampleVoiceMemoTests: XCTestCase {
+    @MainActor
     func testIsRecordingAtom() {
         let context = AtomTestContext()
         let atom = IsRecordingAtom()
@@ -18,6 +18,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
         XCTAssertTrue(context.read(atom))
     }
 
+    @MainActor
     func testRecordingDataAtom() {
         let context = AtomTestContext()
         let atom = RecordingDataAtom()
@@ -55,6 +56,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
         XCTAssertTrue(context.watch(IsRecordingFailedAtom()))
     }
 
+    @MainActor
     func testRecordingElapsedTimeAtom() async {
         let context = AtomTestContext()
         let atom = RecordingElapsedTimeAtom()
@@ -79,6 +81,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
         XCTAssertEqual(context.watch(atom), .success(10))
     }
 
+    @MainActor
     func testToggleRecording() {
         let context = AtomTestContext()
         let actions = VoiceMemoActions(context: context)
@@ -125,6 +128,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
         XCTAssertNil(context.watch(RecordingDataAtom()))
     }
 
+    @MainActor
     func testDelete() {
         let context = AtomTestContext()
         let actions = VoiceMemoActions(context: context)
@@ -142,6 +146,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
         XCTAssertFalse(context.watch(IsPlayingAtom(voiceMemo: voiceMemo)))
     }
 
+    @MainActor
     func testIsPlayingAtom() {
         let context = AtomTestContext()
         let audioPlayer = MockAudioPlayer()
@@ -167,6 +172,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
         XCTAssertTrue(context.watch(IsPlaybackFailedAtom()))
     }
 
+    @MainActor
     func testPlayingElapsedTimeAtom() async {
         let context = AtomTestContext()
         let voiceMemo = VoiceMemo.stub()

@@ -3,8 +3,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class AtomViewContextTests: XCTestCase {
+    @MainActor
     func testRead() {
         let atom = TestValueAtom(value: 100)
         let store = AtomStore()
@@ -18,6 +18,7 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.read(atom), 100)
     }
 
+    @MainActor
     func testSet() {
         let atom = TestStateAtom(defaultValue: 100)
         let store = AtomStore()
@@ -35,6 +36,7 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom), 200)
     }
 
+    @MainActor
     func testRefresh() async {
         let atom = TestPublisherAtom { Just(100) }
         let store = AtomStore()
@@ -53,6 +55,7 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom).value, 100)
     }
 
+    @MainActor
     func testCustomRefresh() async {
         let atom = TestCustomRefreshableAtom {
             Just(100)
@@ -75,6 +78,7 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom).value, 200)
     }
 
+    @MainActor
     func testReset() {
         let atom = TestStateAtom(defaultValue: 0)
         let store = AtomStore()
@@ -96,6 +100,7 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.read(atom), 0)
     }
 
+    @MainActor
     func testWatch() {
         let atom = TestStateAtom(defaultValue: 100)
         let store = AtomStore()
@@ -113,6 +118,7 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom), 200)
     }
 
+    @MainActor
     func testSnapshot() {
         let store = AtomStore()
         let container = SubscriptionContainer()
@@ -150,6 +156,7 @@ final class AtomViewContextTests: XCTestCase {
         )
     }
 
+    @MainActor
     func testUnsubscription() {
         let atom = TestValueAtom(value: 100)
         let key = AtomKey(atom)

@@ -3,8 +3,8 @@ import XCTest
 
 @testable import ExampleCounter
 
-@MainActor
 final class ExampleCounterTests: XCTestCase {
+    @MainActor
     func testCounterAtom() {
         let context = AtomTestContext()
         let atom = CounterAtom()

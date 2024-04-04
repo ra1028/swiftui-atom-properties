@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class AsyncSequenceAtomTests: XCTestCase {
+    @MainActor
     func testValue() async {
         let pipe = AsyncThrowingStreamPipe<Int>()
         let atom = TestAsyncSequenceAtom { pipe.stream }
@@ -67,6 +67,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testRefresh() async {
         let pipe = AsyncThrowingStreamPipe<Int>()
         let atom = TestAsyncSequenceAtom { pipe.stream }
@@ -130,6 +131,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testUpdated() async {
         let pipe = AsyncThrowingStreamPipe<Int>()
         var updatedValues = [Pair<Int?>]()

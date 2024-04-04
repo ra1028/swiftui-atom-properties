@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class StateAtomTests: XCTestCase {
+    @MainActor
     func testValue() {
         let atom = TestStateAtom(defaultValue: 0)
         let context = AtomTestContext()
@@ -22,6 +22,7 @@ final class StateAtomTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testSet() {
         let atom = TestStateAtom(defaultValue: 0)
         let context = AtomTestContext()
@@ -33,6 +34,7 @@ final class StateAtomTests: XCTestCase {
         XCTAssertEqual(context.watch(atom), 100)
     }
 
+    @MainActor
     func testSetOverride() {
         let atom = TestStateAtom(defaultValue: 0)
         let context = AtomTestContext()
@@ -46,6 +48,7 @@ final class StateAtomTests: XCTestCase {
         XCTAssertEqual(context.watch(atom), 100)
     }
 
+    @MainActor
     func testDependency() async {
         struct Dependency1Atom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
@@ -81,6 +84,7 @@ final class StateAtomTests: XCTestCase {
         XCTAssertEqual(value2, 0)
     }
 
+    @MainActor
     func testUpdated() {
         var updatedValues = [Pair<Int>]()
         let atom = TestStateAtom(defaultValue: 0) { new, old in
