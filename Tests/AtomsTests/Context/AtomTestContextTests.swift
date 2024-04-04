@@ -252,6 +252,7 @@ final class AtomTestContextTests: XCTestCase {
         XCTAssertEqual(context.read(atom), 0)
     }
 
+    @MainActor
     func testCustomReset() {
         let atom = TestStateAtom(defaultValue: 0)
         let context = AtomTestContext()

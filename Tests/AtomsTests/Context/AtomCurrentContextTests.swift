@@ -73,6 +73,7 @@ final class AtomCurrentContextTests: XCTestCase {
         XCTAssertEqual(context.read(dependency), 0)
     }
 
+    @MainActor
     func testCustomReset() {
         let store = AtomStore()
         let context = AtomCurrentContext(store: StoreContext(store), coordinator: ())
