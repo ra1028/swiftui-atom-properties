@@ -106,23 +106,27 @@ final class AtomViewContextTests: XCTestCase {
         )
 
         let atom = TestStateAtom(defaultValue: 0)
-        let resettableAtom = TestCustomResettableAtom(defaultValue: 0) { context in
-            context[atom] = 300
-        }
+        let resettableAtom = TestCustomResettableAtom(
+            defaultValue: { context in
+                context.watch(atom)
+            },
+            reset: { context in
+                context[atom] = 300
+            }
+        )
 
         XCTAssertEqual(context.watch(atom), 0)
         XCTAssertEqual(context.watch(resettableAtom), 0)
 
         context[atom] = 100
-        context[resettableAtom] = 200
 
         XCTAssertEqual(context.watch(atom), 100)
-        XCTAssertEqual(context.watch(resettableAtom), 200)
+        XCTAssertEqual(context.watch(resettableAtom), 100)
 
         context.reset(resettableAtom)
 
         XCTAssertEqual(context.watch(atom), 300)
-        XCTAssertEqual(context.watch(resettableAtom), 0)
+        XCTAssertEqual(context.watch(resettableAtom), 300)
     }
 
     func testWatch() {

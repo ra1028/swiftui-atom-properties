@@ -440,26 +440,35 @@ final class StoreContextTests: XCTestCase {
     }
 
     func testCustomReset() {
+        var valueCount = 0
         var updateCount = 0
         var resetCount = 0
 
         let store = AtomStore()
         let container = SubscriptionContainer()
-        let resettableAtom = TestCustomResettableAtom(defaultValue: 0) { context in
-            resetCount += 1
-        }
-        let key = AtomKey(resettableAtom)
+        
+        let atom = TestCustomResettableAtom(
+            defaultValue: { _ in
+                valueCount += 1
+                return 0
+            },
+            reset: { _ in
+                resetCount += 1
+            }
+        )
+        let key = AtomKey(atom)
         var snapshots = [Snapshot]()
         let observer = Observer {
             snapshots.append($0)
         }
         let context = StoreContext(store, observers: [observer])
 
-        _ = context.watch(resettableAtom, container: container.wrapper, requiresObjectUpdate: false) {
+        _ = context.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {
             updateCount += 1
         }
         snapshots.removeAll()
-        context.set(1, for: resettableAtom)
+        context.set(1, for: atom)
+        XCTAssertEqual(valueCount, 1)
         XCTAssertEqual(updateCount, 1)
         XCTAssertEqual(resetCount, 0)
         XCTAssertEqual(
@@ -468,14 +477,12 @@ final class StoreContextTests: XCTestCase {
         )
 
         snapshots.removeAll()
-        context.reset(resettableAtom)
+        context.reset(atom)
 
-        XCTAssertEqual(updateCount, 2)
+        XCTAssertEqual(valueCount, 1)
+        XCTAssertEqual(updateCount, 1)
         XCTAssertEqual(resetCount, 1)
-        XCTAssertEqual(
-            snapshots.map { $0.caches.mapValues { $0.value as? Int } },
-            [[key: 0]]
-        )
+        XCTAssert(snapshots.isEmpty)
     }
 
     func testUnwatch() {

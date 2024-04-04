@@ -77,22 +77,26 @@ final class AtomCurrentContextTests: XCTestCase {
         let atom = TestStateAtom(defaultValue: 0)
         let transaction = Transaction(key: AtomKey(transactionAtom)) {}
 
-        let resettableAtom = TestCustomResettableAtom(defaultValue: 0) { context in
-            context[atom] = 300
-        }
+        let resettableAtom = TestCustomResettableAtom(
+            defaultValue: { context in
+                context.watch(atom)
+            },
+            reset: { context in
+                context[atom] = 300
+            }
+        )
 
         XCTAssertEqual(storeContext.watch(atom, in: transaction), 0)
         XCTAssertEqual(storeContext.watch(resettableAtom, in: transaction), 0)
 
         context[atom] = 100
-        context[resettableAtom] = 200
 
         XCTAssertEqual(storeContext.watch(atom, in: transaction), 100)
-        XCTAssertEqual(storeContext.watch(resettableAtom, in: transaction), 200)
+        XCTAssertEqual(storeContext.watch(resettableAtom, in: transaction), 100)
 
         context.reset(resettableAtom)
 
         XCTAssertEqual(storeContext.watch(atom, in: transaction), 300)
-        XCTAssertEqual(storeContext.watch(resettableAtom, in: transaction), 0)
+        XCTAssertEqual(storeContext.watch(resettableAtom, in: transaction), 300)
     }
 }

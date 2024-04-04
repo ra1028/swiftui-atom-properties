@@ -94,7 +94,7 @@ struct TestCustomRefreshableAtom<Publisher: Combine.Publisher>: PublisherAtom, R
 }
 
 struct TestCustomResettableAtom<T>: StateAtom, Resettable {
-    var defaultValue: T
+    var defaultValue: (Context) -> T
     var reset: (ResetContext) -> Void
 
     var key: UniqueKey {
@@ -102,7 +102,7 @@ struct TestCustomResettableAtom<T>: StateAtom, Resettable {
     }
 
     func defaultValue(context: Context) -> T {
-        defaultValue
+        defaultValue(context)
     }
 
     func reset(context: ResetContext) {
