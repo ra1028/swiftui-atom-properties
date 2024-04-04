@@ -66,9 +66,6 @@ final class TaskAtomTests: XCTestCase {
 
         do {
             // Cancellation
-            var updateCount = 0
-            context.onUpdate = { updateCount += 1 }
-
             let refreshTask0 = Task {
                 await context.refresh(atom)
             }
