@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class ValueAtomTests: XCTestCase {
+    @MainActor
     func testValue() {
         let atom = TestValueAtom(value: 0)
         let context = AtomTestContext()
@@ -23,6 +23,7 @@ final class ValueAtomTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testUpdated() async {
         var updatedValues = [Pair<Int>]()
         let atom = TestValueAtom(value: 0) { new, old in

@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class SubscriptionContainerTests: XCTestCase {
+    @MainActor
     func testUnsubscribeOnDeinit() {
         var container: SubscriptionContainer? = SubscriptionContainer()
         var unsubscribedCount = 0
@@ -17,6 +17,7 @@ final class SubscriptionContainerTests: XCTestCase {
         XCTAssertEqual(unsubscribedCount, 1)
     }
 
+    @MainActor
     func testWrapper() {
         let location = SourceLocation()
         let container0 = SubscriptionContainer()

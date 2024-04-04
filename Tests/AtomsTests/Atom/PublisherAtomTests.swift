@@ -3,8 +3,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class PublisherAtomTests: XCTestCase {
+    @MainActor
     func testValue() async {
         let subject = ResettableSubject<Int, URLError>()
         let atom = TestPublisherAtom { subject }
@@ -66,6 +66,7 @@ final class PublisherAtomTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testRefresh() async {
         let subject = ResettableSubject<Int, URLError>()
         let atom = TestPublisherAtom { subject }
@@ -129,6 +130,7 @@ final class PublisherAtomTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testUpdated() async {
         let subject = ResettableSubject<Int, URLError>()
         var updatedValues = [Pair<Int?>]()

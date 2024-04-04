@@ -3,7 +3,6 @@ import XCTest
 
 @testable import ExampleTodo
 
-@MainActor
 final class ExampleTodoTests: XCTestCase {
     let completedTodos = [
         Todo(
@@ -30,6 +29,7 @@ final class ExampleTodoTests: XCTestCase {
         completedTodos + uncompleteTodos
     }
 
+    @MainActor
     func testFilteredTodosAtom() {
         let context = AtomTestContext()
         let atom = FilteredTodosAtom()
@@ -53,6 +53,7 @@ final class ExampleTodoTests: XCTestCase {
         XCTAssertEqual(context.watch(atom), uncompleteTodos)
     }
 
+    @MainActor
     func testStatsAtom() {
         let context = AtomTestContext()
         let atom = StatsAtom()

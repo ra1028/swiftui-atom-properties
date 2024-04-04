@@ -3,8 +3,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class AtomTransactionContextTests: XCTestCase {
+    @MainActor
     func testRead() {
         let atom = TestValueAtom(value: 100)
         let store = AtomStore()
@@ -14,6 +14,7 @@ final class AtomTransactionContextTests: XCTestCase {
         XCTAssertEqual(context.read(atom), 100)
     }
 
+    @MainActor
     func testSet() {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 100)
@@ -28,6 +29,7 @@ final class AtomTransactionContextTests: XCTestCase {
         XCTAssertEqual(context.watch(dependency), 200)
     }
 
+    @MainActor
     func testRefresh() async {
         let atom0 = TestValueAtom(value: 0)
         let atom1 = TestPublisherAtom { Just(100) }
@@ -43,6 +45,7 @@ final class AtomTransactionContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom1).value, 100)
     }
 
+    @MainActor
     func testCustomRefresh() async {
         let atom0 = TestValueAtom(value: 0)
         let atom1 = TestCustomRefreshableAtom {
@@ -62,6 +65,7 @@ final class AtomTransactionContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom1).value, 200)
     }
 
+    @MainActor
     func testReset() {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)
@@ -80,6 +84,7 @@ final class AtomTransactionContextTests: XCTestCase {
         XCTAssertEqual(context.read(dependency), 0)
     }
 
+    @MainActor
     func testCustomReset() {
         let transactionAtom = TestValueAtom(value: 0)
         let atom = TestStateAtom(defaultValue: 0)
@@ -110,6 +115,7 @@ final class AtomTransactionContextTests: XCTestCase {
         XCTAssertEqual(context.watch(resettableAtom), 300)
     }
 
+    @MainActor
     func testWatch() {
         let atom0 = TestValueAtom(value: 100)
         let atom1 = TestStateAtom(defaultValue: 200)

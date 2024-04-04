@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Atoms
 
-@MainActor
 final class SelectModifierTests: XCTestCase {
+    @MainActor
     func testSelect() {
         let atom = TestStateAtom(defaultValue: "")
         let context = AtomTestContext()
@@ -36,6 +36,7 @@ final class SelectModifierTests: XCTestCase {
         XCTAssertNotEqual(modifier0.key.hashValue, modifier1.key.hashValue)
     }
 
+    @MainActor
     func testShouldUpdate() {
         let modifier = SelectModifier<String, Int>(keyPath: \.count)
 
@@ -43,6 +44,7 @@ final class SelectModifierTests: XCTestCase {
         XCTAssertTrue(modifier.shouldUpdate(newValue: 100, oldValue: 200))
     }
 
+    @MainActor
     func testModify() {
         let atom = TestValueAtom(value: 0)
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
@@ -53,6 +55,7 @@ final class SelectModifierTests: XCTestCase {
         XCTAssertEqual(value, "100")
     }
 
+    @MainActor
     func testAssociateOverridden() {
         let atom = TestValueAtom(value: 0)
         let modifier = SelectModifier<Int, String>(keyPath: \.description)
