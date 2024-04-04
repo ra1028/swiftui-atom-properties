@@ -155,20 +155,18 @@ public struct AtomViewContext: AtomWatchableContext {
         _store.reset(atom)
     }
 
-    /// Resets the value associated with the given atom, and then notifies.
+    /// Calls arbitrary reset function of the given atom.
     ///
     /// This method only accepts atoms that conform to ``Resettable`` protocol.
-    /// This method resets the value for the given atom and then notifies downstream
-    /// atoms and views. Thereafter, if any other atoms or views are watching the atom, a newly
-    /// generated value will be produced.
+    /// Calls custom reset function of the given atom. Hence, it does not generate any new cache value or notify subscribers.
     ///
     /// ```swift
     /// let context = ...
-    /// print(context.watch(TextAtom())) // Prints "Text"
-    /// context[TextAtom()] = "New text"
-    /// print(context.read(TextAtom())) // Prints "New text"
-    /// context.reset(TextAtom())
-    /// print(context.read(TextAtom())) // Prints "Text"
+    /// print(context.watch(ResettableTextAtom()) // Prints "Text"
+    /// context[ResettableTextAtom()] = "New text"
+    /// print(context.read(ResettableTextAtom())) // Prints "New text"
+    /// context.reset(ResettableTextAtom()) // Calls the custom reset function
+    /// print(context.read(ResettableTextAtom())) // Prints "New text"
     /// ```
     ///
     /// - Parameter atom: An atom to reset.

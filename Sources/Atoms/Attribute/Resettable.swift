@@ -1,15 +1,21 @@
-/// An attribute protocol allows an atom to have a custom reset ability.
+/// An attribute protocol allows an atom to have a custom reset override.
 ///
-/// Note that the custom reset ability is possible even when the atom is overridden.
+/// Note that the custom reset will be triggered even when the atom is overridden.
 ///
 /// ```swift
-/// struct RandomIntAtom: ValueAtom, Resettable, Hashable {
-///     func value(context: Context) -> Int {
-///          context.watch(RandomSeedAtom()).integer()
+/// struct UserAtom: ValueAtom, Resettable, Hashable {
+///     func value(context: Context) -> User? {
+///          context.watch(FetchUserAtom()).phase.value
 ///     }
 ///
 ///     func reset(context: ResetContext) {
-///          context.reset(RandomSeedAtom())
+///          context.reset(FetchUserAtom())
+///     }
+/// }
+///
+/// private struct FetchUserAtom: TaskAtom, Hashable {
+///     func value(context: Context) async -> User? {
+///          await fetchUser()
 ///     }
 /// }
 /// ```
@@ -19,9 +25,9 @@ public protocol Resettable where Self: Atom {
     /// with other atoms.
     typealias ResetContext = AtomCurrentContext<Loader.Coordinator>
 
-    /// Resets the atom value.
+    /// Arbitrary reset method to be executed on atom reset.
     ///
-    /// The value after reset will be cached as a new value.
+    /// This is arbitrary custom reset method that replaces regular atom reset functionality.
     ///
     /// - Parameter context: A context structure to read, set, and otherwise interact
     ///                      with other atoms.
