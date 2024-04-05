@@ -805,6 +805,7 @@ struct FetchMoviesPhaseAtom: ValueAtom, Refreshable, Hashable {
 }
 ```
 
+</details>
 
 #### [Resettable](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/resettable)
 
