@@ -93,6 +93,23 @@ struct TestCustomRefreshableAtom<Publisher: Combine.Publisher>: PublisherAtom, R
     }
 }
 
+struct TestCustomResettableAtom<T>: StateAtom, Resettable {
+    var defaultValue: (Context) -> T
+    var reset: (ResetContext) -> Void
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
+
+    func defaultValue(context: Context) -> T {
+        defaultValue(context)
+    }
+
+    func reset(context: ResetContext) {
+        reset(context)
+    }
+}
+
 struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom {
     var getResult: () -> Result<Success, Error>
     var onUpdated: ((Task<Success, Error>, Task<Success, Error>) -> Void)?

@@ -240,11 +240,6 @@ final class AtomTestContextTests: XCTestCase {
     func testReset() {
         let atom = TestStateAtom(defaultValue: 0)
         let context = AtomTestContext()
-        var updateCount = 0
-
-        context.onUpdate = {
-            updateCount += 1
-        }
 
         XCTAssertEqual(context.watch(atom), 0)
 
@@ -255,5 +250,33 @@ final class AtomTestContextTests: XCTestCase {
         context.reset(atom)
 
         XCTAssertEqual(context.read(atom), 0)
+    }
+
+    @MainActor
+    func testCustomReset() {
+        let atom = TestStateAtom(defaultValue: 0)
+        let context = AtomTestContext()
+        let resettableAtom = TestCustomResettableAtom(
+            defaultValue: { context in
+                context.watch(atom)
+            },
+            reset: { context in
+                context[atom] = 300
+            }
+        )
+
+        XCTAssertEqual(context.watch(atom), 0)
+        XCTAssertEqual(context.watch(resettableAtom), 0)
+
+        context.override(resettableAtom, with: { _ in 200 })
+        context[atom] = 100
+
+        XCTAssertEqual(context.watch(atom), 100)
+        XCTAssertEqual(context.watch(resettableAtom), 200)
+
+        context.reset(resettableAtom)
+
+        XCTAssertEqual(context.watch(atom), 300)
+        XCTAssertEqual(context.watch(resettableAtom), 200)
     }
 }

@@ -47,7 +47,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     /// and assigns a new value for the atom.
     /// When you assign a new value, it immediately notifies downstream atoms and views.
     ///
-    /// - SeeAlso: ``AtomTransactionContext/subscript``
+    /// - SeeAlso: ``AtomTransactionContext/subscript(_:)``
     ///
     /// ```swift
     /// let context = ...
@@ -142,16 +142,37 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     ///
     /// ```swift
     /// let context = ...
-    /// print(context.watch(TextAtom())) // Prints "Text"
-    /// context[TextAtom()] = "New text"
-    /// print(context.read(TextAtom())) // Prints "New text"
-    /// context.reset(TextAtom())
-    /// print(context.read(TextAtom())) // Prints "Text"
+    /// print(context.watch(ResettableTextAtom())) // Prints "Text"
+    /// context[ResettableTextAtom()] = "New text"
+    /// print(context.read(ResettableTextAtom())) // Prints "New text"
+    /// context.reset(ResettableTextAtom())
+    /// print(context.read(ResettableTextAtom())) // Prints "Text"
     /// ```
     ///
     /// - Parameter atom: An atom to reset.
     @inlinable
-    public func reset(_ atom: some Atom) {
+    @_disfavoredOverload
+    public func reset<Node: Atom>(_ atom: Node) {
+        _store.reset(atom)
+    }
+
+    /// Calls arbitrary reset function of the given atom.
+    ///
+    /// This method only accepts atoms that conform to ``Resettable`` protocol.
+    /// Calls custom reset function of the given atom. Hence, it does not generate any new cache value or notify subscribers.
+    ///
+    /// ```swift
+    /// let context = ...
+    /// print(context.watch(ResettableTextAtom()) // Prints "Text"
+    /// context[ResettableTextAtom()] = "New text"
+    /// print(context.read(ResettableTextAtom())) // Prints "New text"
+    /// context.reset(ResettableTextAtom()) // Calls the custom reset function
+    /// print(context.read(ResettableTextAtom())) // Prints "New text"
+    /// ```
+    ///
+    /// - Parameter atom: An atom to reset.
+    @inlinable
+    public func reset<Node: Resettable>(_ atom: Node) {
         _store.reset(atom)
     }
 

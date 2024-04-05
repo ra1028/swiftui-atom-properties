@@ -201,7 +201,8 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func reset(_ atom: some Atom) {
+    @_disfavoredOverload
+    func reset<Node: Atom>(_ atom: Node) {
         let override = lookupOverride(of: atom)
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
 
@@ -209,6 +210,15 @@ internal struct StoreContext {
             let newCache = makeNewCache(of: atom, for: key, override: override)
             update(atom: atom, for: key, value: newCache.value, cache: cache, order: .newValue)
         }
+    }
+
+    @usableFromInline
+    func reset<Node: Resettable>(_ atom: Node) {
+        let override = lookupOverride(of: atom)
+        let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
+        let state = getState(of: atom, for: key)
+        let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
+        atom.reset(context: context)
     }
 
     @usableFromInline

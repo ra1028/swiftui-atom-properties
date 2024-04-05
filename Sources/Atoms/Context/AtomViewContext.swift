@@ -46,7 +46,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// and assigns a new value for the atom.
     /// When you assign a new value, it immediately notifies downstream atoms and views.
     ///
-    /// - SeeAlso: ``AtomViewContext/subscript``
+    /// - SeeAlso: ``AtomViewContext/subscript(_:)``
     ///
     /// ```swift
     /// let context = ...
@@ -150,7 +150,28 @@ public struct AtomViewContext: AtomWatchableContext {
     ///
     /// - Parameter atom: An atom to reset.
     @inlinable
-    public func reset(_ atom: some Atom) {
+    @_disfavoredOverload
+    public func reset<Node: Atom>(_ atom: Node) {
+        _store.reset(atom)
+    }
+
+    /// Calls arbitrary reset function of the given atom.
+    ///
+    /// This method only accepts atoms that conform to ``Resettable`` protocol.
+    /// Calls custom reset function of the given atom. Hence, it does not generate any new cache value or notify subscribers.
+    ///
+    /// ```swift
+    /// let context = ...
+    /// print(context.watch(ResettableTextAtom()) // Prints "Text"
+    /// context[ResettableTextAtom()] = "New text"
+    /// print(context.read(ResettableTextAtom())) // Prints "New text"
+    /// context.reset(ResettableTextAtom()) // Calls the custom reset function
+    /// print(context.read(ResettableTextAtom())) // Prints "New text"
+    /// ```
+    ///
+    /// - Parameter atom: An atom to reset.
+    @inlinable
+    public func reset<Node: Resettable>(_ atom: Node) {
         _store.reset(atom)
     }
 

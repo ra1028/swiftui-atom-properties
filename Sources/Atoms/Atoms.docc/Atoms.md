@@ -35,6 +35,7 @@ Building state by compositing atoms automatically optimizes rendering based on i
 
 - ``KeepAlive``
 - ``Refreshable``
+- ``Resettable``
 
 ### Property Wrappers
 
