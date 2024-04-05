@@ -59,9 +59,9 @@ final class AtomTestContextTests: XCTestCase {
 
         context.watch(atom)
 
-        for i in 0..<3 {
+        for i in 1...3 {
             Task {
-                try? await Task.sleep(seconds: Double(i) / 10)
+                try? await Task.sleep(seconds: Double(i) / 100)
                 context[atom] += 1
             }
         }
