@@ -1,8 +1,6 @@
 public extension Atom {
-    /// Selects a partial property with the specified key path from the original atom.
-    ///
-    /// When this modifier is used, the atom provides the partial value which conforms to `Equatable`
-    /// and prevent the view from updating its child view if the new value is equivalent to old value.
+    /// Derives a partial property with the specified key path from the original atom and prevent it
+    /// from updating its downstream when its new value is equivalent to old value.
     ///
     /// ```swift
     /// struct IntAtom: ValueAtom, Hashable {
@@ -12,7 +10,7 @@ public extension Atom {
     /// }
     ///
     /// struct ExampleView: View {
-    ///     @Watch(IntAtom().select(\.description))
+    ///     @Watch(IntAtom().changes(of: \.description))
     ///     var description
     ///
     ///     var body: some View {
@@ -24,20 +22,20 @@ public extension Atom {
     /// - Parameter keyPath: A key path for the property of the original atom value.
     ///
     /// - Returns: An atom that provides the partial property of the original atom value.
-    func select<Selected: Equatable>(
-        _ keyPath: KeyPath<Loader.Value, Selected>
-    ) -> ModifiedAtom<Self, SelectModifier<Loader.Value, Selected>> {
-        modifier(SelectModifier(keyPath: keyPath))
+    func changes<T: Equatable>(
+        of keyPath: KeyPath<Loader.Value, T>
+    ) -> ModifiedAtom<Self, ChangesOfModifier<Loader.Value, T>> {
+        modifier(ChangesOfModifier(keyPath: keyPath))
     }
 }
 
-/// A modifier that selects the partial value of the specified key path
-/// from the original atom.
+/// A modifier that derives a partial property with the specified key path from the original atom
+/// and prevent it from updating its downstream when its new value is equivalent to old value.
 ///
-/// Use ``Atom/select(_:)`` instead of using this modifier directly.
-public struct SelectModifier<BaseValue, Selected: Equatable>: AtomModifier {
+/// Use ``Atom/changes(of:)`` instead of using this modifier directly.
+public struct ChangesOfModifier<BaseValue, T: Equatable>: AtomModifier {
     /// A type of modified value to provide.
-    public typealias Value = Selected
+    public typealias Value = T
 
     /// A type representing the stable identity of this modifier.
     public struct Key: Hashable {

@@ -58,6 +58,6 @@ struct CoordinateAtom: ValueAtom, Hashable {
 
 struct AuthorizationStatusAtom: ValueAtom, Hashable {
     func value(context: Context) -> CLAuthorizationStatus {
-        context.watch(LocationObserverAtom().select(\.manager.authorizationStatus))
+        context.watch(LocationObserverAtom().changes(of: \.manager.authorizationStatus))
     }
 }

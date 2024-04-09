@@ -634,13 +634,13 @@ struct ContactView: View {
 
 Modifiers can be applied to an atom to produce a different versions of the original atom to make it more coding friendly or to reduce view re-computation for performance optimization.
 
-#### [select](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/select(_:))
+#### [changes(of:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/changes(of:))
 
 |               |Description|
 |:--------------|:----------|
-|Summary        |Selects a partial property with the specified key path from the original atom. The selected property doesn't notify updates if the new value is equivalent to the old value.|
+|Summary        |Derives a partial property with the specified key path from the original atom and prevent it from updating its downstream when its new value is equivalent to old value.|
 |Output         |`T: Equatable`|
-|Compatible     |All atoms types. The selected property must be `Equatable` compliant.|
+|Compatible     |All atoms types. The derived property must be `Equatable` compliant.|
 |Use Case       |Performance optimization, Property scope restriction|
 
 <details><summary><code>📖 Expand to see example</code></summary>
@@ -653,7 +653,7 @@ struct CountAtom: StateAtom, Hashable {
 }
 
 struct CountDisplayView: View {
-    @Watch(CountAtom().select(\.description))
+    @Watch(CountAtom().changes(of: \.description))
     var description  // : String
 
     var body: some View {
