@@ -763,23 +763,9 @@ struct FetchMasterDataAtom: ThrowingTaskAtom, KeepAlive, Hashable {
 
 <details><summary><code>📖 Expand to see example</code></summary>
 
-It gives custom refresh behavior to ValueAtom which is inherently unable to refresh.  
-
-```swift
-struct RandomIntAtom: ValueAtom, Refreshable, Hashable {
-    func value(context: Context) -> Int {
-        0
-    }
-
-    func refresh(context: RefreshContext) async -> Int {
-        try? await Task.sleep(nanoseconds: 3 * 1_000_000_000)
-        return .random(in: 0..<100)
-    }
-}
-```
-
-It's also useful when you want to expose a converted value of an atom as another atom with having refresh ability while keeping the original one private visibility.  
-In this example, `FetchMoviesPhaseAtom` transparently exposes the value of `FetchMoviesTaskAtom` as AsyncPhase so that the error can be handled easily inside the atom, and `Refreshable` gives refreshing ability to `FetchMoviesPhaseAtom` itself.  
+It adds custom refresh behavior to ValueAtom which is inherently unable to refresh.  
+It's useful when need to have arbitrary refresh behavior or implementing refresh when value depends on private atom.  
+In this example, `FetchMoviesPhaseAtom` transparently exposes the value of `FetchMoviesTaskAtom` as AsyncPhase so that the error can be handled easily inside the atom, and `Refreshable` gives refreshing behavior to `FetchMoviesPhaseAtom` itself.  
 
 ```swift
 private struct FetchMoviesTaskAtom: ThrowingTaskAtom, Hashable {
@@ -813,11 +799,9 @@ struct FetchMoviesPhaseAtom: ValueAtom, Refreshable, Hashable {
 
 <details><summary><code>📖 Expand to see example</code></summary>
 
-It adds custom reset behavior to an Atom that will be executed upon atom reset.
-
-It's useful when need to have arbitrary reset ability or implementing reset when value depends on private atom.
-  
-In following example, `RandomIntAtom` generates a random value using generated from private `RandomNumberGeneratorAtom`, and `Resettable` gives ability to replace exposed reset with  `RandomNumberGeneratorAtom` reset.
+It adds custom reset behavior to an atom that will be executed upon atom reset.  
+It's useful when need to have arbitrary reset behavior or implementing reset when value depends on private atom.  
+In following example, `RandomIntAtom` generates a random value using generated from private `RandomNumberGeneratorAtom`, and `Resettable` gives ability to replace exposed reset with  `RandomNumberGeneratorAtom` reset.  
 
 ```swift
 struct RandomIntAtom: ValueAtom, Resettable, Hashable {

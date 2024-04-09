@@ -1,16 +1,22 @@
-/// An attribute protocol allows an atom to have a custom refresh ability.
+/// An attribute protocol that allows an atom to have a custom refresh behavior.
 ///
-/// Note that the custom refresh ability is not triggered when the atom is overridden.
+/// It is useful when creating a wrapper atom and you want to transparently refresh the atom underneath.
+/// Note that the custom refresh will not be triggered when the atom is overridden.
 ///
 /// ```swift
-/// struct RandomIntAtom: ValueAtom, Refreshable, Hashable {
-///     func value(context: Context) -> Int {
-///         0
+/// struct UserAtom: ValueAtom, Refreshable, Hashable {
+///     func value(context: Context) -> AsyncPhase<User?, Never> {
+///         context.watch(FetchUserAtom().phase)
 ///     }
 ///
-///     func refresh(context: RefreshContext) async -> Int {
-///         try? await Task.sleep(nanoseconds: 3 * 1_000_000_000)
-///         return .random(in: 0..<100)
+///     func refresh(context: RefreshContext) async -> AsyncPhase<User?, Never> {
+///         await context.refresh(FetchUserAtom().phase)
+///     }
+/// }
+///
+/// private struct FetchUserAtom: TaskAtom, Hashable {
+///     func value(context: Context) async -> User? {
+///         await fetchUser()
 ///     }
 /// }
 /// ```

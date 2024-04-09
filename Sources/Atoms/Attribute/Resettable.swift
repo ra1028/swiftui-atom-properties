@@ -1,21 +1,22 @@
-/// An attribute protocol allows an atom to have a custom reset override.
+/// An attribute protocol that allows an atom to have a custom reset behavior.
 ///
-/// Note that the custom reset will be triggered even when the atom is overridden.
+/// It is useful when creating a wrapper atom and you want to transparently reset the atom underneath.
+/// Note that the custom reset will not be triggered when the atom is overridden.
 ///
 /// ```swift
 /// struct UserAtom: ValueAtom, Resettable, Hashable {
-///     func value(context: Context) -> User? {
-///          context.watch(FetchUserAtom()).phase.value
+///     func value(context: Context) -> AsyncPhase<User?, Never> {
+///         context.watch(FetchUserAtom().phase)
 ///     }
 ///
 ///     func reset(context: ResetContext) {
-///          context.reset(FetchUserAtom())
+///         context.reset(FetchUserAtom())
 ///     }
 /// }
 ///
 /// private struct FetchUserAtom: TaskAtom, Hashable {
 ///     func value(context: Context) async -> User? {
-///          await fetchUser()
+///         await fetchUser()
 ///     }
 /// }
 /// ```

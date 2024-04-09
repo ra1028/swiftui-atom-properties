@@ -451,20 +451,22 @@ final class StoreContextTests: XCTestCase {
 
     @MainActor
     func testCustomReset() {
-        var valueCount = 0
-        var updateCount = 0
-        var resetCount = 0
+        struct Counter: Equatable {
+            var value = 0
+            var update = 0
+            var reset = 0
+        }
 
         let store = AtomStore()
         let container = SubscriptionContainer()
-
+        var counter = Counter()
         let atom = TestCustomResettableAtom(
             defaultValue: { _ in
-                valueCount += 1
+                counter.value += 1
                 return 0
             },
             reset: { _ in
-                resetCount += 1
+                counter.reset += 1
             }
         )
         let key = AtomKey(atom)
@@ -473,15 +475,15 @@ final class StoreContextTests: XCTestCase {
             snapshots.append($0)
         }
         let context = StoreContext(store, observers: [observer])
-
-        _ = context.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {
-            updateCount += 1
+        let value0 = context.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {
+            counter.update += 1
         }
+
         snapshots.removeAll()
         context.set(1, for: atom)
-        XCTAssertEqual(valueCount, 1)
-        XCTAssertEqual(updateCount, 1)
-        XCTAssertEqual(resetCount, 0)
+
+        XCTAssertEqual(value0, 0)
+        XCTAssertEqual(counter, Counter(value: 1, update: 1, reset: 0))
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0.value as? Int } },
             [[key: 1]]
@@ -490,10 +492,34 @@ final class StoreContextTests: XCTestCase {
         snapshots.removeAll()
         context.reset(atom)
 
-        XCTAssertEqual(valueCount, 1)
-        XCTAssertEqual(updateCount, 1)
-        XCTAssertEqual(resetCount, 1)
-        XCTAssert(snapshots.isEmpty)
+        XCTAssertEqual(counter, Counter(value: 1, update: 1, reset: 1))
+        XCTAssertTrue(snapshots.isEmpty)
+
+        context.unwatch(atom, container: container.wrapper)
+        counter = Counter()
+
+        let scopeKey = ScopeKey(token: ScopeKey.Token())
+        let overrideAtomKey = AtomKey(atom, overrideScopeKey: scopeKey)
+        let scopedContext = context.scoped(
+            key: scopeKey,
+            observers: [],
+            overrides: [
+                OverrideKey(atom): AtomOverride<TestCustomResettableAtom<Int>> { _ in 2 }
+            ]
+        )
+        let value1 = scopedContext.watch(atom, container: container.wrapper, requiresObjectUpdate: false) {
+            counter.update += 1
+        }
+
+        XCTAssertEqual(value1, 2)
+        XCTAssertEqual(counter, Counter(value: 0, update: 0, reset: 0))
+
+        scopedContext.reset(atom)
+
+        XCTAssertEqual(scopedContext.read(atom), 2)
+        XCTAssertEqual(counter, Counter(value: 0, update: 1, reset: 0))
+        XCTAssertNotNil(store.state.states[overrideAtomKey])
+        XCTAssertEqual((store.state.caches[overrideAtomKey] as? AtomCache<TestCustomResettableAtom<Int>>)?.value, 2)
     }
 
     @MainActor
