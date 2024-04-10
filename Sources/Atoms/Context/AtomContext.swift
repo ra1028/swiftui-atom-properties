@@ -83,6 +83,22 @@ public protocol AtomContext {
     @discardableResult
     func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader
 
+    /// Refreshes and then returns the value associated with the given refreshable atom.
+    ///
+    /// This method only accepts atoms that conform to ``Refreshable`` protocol.
+    /// It refreshes the value with the custom refresh behavior, so the caller can await until
+    /// the atom completes the update.
+    /// Note that it can be used only in a context that supports concurrency.
+    ///
+    /// ```swift
+    /// let context = ...
+    /// let value = await context.refresh(CustomRefreshableAtom())
+    /// print(value)
+    /// ```
+    ///
+    /// - Parameter atom: An atom to refresh.
+    ///
+    /// - Returns: The value after the refreshing associated with the given atom is completed.
     @discardableResult
     func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value
 

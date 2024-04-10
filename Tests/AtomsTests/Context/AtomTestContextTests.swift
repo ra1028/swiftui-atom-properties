@@ -268,15 +268,14 @@ final class AtomTestContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom), 0)
         XCTAssertEqual(context.watch(resettableAtom), 0)
 
-        context.override(resettableAtom, with: { _ in 200 })
         context[atom] = 100
 
         XCTAssertEqual(context.watch(atom), 100)
-        XCTAssertEqual(context.watch(resettableAtom), 200)
+        XCTAssertEqual(context.watch(resettableAtom), 100)
 
         context.reset(resettableAtom)
 
         XCTAssertEqual(context.watch(atom), 300)
-        XCTAssertEqual(context.watch(resettableAtom), 200)
+        XCTAssertEqual(context.watch(resettableAtom), 300)
     }
 }
