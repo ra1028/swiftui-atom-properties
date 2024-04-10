@@ -763,9 +763,9 @@ struct FetchMasterDataAtom: ThrowingTaskAtom, KeepAlive, Hashable {
 
 <details><summary><code>📖 Expand to see example</code></summary>
 
-It adds custom refresh behavior to ValueAtom which is inherently unable to refresh.  
+It adds custom refresh behavior to `ValueAtom` which is inherently unable to refresh.  
 It's useful when need to have arbitrary refresh behavior or implementing refresh when value depends on private atom.  
-In this example, `FetchMoviesPhaseAtom` transparently exposes the value of `FetchMoviesTaskAtom` as AsyncPhase so that the error can be handled easily inside the atom, and `Refreshable` gives refreshing behavior to `FetchMoviesPhaseAtom` itself.  
+In this example, `FetchMoviesPhaseAtom` transparently exposes the value of `FetchMoviesTaskAtom` as `AsyncPhase` so that the error can be handled easily inside the atom, and `Refreshable` gives refreshing behavior to `FetchMoviesPhaseAtom` itself.  
 
 ```swift
 private struct FetchMoviesTaskAtom: ThrowingTaskAtom, Hashable {
