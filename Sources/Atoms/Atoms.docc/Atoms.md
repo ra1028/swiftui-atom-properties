@@ -27,8 +27,8 @@ Building state by compositing atoms automatically optimizes rendering based on i
 
 ### Modifiers
 
-- ``Atom/select(_:)``
 - ``Atom/changes``
+- ``Atom/changes(of:)``
 - ``Atom/phase``
 
 ### Attributes
@@ -70,8 +70,8 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``Atom``
 - ``AtomStore``
 - ``AtomModifier``
-- ``SelectModifier``
 - ``ChangesModifier``
+- ``ChangesOfModifier``
 - ``TaskPhaseModifier``
 - ``AtomLoader``
 - ``RefreshableAtomLoader``

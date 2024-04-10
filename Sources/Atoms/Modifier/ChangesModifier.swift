@@ -1,6 +1,5 @@
 public extension Atom where Loader.Value: Equatable {
-    /// Prevents the atom from updating its child views or atoms when its new value is the
-    /// same as its old value.
+    /// Prevents the atom from updating its downstream when its new value is equivalent to old value.
     ///
     /// ```swift
     /// struct FlagAtom: StateAtom, Hashable {

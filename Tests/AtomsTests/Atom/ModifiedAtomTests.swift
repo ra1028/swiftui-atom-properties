@@ -6,7 +6,7 @@ final class ModifiedAtomTests: XCTestCase {
     @MainActor
     func testKey() {
         let base = TestAtom(value: 0)
-        let modifier = SelectModifier<Int, String>(keyPath: \.description)
+        let modifier = ChangesOfModifier<Int, String>(keyPath: \.description)
         let atom = ModifiedAtom(atom: base, modifier: modifier)
 
         XCTAssertEqual(atom.key, atom.key)
@@ -20,7 +20,7 @@ final class ModifiedAtomTests: XCTestCase {
     @MainActor
     func testValue() async {
         let base = TestStateAtom(defaultValue: "test")
-        let modifier = SelectModifier<String, Int>(keyPath: \.count)
+        let modifier = ChangesOfModifier<String, Int>(keyPath: \.count)
         let atom = ModifiedAtom(atom: base, modifier: modifier)
         let context = AtomTestContext()
 
