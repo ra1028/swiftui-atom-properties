@@ -18,11 +18,11 @@ public struct ObservableObjectAtomLoader<Node: ObservableObjectAtom>: AtomLoader
     /// Returns a new value for the corresponding atom.
     public func value(context: Context) -> Value {
         let object = context.transaction(atom.object)
-        return associateOverridden(value: object, context: context)
+        return manageOverridden(value: object, context: context)
     }
 
-    /// Associates given value and handle updates and cancellations.
-    public func associateOverridden(value: Value, context: Context) -> Value {
+    /// Manage given overridden value updates and cancellations.
+    public func manageOverridden(value: Value, context: Context) -> Value {
         let cancellable = value.objectWillChange.sink { [weak value] _ in
             guard let value else {
                 return

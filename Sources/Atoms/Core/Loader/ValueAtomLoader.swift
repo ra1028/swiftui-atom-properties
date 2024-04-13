@@ -17,8 +17,8 @@ public struct ValueAtomLoader<Node: ValueAtom>: AtomLoader {
         context.transaction(atom.value)
     }
 
-    /// Associates given value and handle updates and cancellations.
-    public func associateOverridden(value: Value, context: Context) -> Value {
+    /// Manage given overridden value updates and cancellations.
+    public func manageOverridden(value: Value, context: Context) -> Value {
         value
     }
 }

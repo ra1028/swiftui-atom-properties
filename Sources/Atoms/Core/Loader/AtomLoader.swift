@@ -13,8 +13,8 @@ public protocol AtomLoader {
     /// Returns a new value for the corresponding atom.
     func value(context: Context) -> Value
 
-    /// Associates given value and handle updates and cancellations.
-    func associateOverridden(value: Value, context: Context) -> Value
+    /// Manage given overridden value updates and cancellations.
+    func manageOverridden(value: Value, context: Context) -> Value
 
     /// Returns a boolean value indicating whether it should notify updates downstream
     /// by checking the equivalence of the given old value and new value.

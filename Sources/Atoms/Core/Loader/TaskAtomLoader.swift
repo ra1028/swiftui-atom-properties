@@ -23,11 +23,11 @@ public struct TaskAtomLoader<Node: TaskAtom>: AsyncAtomLoader {
         let task = Task {
             await context.transaction(atom.value)
         }
-        return associateOverridden(value: task, context: context)
+        return manageOverridden(value: task, context: context)
     }
 
-    /// Associates given value and handle updates and cancellations.
-    public func associateOverridden(value: Value, context: Context) -> Value {
+    /// Manage given overridden value updates and cancellations.
+    public func manageOverridden(value: Value, context: Context) -> Value {
         context.addTermination(value.cancel)
         return value
     }

@@ -310,7 +310,7 @@ private extension StoreContext {
         let value: Node.Loader.Value
 
         if let override {
-            value = atom._loader.associateOverridden(value: override.value(atom), context: context)
+            value = atom._loader.manageOverridden(value: override.value(atom), context: context)
         }
         else {
             value = atom._loader.value(context: context)

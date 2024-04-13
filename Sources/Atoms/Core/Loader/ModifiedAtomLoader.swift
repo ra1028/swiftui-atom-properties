@@ -20,9 +20,9 @@ public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader
         return modifier.modify(value: value, context: context.modifierContext)
     }
 
-    /// Associates given value and handle updates and cancellations.
-    public func associateOverridden(value: Value, context: Context) -> Value {
-        modifier.associateOverridden(value: value, context: context.modifierContext)
+    /// Manage given overridden value updates and cancellations.
+    public func manageOverridden(value: Value, context: Context) -> Value {
+        modifier.manageOverridden(value: value, context: context.modifierContext)
     }
 
     /// Returns a boolean value indicating whether it should notify updates downstream

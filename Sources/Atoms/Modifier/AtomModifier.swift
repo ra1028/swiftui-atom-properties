@@ -29,9 +29,9 @@ public protocol AtomModifier {
     @MainActor
     func modify(value: BaseValue, context: Context) -> Value
 
-    /// Associates given value and handle updates and cancellations.
+    /// Manage given overridden value updates and cancellations.
     @MainActor
-    func associateOverridden(value: Value, context: Context) -> Value
+    func manageOverridden(value: Value, context: Context) -> Value
 
     /// Returns a boolean value indicating whether it should notify updates downstream
     /// by checking the equivalence of the given old value and new value.
