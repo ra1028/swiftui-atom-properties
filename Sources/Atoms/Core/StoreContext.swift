@@ -62,7 +62,7 @@ internal struct StoreContext {
             let cache = makeNewCache(of: atom, for: key, override: override)
             notifyUpdateToObservers()
 
-            if checkRelease(for: key) {
+            if checkAndRelease(for: key) {
                 notifyUpdateToObservers()
             }
 
@@ -145,7 +145,7 @@ internal struct StoreContext {
     func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         let override = lookupOverride(of: atom)
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
-        let context = prepareTransaction(of: atom, for: key)
+        let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Loader.Value
 
         if let override {
@@ -277,13 +277,13 @@ internal struct StoreContext {
 
         for key in keys {
             // Release if the atom is no longer used.
-            checkRelease(for: key)
+            checkAndRelease(for: key)
 
             // Release dependencies that are no longer dependent.
             if let dependencies = obsoletedDependencies[key] {
                 for dependency in ContiguousArray(dependencies) {
                     store.graph.children[dependency]?.remove(key)
-                    checkRelease(for: dependency)
+                    checkAndRelease(for: dependency)
                 }
             }
 
@@ -300,29 +300,7 @@ internal struct StoreContext {
 }
 
 private extension StoreContext {
-    func makeNewCache<Node: Atom>(
-        of atom: Node,
-        for key: AtomKey,
-        override: AtomScopedOverride<Node>?
-    ) -> AtomCache<Node> {
-        let store = getStore()
-        let context = prepareTransaction(of: atom, for: key)
-        let value: Node.Loader.Value
-
-        if let override {
-            value = atom._loader.manageOverridden(value: override.value(atom), context: context)
-        }
-        else {
-            value = atom._loader.value(context: context)
-        }
-
-        let cache = AtomCache(atom: atom, value: value)
-        store.state.caches[key] = cache
-
-        return cache
-    }
-
-    func prepareTransaction<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
+    func prepareForTransaction<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
         let store = getStore()
         let state = getState(of: atom, for: key)
 
@@ -344,7 +322,7 @@ private extension StoreContext {
             let newDependencies = dependencies.subtracting(oldDependencies)
 
             for dependency in ContiguousArray(obsoletedDependencies) {
-                checkRelease(for: dependency)
+                checkAndRelease(for: dependency)
             }
 
             if !obsoletedDependencies.isEmpty || !newDependencies.isEmpty {
@@ -445,32 +423,14 @@ private extension StoreContext {
 
         for key in ContiguousArray(keys) {
             store.state.subscriptions[key]?.removeValue(forKey: subscriberKey)
-            checkRelease(for: key)
+            checkAndRelease(for: key)
         }
 
         notifyUpdateToObservers()
     }
 
-    func release(for key: AtomKey) {
-        // Invalidate transactions, dependencies, and the atom state.
-        let store = getStore()
-        let dependencies = store.graph.dependencies.removeValue(forKey: key)
-        let state = store.state.states.removeValue(forKey: key)
-        store.graph.children.removeValue(forKey: key)
-        store.state.caches.removeValue(forKey: key)
-        store.state.subscriptions.removeValue(forKey: key)
-        state?.transaction?.terminate()
-
-        if let dependencies {
-            for dependency in ContiguousArray(dependencies) {
-                store.graph.children[dependency]?.remove(key)
-                checkRelease(for: dependency)
-            }
-        }
-    }
-
     @discardableResult
-    func checkRelease(for key: AtomKey) -> Bool {
+    func checkAndRelease(for key: AtomKey) -> Bool {
         let store = getStore()
 
         // The condition under which an atom may be released are as follows:
@@ -490,40 +450,22 @@ private extension StoreContext {
         return true
     }
 
-    func notifyUpdateToObservers() {
-        guard !observers.isEmpty else {
-            return
+    func release(for key: AtomKey) {
+        // Invalidate transactions, dependencies, and the atom state.
+        let store = getStore()
+        let dependencies = store.graph.dependencies.removeValue(forKey: key)
+        let state = store.state.states.removeValue(forKey: key)
+        store.graph.children.removeValue(forKey: key)
+        store.state.caches.removeValue(forKey: key)
+        store.state.subscriptions.removeValue(forKey: key)
+        state?.transaction?.terminate()
+
+        if let dependencies {
+            for dependency in ContiguousArray(dependencies) {
+                store.graph.children[dependency]?.remove(key)
+                checkAndRelease(for: dependency)
+            }
         }
-
-        let snapshot = snapshot()
-
-        for observer in observers {
-            observer.onUpdate(snapshot)
-        }
-    }
-
-    func lookupOverride<Node: Atom>(of atom: Node) -> AtomScopedOverride<Node>? {
-        let baseOverride = overrides[OverrideKey(atom)] ?? overrides[OverrideKey(Node.self)]
-
-        guard let baseOverride else {
-            return nil
-        }
-
-        guard let override = baseOverride as? AtomScopedOverride<Node> else {
-            assertionFailure(
-                """
-                [Atoms]
-                Detected an illegal override.
-                There might be duplicate keys or logic failure.
-                Detected: \(type(of: baseOverride))
-                Expected: AtomScopedOverride<\(Node.self)>
-                """
-            )
-
-            return nil
-        }
-
-        return override
     }
 
     func getState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Coordinator> {
@@ -563,6 +505,28 @@ private extension StoreContext {
         return state
     }
 
+    func makeNewCache<Node: Atom>(
+        of atom: Node,
+        for key: AtomKey,
+        override: AtomScopedOverride<Node>?
+    ) -> AtomCache<Node> {
+        let store = getStore()
+        let context = prepareForTransaction(of: atom, for: key)
+        let value: Node.Loader.Value
+
+        if let override {
+            value = atom._loader.manageOverridden(value: override.value(atom), context: context)
+        }
+        else {
+            value = atom._loader.value(context: context)
+        }
+
+        let cache = AtomCache(atom: atom, value: value)
+        store.state.caches[key] = cache
+
+        return cache
+    }
+
     func lookupCache<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomCache<Node>? {
         let store = getStore()
 
@@ -591,6 +555,42 @@ private extension StoreContext {
         }
 
         return cache
+    }
+
+    func lookupOverride<Node: Atom>(of atom: Node) -> AtomScopedOverride<Node>? {
+        let baseOverride = overrides[OverrideKey(atom)] ?? overrides[OverrideKey(Node.self)]
+
+        guard let baseOverride else {
+            return nil
+        }
+
+        guard let override = baseOverride as? AtomScopedOverride<Node> else {
+            assertionFailure(
+                """
+                [Atoms]
+                Detected an illegal override.
+                There might be duplicate keys or logic failure.
+                Detected: \(type(of: baseOverride))
+                Expected: AtomScopedOverride<\(Node.self)>
+                """
+            )
+
+            return nil
+        }
+
+        return override
+    }
+
+    func notifyUpdateToObservers() {
+        guard !observers.isEmpty else {
+            return
+        }
+
+        let snapshot = snapshot()
+
+        for observer in observers {
+            observer.onUpdate(snapshot)
+        }
     }
 
     func getStore() -> AtomStore {

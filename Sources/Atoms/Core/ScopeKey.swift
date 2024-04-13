@@ -4,7 +4,7 @@ internal struct ScopeKey: Hashable {
 
     private let identifier: ObjectIdentifier
 
-    var id: String {
+    var debugLabel: String {
         String(hashValue, radix: 36, uppercase: false)
     }
 

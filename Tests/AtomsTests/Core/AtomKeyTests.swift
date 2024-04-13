@@ -46,7 +46,7 @@ final class AtomKeyTests: XCTestCase {
         let key0 = AtomKey(atom)
         let key1 = AtomKey(atom, overrideScopeKey: scopeKey)
 
-        XCTAssertEqual(key0.description, "TestAtom<Int>")
-        XCTAssertEqual(key1.description, "TestAtom<Int>-override:\(scopeKey.id)")
+        XCTAssertEqual(key0.debugLabel, "TestAtom<Int>")
+        XCTAssertEqual(key1.debugLabel, "TestAtom<Int>-override:\(scopeKey.debugLabel)")
     }
 }
