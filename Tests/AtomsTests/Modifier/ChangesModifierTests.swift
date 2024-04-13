@@ -55,7 +55,7 @@ final class ChangesModifierTests: XCTestCase {
     }
 
     @MainActor
-    func testmanageOverridden() {
+    func testManageOverridden() {
         let atom = TestValueAtom(value: 0)
         let modifier = ChangesModifier<Int>()
         let transaction = Transaction(key: AtomKey(atom)) {}

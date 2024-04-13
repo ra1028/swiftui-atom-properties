@@ -45,7 +45,7 @@ final class TaskPhaseModifierTests: XCTestCase {
     }
 
     @MainActor
-    func testmanageOverridden() {
+    func testManageOverridden() {
         let atom = TestValueAtom(value: 0)
         let modifier = TaskPhaseModifier<Int, Never>()
         let transaction = Transaction(key: AtomKey(atom)) {}
