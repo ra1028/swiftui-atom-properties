@@ -35,8 +35,8 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
         return .suspending
     }
 
-    /// Associates given value and handle updates and cancellations.
-    public func associateOverridden(value: Value, context: Context) -> Value {
+    /// Manage given overridden value updates and cancellations.
+    public func manageOverridden(value: Value, context: Context) -> Value {
         value
     }
 

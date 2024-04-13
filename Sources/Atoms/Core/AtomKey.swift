@@ -1,4 +1,4 @@
-internal struct AtomKey: Hashable, CustomStringConvertible {
+internal struct AtomKey: Hashable {
     private let key: AnyHashable
     private let type: ObjectIdentifier
     private let overrideScopeKey: ScopeKey?
@@ -8,9 +8,9 @@ internal struct AtomKey: Hashable, CustomStringConvertible {
         overrideScopeKey != nil
     }
 
-    var description: String {
+    var debugLabel: String {
         if let overrideScopeKey {
-            return getName() + "-override:\(overrideScopeKey.id)"
+            return getName() + "-override:\(overrideScopeKey.debugLabel)"
         }
         else {
             return getName()

@@ -2,12 +2,12 @@
 public struct Snapshot: CustomStringConvertible {
     internal let graph: Graph
     internal let caches: [AtomKey: any AtomCacheProtocol]
-    internal let subscriptions: [AtomKey: [SubscriptionKey: Subscription]]
+    internal let subscriptions: [AtomKey: [SubscriberKey: Subscription]]
 
     internal init(
         graph: Graph,
         caches: [AtomKey: any AtomCacheProtocol],
-        subscriptions: [AtomKey: [SubscriptionKey: Subscription]]
+        subscriptions: [AtomKey: [SubscriberKey: Subscription]]
     ) {
         self.graph = graph
         self.caches = caches
@@ -69,11 +69,11 @@ public struct Snapshot: CustomStringConvertible {
         var statements = Set<String>()
 
         for key in caches.keys {
-            statements.insert(key.description.quoted)
+            statements.insert(key.debugLabel.quoted)
 
             if let children = graph.children[key] {
                 for child in children {
-                    statements.insert("\(key.description.quoted) -> \(child.description.quoted)")
+                    statements.insert("\(key.debugLabel.quoted) -> \(child.debugLabel.quoted)")
                 }
             }
 
@@ -81,7 +81,7 @@ public struct Snapshot: CustomStringConvertible {
                 for subscription in subscriptions {
                     let label = "line:\(subscription.location.line)".quoted
                     statements.insert("\(subscription.location.fileID.quoted) [style=filled]")
-                    statements.insert("\(key.description.quoted) -> \(subscription.location.fileID.quoted) [label=\(label)]")
+                    statements.insert("\(key.debugLabel.quoted) -> \(subscription.location.fileID.quoted) [label=\(label)]")
                 }
             }
         }

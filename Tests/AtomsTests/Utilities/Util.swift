@@ -36,7 +36,7 @@ final class AsyncThrowingStreamPipe<Element> {
 final class ResettableSubject<Output, Failure: Error>: Publisher, Subject {
     private var internalSubject = PassthroughSubject<Output, Failure>()
 
-    func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
+    func receive<S: Combine.Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
         internalSubject.receive(subscriber: subscriber)
     }
 
@@ -63,10 +63,10 @@ extension AtomKey {
     }
 }
 
-extension SubscriptionContainer {
-    var wrapper: Wrapper {
+extension Atoms.Subscriber {
+    init(_ state: SubscriberState) {
         let location = SourceLocation()
-        return wrapper(location: location)
+        self.init(state, location: location)
     }
 }
 

@@ -45,12 +45,12 @@ final class TaskPhaseModifierTests: XCTestCase {
     }
 
     @MainActor
-    func testAssociateOverridden() {
+    func testManageOverridden() {
         let atom = TestValueAtom(value: 0)
         let modifier = TaskPhaseModifier<Int, Never>()
         let transaction = Transaction(key: AtomKey(atom)) {}
         let context = AtomModifierContext<AsyncPhase<Int, Never>>(transaction: transaction) { _ in }
-        let phase = modifier.associateOverridden(value: .success(100), context: context)
+        let phase = modifier.manageOverridden(value: .success(100), context: context)
 
         XCTAssertEqual(phase, .success(100))
     }

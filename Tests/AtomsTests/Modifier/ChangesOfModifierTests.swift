@@ -56,12 +56,12 @@ final class ChangesOfModifierTests: XCTestCase {
     }
 
     @MainActor
-    func testAssociateOverridden() {
+    func testManageOverridden() {
         let atom = TestValueAtom(value: 0)
         let modifier = ChangesOfModifier<Int, String>(keyPath: \.description)
         let transaction = Transaction(key: AtomKey(atom)) {}
         let context = AtomModifierContext<String>(transaction: transaction) { _ in }
-        let value = modifier.associateOverridden(value: "100", context: context)
+        let value = modifier.manageOverridden(value: "100", context: context)
 
         XCTAssertEqual(value, "100")
     }

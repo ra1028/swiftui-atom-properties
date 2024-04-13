@@ -322,7 +322,7 @@ public struct AtomTestContext: AtomWatchableContext {
     @inlinable
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        _store.watch(atom, container: _container, requiresObjectUpdate: true) { [weak _state] in
+        _store.watch(atom, subscriber: _subscriber, requiresObjectUpdate: true) { [weak _state] in
             _state?.notifyUpdate()
         }
     }
@@ -354,7 +354,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom to unwatch.
     @inlinable
     public func unwatch(_ atom: some Atom) {
-        _store.unwatch(atom, container: _container)
+        _store.unwatch(atom, subscriber: _subscriber)
     }
 
     /// Overrides the atom value with the given value.
@@ -393,7 +393,7 @@ internal extension AtomTestContext {
         @usableFromInline
         let store = AtomStore()
         let token = ScopeKey.Token()
-        let container = SubscriptionContainer()
+        let subscriberState = SubscriberState()
 
         @usableFromInline
         var overrides = [OverrideKey: any AtomOverrideProtocol]()
@@ -448,7 +448,7 @@ internal extension AtomTestContext {
     }
 
     @usableFromInline
-    var _container: SubscriptionContainer.Wrapper {
-        _state.container.wrapper(location: location)
+    var _subscriber: Subscriber {
+        Subscriber(_state.subscriberState, location: location)
     }
 }
