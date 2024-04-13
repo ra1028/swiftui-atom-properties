@@ -113,7 +113,7 @@ internal struct StoreContext {
     @usableFromInline
     func watch<Node: Atom>(
         _ atom: Node,
-        container: SubscriptionContainer.Wrapper,
+        subscriber: Subscriber,
         requiresObjectUpdate: Bool,
         notifyUpdate: @escaping () -> Void
     ) -> Node.Loader.Value {
@@ -122,15 +122,15 @@ internal struct StoreContext {
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
         let newCache = lookupCache(of: atom, for: key) ?? makeNewCache(of: atom, for: key, override: override)
         let subscription = Subscription(
-            location: container.location,
+            location: subscriber.location,
             requiresObjectUpdate: requiresObjectUpdate,
             notifyUpdate: notifyUpdate
         )
-        let isNewSubscription = container.subscribingKeys.insert(key).inserted
+        let isNewSubscription = subscriber.subscribingKeys.insert(key).inserted
 
-        store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: container.key)
-        container.unsubscribe = { keys in
-            unsubscribe(keys, for: container.key)
+        store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriber.key)
+        subscriber.unsubscribe = { keys in
+            unsubscribe(keys, for: subscriber.key)
         }
 
         if isNewSubscription {
@@ -239,12 +239,12 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func unwatch(_ atom: some Atom, container: SubscriptionContainer.Wrapper) {
+    func unwatch(_ atom: some Atom, subscriber: Subscriber) {
         let override = lookupOverride(of: atom)
         let key = AtomKey(atom, overrideScopeKey: override?.scopeKey)
 
-        container.subscribingKeys.remove(key)
-        unsubscribe([key], for: container.key)
+        subscriber.subscribingKeys.remove(key)
+        unsubscribe([key], for: subscriber.key)
     }
 
     @usableFromInline
@@ -440,11 +440,11 @@ private extension StoreContext {
         }
     }
 
-    func unsubscribe<Keys: Sequence<AtomKey>>(_ keys: Keys, for subscriptionKey: SubscriptionKey) {
+    func unsubscribe<Keys: Sequence<AtomKey>>(_ keys: Keys, for subscriberKey: SubscriberKey) {
         let store = getStore()
 
         for key in ContiguousArray(keys) {
-            store.state.subscriptions[key]?.removeValue(forKey: subscriptionKey)
+            store.state.subscriptions[key]?.removeValue(forKey: subscriberKey)
             checkRelease(for: key)
         }
 

@@ -7,17 +7,17 @@ public struct AtomViewContext: AtomWatchableContext {
     @usableFromInline
     internal let _store: StoreContext
     @usableFromInline
-    internal let _container: SubscriptionContainer.Wrapper
+    internal let _subscriber: Subscriber
     @usableFromInline
     internal let _notifyUpdate: () -> Void
 
     internal init(
         store: StoreContext,
-        container: SubscriptionContainer.Wrapper,
+        subscriber: Subscriber,
         notifyUpdate: @escaping () -> Void
     ) {
         _store = store
-        _container = container
+        _subscriber = subscriber
         _notifyUpdate = notifyUpdate
     }
 
@@ -197,7 +197,7 @@ public struct AtomViewContext: AtomWatchableContext {
     public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         _store.watch(
             atom,
-            container: _container,
+            subscriber: _subscriber,
             requiresObjectUpdate: false,
             notifyUpdate: _notifyUpdate
         )

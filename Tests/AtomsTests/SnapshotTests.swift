@@ -50,8 +50,8 @@ final class SnapshotTests: XCTestCase {
         let key3 = AtomKey(atom3)
         let key4 = AtomKey(atom4, overrideScopeKey: scopeKey)
         let location = SourceLocation(fileID: "Module/View.swift", line: 10)
-        let subscriptionToken = SubscriptionKey.Token()
-        let subscriber = SubscriptionKey(token: subscriptionToken)
+        let subscriberToken = SubscriberKey.Token()
+        let subscriberKey = SubscriberKey(token: subscriberToken)
         let subscription = Subscription(
             location: location,
             requiresObjectUpdate: false,
@@ -78,9 +78,9 @@ final class SnapshotTests: XCTestCase {
                 key4: AtomCache(atom: atom4, value: Value4()),
             ],
             subscriptions: [
-                key2: [subscriber: subscription],
-                key3: [subscriber: subscription],
-                key4: [subscriber: subscription],
+                key2: [subscriberKey: subscription],
+                key3: [subscriberKey: subscription],
+                key4: [subscriberKey: subscription],
             ]
         )
 

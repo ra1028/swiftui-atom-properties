@@ -2,12 +2,12 @@
 public struct Snapshot: CustomStringConvertible {
     internal let graph: Graph
     internal let caches: [AtomKey: any AtomCacheProtocol]
-    internal let subscriptions: [AtomKey: [SubscriptionKey: Subscription]]
+    internal let subscriptions: [AtomKey: [SubscriberKey: Subscription]]
 
     internal init(
         graph: Graph,
         caches: [AtomKey: any AtomCacheProtocol],
-        subscriptions: [AtomKey: [SubscriptionKey: Subscription]]
+        subscriptions: [AtomKey: [SubscriberKey: Subscription]]
     ) {
         self.graph = graph
         self.caches = caches
