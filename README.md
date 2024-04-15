@@ -1221,26 +1221,29 @@ struct NewsView: View {
 
 #### Override
 
-Values and states defined by atoms can be overridden in root or in any scope.  
-If you override an atom in [AtomRoot](#atomroot), it will override the values throughout the app, which is useful for dependency injection. In case you want to override an atom only in a limited scope, you might like to use [AtomScope](#atomscope) instead to override as it substitutes the atom value only in that scope, which can be useful for injecting dependencies that are needed only for the scope or overriding state in certain views.
+Overriding an atom in [AtomRoot](#atomroot) or [AtomScope](#atomscope) overwrites its value when used in the descendant views, which is useful for dependency injection or swapping state in a particular view.  
 
 ```swift
-AtomRoot {
-    VStack {
-        CountStepper()
-
-        AtomScope {
-            CountDisplay()
-        }
-        .override(CounterAtom()) { _ in
-            // Overrides the count to be 456 only for the display content.
-            456
-        }
-    }
+AtomScope {
+    CountDisplay()
 }
 .override(CounterAtom()) { _ in
-    // Overrides the count to be 123 throughout the app.
-    123
+    456  // Overrides the count to be `456` only for this scope.
+}
+```
+
+Note that when multiple `AtomScope`s are nested, it doesn't inherit the overrides of its ancestor scopes.  
+In this case, you can explicitly inherit overrides from the parent scope by passing a `@ViewContext` context that has gotten in the parent scope.  
+
+```swift
+@ViewContext
+var context
+
+var body: some {
+    // Inherites the nearest ancester scope's overrides.
+    AtomScope(inheriting: context) {
+        CountDisplay()
+    }
 }
 ```
 
@@ -1592,7 +1595,7 @@ struct RootView: View {
             Text("Example View")
         }
         .sheet(isPresented: $isPresented) {
-            AtomScope(context) {
+            AtomScope(inheriting: context) {
                 MailView()
             }
         }
