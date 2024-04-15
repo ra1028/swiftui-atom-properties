@@ -582,7 +582,7 @@ private extension StoreContext {
                 Detected an illegal override.
                 There might be duplicate keys or logic failure.
                 Detected: \(type(of: baseOverride))
-                Expected: AtomScopedOverride<\(Node.self)>
+                Expected: AtomOverride<\(Node.self)>
                 """
             )
 
@@ -639,7 +639,7 @@ private extension StoreContext {
 
                 var body: some View {
                     UIViewWrappingView {
-                        AtomScope(context) {
+                        AtomScope(inheriting: context) {
                             WrappedView()
                         }
                     }
@@ -653,7 +653,7 @@ private extension StoreContext {
 
             ```
             .sheet(isPresented: ...) {
-                AtomScope(context) {
+                AtomScope(inheriting: context) {
                     ExampleView()
                 }
             }
