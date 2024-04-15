@@ -1,36 +1,38 @@
 internal struct AtomKey: Hashable {
     private let key: AnyHashable
     private let type: ObjectIdentifier
-    private let overrideScopeKey: ScopeKey?
-    private let getName: () -> String
-
-    var isOverridden: Bool {
-        overrideScopeKey != nil
-    }
+    private let scopeKey: ScopeKey?
+    private let anyAtomType: Any.Type
 
     var debugLabel: String {
-        if let overrideScopeKey {
-            return getName() + "-override:\(overrideScopeKey.debugLabel)"
+        let atomLabel = String(describing: anyAtomType)
+
+        if let scopeKey {
+            return atomLabel + "-scoped:\(scopeKey.debugLabel)"
         }
         else {
-            return getName()
+            return atomLabel
         }
     }
 
-    init<Node: Atom>(_ atom: Node, overrideScopeKey: ScopeKey?) {
+    var isScoped: Bool {
+        scopeKey != nil
+    }
+
+    init<Node: Atom>(_ atom: Node, scopeKey: ScopeKey?) {
         self.key = AnyHashable(atom.key)
         self.type = ObjectIdentifier(Node.self)
-        self.overrideScopeKey = overrideScopeKey
-        self.getName = { String(describing: Node.self) }
+        self.scopeKey = scopeKey
+        self.anyAtomType = Node.self
     }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(key)
         hasher.combine(type)
-        hasher.combine(overrideScopeKey)
+        hasher.combine(scopeKey)
     }
 
     static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.key == rhs.key && lhs.type == rhs.type && lhs.overrideScopeKey == rhs.overrideScopeKey
+        lhs.key == rhs.key && lhs.type == rhs.type && lhs.scopeKey == rhs.scopeKey
     }
 }

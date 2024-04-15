@@ -48,7 +48,7 @@ final class SnapshotTests: XCTestCase {
         let key1 = AtomKey(atom1)
         let key2 = AtomKey(atom2)
         let key3 = AtomKey(atom3)
-        let key4 = AtomKey(atom4, overrideScopeKey: scopeKey)
+        let key4 = AtomKey(atom4, scopeKey: scopeKey)
         let location = SourceLocation(fileID: "Module/View.swift", line: 10)
         let subscriberToken = SubscriberKey.Token()
         let subscriberKey = SubscriberKey(token: subscriberToken)
@@ -99,8 +99,8 @@ final class SnapshotTests: XCTestCase {
               "TestAtom<Value2>" -> "TestAtom<Value3>"
               "TestAtom<Value3>"
               "TestAtom<Value3>" -> "Module/View.swift" [label="line:10"]
-              "TestAtom<Value4>-override:\(scopeKey.debugLabel)"
-              "TestAtom<Value4>-override:\(scopeKey.debugLabel)" -> "Module/View.swift" [label="line:10"]
+              "TestAtom<Value4>-scoped:\(scopeKey.debugLabel)"
+              "TestAtom<Value4>-scoped:\(scopeKey.debugLabel)" -> "Module/View.swift" [label="line:10"]
             }
             """
         )

@@ -28,7 +28,7 @@ import SwiftUI
 ///
 /// var body: some View {
 ///     MyUIViewWrappingView {
-///         AtomScope(context) {
+///         AtomScope(inheriting: context) {
 ///             MySwiftUIView()
 ///         }
 ///     }
@@ -37,11 +37,11 @@ import SwiftUI
 ///
 /// Additionally, if for some reason your app cannot use ``AtomRoot`` to manage the store,
 /// you can instead manage the store on your own and pass the instance to ``AtomScope``
-/// to allow descendant views to use atoms.
+/// to allow descendant views to store atom values in the given store.
 ///
 /// ```swift
 /// let store = AtomStore()
-/// let rootView = AtomScope(store) {
+/// let rootView = AtomScope(storesIn: store) {
 ///     RootView()
 /// }
 /// let window = UIWindow(frame: UIScreen.main.bounds)
@@ -50,21 +50,16 @@ import SwiftUI
 /// ```
 ///
 public struct AtomScope<Content: View>: View {
-    @StateObject
-    private var state = State()
-    private let store: StoreContext?
+    private let inheritance: Inheritance
     private var overrides = [OverrideKey: any AtomOverrideProtocol]()
     private var observers = [Observer]()
     private let content: Content
-
-    @Environment(\.store)
-    private var environmentStore
 
     /// Creates a new scope with the specified content.
     ///
     /// - Parameter content: The view content that inheriting from the parent.
     public init(@ViewBuilder content: () -> Content) {
-        self.store = nil
+        self.inheritance = .environment
         self.content = content()
     }
 
@@ -75,10 +70,10 @@ public struct AtomScope<Content: View>: View {
     ///   - context: The parent view context that for inheriting store explicitly.
     ///   - content: The view content that inheriting from the parent.
     public init(
-        _ context: AtomViewContext,
+        inheriting context: AtomViewContext,
         @ViewBuilder content: () -> Content
     ) {
-        self.store = context._store
+        self.inheritance = .context(context)
         self.content = content()
     }
 
@@ -89,23 +84,39 @@ public struct AtomScope<Content: View>: View {
     ///   - store: An object that stores the state of atoms.
     ///   - content: The view content that inheriting from the parent.
     public init(
-        _ store: AtomStore,
+        storesIn store: AtomStore,
         @ViewBuilder content: () -> Content
     ) {
-        self.store = StoreContext(store)
+        self.inheritance = .store(store)
         self.content = content()
     }
 
     /// The content and behavior of the view.
     public var body: some View {
-        content.environment(
-            \.store,
-            (store ?? environmentStore).scoped(
-                key: ScopeKey(token: state.token),
-                observers: observers,
-                overrides: overrides
+        switch inheritance {
+        case .context(let context):
+            InheritedContext(
+                content: content,
+                context: context,
+                overrides: overrides,
+                observers: observers
             )
-        )
+
+        case .store(let store):
+            InheritedStore(
+                content: content,
+                store: store,
+                overrides: overrides,
+                observers: observers
+            )
+
+        case .environment:
+            InheritedEnvironment(
+                content: content,
+                overrides: overrides,
+                observers: observers
+            )
+        }
     }
 
     /// For debugging purposes, each time there is a change in the internal state,
@@ -127,7 +138,7 @@ public struct AtomScope<Content: View>: View {
     /// When accessing the overridden atom, this context will create and return the given value
     /// instead of the atom value.
     ///
-    /// Note that unlike override by ``AtomRoot``, this will only override atoms used in this scope.
+    /// This only overrides atoms used in this scope and never be inherited to a nested scope.
     ///
     /// - Parameters:
     ///   - atom: An atom to be overridden.
@@ -145,7 +156,7 @@ public struct AtomScope<Content: View>: View {
     /// When accessing the overridden atom, this context will create and return the given value
     /// instead of the atom value.
     ///
-    /// Note that unlike override by ``AtomRoot``, this will only override atoms used in this scope.
+    /// This only overrides atoms used in this scope and never be inherited to a nested scope.
     ///
     /// - Parameters:
     ///   - atomType: An atom type to be overridden.
@@ -158,8 +169,75 @@ public struct AtomScope<Content: View>: View {
 }
 
 private extension AtomScope {
+    enum Inheritance {
+        case context(AtomViewContext)
+        case store(AtomStore)
+        case environment
+    }
+
+    struct InheritedContext: View {
+        let content: Content
+        let context: AtomViewContext
+        let overrides: [OverrideKey: any AtomOverrideProtocol]
+        let observers: [Observer]
+
+        var body: some View {
+            content.environment(
+                \.store,
+                context._store.inherited(
+                    observers: observers,
+                    overrides: overrides
+                )
+            )
+        }
+    }
+
+    struct InheritedStore: View {
+        let content: Content
+        let store: AtomStore
+        let overrides: [OverrideKey: any AtomOverrideProtocol]
+        let observers: [Observer]
+
+        @StateObject
+        private var state = ScopeState()
+
+        var body: some View {
+            content.environment(
+                \.store,
+                StoreContext(
+                    store,
+                    scopeKey: ScopeKey(token: state.token),
+                    observers: observers,
+                    overrides: overrides
+                )
+            )
+        }
+    }
+
+    struct InheritedEnvironment: View {
+        let content: Content
+        let overrides: [OverrideKey: any AtomOverrideProtocol]
+        let observers: [Observer]
+
+        @StateObject
+        private var state = ScopeState()
+        @Environment(\.store)
+        private var environmentStore
+
+        var body: some View {
+            content.environment(
+                \.store,
+                environmentStore.scoped(
+                    scopeKey: ScopeKey(token: state.token),
+                    observers: observers,
+                    overrides: overrides
+                )
+            )
+        }
+    }
+
     @MainActor
-    final class State: ObservableObject {
+    final class ScopeState: ObservableObject {
         let token = ScopeKey.Token()
     }
 

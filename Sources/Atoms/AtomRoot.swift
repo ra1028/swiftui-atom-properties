@@ -60,9 +60,9 @@ public struct AtomRoot<Content: View>: View {
     public var body: some View {
         content.environment(
             \.store,
-            .scoped(
-                key: ScopeKey(token: state.token),
-                store: state.store,
+            StoreContext(
+                state.store,
+                scopeKey: ScopeKey(token: state.token),
                 observers: observers,
                 overrides: overrides
             )
