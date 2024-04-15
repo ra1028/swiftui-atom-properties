@@ -439,9 +439,9 @@ internal extension AtomTestContext {
 
     @usableFromInline
     var _store: StoreContext {
-        .scoped(
-            key: ScopeKey(token: _state.token),
-            store: _state.store,
+        StoreContext(
+            _state.store,
+            scopeKey: ScopeKey(token: _state.token),
             observers: [],
             overrides: _state.overrides
         )

@@ -44,9 +44,9 @@ final class AtomKeyTests: XCTestCase {
         let token = ScopeKey.Token()
         let scopeKey = ScopeKey(token: token)
         let key0 = AtomKey(atom)
-        let key1 = AtomKey(atom, overrideScopeKey: scopeKey)
+        let key1 = AtomKey(atom, scopeKey: scopeKey)
 
         XCTAssertEqual(key0.debugLabel, "TestAtom<Int>")
-        XCTAssertEqual(key1.debugLabel, "TestAtom<Int>-override:\(scopeKey.debugLabel)")
+        XCTAssertEqual(key1.debugLabel, "TestAtom<Int>-scoped:\(scopeKey.debugLabel)")
     }
 }

@@ -9,6 +9,12 @@ internal extension EnvironmentValues {
 
 private struct StoreEnvironmentKey: EnvironmentKey {
     static var defaultValue: StoreContext {
-        StoreContext(enablesAssertion: true)
+        StoreContext(
+            nil,
+            scopeKey: ScopeKey(token: ScopeKey.Token()),
+            observers: [],
+            overrides: [:],
+            enablesAssertion: true
+        )
     }
 }
