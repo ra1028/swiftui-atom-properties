@@ -18,11 +18,13 @@ public extension AtomScope {
         self.init(inheriting: context, content: content)
     }
 
-    @available(*, deprecated, renamed: "init(storesIn:content:)")
-    init(
+    @available(*, deprecated, renamed: "AtomRoot.init(storesIn:content:)")
+    init<Root: View>(
         _ store: AtomStore,
-        @ViewBuilder content: () -> Content
-    ) {
-        self.init(storesIn: store, content: content)
+        @ViewBuilder content: () -> Root
+    ) where Content == AtomRoot<Root> {
+        self.init {
+            AtomRoot(storesIn: store, content: content)
+        }
     }
 }
