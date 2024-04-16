@@ -210,7 +210,6 @@ public struct AtomViewContext: AtomWatchableContext {
     /// or rollback to a specific state.
     ///
     /// - Returns: A snapshot that contains values of atoms.
-    @discardableResult
     @inlinable
     public func snapshot() -> Snapshot {
         _store.snapshot()
