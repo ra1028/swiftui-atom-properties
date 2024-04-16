@@ -1,10 +1,11 @@
 @usableFromInline
-internal struct ScopeKey: Hashable {
+internal struct ScopeKey: Hashable, CustomStringConvertible {
     final class Token {}
 
     private let identifier: ObjectIdentifier
 
-    var debugLabel: String {
+    @usableFromInline
+    var description: String {
         String(hashValue, radix: 36, uppercase: false)
     }
 

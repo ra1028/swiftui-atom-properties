@@ -99,8 +99,8 @@ final class SnapshotTests: XCTestCase {
               "TestAtom<Value2>" -> "TestAtom<Value3>"
               "TestAtom<Value3>"
               "TestAtom<Value3>" -> "Module/View.swift" [label="line:10"]
-              "TestAtom<Value4>-scoped:\(scopeKey.debugLabel)"
-              "TestAtom<Value4>-scoped:\(scopeKey.debugLabel)" -> "Module/View.swift" [label="line:10"]
+              "TestAtom<Value4>-scoped:\(scopeKey.description)"
+              "TestAtom<Value4>-scoped:\(scopeKey.description)" -> "Module/View.swift" [label="line:10"]
             }
             """
         )
