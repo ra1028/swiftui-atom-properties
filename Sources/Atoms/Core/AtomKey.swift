@@ -1,14 +1,14 @@
-internal struct AtomKey: Hashable {
+internal struct AtomKey: Hashable, CustomStringConvertible {
     private let key: AnyHashable
     private let type: ObjectIdentifier
     private let scopeKey: ScopeKey?
     private let anyAtomType: Any.Type
 
-    var debugLabel: String {
+    var description: String {
         let atomLabel = String(describing: anyAtomType)
 
         if let scopeKey {
-            return atomLabel + "-scoped:\(scopeKey.debugLabel)"
+            return atomLabel + "-scoped:\(scopeKey)"
         }
         else {
             return atomLabel
