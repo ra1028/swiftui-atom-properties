@@ -14,6 +14,7 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext(
             store,
             scopeKey: scopeKey,
+            inheritedScopeKeys: [:],
             observers: [],
             overrides: [
                 OverrideKey(atom): AtomOverride<TestAtom<Int>> { _ in
@@ -53,6 +54,7 @@ final class StoreContextTests: XCTestCase {
         )
         let scopedContext = context.scoped(
             scopeKey: ScopeKey(token: ScopeKey.Token()),
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [observer1],
             overrides: [
                 OverrideKey(atom): AtomOverride<TestValueAtom<Int>> { _ in
@@ -343,6 +345,7 @@ final class StoreContextTests: XCTestCase {
         let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
         let scopedContext = context.scoped(
             scopeKey: scopeKey,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [
                 OverrideKey(atom): AtomOverride<TestPublisherAtom<Just<Int>>> { _ in .success(1) }
@@ -405,6 +408,7 @@ final class StoreContextTests: XCTestCase {
         let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
         let scopedContext = context.scoped(
             scopeKey: scopeKey,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [
                 OverrideKey(atom): AtomOverride<TestCustomRefreshableAtom<Just<Int>>> { _ in .success(2) }
@@ -509,6 +513,7 @@ final class StoreContextTests: XCTestCase {
         let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
         let scopedContext = context.scoped(
             scopeKey: scopeKey,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [
                 OverrideKey(atom): AtomOverride<TestCustomResettableAtom<Int>> { _ in 2 }
@@ -645,11 +650,13 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext(store)
         let scoped1Context = context.scoped(
             scopeKey: scope1Key,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: scoped1Overrides
         )
         let scoped2Context = scoped1Context.scoped(
             scopeKey: scope2Key,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: scoped2Overrides
         )
@@ -906,6 +913,7 @@ final class StoreContextTests: XCTestCase {
             let key = AtomKey(atom, scopeKey: scopeKey)
             let context = context.scoped(
                 scopeKey: scopeKey,
+                scopeID: ScopeID(DefaultScopeID()),
                 observers: [],
                 overrides: [
                     OverrideKey(atom): AtomOverride<KeepAliveAtom<Int>> { _ in 10 }
@@ -948,11 +956,13 @@ final class StoreContextTests: XCTestCase {
         )
         let scoped1Context = context.scoped(
             scopeKey: scope1Key,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [:]
         )
         let scoped2Context = scoped1Context.scoped(
             scopeKey: scope2Key,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [Observer { scopedSnapshots.append($0) }],
             overrides: scopedOverride
         )

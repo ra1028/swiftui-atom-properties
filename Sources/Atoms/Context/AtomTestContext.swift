@@ -442,6 +442,7 @@ internal extension AtomTestContext {
         StoreContext(
             _state.store,
             scopeKey: ScopeKey(token: _state.token),
+            inheritedScopeKeys: [:],
             observers: [],
             overrides: _state.overrides
         )

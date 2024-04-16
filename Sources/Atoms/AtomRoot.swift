@@ -116,7 +116,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
-        mutating { $0.observers.append(Observer(onUpdate: onUpdate)) }
+        mutating(self) { $0.observers.append(Observer(onUpdate: onUpdate)) }
     }
 
     /// Overrides the atom value with the given value.
@@ -130,7 +130,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides[OverrideKey(atom)] = AtomOverride(value: value) }
+        mutating(self) { $0.overrides[OverrideKey(atom)] = AtomOverride(value: value) }
     }
 
     /// Overrides the atom value with the given value.
@@ -146,7 +146,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides[OverrideKey(atomType)] = AtomOverride(value: value) }
+        mutating(self) { $0.overrides[OverrideKey(atomType)] = AtomOverride(value: value) }
     }
 }
 
@@ -176,6 +176,7 @@ private extension AtomRoot {
                 StoreContext(
                     state.store,
                     scopeKey: ScopeKey(token: state.token),
+                    inheritedScopeKeys: [:],
                     observers: observers,
                     overrides: overrides
                 )
@@ -203,16 +204,11 @@ private extension AtomRoot {
                 StoreContext(
                     store,
                     scopeKey: ScopeKey(token: state.token),
+                    inheritedScopeKeys: [:],
                     observers: observers,
                     overrides: overrides
                 )
             )
         }
-    }
-
-    func `mutating`(_ mutation: (inout Self) -> Void) -> Self {
-        var view = self
-        mutation(&view)
-        return view
     }
 }

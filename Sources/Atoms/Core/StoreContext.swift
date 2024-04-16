@@ -5,6 +5,7 @@ import Foundation
 internal struct StoreContext {
     private weak var weakStore: AtomStore?
     private let scopeKey: ScopeKey
+    private let inheritedScopeKeys: [ScopeID: ScopeKey]
     private let observers: [Observer]
     private let overrides: [OverrideKey: any AtomOverrideProtocol]
     private let enablesAssertion: Bool
@@ -12,12 +13,14 @@ internal struct StoreContext {
     nonisolated init(
         _ store: AtomStore?,
         scopeKey: ScopeKey,
+        inheritedScopeKeys: [ScopeID: ScopeKey],
         observers: [Observer],
         overrides: [OverrideKey: any AtomOverrideProtocol],
         enablesAssertion: Bool = false
     ) {
         self.weakStore = store
         self.scopeKey = scopeKey
+        self.inheritedScopeKeys = inheritedScopeKeys
         self.observers = observers
         self.overrides = overrides
         self.enablesAssertion = enablesAssertion
@@ -30,6 +33,7 @@ internal struct StoreContext {
         StoreContext(
             weakStore,
             scopeKey: scopeKey,
+            inheritedScopeKeys: inheritedScopeKeys,
             observers: self.observers + observers,
             overrides: self.overrides.merging(overrides) { $1 },
             enablesAssertion: enablesAssertion
@@ -38,12 +42,14 @@ internal struct StoreContext {
 
     func scoped(
         scopeKey: ScopeKey,
+        scopeID: ScopeID,
         observers: [Observer],
         overrides: [OverrideKey: any AtomOverrideProtocol]
     ) -> StoreContext {
         StoreContext(
             weakStore,
             scopeKey: scopeKey,
+            inheritedScopeKeys: mutating(inheritedScopeKeys) { $0[scopeID] = scopeKey },
             observers: self.observers + observers,
             overrides: overrides,
             enablesAssertion: enablesAssertion
@@ -53,7 +59,7 @@ internal struct StoreContext {
     @usableFromInline
     func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
@@ -74,7 +80,7 @@ internal struct StoreContext {
     @usableFromInline
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
@@ -85,7 +91,7 @@ internal struct StoreContext {
     @usableFromInline
     func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void) {
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
@@ -103,7 +109,7 @@ internal struct StoreContext {
 
         let store = getStore()
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let newCache = lookupCache(of: atom, for: key) ?? makeNewCache(of: atom, for: key, override: override)
 
@@ -123,7 +129,7 @@ internal struct StoreContext {
     ) -> Node.Loader.Value {
         let store = getStore()
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let newCache = lookupCache(of: atom, for: key) ?? makeNewCache(of: atom, for: key, override: override)
         let subscription = Subscription(
@@ -149,7 +155,7 @@ internal struct StoreContext {
     @_disfavoredOverload
     func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Loader.Value
@@ -179,7 +185,7 @@ internal struct StoreContext {
     @usableFromInline
     func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value {
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let state = getState(of: atom, for: key)
         let value: Node.Loader.Value
@@ -445,7 +451,7 @@ private extension StoreContext {
         let store = getStore()
 
         // The condition under which an atom may be released are as follows:
-        //     1. It's not marked as `KeepAlive` or is overridden.
+        //     1. It's not marked as `KeepAlive`, is marked as `Scoped`, or is scoped by override.
         //     2. It has no downstream atoms.
         //     3. It has no subscriptions from views.
         lazy var shouldKeepAlive = !key.isScoped && store.state.caches[key].map { $0.atom is any KeepAlive } ?? false
@@ -590,6 +596,19 @@ private extension StoreContext {
         }
 
         return override
+    }
+
+    func lookupScopeKey<Node: Atom>(of atom: Node, isOverridden: Bool) -> ScopeKey? {
+        if isOverridden {
+            return scopeKey
+        }
+        else if let atom = atom as? any Scoped {
+            let scopeID = ScopeID(atom.scopeID)
+            return inheritedScopeKeys[scopeID]
+        }
+        else {
+            return nil
+        }
     }
 
     func notifyUpdateToObservers() {

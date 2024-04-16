@@ -66,6 +66,7 @@ extension StoreContext {
         self.init(
             store,
             scopeKey: ScopeKey(token: ScopeKey.Token()),
+            inheritedScopeKeys: [:],
             observers: observers,
             overrides: overrides
         )
