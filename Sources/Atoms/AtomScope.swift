@@ -35,20 +35,6 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// Additionally, if for some reason your app cannot use ``AtomRoot`` to manage the store,
-/// you can instead manage the store on your own and pass the instance to ``AtomScope``
-/// to allow descendant views to store atom values in the given store.
-///
-/// ```swift
-/// let store = AtomStore()
-/// let rootView = AtomScope(storesIn: store) {
-///     RootView()
-/// }
-/// let window = UIWindow(frame: UIScreen.main.bounds)
-/// window.rootViewController = UIHostingController(rootView: rootView)
-/// window.makeKeyAndVisible()
-/// ```
-///
 public struct AtomScope<Content: View>: View {
     private let inheritance: Inheritance
     private var overrides = [OverrideKey: any AtomOverrideProtocol]()
@@ -77,42 +63,20 @@ public struct AtomScope<Content: View>: View {
         self.content = content()
     }
 
-    /// Creates a new scope with the specified content that will be allowed to use atoms by
-    /// passing a store object.
-    ///
-    /// - Parameters:
-    ///   - store: An object that stores the state of atoms.
-    ///   - content: The view content that inheriting from the parent.
-    public init(
-        storesIn store: AtomStore,
-        @ViewBuilder content: () -> Content
-    ) {
-        self.inheritance = .store(store)
-        self.content = content()
-    }
-
     /// The content and behavior of the view.
     public var body: some View {
         switch inheritance {
+        case .environment:
+            InheritedEnvironment(
+                content: content,
+                overrides: overrides,
+                observers: observers
+            )
+
         case .context(let context):
             InheritedContext(
                 content: content,
                 context: context,
-                overrides: overrides,
-                observers: observers
-            )
-
-        case .store(let store):
-            InheritedStore(
-                content: content,
-                store: store,
-                overrides: overrides,
-                observers: observers
-            )
-
-        case .environment:
-            InheritedEnvironment(
-                content: content,
                 overrides: overrides,
                 observers: observers
             )
@@ -170,9 +134,35 @@ public struct AtomScope<Content: View>: View {
 
 private extension AtomScope {
     enum Inheritance {
-        case context(AtomViewContext)
-        case store(AtomStore)
         case environment
+        case context(AtomViewContext)
+    }
+
+    struct InheritedEnvironment: View {
+        @MainActor
+        final class State: ObservableObject {
+            let token = ScopeKey.Token()
+        }
+
+        let content: Content
+        let overrides: [OverrideKey: any AtomOverrideProtocol]
+        let observers: [Observer]
+
+        @StateObject
+        private var state = State()
+        @Environment(\.store)
+        private var environmentStore
+
+        var body: some View {
+            content.environment(
+                \.store,
+                environmentStore.scoped(
+                    scopeKey: ScopeKey(token: state.token),
+                    observers: observers,
+                    overrides: overrides
+                )
+            )
+        }
     }
 
     struct InheritedContext: View {
@@ -190,55 +180,6 @@ private extension AtomScope {
                 )
             )
         }
-    }
-
-    struct InheritedStore: View {
-        let content: Content
-        let store: AtomStore
-        let overrides: [OverrideKey: any AtomOverrideProtocol]
-        let observers: [Observer]
-
-        @StateObject
-        private var state = ScopeState()
-
-        var body: some View {
-            content.environment(
-                \.store,
-                StoreContext(
-                    store,
-                    scopeKey: ScopeKey(token: state.token),
-                    observers: observers,
-                    overrides: overrides
-                )
-            )
-        }
-    }
-
-    struct InheritedEnvironment: View {
-        let content: Content
-        let overrides: [OverrideKey: any AtomOverrideProtocol]
-        let observers: [Observer]
-
-        @StateObject
-        private var state = ScopeState()
-        @Environment(\.store)
-        private var environmentStore
-
-        var body: some View {
-            content.environment(
-                \.store,
-                environmentStore.scoped(
-                    scopeKey: ScopeKey(token: state.token),
-                    observers: observers,
-                    overrides: overrides
-                )
-            )
-        }
-    }
-
-    @MainActor
-    final class ScopeState: ObservableObject {
-        let token = ScopeKey.Token()
     }
 
     func `mutating`(_ mutation: (inout Self) -> Void) -> Self {
