@@ -108,8 +108,8 @@ public struct AtomRoot<Content: View>: View {
         }
     }
 
-    /// Observes the state changes along with a snapshot capturing the whole atom states and their dependency
-    /// graph at the point in time for debugging purpose.
+    /// Observes the state changes with a snapshot that captures the whole atom states and
+    /// their dependency graph at the point in time for debugging purposes.
     ///
     /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
     ///
