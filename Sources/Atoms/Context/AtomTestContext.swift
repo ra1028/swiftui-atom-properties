@@ -173,7 +173,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// and assigns a new value for the atom.
     /// When you assign a new value, it immediately notifies downstream atoms and views.
     ///
-    /// - SeeAlso: ``AtomTestContext/subscript(_:)``
+    /// - SeeAlso: ``AtomContext/subscript(_:)``
     ///
     /// ```swift
     /// let context = AtomTestContext()
@@ -442,6 +442,7 @@ internal extension AtomTestContext {
         StoreContext(
             _state.store,
             scopeKey: ScopeKey(token: _state.token),
+            inheritedScopeKeys: [:],
             observers: [],
             overrides: _state.overrides
         )

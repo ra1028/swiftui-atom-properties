@@ -43,9 +43,12 @@ public struct AtomScope<Content: View>: View {
 
     /// Creates a new scope with the specified content.
     ///
-    /// - Parameter content: The view content that inheriting from the parent.
-    public init(@ViewBuilder content: () -> Content) {
-        self.inheritance = .environment
+    /// - Parameters:
+    ///   - id: An identifier represents this scope used for matching with scoped atoms.
+    ///   - content: The descendant view content that provides scoped context for atoms.
+    public init<ID: Hashable>(id: ID = DefaultScopeID(), @ViewBuilder content: () -> Content) {
+        let id = ScopeID(id)
+        self.inheritance = .environment(id: id)
         self.content = content()
     }
 
@@ -54,7 +57,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Parameters:
     ///   - context: The parent view context that for inheriting store explicitly.
-    ///   - content: The view content that inheriting from the parent.
+    ///   - content: The descendant view content that provides scoped context for atoms.
     public init(
         inheriting context: AtomViewContext,
         @ViewBuilder content: () -> Content
@@ -66,8 +69,9 @@ public struct AtomScope<Content: View>: View {
     /// The content and behavior of the view.
     public var body: some View {
         switch inheritance {
-        case .environment:
+        case .environment(let id):
             InheritedEnvironment(
+                id: id,
                 content: content,
                 overrides: overrides,
                 observers: observers
@@ -94,7 +98,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
-        mutating { $0.observers.append(Observer(onUpdate: onUpdate)) }
+        mutating(self) { $0.observers.append(Observer(onUpdate: onUpdate)) }
     }
 
     /// Override the atom value used in this scope with the given value.
@@ -110,7 +114,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides[OverrideKey(atom)] = AtomOverride(value: value) }
+        mutating(self) { $0.overrides[OverrideKey(atom)] = AtomOverride(value: value) }
     }
 
     /// Override the atom value used in this scope with the given value.
@@ -128,13 +132,13 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating { $0.overrides[OverrideKey(atomType)] = AtomOverride(value: value) }
+        mutating(self) { $0.overrides[OverrideKey(atomType)] = AtomOverride(value: value) }
     }
 }
 
 private extension AtomScope {
     enum Inheritance {
-        case environment
+        case environment(id: ScopeID)
         case context(AtomViewContext)
     }
 
@@ -144,6 +148,7 @@ private extension AtomScope {
             let token = ScopeKey.Token()
         }
 
+        let id: ScopeID
         let content: Content
         let overrides: [OverrideKey: any AtomOverrideProtocol]
         let observers: [Observer]
@@ -158,6 +163,7 @@ private extension AtomScope {
                 \.store,
                 environmentStore.scoped(
                     scopeKey: ScopeKey(token: state.token),
+                    scopeID: id,
                     observers: observers,
                     overrides: overrides
                 )
@@ -180,11 +186,5 @@ private extension AtomScope {
                 )
             )
         }
-    }
-
-    func `mutating`(_ mutation: (inout Self) -> Void) -> Self {
-        var view = self
-        mutation(&view)
-        return view
     }
 }

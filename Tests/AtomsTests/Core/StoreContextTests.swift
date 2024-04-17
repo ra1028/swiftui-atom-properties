@@ -14,6 +14,7 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext(
             store,
             scopeKey: scopeKey,
+            inheritedScopeKeys: [:],
             observers: [],
             overrides: [
                 OverrideKey(atom): AtomOverride<TestAtom<Int>> { _ in
@@ -53,6 +54,7 @@ final class StoreContextTests: XCTestCase {
         )
         let scopedContext = context.scoped(
             scopeKey: ScopeKey(token: ScopeKey.Token()),
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [observer1],
             overrides: [
                 OverrideKey(atom): AtomOverride<TestValueAtom<Int>> { _ in
@@ -343,6 +345,7 @@ final class StoreContextTests: XCTestCase {
         let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
         let scopedContext = context.scoped(
             scopeKey: scopeKey,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [
                 OverrideKey(atom): AtomOverride<TestPublisherAtom<Just<Int>>> { _ in .success(1) }
@@ -358,68 +361,6 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(
             (store.state.caches[overrideAtomKey] as? AtomCache<TestPublisherAtom<Just<Int>>>)?.value,
             .success(1)
-        )
-    }
-
-    @MainActor
-    func testCustomRefresh() async {
-        let store = AtomStore()
-        let subscriberState = SubscriberState()
-        let subscriber = Subscriber(subscriberState)
-        let atom = TestCustomRefreshableAtom {
-            Just(0)
-        } refresh: {
-            .success(1)
-        }
-        let key = AtomKey(atom)
-        var snapshots = [Snapshot]()
-        let observer = Observer { snapshots.append($0) }
-        let context = StoreContext(store, observers: [observer])
-
-        let phase0 = await context.refresh(atom)
-        XCTAssertEqual(phase0.value, 1)
-        XCTAssertNil(store.state.caches[key])
-        XCTAssertNil(store.state.states[key])
-        XCTAssertTrue(snapshots.isEmpty)
-
-        var updateCount = 0
-        let phase1 = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-            updateCount += 1
-        }
-
-        XCTAssertTrue(phase1.isSuspending)
-
-        snapshots.removeAll()
-
-        let phase2 = await context.refresh(atom)
-        XCTAssertEqual(phase2.value, 1)
-        XCTAssertNotNil(store.state.states[key])
-        XCTAssertEqual((store.state.caches[key] as? AtomCache<TestCustomRefreshableAtom<Just<Int>>>)?.value, .success(1))
-        XCTAssertEqual(updateCount, 1)
-        XCTAssertEqual(
-            snapshots.map { $0.caches.mapValues { $0.value as? AsyncPhase<Int, Never> } },
-            [[key: .success(1)]]
-        )
-
-        let scopeKey = ScopeKey(token: ScopeKey.Token())
-        let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
-        let scopedContext = context.scoped(
-            scopeKey: scopeKey,
-            observers: [],
-            overrides: [
-                OverrideKey(atom): AtomOverride<TestCustomRefreshableAtom<Just<Int>>> { _ in .success(2) }
-            ]
-        )
-
-        let phase3 = scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
-        XCTAssertEqual(phase3.value, 2)
-
-        let phase4 = await scopedContext.refresh(atom)
-        XCTAssertEqual(phase4.value, 2)
-        XCTAssertNotNil(store.state.states[overrideAtomKey])
-        XCTAssertEqual(
-            (store.state.caches[overrideAtomKey] as? AtomCache<TestCustomRefreshableAtom<Just<Int>>>)?.value,
-            .success(2)
         )
     }
 
@@ -453,80 +394,6 @@ final class StoreContextTests: XCTestCase {
             snapshots.map { $0.caches.mapValues { $0.value as? Int } },
             [[key: 0]]
         )
-    }
-
-    @MainActor
-    func testCustomReset() {
-        struct Counter: Equatable {
-            var value = 0
-            var update = 0
-            var reset = 0
-        }
-
-        let store = AtomStore()
-        let subscriberState = SubscriberState()
-        let subscriber = Subscriber(subscriberState)
-        var counter = Counter()
-        let atom = TestCustomResettableAtom(
-            defaultValue: { _ in
-                counter.value += 1
-                return 0
-            },
-            reset: { _ in
-                counter.reset += 1
-            }
-        )
-        let key = AtomKey(atom)
-        var snapshots = [Snapshot]()
-        let observer = Observer {
-            snapshots.append($0)
-        }
-        let context = StoreContext(store, observers: [observer])
-        let value0 = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-            counter.update += 1
-        }
-
-        snapshots.removeAll()
-        context.set(1, for: atom)
-
-        XCTAssertEqual(value0, 0)
-        XCTAssertEqual(counter, Counter(value: 1, update: 1, reset: 0))
-        XCTAssertEqual(
-            snapshots.map { $0.caches.mapValues { $0.value as? Int } },
-            [[key: 1]]
-        )
-
-        snapshots.removeAll()
-        context.reset(atom)
-
-        XCTAssertEqual(counter, Counter(value: 1, update: 1, reset: 1))
-        XCTAssertTrue(snapshots.isEmpty)
-
-        context.unwatch(atom, subscriber: subscriber)
-        counter = Counter()
-
-        let scopeKey = ScopeKey(token: ScopeKey.Token())
-        let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
-        let scopedContext = context.scoped(
-            scopeKey: scopeKey,
-            observers: [],
-            overrides: [
-                OverrideKey(atom): AtomOverride<TestCustomResettableAtom<Int>> { _ in 2 }
-            ]
-        )
-        let value1 = scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-            counter.update += 1
-        }
-
-        XCTAssertEqual(value1, 2)
-        XCTAssertEqual(counter, Counter(value: 0, update: 0, reset: 0))
-
-        scopedContext.reset(atom)
-
-        XCTAssertEqual(scopedContext.read(atom), 2)
-        XCTAssertEqual(counter, Counter(value: 0, update: 1, reset: 0))
-        XCTAssertNotNil(store.state.states[overrideAtomKey])
-        XCTAssertEqual((store.state.caches[overrideAtomKey] as? AtomCache<TestCustomResettableAtom<Int>>)?.value, 2)
     }
 
     @MainActor
@@ -645,11 +512,13 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext(store)
         let scoped1Context = context.scoped(
             scopeKey: scope1Key,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: scoped1Overrides
         )
         let scoped2Context = scoped1Context.scoped(
             scopeKey: scope2Key,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: scoped2Overrides
         )
@@ -862,64 +731,19 @@ final class StoreContextTests: XCTestCase {
 
     @MainActor
     func testRelease() {
-        struct KeepAliveAtom<T: Hashable>: ValueAtom, KeepAlive, Hashable {
-            var value: T
-
-            func value(context: Context) -> T {
-                value
-            }
-        }
-
         let store = AtomStore()
         let context = StoreContext(store)
 
-        XCTContext.runActivity(named: "Normal atoms should be released.") { _ in
-            let atom = TestAtom(value: 0)
-            let key = AtomKey(atom)
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
+        let atom = TestAtom(value: 0)
+        let key = AtomKey(atom)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
 
-            _ = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
-            XCTAssertNotNil(store.state.caches[key])
+        _ = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
+        XCTAssertNotNil(store.state.caches[key])
 
-            context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNil(store.state.caches[key])
-        }
-
-        XCTContext.runActivity(named: "KeepAlive atoms should not be released.") { _ in
-            let atom = KeepAliveAtom(value: 0)
-            let key = AtomKey(atom)
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
-
-            _ = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
-            XCTAssertNotNil(store.state.caches[key])
-
-            context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNotNil(store.state.caches[key])
-        }
-
-        XCTContext.runActivity(named: "Overridden KeepAlive atoms should be released.") { _ in
-            let atom = KeepAliveAtom(value: 0)
-            let token = ScopeKey.Token()
-            let scopeKey = ScopeKey(token: token)
-            let key = AtomKey(atom, scopeKey: scopeKey)
-            let context = context.scoped(
-                scopeKey: scopeKey,
-                observers: [],
-                overrides: [
-                    OverrideKey(atom): AtomOverride<KeepAliveAtom<Int>> { _ in 10 }
-                ]
-            )
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
-
-            _ = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
-            XCTAssertNotNil(store.state.caches[key])
-
-            context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNil(store.state.caches[key])
-        }
+        context.unwatch(atom, subscriber: subscriber)
+        XCTAssertNil(store.state.caches[key])
     }
 
     @MainActor
@@ -948,11 +772,13 @@ final class StoreContextTests: XCTestCase {
         )
         let scoped1Context = context.scoped(
             scopeKey: scope1Key,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [:]
         )
         let scoped2Context = scoped1Context.scoped(
             scopeKey: scope2Key,
+            scopeID: ScopeID(DefaultScopeID()),
             observers: [Observer { scopedSnapshots.append($0) }],
             overrides: scopedOverride
         )

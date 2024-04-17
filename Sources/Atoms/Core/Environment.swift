@@ -12,6 +12,7 @@ private struct StoreEnvironmentKey: EnvironmentKey {
         StoreContext(
             nil,
             scopeKey: ScopeKey(token: ScopeKey.Token()),
+            inheritedScopeKeys: [:],
             observers: [],
             overrides: [:],
             enablesAssertion: true
