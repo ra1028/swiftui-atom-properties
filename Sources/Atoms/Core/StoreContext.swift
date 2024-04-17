@@ -217,7 +217,7 @@ internal struct StoreContext {
     @_disfavoredOverload
     func reset<Node: Atom>(_ atom: Node) {
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
@@ -229,7 +229,7 @@ internal struct StoreContext {
     @usableFromInline
     func reset<Node: Resettable>(_ atom: Node) {
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         guard let override else {
@@ -247,7 +247,7 @@ internal struct StoreContext {
     @usableFromInline
     func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let cache = lookupCache(of: atom, for: key)
 
@@ -257,7 +257,7 @@ internal struct StoreContext {
     @usableFromInline
     func unwatch(_ atom: some Atom, subscriber: Subscriber) {
         let override = lookupOverride(of: atom)
-        let scopeKey = override != nil ? scopeKey : nil
+        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         subscriber.subscribingKeys.remove(key)
