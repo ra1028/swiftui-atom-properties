@@ -68,7 +68,7 @@ public struct AtomRoot<Content: View>: View {
 
     /// Creates an atom root with the specified content that will be allowed to use atoms.
     ///
-    /// - Parameter content: The content that uses atoms.
+    /// - Parameter content: The descendant view content that provides context for atoms.
     public init(@ViewBuilder content: () -> Content) {
         self.storeHost = .tree
         self.content = content()
@@ -79,7 +79,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Parameters:
     ///   - store: An object that stores the state of atoms.
-    ///   - content: The view content that inheriting from the parent.
+    ///   - content: The descendant view content that provides context for atoms.
     public init(
         storesIn store: AtomStore,
         @ViewBuilder content: () -> Content

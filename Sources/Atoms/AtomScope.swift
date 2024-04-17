@@ -44,8 +44,8 @@ public struct AtomScope<Content: View>: View {
     /// Creates a new scope with the specified content.
     ///
     /// - Parameters:
-    ///   - id: An identifier represents this scope used for matching scoped atoms.
-    ///   - content: The view content that inheriting from the parent.
+    ///   - id: An identifier represents this scope used for matching with scoped atoms.
+    ///   - content: The descendant view content that provides scoped context for atoms.
     public init<ID: Hashable>(id: ID = DefaultScopeID(), @ViewBuilder content: () -> Content) {
         let id = ScopeID(id)
         self.inheritance = .environment(id: id)
@@ -57,7 +57,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Parameters:
     ///   - context: The parent view context that for inheriting store explicitly.
-    ///   - content: The view content that inheriting from the parent.
+    ///   - content: The descendant view content that provides scoped context for atoms.
     public init(
         inheriting context: AtomViewContext,
         @ViewBuilder content: () -> Content
