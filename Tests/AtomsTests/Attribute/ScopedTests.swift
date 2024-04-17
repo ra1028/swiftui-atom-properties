@@ -15,15 +15,16 @@ final class ScopedTests: XCTestCase {
             }
         }
 
+        let scope1Token = ScopeKey.Token()
+        let scope1Key = ScopeKey(token: scope1Token)
+        let scope2Token = ScopeKey.Token()
+        let scope2Key = ScopeKey(token: scope2Token)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+
         XCTContext.runActivity(named: "Should be scoped") { _ in
             let store = AtomStore()
             let context = StoreContext(store)
-            let scope1Token = ScopeKey.Token()
-            let scope1Key = ScopeKey(token: scope1Token)
-            let scope2Token = ScopeKey.Token()
-            let scope2Key = ScopeKey(token: scope2Token)
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
             let scoped1Context = context.scoped(
                 scopeKey: scope1Key,
                 scopeID: ScopeID(DefaultScopeID()),
@@ -69,12 +70,6 @@ final class ScopedTests: XCTestCase {
         XCTContext.runActivity(named: "Should be scoped in particular scope") { _ in
             let store = AtomStore()
             let context = StoreContext(store)
-            let scope1Token = ScopeKey.Token()
-            let scope1Key = ScopeKey(token: scope1Token)
-            let scope2Token = ScopeKey.Token()
-            let scope2Key = ScopeKey(token: scope2Token)
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
             let scopeID = "Scope 1"
             let scoped1Context = context.scoped(
                 scopeKey: scope1Key,
