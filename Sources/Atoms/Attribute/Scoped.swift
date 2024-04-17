@@ -1,5 +1,5 @@
-/// An attribute protocol to preserve the atom state in the nearest scope in the ancestor of
-/// where it is used and prevent it from being shared outside of the scope.
+/// An attribute protocol to preserve the atom state in the scope nearest to the ancestor
+/// of where it is used and prevents it from being shared out of scope.
 ///
 /// If multiple scopes are nested, you can define an arbitrary `scopeID` to ensure that
 /// values are stored in a particular scope.

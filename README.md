@@ -741,7 +741,7 @@ The attributes allow control over how the atoms essentially work, for example, c
 
 #### [Scoped](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/scoped)
 
-`Scoped` preserves the atom state in the nearest scope in the ancestor of where it is used and prevent it from being shared outside of the scope.
+`Scoped` preserves the atom state in the scope nearest to the ancestor of where it is used and prevents it from being shared out of scope.
 
 <details><summary><code>📖 Example</code></summary>
 
@@ -1250,7 +1250,7 @@ struct NewsView: View {
 #### Scoped Atoms
 
 This library is designed with the shared state as a single source of truth first principle, but also the state can be scoped depending on the intended use.  
-Scoped atoms preserve their state in the nearest [AtomScope](#atomscope) in the ancestor of the view in which the atom is used, and they are not shared outside the scope. `Scoped` is the attribute for that feature.  
+Scoped atoms preserves the atom state in the [AtomScope](#atomscope) nearest to the ancestor of where it is used and prevents it from being shared out of scope. `Scoped` is the attribute for that feature.  
 
 ```swift
 struct TextInputAtom: StateAtom, Scoped Hashable {
@@ -1302,12 +1302,12 @@ AtomScope(id: TextScopeID()) {
 }
 ```
 
-This is also useful when multiple identical screens are stacked and each has isolated states such as user inputs.  
-Note that other atoms that depend on the scoped atom will be in a shared state and must be given `Scoped` attribute as well in order to scope them as well.  
+This is also useful when multiple identical screens are stacked and each screen needs isolated states such as user inputs.  
+Note that other atoms that depend on scoped atoms will be in a shared state and must be given `Scoped` attribute as well in order to scope them as well.  
 
 #### Override Atoms
 
-Overriding an atom in [AtomRoot](#atomroot) or [AtomScope](#atomscope) overwrites its value when used in the descendant views, which is useful for dependency injection or swapping state in a particular view.  
+Overriding an atom in [AtomRoot](#atomroot) or [AtomScope](#atomscope) overwrites its state when used in the descendant views, which is useful for dependency injection or swapping state in a particular view.  
 
 ```swift
 AtomScope {
