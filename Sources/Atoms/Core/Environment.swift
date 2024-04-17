@@ -14,6 +14,7 @@ private struct StoreEnvironmentKey: EnvironmentKey {
             scopeKey: ScopeKey(token: ScopeKey.Token()),
             inheritedScopeKeys: [:],
             observers: [],
+            scopedObservers: [],
             overrides: [:],
             enablesAssertion: true
         )

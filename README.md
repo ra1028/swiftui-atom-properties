@@ -1214,7 +1214,7 @@ See the [Override Atoms](#override-atoms) and [Debugging](#debugging) sections f
 AtomScope {
     CounterView()
 }
-.observe { snapshot in
+.scopedObserve { snapshot in
     if let count = snapshot.lookup(CounterAtom()) {
         print(count)
     }
@@ -1443,8 +1443,8 @@ var debugButton: some View {
 }
 ```
 
-Or, you can observe all updates of atoms and always continue to receive `Snapshots` at that point in time through `observe(_:)` modifier of [AtomRoot](#atomroot) or [AtomScope](#atomscope).  
-Note that observing in `AtomRoot` will receive all atom updates that happened in the whole app, but observing in `AtomScope` will only receive atoms used in the descendant views.  
+Or, you can observe all state changes and always continue to receive `Snapshots` at that point in time with `observe(_:)` modifier of [AtomRoot](#atomroot) or with `scopedObserve(_:)` modifier of [AtomScope](#atomscope).  
+Note that observing in `AtomRoot` will receive every state changes that happened in the whole app, but observing in `AtomScope` will observe changes of atoms used in the scope.  
 
 ```swift
 AtomRoot {
