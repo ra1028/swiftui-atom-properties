@@ -89,7 +89,7 @@ struct TimeTravelDebug<Content: View>: View {
             }
             .padding()
         }
-        .observe { snapshot in
+        .scopedObserve { snapshot in
             Task {
                 snapshots = Array(snapshots.prefix(position + 1))
                 snapshots.append(snapshot)

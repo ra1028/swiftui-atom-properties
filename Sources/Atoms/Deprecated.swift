@@ -27,4 +27,9 @@ public extension AtomScope {
             AtomRoot(storesIn: store, content: content)
         }
     }
+
+    @available(*, deprecated, renamed: "scopedObserve(_:)")
+    func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
+        scopedObserve(onUpdate)
+    }
 }

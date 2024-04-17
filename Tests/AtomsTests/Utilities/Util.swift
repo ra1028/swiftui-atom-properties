@@ -68,6 +68,7 @@ extension StoreContext {
             scopeKey: ScopeKey(token: ScopeKey.Token()),
             inheritedScopeKeys: [:],
             observers: observers,
+            scopedObservers: [],
             overrides: overrides
         )
     }

@@ -5,8 +5,7 @@ import Foundation
 ///
 /// This context has a store that manages the state of atoms, so it can be used to test individual
 /// atoms or their interactions with other atoms without depending on the SwiftUI view tree.
-/// Furthermore, unlike other contexts, it is possible to override or observe changes in atoms
-/// through this context.
+/// Furthermore, unlike other contexts, it is possible to override atoms through this context.
 @MainActor
 public struct AtomTestContext: AtomWatchableContext {
     private let location: SourceLocation
@@ -444,6 +443,7 @@ internal extension AtomTestContext {
             scopeKey: ScopeKey(token: _state.token),
             inheritedScopeKeys: [:],
             observers: [],
+            scopedObservers: [],
             overrides: _state.overrides
         )
     }

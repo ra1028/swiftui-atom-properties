@@ -16,6 +16,7 @@ final class StoreContextTests: XCTestCase {
             scopeKey: scopeKey,
             inheritedScopeKeys: [:],
             observers: [],
+            scopedObservers: [],
             overrides: [
                 OverrideKey(atom): AtomOverride<TestAtom<Int>> { _ in
                     10

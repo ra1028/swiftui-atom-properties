@@ -2,13 +2,13 @@ import SwiftUI
 
 /// A view to override or monitor atoms in scope.
 ///
-/// This view allows you to monitor changes of atoms used in descendant views by``AtomScope/observe(_:)``.
+/// This view allows you to monitor changes of atoms used in descendant views by``AtomScope/scopedObserve(_:)``.
 ///
 /// ```swift
 /// AtomScope {
 ///     CounterView()
 /// }
-/// .observe { snapshot in
+/// .scopedObserve { snapshot in
 ///     if let count = snapshot.lookup(CounterAtom()) {
 ///         print(count)
 ///     }
@@ -87,17 +87,16 @@ public struct AtomScope<Content: View>: View {
         }
     }
 
-    /// For debugging purposes, each time there is a change in the internal state,
-    /// a snapshot is taken that captures the state of the atoms and their dependency graph
-    /// at that point in time.
+    /// Observes the state changes with a snapshot that captures the whole atom states and
+    /// their dependency graph at the point in time for debugging purposes.
     ///
-    /// Note that unlike observed by ``AtomRoot``, this is triggered only by internal state changes
-    /// caused by atoms use in this scope.
+    /// Note that unlike ``AtomRoot/observe(_:)``, this observes only the state changes caused by atoms
+    /// used in this scope.
     ///
     /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
     ///
     /// - Returns: The self instance.
-    public func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
+    public func scopedObserve(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
         mutating(self) { $0.observers.append(Observer(onUpdate: onUpdate)) }
     }
 
@@ -181,7 +180,7 @@ private extension AtomScope {
             content.environment(
                 \.store,
                 context._store.inherited(
-                    observers: observers,
+                    scopedObservers: observers,
                     overrides: overrides
                 )
             )

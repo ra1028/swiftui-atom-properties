@@ -108,9 +108,8 @@ public struct AtomRoot<Content: View>: View {
         }
     }
 
-    /// For debugging purposes, each time there is a change in the internal state,
-    /// a snapshot is taken that captures the state of the atoms and their dependency graph
-    /// at that point in time.
+    /// Observes the state changes with a snapshot that captures the whole atom states and
+    /// their dependency graph at the point in time for debugging purposes.
     ///
     /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
     ///
@@ -178,6 +177,7 @@ private extension AtomRoot {
                     scopeKey: ScopeKey(token: state.token),
                     inheritedScopeKeys: [:],
                     observers: observers,
+                    scopedObservers: [],
                     overrides: overrides
                 )
             )
@@ -206,6 +206,7 @@ private extension AtomRoot {
                     scopeKey: ScopeKey(token: state.token),
                     inheritedScopeKeys: [:],
                     observers: observers,
+                    scopedObservers: [],
                     overrides: overrides
                 )
             )

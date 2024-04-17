@@ -7,6 +7,7 @@ internal struct StoreContext {
     private let scopeKey: ScopeKey
     private let inheritedScopeKeys: [ScopeID: ScopeKey]
     private let observers: [Observer]
+    private let scopedObservers: [Observer]
     private let overrides: [OverrideKey: any AtomOverrideProtocol]
     private let enablesAssertion: Bool
 
@@ -15,6 +16,7 @@ internal struct StoreContext {
         scopeKey: ScopeKey,
         inheritedScopeKeys: [ScopeID: ScopeKey],
         observers: [Observer],
+        scopedObservers: [Observer],
         overrides: [OverrideKey: any AtomOverrideProtocol],
         enablesAssertion: Bool = false
     ) {
@@ -22,19 +24,21 @@ internal struct StoreContext {
         self.scopeKey = scopeKey
         self.inheritedScopeKeys = inheritedScopeKeys
         self.observers = observers
+        self.scopedObservers = scopedObservers
         self.overrides = overrides
         self.enablesAssertion = enablesAssertion
     }
 
     func inherited(
-        observers: [Observer],
+        scopedObservers: [Observer],
         overrides: [OverrideKey: any AtomOverrideProtocol]
     ) -> StoreContext {
         StoreContext(
             weakStore,
             scopeKey: scopeKey,
             inheritedScopeKeys: inheritedScopeKeys,
-            observers: self.observers + observers,
+            observers: observers,
+            scopedObservers: self.scopedObservers + scopedObservers,
             overrides: self.overrides.merging(overrides) { $1 },
             enablesAssertion: enablesAssertion
         )
@@ -50,7 +54,8 @@ internal struct StoreContext {
             weakStore,
             scopeKey: scopeKey,
             inheritedScopeKeys: mutating(inheritedScopeKeys) { $0[scopeID] = scopeKey },
-            observers: self.observers + observers,
+            observers: self.observers,
+            scopedObservers: observers,
             overrides: overrides,
             enablesAssertion: enablesAssertion
         )
@@ -612,13 +617,13 @@ private extension StoreContext {
     }
 
     func notifyUpdateToObservers() {
-        guard !observers.isEmpty else {
+        guard !observers.isEmpty || !scopedObservers.isEmpty else {
             return
         }
 
         let snapshot = snapshot()
 
-        for observer in observers {
+        for observer in observers + scopedObservers {
             observer.onUpdate(snapshot)
         }
     }
