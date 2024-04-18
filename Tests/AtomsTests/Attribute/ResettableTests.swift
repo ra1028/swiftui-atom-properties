@@ -29,7 +29,7 @@ final class ResettableTests: XCTestCase {
         let observer = Observer {
             snapshots.append($0)
         }
-        let context = StoreContext(store, observers: [observer])
+        let context = StoreContext(store: store, observers: [observer])
         let value0 = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
             counter.update += 1
         }

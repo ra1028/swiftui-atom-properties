@@ -17,7 +17,7 @@ final class RefreshableTests: XCTestCase {
         let key = AtomKey(atom)
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
-        let context = StoreContext(store, observers: [observer])
+        let context = StoreContext(store: store, observers: [observer])
 
         let phase0 = await context.refresh(atom)
         XCTAssertEqual(phase0.value, 1)

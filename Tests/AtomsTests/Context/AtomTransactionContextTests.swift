@@ -9,7 +9,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom = TestValueAtom(value: 100)
         let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
+        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction, coordinator: ())
 
         XCTAssertEqual(context.read(atom), 100)
     }
@@ -20,7 +20,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let dependency = TestStateAtom(defaultValue: 100)
         let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
+        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction, coordinator: ())
 
         XCTAssertEqual(context.watch(dependency), 100)
 
@@ -35,7 +35,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom1 = TestPublisherAtom { Just(100) }
         let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom0)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
+        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction, coordinator: ())
 
         XCTAssertTrue(context.watch(atom1).isSuspending)
 
@@ -55,7 +55,7 @@ final class AtomTransactionContextTests: XCTestCase {
         }
         let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom0)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
+        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction, coordinator: ())
 
         XCTAssertTrue(context.watch(atom1).isSuspending)
 
@@ -71,7 +71,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let dependency = TestStateAtom(defaultValue: 0)
         let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
+        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction, coordinator: ())
 
         XCTAssertEqual(context.watch(dependency), 0)
 
@@ -99,7 +99,7 @@ final class AtomTransactionContextTests: XCTestCase {
 
         let store = AtomStore()
         let transaction = Transaction(key: AtomKey(transactionAtom)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
+        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction, coordinator: ())
 
         XCTAssertEqual(context.watch(atom), 0)
         XCTAssertEqual(context.watch(resettableAtom), 0)
@@ -121,7 +121,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom1 = TestStateAtom(defaultValue: 200)
         let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom0)) {}
-        let context = AtomTransactionContext(store: StoreContext(store), transaction: transaction, coordinator: ())
+        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction, coordinator: ())
 
         let value = context.watch(atom1)
 

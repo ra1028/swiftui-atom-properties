@@ -23,7 +23,7 @@ final class KeepAliveTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should not be released") { _ in
             let store = AtomStore()
-            let context = StoreContext(store)
+            let context = StoreContext(store: store)
             let atom = KeepAliveAtom(value: 0)
             let key = AtomKey(atom)
             let subscriberState = SubscriberState()
@@ -38,7 +38,7 @@ final class KeepAliveTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should be released when overridden") { _ in
             let store = AtomStore()
-            let context = StoreContext(store)
+            let context = StoreContext(store: store)
             let atom = KeepAliveAtom(value: 0)
             let scopeToken = ScopeKey.Token()
             let scopeKey = ScopeKey(token: scopeToken)
@@ -63,7 +63,7 @@ final class KeepAliveTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should be released when scoped") { _ in
             let store = AtomStore()
-            let context = StoreContext(store)
+            let context = StoreContext(store: store)
             let atom = ScopedKeepAliveAtom(value: 0)
             let scopeToken = ScopeKey.Token()
             let scopeKey = ScopeKey(token: scopeToken)

@@ -24,7 +24,7 @@ final class ScopedTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should be scoped") { _ in
             let store = AtomStore()
-            let context = StoreContext(store)
+            let context = StoreContext(store: store)
             let scoped1Context = context.scoped(
                 scopeKey: scope1Key,
                 scopeID: ScopeID(DefaultScopeID()),
@@ -69,7 +69,7 @@ final class ScopedTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should be scoped in particular scope") { _ in
             let store = AtomStore()
-            let context = StoreContext(store)
+            let context = StoreContext(store: store)
             let scopeID = "Scope 1"
             let scoped1Context = context.scoped(
                 scopeKey: scope1Key,
