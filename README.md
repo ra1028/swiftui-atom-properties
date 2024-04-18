@@ -1253,7 +1253,7 @@ This library is designed with the shared state as a single source of truth first
 Scoped atoms preserves the atom state in the [AtomScope](#atomscope) nearest to the ancestor of where it is used and prevents it from being shared out of scope. `Scoped` is the attribute for that feature.  
 
 ```swift
-struct TextInputAtom: StateAtom, Scoped Hashable {
+struct TextInputAtom: StateAtom, Scoped, Hashable {
     func defaultValue(context: Context) -> String {
         ""
     }
@@ -1282,7 +1282,7 @@ When multiple `AtomScope`s are nested, and you want to store and share an atom s
 ```swift
 struct TextScopeID: Hashable {}
 
-struct TextInputAtom: StateAtom, Scoped Hashable {
+struct TextInputAtom: StateAtom, Scoped, Hashable {
     var scopeID: TextScopeID {
         TextScopeID()
     }
