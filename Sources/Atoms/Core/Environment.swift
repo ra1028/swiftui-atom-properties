@@ -16,6 +16,7 @@ private struct StoreEnvironmentKey: EnvironmentKey {
             observers: [],
             scopedObservers: [],
             overrides: [:],
+            scopedOverrides: [:],
             enablesAssertion: true
         )
     }

@@ -48,7 +48,7 @@ final class KeepAliveTests: XCTestCase {
                 scopeID: ScopeID(DefaultScopeID()),
                 observers: [],
                 overrides: [
-                    OverrideKey(atom): AtomOverride<KeepAliveAtom<Int>> { _ in 10 }
+                    OverrideKey(atom): AtomOverride<KeepAliveAtom<Int>>(isScoped: true) { _ in 10 }
                 ]
             )
             let subscriberState = SubscriberState()

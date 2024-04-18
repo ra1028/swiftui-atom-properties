@@ -60,16 +60,18 @@ final class ResettableSubject<Output, Failure: Error>: Publisher, Subject {
 extension StoreContext {
     init(
         _ store: AtomStore? = nil,
+        scopeKey: ScopeKey = ScopeKey(token: ScopeKey.Token()),
         observers: [Observer] = [],
         overrides: [OverrideKey: any AtomOverrideProtocol] = [:]
     ) {
         self.init(
             store,
-            scopeKey: ScopeKey(token: ScopeKey.Token()),
+            scopeKey: scopeKey,
             inheritedScopeKeys: [:],
             observers: observers,
             scopedObservers: [],
-            overrides: overrides
+            overrides: overrides,
+            scopedOverrides: [:]
         )
     }
 }

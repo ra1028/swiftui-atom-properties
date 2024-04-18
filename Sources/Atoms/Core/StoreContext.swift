@@ -9,6 +9,7 @@ internal struct StoreContext {
     private let observers: [Observer]
     private let scopedObservers: [Observer]
     private let overrides: [OverrideKey: any AtomOverrideProtocol]
+    private let scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
     private let enablesAssertion: Bool
 
     nonisolated init(
@@ -18,6 +19,7 @@ internal struct StoreContext {
         observers: [Observer],
         scopedObservers: [Observer],
         overrides: [OverrideKey: any AtomOverrideProtocol],
+        scopedOverrides: [OverrideKey: any AtomOverrideProtocol],
         enablesAssertion: Bool = false
     ) {
         self.weakStore = store
@@ -26,12 +28,13 @@ internal struct StoreContext {
         self.observers = observers
         self.scopedObservers = scopedObservers
         self.overrides = overrides
+        self.scopedOverrides = scopedOverrides
         self.enablesAssertion = enablesAssertion
     }
 
     func inherited(
         scopedObservers: [Observer],
-        overrides: [OverrideKey: any AtomOverrideProtocol]
+        scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
     ) -> StoreContext {
         StoreContext(
             weakStore,
@@ -39,7 +42,8 @@ internal struct StoreContext {
             inheritedScopeKeys: inheritedScopeKeys,
             observers: observers,
             scopedObservers: self.scopedObservers + scopedObservers,
-            overrides: self.overrides.merging(overrides) { $1 },
+            overrides: overrides,
+            scopedOverrides: self.scopedOverrides.merging(scopedOverrides) { $1 },
             enablesAssertion: enablesAssertion
         )
     }
@@ -56,7 +60,8 @@ internal struct StoreContext {
             inheritedScopeKeys: mutating(inheritedScopeKeys) { $0[scopeID] = scopeKey },
             observers: self.observers,
             scopedObservers: observers,
-            overrides: overrides,
+            overrides: self.overrides,
+            scopedOverrides: overrides,
             enablesAssertion: enablesAssertion
         )
     }
@@ -64,7 +69,7 @@ internal struct StoreContext {
     @usableFromInline
     func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
@@ -85,7 +90,7 @@ internal struct StoreContext {
     @usableFromInline
     func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
@@ -96,7 +101,7 @@ internal struct StoreContext {
     @usableFromInline
     func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void) {
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
@@ -114,7 +119,7 @@ internal struct StoreContext {
 
         let store = getStore()
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let newCache = lookupCache(of: atom, for: key) ?? makeNewCache(of: atom, for: key, override: override)
 
@@ -134,7 +139,7 @@ internal struct StoreContext {
     ) -> Node.Loader.Value {
         let store = getStore()
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let newCache = lookupCache(of: atom, for: key) ?? makeNewCache(of: atom, for: key, override: override)
         let subscription = Subscription(
@@ -160,7 +165,7 @@ internal struct StoreContext {
     @_disfavoredOverload
     func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Loader.Value
@@ -190,7 +195,7 @@ internal struct StoreContext {
     @usableFromInline
     func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value {
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let state = getState(of: atom, for: key)
         let value: Node.Loader.Value
@@ -222,7 +227,7 @@ internal struct StoreContext {
     @_disfavoredOverload
     func reset<Node: Atom>(_ atom: Node) {
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
@@ -234,7 +239,7 @@ internal struct StoreContext {
     @usableFromInline
     func reset<Node: Resettable>(_ atom: Node) {
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         guard let override else {
@@ -252,7 +257,7 @@ internal struct StoreContext {
     @usableFromInline
     func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let cache = lookupCache(of: atom, for: key)
 
@@ -262,7 +267,7 @@ internal struct StoreContext {
     @usableFromInline
     func unwatch(_ atom: some Atom, subscriber: Subscriber) {
         let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, isOverridden: override != nil)
+        let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         subscriber.subscribingKeys.remove(key)
@@ -580,7 +585,10 @@ private extension StoreContext {
     }
 
     func lookupOverride<Node: Atom>(of atom: Node) -> AtomOverride<Node>? {
-        let baseOverride = overrides[OverrideKey(atom)] ?? overrides[OverrideKey(Node.self)]
+        let overrideKey = OverrideKey(atom)
+        let typeOverrideKey = OverrideKey(Node.self)
+        let baseScopedOverride = scopedOverrides[overrideKey] ?? scopedOverrides[typeOverrideKey]
+        let baseOverride = baseScopedOverride ?? overrides[overrideKey] ?? overrides[typeOverrideKey]
 
         guard let baseOverride else {
             return nil
@@ -603,8 +611,8 @@ private extension StoreContext {
         return override
     }
 
-    func lookupScopeKey<Node: Atom>(of atom: Node, isOverridden: Bool) -> ScopeKey? {
-        if isOverridden {
+    func lookupScopeKey<Node: Atom>(of atom: Node, isScopedOverriden: Bool) -> ScopeKey? {
+        if isScopedOverriden {
             return scopeKey
         }
         else if let atom = atom as? any Scoped {

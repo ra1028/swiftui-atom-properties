@@ -121,6 +121,7 @@ final class PublisherAtomTests: XCTestCase {
             context.override(atom) { _ in .success(200) }
             subject.reset()
 
+            context.unwatch(atom)
             XCTAssertEqual(context.watch(atom).value, 200)
 
             let phase = await context.refresh(atom)

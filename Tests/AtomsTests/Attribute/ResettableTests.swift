@@ -60,7 +60,7 @@ final class ResettableTests: XCTestCase {
             scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [
-                OverrideKey(atom): AtomOverride<TestCustomResettableAtom<Int>> { _ in 2 }
+                OverrideKey(atom): AtomOverride<TestCustomResettableAtom<Int>>(isScoped: true) { _ in 2 }
             ]
         )
         let value1 = scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
