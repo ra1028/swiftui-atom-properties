@@ -3,33 +3,30 @@ import Foundation
 @usableFromInline
 @MainActor
 internal struct StoreContext {
-    private weak var weakStore: AtomStore?
+    private let store: AtomStore
     private let scopeKey: ScopeKey
     private let inheritedScopeKeys: [ScopeID: ScopeKey]
     private let observers: [Observer]
     private let scopedObservers: [Observer]
     private let overrides: [OverrideKey: any AtomOverrideProtocol]
     private let scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
-    private let enablesAssertion: Bool
 
-    nonisolated init(
-        _ store: AtomStore?,
+    init(
+        store: AtomStore,
         scopeKey: ScopeKey,
         inheritedScopeKeys: [ScopeID: ScopeKey],
         observers: [Observer],
         scopedObservers: [Observer],
         overrides: [OverrideKey: any AtomOverrideProtocol],
-        scopedOverrides: [OverrideKey: any AtomOverrideProtocol],
-        enablesAssertion: Bool = false
+        scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
     ) {
-        self.weakStore = store
+        self.store = store
         self.scopeKey = scopeKey
         self.inheritedScopeKeys = inheritedScopeKeys
         self.observers = observers
         self.scopedObservers = scopedObservers
         self.overrides = overrides
         self.scopedOverrides = scopedOverrides
-        self.enablesAssertion = enablesAssertion
     }
 
     func inherited(
@@ -37,14 +34,13 @@ internal struct StoreContext {
         scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
     ) -> StoreContext {
         StoreContext(
-            weakStore,
+            store: store,
             scopeKey: scopeKey,
             inheritedScopeKeys: inheritedScopeKeys,
             observers: observers,
             scopedObservers: self.scopedObservers + scopedObservers,
             overrides: overrides,
-            scopedOverrides: self.scopedOverrides.merging(scopedOverrides) { $1 },
-            enablesAssertion: enablesAssertion
+            scopedOverrides: self.scopedOverrides.merging(scopedOverrides) { $1 }
         )
     }
 
@@ -55,14 +51,13 @@ internal struct StoreContext {
         overrides: [OverrideKey: any AtomOverrideProtocol]
     ) -> StoreContext {
         StoreContext(
-            weakStore,
+            store: store,
             scopeKey: scopeKey,
             inheritedScopeKeys: mutating(inheritedScopeKeys) { $0[scopeID] = scopeKey },
             observers: self.observers,
             scopedObservers: observers,
             overrides: self.overrides,
-            scopedOverrides: overrides,
-            enablesAssertion: enablesAssertion
+            scopedOverrides: overrides
         )
     }
 
@@ -117,7 +112,6 @@ internal struct StoreContext {
             return read(atom)
         }
 
-        let store = getStore()
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
@@ -137,7 +131,6 @@ internal struct StoreContext {
         requiresObjectUpdate: Bool,
         notifyUpdate: @escaping () -> Void
     ) -> Node.Loader.Value {
-        let store = getStore()
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
@@ -276,9 +269,7 @@ internal struct StoreContext {
 
     @usableFromInline
     func snapshot() -> Snapshot {
-        let store = getStore()
-
-        return Snapshot(
+        Snapshot(
             graph: store.graph,
             caches: store.state.caches,
             subscriptions: store.state.subscriptions
@@ -287,7 +278,6 @@ internal struct StoreContext {
 
     @usableFromInline
     func restore(_ snapshot: Snapshot) {
-        let store = getStore()
         let keys = ContiguousArray(snapshot.caches.keys)
         var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
 
@@ -328,7 +318,6 @@ internal struct StoreContext {
 
 private extension StoreContext {
     func prepareForTransaction<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
-        let store = getStore()
         let state = getState(of: atom, for: key)
 
         // Terminate the ongoing transaction first.
@@ -343,7 +332,6 @@ private extension StoreContext {
         }
 
         let transaction = Transaction(key: key) {
-            let store = getStore()
             let dependencies = store.graph.dependencies[key] ?? []
             let obsoletedDependencies = oldDependencies.subtracting(dependencies)
             let newDependencies = dependencies.subtracting(oldDependencies)
@@ -386,7 +374,6 @@ private extension StoreContext {
         cache: AtomCache<Node>,
         order: UpdateOrder
     ) {
-        let store = getStore()
         let oldValue = cache.value
 
         if case .newValue = order {
@@ -446,8 +433,6 @@ private extension StoreContext {
     }
 
     func unsubscribe<Keys: Sequence<AtomKey>>(_ keys: Keys, for subscriberKey: SubscriberKey) {
-        let store = getStore()
-
         for key in ContiguousArray(keys) {
             store.state.subscriptions[key]?.removeValue(forKey: subscriberKey)
             checkAndRelease(for: key)
@@ -458,8 +443,6 @@ private extension StoreContext {
 
     @discardableResult
     func checkAndRelease(for key: AtomKey) -> Bool {
-        let store = getStore()
-
         // The condition under which an atom may be released are as follows:
         //     1. It's not marked as `KeepAlive`, is marked as `Scoped`, or is scoped by override.
         //     2. It has no downstream atoms.
@@ -479,7 +462,6 @@ private extension StoreContext {
 
     func release(for key: AtomKey) {
         // Invalidate transactions, dependencies, and the atom state.
-        let store = getStore()
         let dependencies = store.graph.dependencies.removeValue(forKey: key)
         let state = store.state.states.removeValue(forKey: key)
         store.graph.children.removeValue(forKey: key)
@@ -496,8 +478,6 @@ private extension StoreContext {
     }
 
     func getState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Coordinator> {
-        let store = getStore()
-
         func makeState() -> AtomState<Node.Coordinator> {
             let coordinator = atom.makeCoordinator()
             let state = AtomState(coordinator: coordinator)
@@ -537,7 +517,6 @@ private extension StoreContext {
         for key: AtomKey,
         override: AtomOverride<Node>?
     ) -> AtomCache<Node> {
-        let store = getStore()
         let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Loader.Value
 
@@ -555,8 +534,6 @@ private extension StoreContext {
     }
 
     func lookupCache<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomCache<Node>? {
-        let store = getStore()
-
         guard let baseCache = store.state.caches[key] else {
             return nil
         }
@@ -636,65 +613,5 @@ private extension StoreContext {
         for observer in observers + scopedObservers {
             observer.onUpdate(snapshot)
         }
-    }
-
-    func getStore() -> AtomStore {
-        if let store = weakStore {
-            return store
-        }
-
-        assert(
-            !enablesAssertion,
-            """
-            [Atoms]
-            There is no store provided on the current view tree.
-            Make sure that this application has an `AtomRoot` as a root ancestor of any view.
-
-            ```
-            struct ExampleApp: App {
-                var body: some Scene {
-                    WindowGroup {
-                        AtomRoot {
-                            ExampleView()
-                        }
-                    }
-                }
-            }
-            ```
-
-            If for some reason the view tree is formed that does not inherit from `EnvironmentValues`,
-            consider using `AtomScope` to pass it.
-            That happens when using SwiftUI view wrapped with `UIHostingController`.
-
-            ```
-            struct ExampleView: View {
-                @ViewContext
-                var context
-
-                var body: some View {
-                    UIViewWrappingView {
-                        AtomScope(inheriting: context) {
-                            WrappedView()
-                        }
-                    }
-                }
-            }
-            ```
-
-            The modal screen presented by the `.sheet` modifier or etc, inherits from the environment values,
-            but only in iOS14, there is a bug where the environment values will be dismantled during it is
-            dismissing. This also can be avoided by using `AtomScope` to explicitly inherit from it.
-
-            ```
-            .sheet(isPresented: ...) {
-                AtomScope(inheriting: context) {
-                    ExampleView()
-                }
-            }
-            ```
-            """
-        )
-
-        return AtomStore()
     }
 }

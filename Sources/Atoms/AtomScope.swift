@@ -172,7 +172,7 @@ private extension AtomScope {
         var body: some View {
             content.environment(
                 \.store,
-                environmentStore.scoped(
+                environmentStore?.scoped(
                     scopeKey: ScopeKey(token: state.token),
                     scopeID: id,
                     observers: observers,

@@ -173,7 +173,7 @@ private extension AtomRoot {
             content.environment(
                 \.store,
                 StoreContext(
-                    state.store,
+                    store: state.store,
                     scopeKey: ScopeKey(token: state.token),
                     inheritedScopeKeys: [:],
                     observers: observers,
@@ -203,7 +203,7 @@ private extension AtomRoot {
             content.environment(
                 \.store,
                 StoreContext(
-                    store,
+                    store: store,
                     scopeKey: ScopeKey(token: state.token),
                     inheritedScopeKeys: [:],
                     observers: observers,
