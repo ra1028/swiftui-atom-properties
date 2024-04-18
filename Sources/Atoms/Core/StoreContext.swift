@@ -585,8 +585,10 @@ private extension StoreContext {
     }
 
     func lookupOverride<Node: Atom>(of atom: Node) -> AtomOverride<Node>? {
-        let overrideKey = OverrideKey(atom)
-        let typeOverrideKey = OverrideKey(Node.self)
+        lazy var overrideKey = OverrideKey(atom)
+        lazy var typeOverrideKey = OverrideKey(Node.self)
+
+        // OPTIMIZE: Desirable to reduce the number of dictionary lookups which is currently 4 times.
         let baseScopedOverride = scopedOverrides[overrideKey] ?? scopedOverrides[typeOverrideKey]
         let baseOverride = baseScopedOverride ?? overrides[overrideKey] ?? overrides[typeOverrideKey]
 
