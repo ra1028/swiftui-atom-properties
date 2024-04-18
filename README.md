@@ -1307,33 +1307,52 @@ Note that other atoms that depend on scoped atoms will be in a shared state and 
 
 #### Override Atoms
 
-Overriding an atom in [AtomRoot](#atomroot) or [AtomScope](#atomscope) overwrites its state when used in the descendant views, which is useful for dependency injection or swapping state in a particular view.  
+You can override atoms in [AtomRoot](#atomroot) or [AtomScope](#atomscope) to overwirete the atom states for dependency injection or faking state in particular view, which is useful especially for testing.  
+
+Overriding in `AtomRoot` return the given value instead of the actual atom value no matter where the overridden atom is used in its descendant views.  
 
 ```swift
-AtomScope {
-    CountDisplay()
+// Overrides the CounterAtom value to be `456` in anywhere in the ancestor.
+AtomRoot {
+    RootView()
 }
 .override(CounterAtom()) { _ in
-    456  // Overrides the count to be `456` only for this scope.
+    456
 }
 ```
 
-Note that when multiple `AtomScope`s are nested, it doesn't inherit the overrides of its ancestor scopes.  
-In this case, you can explicitly inherit overrides from the parent scope by passing a `@ViewContext` context that has gotten in the parent scope.  
+On the other hand, overriding with `AtomScope` behaves similar to overriding in `AtomRoot`, but the atoms used in other scopes nested in the descendants are not overridden.  
+
+```swift
+// Overrides the CounterAtom value to be `456` only for this scope.
+AtomScope {
+    CountDisplay()
+
+    // CounterAtom is not overridden in this scope.
+    AtomScope {
+        CountDisplay()
+    }
+}
+.scopedOverride(CounterAtom()) { _ in
+    456
+}
+```
+
+If you want to inherit the overridden atom from the parent scope, you can explicitly pass `@ViewContext` context that has gotten in the parent scope. Then, the new scope completely inherits the parent scope's context.  
 
 ```swift
 @ViewContext
 var context
 
 var body: some {
-    // Inherites the nearest ancester scope's overrides.
+    // Inherites the parent scope's overrides.
     AtomScope(inheriting: context) {
         CountDisplay()
     }
 }
 ```
 
-Note also that overridden atoms will automatically be scoped to the `AtomScope`, but other atoms that depend on them will be in a shared state and must be given `Scoped` attribute (See also: [Scoped Atoms](#scoped-atoms)) in order to scope them as well.  
+Note that overridden atoms in `AtomScope` automatically be scoped, but other atoms that depend on them will be in a shared state and must be given `Scoped` attribute (See also: [Scoped Atoms](#scoped-atoms)) in order to avoid it from being shared across out of scope.  
 
 See [Testing](#testing) section for details on dependency injection on unit tests.  
 
@@ -1501,7 +1520,8 @@ digraph {
 
 #### Preview
 
-Even in SwiftUI previews, the view must have an `AtomRoot` somewhere in the ancestor. However, since This library offers the new solution for dependency injection, you don't need to do painful DI each time you create previews anymore. You can to override the atoms that you really want to inject substitutions.
+Even in SwiftUI previews, the view must have an `AtomRoot` somewhere in the ancestor.  
+To inject dependencies so that display a static preview, define the dependencies as atoms and override them.  
 
 ```swift
 struct NewsList_Preview: PreviewProvider {
@@ -1515,6 +1535,8 @@ struct NewsList_Preview: PreviewProvider {
     }
 }
 ```
+
+ See [Override Atoms](#override-atoms) section for more details of dependency injection.  
 
 ---
 

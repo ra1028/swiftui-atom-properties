@@ -32,4 +32,14 @@ public extension AtomScope {
     func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
         scopedObserve(onUpdate)
     }
+
+    @available(*, deprecated, renamed: "scopedOverride(_:with:)")
+    func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
+        scopedOverride(atom, with: value)
+    }
+
+    @available(*, deprecated, renamed: "scopedOverride(_:with:)")
+    func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
+        scopedOverride(atomType, with: value)
+    }
 }

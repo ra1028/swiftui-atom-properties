@@ -2,7 +2,19 @@ import SwiftUI
 
 /// A view to override or monitor atoms in scope.
 ///
-/// This view allows you to monitor changes of atoms used in descendant views by``AtomScope/scopedObserve(_:)``.
+/// This view allows you to override a value of arbitrary atoms used in this scope, which is useful
+/// for dependency injection in testing.
+///
+/// ```swift
+/// AtomScope {
+///     MyView()
+/// }
+/// .scopedOverride(APIClientAtom()) {
+///     StubAPIClient()
+/// }
+/// ```
+///
+/// You can also observe updates with a snapshot that captures a specific set of values of atoms.
 ///
 /// ```swift
 /// AtomScope {
@@ -100,38 +112,38 @@ public struct AtomScope<Content: View>: View {
         mutating(self) { $0.observers.append(Observer(onUpdate: onUpdate)) }
     }
 
-    /// Override the atom value used in this scope with the given value.
+    /// Override the atoms used in this scope with the given value.
     ///
-    /// When accessing the overridden atom, this context will create and return the given value
-    /// instead of the atom value.
+    /// It will create and return the given value instead of the actual atom value when accessing
+    /// the overridden atom in this scope.
     ///
-    /// This only overrides atoms used in this scope and never be inherited to a nested scope.
+    /// This only overrides atoms used in this scope and never be inherited to a nested scopes.
     ///
     /// - Parameters:
     ///   - atom: An atom to be overridden.
     ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atom)] = AtomOverride(value: value) }
+    public func scopedOverride<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
+        mutating(self) { $0.overrides[OverrideKey(atom)] = AtomOverride(isScoped: true, value: value) }
     }
 
-    /// Override the atom value used in this scope with the given value.
+    /// Override the atoms used in this scope with the given value.
     ///
-    /// Instead of overriding the particular instance of atom, this method overrides any atom that
-    /// has the same metatype.
-    /// When accessing the overridden atom, this context will create and return the given value
-    /// instead of the atom value.
+    /// It will create and return the given value instead of the actual atom value when accessing
+    /// the overridden atom in this scope.
+    /// This method overrides any atoms that has the same metatype, instead of overriding
+    /// the particular instance of atom.
     ///
-    /// This only overrides atoms used in this scope and never be inherited to a nested scope.
+    /// This only overrides atoms used in this scope and never be inherited to a nested scopes.
     ///
     /// - Parameters:
     ///   - atomType: An atom type to be overridden.
     ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atomType)] = AtomOverride(value: value) }
+    public func scopedOverride<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
+        mutating(self) { $0.overrides[OverrideKey(atomType)] = AtomOverride(isScoped: true, value: value) }
     }
 }
 
@@ -181,7 +193,7 @@ private extension AtomScope {
                 \.store,
                 context._store.inherited(
                     scopedObservers: observers,
-                    overrides: overrides
+                    scopedOverrides: overrides
                 )
             )
         }

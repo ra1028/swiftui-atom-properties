@@ -5,12 +5,13 @@ import XCTest
 
 final class StoreContextTests: XCTestCase {
     @MainActor
-    func testScopedConstructor() {
+    func testInit() {
         let store = AtomStore()
-        let token = ScopeKey.Token()
-        let scopeKey = ScopeKey(token: token)
         let atom = TestAtom(value: 0)
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+        let scopeToken = ScopeKey.Token()
+        let scopeKey = ScopeKey(token: scopeToken)
         let context = StoreContext(
             store,
             scopeKey: scopeKey,
@@ -18,23 +19,57 @@ final class StoreContextTests: XCTestCase {
             observers: [],
             scopedObservers: [],
             overrides: [
-                OverrideKey(atom): AtomOverride<TestAtom<Int>> { _ in
+                OverrideKey(atom): AtomOverride<TestAtom<Int>>(isScoped: false) { _ in
+                    10
+                }
+            ],
+            scopedOverrides: [:]
+        )
+
+        XCTAssertEqual(context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}, 10)
+        XCTAssertEqual(
+            store.state.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> },
+            [
+                AtomKey(atom): AtomCache(atom: atom, value: 10)
+            ]
+        )
+    }
+
+    @MainActor
+    func testInherited() {
+        let store = AtomStore()
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+        let scopeToken = ScopeKey.Token()
+        let scopeKey = ScopeKey(token: scopeToken)
+        let atom = TestAtom(value: 0)
+        var snapshots0 = [Snapshot]()
+        var snapshots1 = [Snapshot]()
+        let context = StoreContext(
+            store,
+            scopeKey: scopeKey,
+            observers: [
+                Observer { snapshots0.append($0) }
+            ]
+        )
+        let inheritedContext = context.inherited(
+            scopedObservers: [
+                Observer { snapshots1.append($0) }
+            ],
+            scopedOverrides: [
+                OverrideKey(atom): AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
                     10
                 }
             ]
         )
 
-        XCTAssertEqual(context.watch(atom, in: transaction), 10)
+        XCTAssertEqual(inheritedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}, 10)
+        XCTAssertFalse(snapshots0.isEmpty)
+        XCTAssertFalse(snapshots1.isEmpty)
         XCTAssertEqual(
-            store.graph.children,
+            store.state.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> },
             [
-                AtomKey(atom, scopeKey: scopeKey): [AtomKey(atom)]
-            ]
-        )
-        XCTAssertEqual(
-            store.graph.dependencies,
-            [
-                AtomKey(atom): [AtomKey(atom, scopeKey: scopeKey)]
+                AtomKey(atom, scopeKey: scopeKey): AtomCache(atom: atom, value: 10)
             ]
         )
     }
@@ -44,21 +79,25 @@ final class StoreContextTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
-        let atom = TestValueAtom(value: 0)
+        let scopeToken = ScopeKey.Token()
+        let scopeKey = ScopeKey(token: scopeToken)
+        let atom = TestAtom(value: 0)
         var snapshots0 = [Snapshot]()
         var snapshots1 = [Snapshot]()
-        let observer0 = Observer { snapshots0.append($0) }
-        let observer1 = Observer { snapshots1.append($0) }
         let context = StoreContext(
             store,
-            observers: [observer0]
+            observers: [
+                Observer { snapshots0.append($0) }
+            ]
         )
         let scopedContext = context.scoped(
-            scopeKey: ScopeKey(token: ScopeKey.Token()),
+            scopeKey: scopeKey,
             scopeID: ScopeID(DefaultScopeID()),
-            observers: [observer1],
+            observers: [
+                Observer { snapshots1.append($0) }
+            ],
             overrides: [
-                OverrideKey(atom): AtomOverride<TestValueAtom<Int>> { _ in
+                OverrideKey(atom): AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
                     10
                 }
             ]
@@ -67,6 +106,12 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}, 10)
         XCTAssertFalse(snapshots0.isEmpty)
         XCTAssertFalse(snapshots1.isEmpty)
+        XCTAssertEqual(
+            store.state.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> },
+            [
+                AtomKey(atom, scopeKey: scopeKey): AtomCache(atom: atom, value: 10)
+            ]
+        )
     }
 
     @MainActor
@@ -349,7 +394,7 @@ final class StoreContextTests: XCTestCase {
             scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [
-                OverrideKey(atom): AtomOverride<TestPublisherAtom<Just<Int>>> { _ in .success(1) }
+                OverrideKey(atom): AtomOverride<TestPublisherAtom<Just<Int>>>(isScoped: true) { _ in .success(1) }
             ]
         )
 
@@ -451,6 +496,67 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
+    func testOverride() {
+        let store = AtomStore()
+        let atom0 = TestAtom(value: 0)
+        let atom1 = TestAtom(value: 1)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+        let rootScopeToken = ScopeKey.Token()
+        let rootScopeKey = ScopeKey(token: rootScopeToken)
+        let scope1Token = ScopeKey.Token()
+        let scope1Key = ScopeKey(token: scope1Token)
+        let scope2Token = ScopeKey.Token()
+        let scope2Key = ScopeKey(token: scope2Token)
+        let context = StoreContext(
+            store,
+            scopeKey: rootScopeKey,
+            overrides: [
+                // Should override atoms used in any scopes.
+                OverrideKey(atom0): AtomOverride<TestAtom<Int>>(isScoped: false) { _ in
+                    10
+                }
+            ]
+        )
+        let scoped1Context = context.scoped(
+            scopeKey: scope1Key,
+            scopeID: ScopeID(DefaultScopeID()),
+            observers: [],
+            overrides: [
+                // Should scoped to this scope.
+                OverrideKey(atom1): AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
+                    20
+                }
+            ]
+        )
+        let scoped2Context = scoped1Context.scoped(
+            scopeKey: scope2Key,
+            scopeID: ScopeID(DefaultScopeID()),
+            observers: [],
+            overrides: [
+                // Should override the atoms overridden in the ancestor scopes.
+                OverrideKey(TestAtom<Int>.self): AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
+                    30
+                }
+            ]
+        )
+
+        XCTAssertEqual(scoped1Context.watch(atom0, subscriber: subscriber, requiresObjectUpdate: false) {}, 10)
+        XCTAssertEqual(scoped1Context.watch(atom1, subscriber: subscriber, requiresObjectUpdate: false) {}, 20)
+        XCTAssertEqual(scoped2Context.watch(atom0, subscriber: subscriber, requiresObjectUpdate: false) {}, 30)
+        XCTAssertEqual(scoped2Context.watch(atom1, subscriber: subscriber, requiresObjectUpdate: false) {}, 30)
+        XCTAssertEqual(
+            store.state.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> },
+            [
+                AtomKey(atom0): AtomCache(atom: atom0, value: 10),
+                AtomKey(atom1, scopeKey: scope1Key): AtomCache(atom: atom1, value: 20),
+                AtomKey(atom0, scopeKey: scope2Key): AtomCache(atom: atom0, value: 30),
+                AtomKey(atom1, scopeKey: scope2Key): AtomCache(atom: atom1, value: 30),
+            ]
+        )
+    }
+
+    @MainActor
     func testScopedOverride() async {
         struct TestDependency1Atom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
@@ -499,29 +605,26 @@ final class StoreContextTests: XCTestCase {
         let scope2Token = ScopeKey.Token()
         let scope1Key = ScopeKey(token: scope1Token)
         let scope2Key = ScopeKey(token: scope2Token)
-
-        var scoped1Overrides = [OverrideKey: any AtomOverrideProtocol]()
-        scoped1Overrides[OverrideKey(dependency1Atom)] = AtomOverride<TestDependency1Atom> { _ in
-            10
-        }
-
-        var scoped2Overrides = [OverrideKey: any AtomOverrideProtocol]()
-        scoped2Overrides[OverrideKey(dependency2Atom)] = AtomOverride<TestDependency2Atom> { _ in
-            20
-        }
-
         let context = StoreContext(store)
         let scoped1Context = context.scoped(
             scopeKey: scope1Key,
             scopeID: ScopeID(DefaultScopeID()),
             observers: [],
-            overrides: scoped1Overrides
+            overrides: [
+                OverrideKey(dependency1Atom): AtomOverride<TestDependency1Atom>(isScoped: true) { _ in
+                    10
+                }
+            ]
         )
         let scoped2Context = scoped1Context.scoped(
             scopeKey: scope2Key,
             scopeID: ScopeID(DefaultScopeID()),
             observers: [],
-            overrides: scoped2Overrides
+            overrides: [
+                OverrideKey(dependency2Atom): AtomOverride<TestDependency2Atom>(isScoped: true) { _ in
+                    20
+                }
+            ]
         )
 
         // Should return default values in the scope that atoms are not overridden.
@@ -761,7 +864,7 @@ final class StoreContextTests: XCTestCase {
         let scope2Key = ScopeKey(token: scope2Token)
 
         var scopedOverride = [OverrideKey: any AtomOverrideProtocol]()
-        scopedOverride[OverrideKey(atom1)] = AtomOverride<TestAtom<Int>> { _ in
+        scopedOverride[OverrideKey(atom1)] = AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
             100
         }
 

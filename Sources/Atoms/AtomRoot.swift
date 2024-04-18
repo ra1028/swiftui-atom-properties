@@ -17,15 +17,15 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// Optionally, this component allows you to override a value of arbitrary atoms, that's useful
+/// This view allows you to override a value of arbitrary atoms, which is useful
 /// for dependency injection in testing.
 ///
 /// ```swift
 /// AtomRoot {
-///     MyView()
+///     RootView()
 /// }
-/// .override(RepositoryAtom()) {
-///     FakeRepository()
+/// .override(APIClientAtom()) {
+///     StubAPIClient()
 /// }
 /// ```
 ///
@@ -118,10 +118,10 @@ public struct AtomRoot<Content: View>: View {
         mutating(self) { $0.observers.append(Observer(onUpdate: onUpdate)) }
     }
 
-    /// Overrides the atom value with the given value.
+    /// Overrides the atoms with the given value.
     ///
-    /// When accessing the overridden atom, this context will create and return the given value
-    /// instead of the atom value.
+    /// It will create and return the given value instead of the actual atom value when accessing
+    /// the overridden atom in any scopes.
     ///
     /// - Parameters:
     ///   - atom: An atom to be overridden.
@@ -129,15 +129,15 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atom)] = AtomOverride(value: value) }
+        mutating(self) { $0.overrides[OverrideKey(atom)] = AtomOverride(isScoped: false, value: value) }
     }
 
-    /// Overrides the atom value with the given value.
+    /// Overrides the atoms with the given value.
     ///
-    /// Instead of overriding the particular instance of atom, this method overrides any atom that
-    /// has the same metatype.
-    /// When accessing the overridden atom, this context will create and return the given value
-    /// instead of the atom value.
+    /// It will create and return the given value instead of the actual atom value when accessing
+    /// the overridden atom in any scopes.
+    /// This method overrides any atoms that has the same metatype, instead of overriding
+    /// the particular instance of atom.
     ///
     /// - Parameters:
     ///   - atomType: An atom type to be overridden.
@@ -145,7 +145,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atomType)] = AtomOverride(value: value) }
+        mutating(self) { $0.overrides[OverrideKey(atomType)] = AtomOverride(isScoped: false, value: value) }
     }
 }
 
@@ -178,7 +178,8 @@ private extension AtomRoot {
                     inheritedScopeKeys: [:],
                     observers: observers,
                     scopedObservers: [],
-                    overrides: overrides
+                    overrides: overrides,
+                    scopedOverrides: [:]
                 )
             )
         }
@@ -207,7 +208,8 @@ private extension AtomRoot {
                     inheritedScopeKeys: [:],
                     observers: observers,
                     scopedObservers: [],
-                    overrides: overrides
+                    overrides: overrides,
+                    scopedOverrides: [:]
                 )
             )
         }
