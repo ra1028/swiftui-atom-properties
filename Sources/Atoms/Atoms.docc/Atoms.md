@@ -66,11 +66,12 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``AtomCurrentContext``
 - ``AtomModifierContext``
 
-### Internal System
+### Misc
 
 - ``Atom``
 - ``AtomStore``
 - ``AtomModifier``
+- ``RefreshableAtomModifier``
 - ``ChangesModifier``
 - ``ChangesOfModifier``
 - ``TaskPhaseModifier``
