@@ -49,8 +49,8 @@ import SwiftUI
 ///
 public struct AtomScope<Content: View>: View {
     private let inheritance: Inheritance
-    private var overrides = [OverrideKey: any AtomOverrideProtocol]()
-    private var observers = [Observer]()
+    private var overrides: [OverrideKey: any AtomOverrideProtocol]
+    private var observers: [Observer]
     private let content: Content
 
     /// Creates a new scope with the specified content.
@@ -61,6 +61,8 @@ public struct AtomScope<Content: View>: View {
     public init<ID: Hashable>(id: ID = DefaultScopeID(), @ViewBuilder content: () -> Content) {
         let id = ScopeID(id)
         self.inheritance = .environment(id: id)
+        self.overrides = [:]
+        self.observers = []
         self.content = content()
     }
 
@@ -74,7 +76,10 @@ public struct AtomScope<Content: View>: View {
         inheriting context: AtomViewContext,
         @ViewBuilder content: () -> Content
     ) {
-        self.inheritance = .context(context)
+        let store = context._store
+        self.inheritance = .context(store: store)
+        self.overrides = store.scopedOverrides
+        self.observers = store.scopedObservers
         self.content = content()
     }
 
@@ -89,10 +94,10 @@ public struct AtomScope<Content: View>: View {
                 observers: observers
             )
 
-        case .context(let context):
+        case .context(let store):
             InheritedContext(
                 content: content,
-                context: context,
+                store: store,
                 overrides: overrides,
                 observers: observers
             )
@@ -150,7 +155,7 @@ public struct AtomScope<Content: View>: View {
 private extension AtomScope {
     enum Inheritance {
         case environment(id: ScopeID)
-        case context(AtomViewContext)
+        case context(store: StoreContext)
     }
 
     struct InheritedEnvironment: View {
@@ -184,14 +189,14 @@ private extension AtomScope {
 
     struct InheritedContext: View {
         let content: Content
-        let context: AtomViewContext
+        let store: StoreContext
         let overrides: [OverrideKey: any AtomOverrideProtocol]
         let observers: [Observer]
 
         var body: some View {
             content.environment(
                 \.store,
-                context._store.inherited(
+                store.inherited(
                     scopedObservers: observers,
                     scopedOverrides: overrides
                 )

@@ -42,34 +42,51 @@ final class StoreContextTests: XCTestCase {
         let subscriber = Subscriber(subscriberState)
         let scopeToken = ScopeKey.Token()
         let scopeKey = ScopeKey(token: scopeToken)
-        let atom = TestAtom(value: 0)
+        let atom0 = TestAtom(value: 0)
+        let atom1 = TestAtom(value: 1)
         var snapshots0 = [Snapshot]()
         var snapshots1 = [Snapshot]()
+        var snapshots2 = [Snapshot]()
         let context = StoreContext(
             store: store,
-            scopeKey: scopeKey,
+            scopeKey: ScopeKey(token: ScopeKey.Token()),
             observers: [
                 Observer { snapshots0.append($0) }
             ]
         )
-        let inheritedContext = context.inherited(
-            scopedObservers: [
+        let scopedContext = context.scoped(
+            scopeKey: scopeKey,
+            scopeID: ScopeID(DefaultScopeID()),
+            observers: [
                 Observer { snapshots1.append($0) }
             ],
-            scopedOverrides: [
-                OverrideKey(atom): AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
+            overrides: [
+                OverrideKey(atom0): AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
                     10
                 }
             ]
         )
+        let inheritedContext = scopedContext.inherited(
+            scopedObservers: scopedContext.scopedObservers + [
+                Observer { snapshots2.append($0) }
+            ],
+            scopedOverrides: mutating(scopedContext.scopedOverrides) {
+                $0[OverrideKey(atom1)] = AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
+                    20
+                }
+            }
+        )
 
-        XCTAssertEqual(inheritedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}, 10)
+        XCTAssertEqual(inheritedContext.watch(atom0, subscriber: subscriber, requiresObjectUpdate: false) {}, 10)
+        XCTAssertEqual(inheritedContext.watch(atom1, subscriber: subscriber, requiresObjectUpdate: false) {}, 20)
         XCTAssertFalse(snapshots0.isEmpty)
         XCTAssertFalse(snapshots1.isEmpty)
+        XCTAssertFalse(snapshots2.isEmpty)
         XCTAssertEqual(
             store.state.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> },
             [
-                AtomKey(atom, scopeKey: scopeKey): AtomCache(atom: atom, value: 10)
+                AtomKey(atom0, scopeKey: scopeKey): AtomCache(atom: atom0, value: 10),
+                AtomKey(atom1, scopeKey: scopeKey): AtomCache(atom: atom1, value: 20),
             ]
         )
     }

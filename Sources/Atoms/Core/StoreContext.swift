@@ -7,9 +7,10 @@ internal struct StoreContext {
     private let scopeKey: ScopeKey
     private let inheritedScopeKeys: [ScopeID: ScopeKey]
     private let observers: [Observer]
-    private let scopedObservers: [Observer]
     private let overrides: [OverrideKey: any AtomOverrideProtocol]
-    private let scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
+
+    let scopedObservers: [Observer]
+    let scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
 
     init(
         store: AtomStore,
@@ -38,9 +39,9 @@ internal struct StoreContext {
             scopeKey: scopeKey,
             inheritedScopeKeys: inheritedScopeKeys,
             observers: observers,
-            scopedObservers: self.scopedObservers + scopedObservers,
+            scopedObservers: scopedObservers,
             overrides: overrides,
-            scopedOverrides: self.scopedOverrides.merging(scopedOverrides) { $1 }
+            scopedOverrides: scopedOverrides
         )
     }
 
