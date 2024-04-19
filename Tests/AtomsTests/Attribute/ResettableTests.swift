@@ -30,51 +30,65 @@ final class ResettableTests: XCTestCase {
             snapshots.append($0)
         }
         let context = StoreContext(store: store, observers: [observer])
-        let value0 = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-            counter.update += 1
+
+        XCTContext.runActivity(named: "Should call custom reset behavior") { _ in
+            let value0 = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
+                counter.update += 1
+            }
+
+            snapshots.removeAll()
+            context.set(1, for: atom)
+
+            XCTAssertEqual(value0, 0)
+            XCTAssertEqual(counter, Counter(value: 1, update: 1, reset: 0))
+            XCTAssertEqual(
+                snapshots.map { $0.caches.mapValues { $0.value as? Int } },
+                [[key: 1]]
+            )
+
+            snapshots.removeAll()
+            context.reset(atom)
+
+            XCTAssertEqual(counter, Counter(value: 1, update: 1, reset: 1))
+            XCTAssertTrue(snapshots.isEmpty)
+
+            context.unwatch(atom, subscriber: subscriber)
+            counter = Counter()
         }
 
-        snapshots.removeAll()
-        context.set(1, for: atom)
+        XCTContext.runActivity(named: "Custom reset behavior should not be overridden") { _ in
+            let scopeKey = ScopeKey(token: ScopeKey.Token())
+            let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
+            let scopedContext = context.scoped(
+                scopeKey: scopeKey,
+                scopeID: ScopeID(DefaultScopeID()),
+                observers: [],
+                overrides: [
+                    OverrideKey(atom): AtomOverride<TestCustomResettableAtom<Int>>(isScoped: true) { _ in
+                        2
+                    }
+                ]
+            )
+            let value = scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
+                counter.update += 1
+            }
 
-        XCTAssertEqual(value0, 0)
-        XCTAssertEqual(counter, Counter(value: 1, update: 1, reset: 0))
-        XCTAssertEqual(
-            snapshots.map { $0.caches.mapValues { $0.value as? Int } },
-            [[key: 1]]
-        )
+            XCTAssertEqual(value, 2)
+            XCTAssertEqual(counter, Counter(value: 0, update: 0, reset: 0))
 
-        snapshots.removeAll()
-        context.reset(atom)
+            scopedContext.reset(atom)
 
-        XCTAssertEqual(counter, Counter(value: 1, update: 1, reset: 1))
-        XCTAssertTrue(snapshots.isEmpty)
-
-        context.unwatch(atom, subscriber: subscriber)
-        counter = Counter()
-
-        let scopeKey = ScopeKey(token: ScopeKey.Token())
-        let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
-        let scopedContext = context.scoped(
-            scopeKey: scopeKey,
-            scopeID: ScopeID(DefaultScopeID()),
-            observers: [],
-            overrides: [
-                OverrideKey(atom): AtomOverride<TestCustomResettableAtom<Int>>(isScoped: true) { _ in 2 }
-            ]
-        )
-        let value1 = scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-            counter.update += 1
+            XCTAssertEqual(scopedContext.read(atom), 2)
+            XCTAssertEqual(counter, Counter(value: 0, update: 0, reset: 1))
+            XCTAssertNotNil(store.state.states[overrideAtomKey])
+            XCTAssertEqual((store.state.caches[overrideAtomKey] as? AtomCache<TestCustomResettableAtom<Int>>)?.value, 2)
         }
 
-        XCTAssertEqual(value1, 2)
-        XCTAssertEqual(counter, Counter(value: 0, update: 0, reset: 0))
+        XCTContext.runActivity(named: "Should not make new state and cache") { _ in
+            context.reset(atom)
 
-        scopedContext.reset(atom)
-
-        XCTAssertEqual(scopedContext.read(atom), 2)
-        XCTAssertEqual(counter, Counter(value: 0, update: 1, reset: 0))
-        XCTAssertNotNil(store.state.states[overrideAtomKey])
-        XCTAssertEqual((store.state.caches[overrideAtomKey] as? AtomCache<TestCustomResettableAtom<Int>>)?.value, 2)
+            XCTAssertNil(store.state.states[key])
+            XCTAssertNil(store.state.caches[key])
+        }
     }
 }

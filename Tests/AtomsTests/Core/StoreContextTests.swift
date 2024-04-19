@@ -424,6 +424,11 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext(store: store, observers: [observer])
         var updateCount = 0
 
+        context.reset(atom)
+        XCTAssertNil(store.state.caches[key])
+        XCTAssertNil(store.state.states[key])
+        XCTAssertTrue(snapshots.isEmpty)
+
         _ = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
             updateCount += 1
         }
