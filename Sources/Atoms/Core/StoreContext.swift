@@ -147,8 +147,7 @@ internal struct StoreContext {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
-        let state = getState(of: atom, for: key)
-        let context = prepareForTransaction(of: atom, for: key, state: state)
+        let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Loader.Value
 
         if let override {
@@ -290,9 +289,10 @@ internal struct StoreContext {
 private extension StoreContext {
     func prepareForTransaction<Node: Atom>(
         of atom: Node,
-        for key: AtomKey,
-        state: AtomState<Node.Coordinator>
+        for key: AtomKey
     ) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
+        let state = getState(of: atom, for: key)
+
         // Terminate the ongoing transaction first.
         state.transaction?.terminate()
 
@@ -469,8 +469,7 @@ private extension StoreContext {
         for key: AtomKey,
         override: AtomOverride<Node>?
     ) -> AtomCache<Node> {
-        let state = getState(of: atom, for: key)
-        let context = prepareForTransaction(of: atom, for: key, state: state)
+        let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Loader.Value
 
         if let override {
