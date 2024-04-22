@@ -9,7 +9,7 @@ pushd "$(cd $(dirname $0)/.. && pwd)" &>/dev/null
 
 case $PLATFORM in
 ios)
-    platform="iOS Simulator,name=iPhone 14 Pro"
+    platform="iOS Simulator,name=iPhone 15 Pro"
     ;;
 macos)
     platform="macOS"
@@ -18,7 +18,7 @@ tvos)
     platform="tvOS Simulator,name=Apple TV 4K (3rd generation)"
     ;;
 watchos)
-    platform="watchOS Simulator,name=Apple Watch Ultra (49mm)"
+    platform="watchOS Simulator,name=Apple Watch Ultra 2 (49mm)"
     ;;
 esac
 
