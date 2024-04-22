@@ -82,10 +82,10 @@ extension AtomKey {
     }
 }
 
-extension Atoms.Subscriber {
-    init(_ state: SubscriberState) {
+extension Atoms.Subscription {
+    init(update: @escaping () -> Void = {}) {
         let location = SourceLocation()
-        self.init(state, location: location)
+        self.init(location: location, update: update)
     }
 }
 

@@ -37,11 +37,19 @@ public protocol AtomModifier {
     /// by checking the equivalence of the given old value and new value.
     @MainActor
     func shouldUpdate(newValue: Value, oldValue: Value) -> Bool
+
+    /// Performs atom update.
+    @MainActor
+    func performUpdate(_ body: () -> Void)
 }
 
 public extension AtomModifier {
     func shouldUpdate(newValue: Value, oldValue: Value) -> Bool {
         true
+    }
+
+    func performUpdate(_ body: () -> Void) {
+        body()
     }
 }
 

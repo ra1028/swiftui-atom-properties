@@ -29,7 +29,7 @@ final class KeepAliveTests: XCTestCase {
             let subscriberState = SubscriberState()
             let subscriber = Subscriber(subscriberState)
 
-            _ = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
+            _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
             XCTAssertNotNil(store.state.caches[key])
 
             context.unwatch(atom, subscriber: subscriber)
@@ -54,7 +54,7 @@ final class KeepAliveTests: XCTestCase {
             let subscriberState = SubscriberState()
             let subscriber = Subscriber(subscriberState)
 
-            _ = scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
+            _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
             XCTAssertNotNil(store.state.caches[key])
 
             scopedContext.unwatch(atom, subscriber: subscriber)
@@ -77,7 +77,7 @@ final class KeepAliveTests: XCTestCase {
             let subscriberState = SubscriberState()
             let subscriber = Subscriber(subscriberState)
 
-            _ = scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
+            _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
             XCTAssertNotNil(store.state.caches[key])
 
             scopedContext.unwatch(atom, subscriber: subscriber)

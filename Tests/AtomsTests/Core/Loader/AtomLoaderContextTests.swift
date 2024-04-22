@@ -13,7 +13,7 @@ final class AtomLoaderContextTests: XCTestCase {
             store: StoreContext(),
             transaction: transaction,
             coordinator: ()
-        ) { value, _ in
+        ) { value in
             updatedValue = value
         }
 
@@ -30,7 +30,7 @@ final class AtomLoaderContextTests: XCTestCase {
             store: StoreContext(),
             transaction: transaction,
             coordinator: ()
-        ) { _, _ in }
+        ) { _ in }
 
         context.addTermination {}
         context.addTermination {}
@@ -54,7 +54,7 @@ final class AtomLoaderContextTests: XCTestCase {
             store: StoreContext(),
             transaction: transaction,
             coordinator: ()
-        ) { _, _ in }
+        ) { _ in }
 
         context.transaction { _ in }
 
@@ -72,7 +72,7 @@ final class AtomLoaderContextTests: XCTestCase {
             store: StoreContext(),
             transaction: transaction,
             coordinator: ()
-        ) { _, _ in }
+        ) { _ in }
 
         await context.transaction { _ in
             try? await Task.sleep(seconds: 0)

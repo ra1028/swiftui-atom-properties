@@ -30,6 +30,11 @@ public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader
     public func shouldUpdate(newValue: Value, oldValue: Value) -> Bool {
         modifier.shouldUpdate(newValue: newValue, oldValue: oldValue)
     }
+
+    /// Performs atom update.
+    public func performUpdate(_ body: () -> Void) {
+        modifier.performUpdate(body)
+    }
 }
 
 extension ModifiedAtomLoader: RefreshableAtomLoader where Node.Loader: RefreshableAtomLoader, Modifier: RefreshableAtomModifier {

@@ -23,13 +23,17 @@ public struct ObservableObjectAtomLoader<Node: ObservableObjectAtom>: AtomLoader
 
     /// Manage given overridden value updates and cancellations.
     public func manageOverridden(value: Value, context: Context) -> Value {
-        let cancellable = value.objectWillChange.sink { [weak value] _ in
-            guard let value else {
-                return
+        let cancellable = value
+            .objectWillChange
+            .sink { [weak value] _ in
+                // Wait until the object's property is set, because `objectWillChange`
+                // emits an event before the property is updated.
+                RunLoop.main.perform(inModes: [.common]) {
+                    if !context.isTerminated, let value {
+                        context.update(with: value)
+                    }
+                }
             }
-
-            context.update(with: value, order: .objectWillChange)
-        }
 
         context.addTermination(cancellable.cancel)
 

@@ -26,7 +26,7 @@ final class StoreContextTests: XCTestCase {
             scopedOverrides: [:]
         )
 
-        XCTAssertEqual(context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}, 10)
+        XCTAssertEqual(context.watch(atom, subscriber: subscriber, subscription: Subscription()), 10)
         XCTAssertEqual(
             store.state.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> },
             [
@@ -77,8 +77,8 @@ final class StoreContextTests: XCTestCase {
             }
         )
 
-        XCTAssertEqual(inheritedContext.watch(atom0, subscriber: subscriber, requiresObjectUpdate: false) {}, 10)
-        XCTAssertEqual(inheritedContext.watch(atom1, subscriber: subscriber, requiresObjectUpdate: false) {}, 20)
+        XCTAssertEqual(inheritedContext.watch(atom0, subscriber: subscriber, subscription: Subscription()), 10)
+        XCTAssertEqual(inheritedContext.watch(atom1, subscriber: subscriber, subscription: Subscription()), 20)
         XCTAssertFalse(snapshots0.isEmpty)
         XCTAssertFalse(snapshots1.isEmpty)
         XCTAssertFalse(snapshots2.isEmpty)
@@ -120,7 +120,7 @@ final class StoreContextTests: XCTestCase {
             ]
         )
 
-        XCTAssertEqual(scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}, 10)
+        XCTAssertEqual(scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription()), 10)
         XCTAssertFalse(snapshots0.isEmpty)
         XCTAssertFalse(snapshots1.isEmpty)
         XCTAssertEqual(
@@ -189,8 +189,7 @@ final class StoreContextTests: XCTestCase {
         store.state.states[key] = AtomState(coordinator: atom.makeCoordinator())
         store.state.subscriptions[key, default: [:]][subscriberKey] = Subscription(
             location: SourceLocation(),
-            requiresObjectUpdate: false,
-            notifyUpdate: { updateCount += 1 }
+            update: { updateCount += 1 }
         )
         context.set(2, for: atom)
         XCTAssertEqual(
@@ -236,8 +235,7 @@ final class StoreContextTests: XCTestCase {
         store.state.states[key] = AtomState(coordinator: atom.makeCoordinator())
         store.state.subscriptions[key, default: [:]][subscriberKey] = Subscription(
             location: SourceLocation(),
-            requiresObjectUpdate: false,
-            notifyUpdate: { updateCount += 1 }
+            update: { updateCount += 1 }
         )
         context.modify(atom) { $0 = 2 }
         XCTAssertEqual(updateCount, 1)
@@ -322,9 +320,13 @@ final class StoreContextTests: XCTestCase {
         let observer = Observer { snapshots.append($0) }
         let context = StoreContext(store: store, observers: [observer])
         var updateCount = 0
-        let initialValue = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-            updateCount += 1
-        }
+        let initialValue = context.watch(
+            atom,
+            subscriber: subscriber,
+            subscription: Subscription {
+                updateCount += 1
+            }
+        )
 
         XCTAssertEqual(initialValue, 0)
         XCTAssertTrue(subscriber.subscribingKeys.contains(key))
@@ -340,7 +342,7 @@ final class StoreContextTests: XCTestCase {
         )
 
         snapshots.removeAll()
-        store.state.subscriptions[key]?[subscriber.key]?.notifyUpdate()
+        store.state.subscriptions[key]?[subscriber.key]?.update()
         subscriberState = nil
         XCTAssertEqual(updateCount, 1)
         XCTAssertNil(store.state.caches[key])
@@ -371,9 +373,13 @@ final class StoreContextTests: XCTestCase {
         XCTAssertTrue(snapshots.isEmpty)
 
         var updateCount = 0
-        let phase1 = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-            updateCount += 1
-        }
+        let phase1 = context.watch(
+            atom,
+            subscriber: subscriber,
+            subscription: Subscription {
+                updateCount += 1
+            }
+        )
 
         XCTAssertTrue(phase1.isSuspending)
 
@@ -400,7 +406,7 @@ final class StoreContextTests: XCTestCase {
             ]
         )
 
-        let phase3 = scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
+        let phase3 = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
         XCTAssertEqual(phase3.value, 1)
 
         let phase4 = await scopedContext.refresh(atom)
@@ -429,9 +435,13 @@ final class StoreContextTests: XCTestCase {
         XCTAssertNil(store.state.states[key])
         XCTAssertTrue(snapshots.isEmpty)
 
-        _ = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-            updateCount += 1
-        }
+        _ = context.watch(
+            atom,
+            subscriber: subscriber,
+            subscription: Subscription {
+                updateCount += 1
+            }
+        )
         snapshots.removeAll()
         context.set(1, for: atom)
         XCTAssertEqual(updateCount, 1)
@@ -459,7 +469,7 @@ final class StoreContextTests: XCTestCase {
         let observer = Observer { snapshots.append($0) }
         let context = StoreContext(store: store, observers: [observer])
 
-        _ = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
+        _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
         snapshots.removeAll()
         context.unwatch(atom, subscriber: subscriber)
         XCTAssertEqual(
@@ -486,7 +496,7 @@ final class StoreContextTests: XCTestCase {
             key0: AtomCache(atom: atom0, value: 0),
             key1: AtomCache(atom: atom1, value: 1),
         ]
-        let subscription = Subscription(location: SourceLocation(), requiresObjectUpdate: false) {}
+        let subscription = Subscription()
 
         store.graph = graph
         store.state.caches = caches
@@ -548,10 +558,10 @@ final class StoreContextTests: XCTestCase {
             ]
         )
 
-        XCTAssertEqual(scoped1Context.watch(atom0, subscriber: subscriber, requiresObjectUpdate: false) {}, 10)
-        XCTAssertEqual(scoped1Context.watch(atom1, subscriber: subscriber, requiresObjectUpdate: false) {}, 20)
-        XCTAssertEqual(scoped2Context.watch(atom0, subscriber: subscriber, requiresObjectUpdate: false) {}, 30)
-        XCTAssertEqual(scoped2Context.watch(atom1, subscriber: subscriber, requiresObjectUpdate: false) {}, 30)
+        XCTAssertEqual(scoped1Context.watch(atom0, subscriber: subscriber, subscription: Subscription()), 10)
+        XCTAssertEqual(scoped1Context.watch(atom1, subscriber: subscriber, subscription: Subscription()), 20)
+        XCTAssertEqual(scoped2Context.watch(atom0, subscriber: subscriber, subscription: Subscription()), 30)
+        XCTAssertEqual(scoped2Context.watch(atom1, subscriber: subscriber, subscription: Subscription()), 30)
         XCTAssertEqual(
             store.state.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> },
             [
@@ -636,19 +646,19 @@ final class StoreContextTests: XCTestCase {
 
         // Should return default values in the scope that atoms are not overridden.
         XCTAssertEqual(
-            context.watch(dependency1Atom, subscriber: subscriber, requiresObjectUpdate: false) {},
+            context.watch(dependency1Atom, subscriber: subscriber, subscription: Subscription()),
             1
         )
         XCTAssertEqual(
-            context.watch(dependency2Atom, subscriber: subscriber, requiresObjectUpdate: false) {},
+            context.watch(dependency2Atom, subscriber: subscriber, subscription: Subscription()),
             2
         )
         XCTAssertEqual(
-            scoped1Context.watch(dependency1Atom, subscriber: subscriber, requiresObjectUpdate: false) {},
+            scoped1Context.watch(dependency1Atom, subscriber: subscriber, subscription: Subscription()),
             10
         )
         XCTAssertEqual(
-            scoped2Context.watch(dependency2Atom, subscriber: subscriber, requiresObjectUpdate: false) {},
+            scoped2Context.watch(dependency2Atom, subscriber: subscriber, subscription: Subscription()),
             20
         )
 
@@ -670,8 +680,8 @@ final class StoreContextTests: XCTestCase {
         scoped2Context.unwatch(dependency1Atom, subscriber: subscriber)
 
         // Override for `scoped1Context` shouldn't inherited to `scoped2Context`.
-        XCTAssertEqual(scoped2Context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}, 21)
-        XCTAssertEqual(scoped2Context.watch(publisherAtom, subscriber: subscriber, requiresObjectUpdate: false) {}, .suspending)
+        XCTAssertEqual(scoped2Context.watch(atom, subscriber: subscriber, subscription: Subscription()), 21)
+        XCTAssertEqual(scoped2Context.watch(publisherAtom, subscriber: subscriber, subscription: Subscription()), .suspending)
 
         // Should set the value and then propagate it to the dependent atoms..
         scoped2Context.set(20, for: dependency1Atom)
@@ -823,7 +833,7 @@ final class StoreContextTests: XCTestCase {
         )
         let key = AtomKey(atom)
 
-        _ = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
+        _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
 
         let state = store.state.states[key] as? AtomState<TestAtom.Coordinator>
 
@@ -850,7 +860,7 @@ final class StoreContextTests: XCTestCase {
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
 
-        _ = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
+        _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
         XCTAssertNotNil(store.state.caches[key])
 
         context.unwatch(atom, subscriber: subscriber)
@@ -896,11 +906,11 @@ final class StoreContextTests: XCTestCase {
 
         // New value
 
-        _ = scoped2Context.watch(atom0, subscriber: subscriber, requiresObjectUpdate: false) {}
-        _ = scoped2Context.watch(atom1, subscriber: subscriber, requiresObjectUpdate: false) {}
-        _ = context.watch(atom0, subscriber: subscriber, requiresObjectUpdate: false) {}
-        _ = context.watch(atom1, subscriber: subscriber, requiresObjectUpdate: false) {}
-        _ = context.watch(atom2, subscriber: subscriber, requiresObjectUpdate: false) {}
+        _ = scoped2Context.watch(atom0, subscriber: subscriber, subscription: Subscription())
+        _ = scoped2Context.watch(atom1, subscriber: subscriber, subscription: Subscription())
+        _ = context.watch(atom0, subscriber: subscriber, subscription: Subscription())
+        _ = context.watch(atom1, subscriber: subscriber, subscription: Subscription())
+        _ = context.watch(atom2, subscriber: subscriber, subscription: Subscription())
 
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } },
@@ -1055,9 +1065,9 @@ final class StoreContextTests: XCTestCase {
         ]
 
         var updated = Set<AtomKey>()
-        let subscription0 = Subscription(location: location, requiresObjectUpdate: false) { updated.insert(AtomKey(atom0)) }
-        let subscription1 = Subscription(location: location, requiresObjectUpdate: false) { updated.insert(AtomKey(atom1)) }
-        let subscription2 = Subscription(location: location, requiresObjectUpdate: false) { updated.insert(AtomKey(atom2)) }
+        let subscription0 = Subscription(location: location) { updated.insert(AtomKey(atom0)) }
+        let subscription1 = Subscription(location: location) { updated.insert(AtomKey(atom1)) }
+        let subscription2 = Subscription(location: location) { updated.insert(AtomKey(atom2)) }
 
         store.state.subscriptions = [
             AtomKey(atom0): [subscriberKey: subscription0],
@@ -1201,7 +1211,7 @@ final class StoreContextTests: XCTestCase {
         let phase = PhaseAtom()
 
         func watch() async -> Int {
-            await atomStore.watch(atom, subscriber: subscriber, requiresObjectUpdate: false, notifyUpdate: {}).value
+            await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
         }
 
         do {
