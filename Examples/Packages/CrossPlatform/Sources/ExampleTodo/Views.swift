@@ -62,9 +62,9 @@ struct TodoCreator: View {
         HStack {
             TextField("Enter your todo", text: $text)
 
-            #if os(iOS) || os(macOS)
-                .textFieldStyle(.roundedBorder)
-            #endif
+                #if os(iOS) || os(macOS)
+                    .textFieldStyle(.roundedBorder)
+                #endif
 
             Button("Add", action: addTodo)
                 .disabled(text.isEmpty)
