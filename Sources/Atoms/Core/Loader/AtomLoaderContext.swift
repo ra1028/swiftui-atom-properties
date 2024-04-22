@@ -4,13 +4,13 @@ public struct AtomLoaderContext<Value, Coordinator> {
     internal let store: StoreContext
     internal let transaction: Transaction
     internal let coordinator: Coordinator
-    internal let update: @MainActor (Value, UpdateOrder) -> Void
+    internal let update: @MainActor (Value) -> Void
 
     internal init(
         store: StoreContext,
         transaction: Transaction,
         coordinator: Coordinator,
-        update: @escaping @MainActor (Value, UpdateOrder) -> Void
+        update: @escaping @MainActor (Value) -> Void
     ) {
         self.store = store
         self.transaction = transaction
@@ -24,8 +24,8 @@ public struct AtomLoaderContext<Value, Coordinator> {
         }
     }
 
-    internal func update(with value: Value, order: UpdateOrder = .newValue) {
-        update(value, order)
+    internal func update(with value: Value) {
+        update(value)
     }
 
     internal func addTermination(_ termination: @MainActor @escaping () -> Void) {

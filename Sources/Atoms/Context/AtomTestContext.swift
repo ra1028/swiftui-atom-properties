@@ -321,9 +321,11 @@ public struct AtomTestContext: AtomWatchableContext {
     @inlinable
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
-        _store.watch(atom, subscriber: _subscriber, requiresObjectUpdate: true) { [weak _state] in
-            _state?.notifyUpdate()
-        }
+        _store.watch(
+            atom,
+            subscriber: _subscriber,
+            subscription: _subscription
+        )
     }
 
     /// Returns the already cached value associated with a given atom without side effects.
@@ -430,7 +432,7 @@ internal extension AtomTestContext {
         }
 
         @usableFromInline
-        func notifyUpdate() {
+        func update() {
             onUpdate?()
             notifier.send()
         }
@@ -451,6 +453,13 @@ internal extension AtomTestContext {
 
     @usableFromInline
     var _subscriber: Subscriber {
-        Subscriber(_state.subscriberState, location: location)
+        Subscriber(_state.subscriberState)
+    }
+
+    @usableFromInline
+    var _subscription: Subscription {
+        Subscription(location: location) { [weak _state] in
+            _state?.update()
+        }
     }
 }

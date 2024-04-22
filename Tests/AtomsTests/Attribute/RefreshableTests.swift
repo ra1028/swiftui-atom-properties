@@ -29,9 +29,13 @@ final class RefreshableTests: XCTestCase {
             XCTAssertTrue(snapshots.isEmpty)
 
             var updateCount = 0
-            let phase1 = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-                updateCount += 1
-            }
+            let phase1 = context.watch(
+                atom,
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
 
             XCTAssertTrue(phase1.isSuspending)
 
@@ -64,7 +68,7 @@ final class RefreshableTests: XCTestCase {
                 ]
             )
 
-            let phase0 = scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {}
+            let phase0 = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
             XCTAssertEqual(phase0.value, 2)
 
             let phase1 = await scopedContext.refresh(atom)
@@ -79,8 +83,9 @@ final class RefreshableTests: XCTestCase {
         do {
             // Should not make new state and cache
 
-            let value = await context.refresh(atom)
+            let phase = await context.refresh(atom)
 
+            XCTAssertEqual(phase.value, 1)
             XCTAssertNil(store.state.states[key])
             XCTAssertNil(store.state.caches[key])
         }

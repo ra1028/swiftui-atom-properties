@@ -9,16 +9,16 @@ public struct AtomViewContext: AtomWatchableContext {
     @usableFromInline
     internal let _subscriber: Subscriber
     @usableFromInline
-    internal let _notifyUpdate: () -> Void
+    internal let _subscription: Subscription
 
     internal init(
         store: StoreContext,
         subscriber: Subscriber,
-        notifyUpdate: @escaping () -> Void
+        subscription: Subscription
     ) {
         _store = store
         _subscriber = subscriber
-        _notifyUpdate = notifyUpdate
+        _subscription = subscription
     }
 
     /// Accesses the value associated with the given atom without watching it.
@@ -198,8 +198,7 @@ public struct AtomViewContext: AtomWatchableContext {
         _store.watch(
             atom,
             subscriber: _subscriber,
-            requiresObjectUpdate: false,
-            notifyUpdate: _notifyUpdate
+            subscription: _subscription
         )
     }
 

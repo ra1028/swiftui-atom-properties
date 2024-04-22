@@ -42,7 +42,7 @@ final class ScopedTests: XCTestCase {
             let atomScope2Key = AtomKey(atom, scopeKey: scope2Key)
 
             XCTAssertEqual(
-                scoped1Context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {},
+                scoped1Context.watch(atom, subscriber: subscriber, subscription: Subscription()),
                 0
             )
             XCTAssertEqual(
@@ -55,7 +55,7 @@ final class ScopedTests: XCTestCase {
             XCTAssertNil(store.state.caches[atomScope1Key])
 
             XCTAssertEqual(
-                scoped2Context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {},
+                scoped2Context.watch(atom, subscriber: subscriber, subscription: Subscription()),
                 0
             )
             XCTAssertEqual(
@@ -88,7 +88,7 @@ final class ScopedTests: XCTestCase {
             let atomScope2Key = AtomKey(atom, scopeKey: scope2Key)
 
             XCTAssertEqual(
-                scoped2Context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {},
+                scoped2Context.watch(atom, subscriber: subscriber, subscription: Subscription()),
                 0
             )
             XCTAssertEqual(

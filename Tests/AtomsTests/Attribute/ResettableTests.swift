@@ -32,9 +32,13 @@ final class ResettableTests: XCTestCase {
         let context = StoreContext(store: store, observers: [observer])
 
         XCTContext.runActivity(named: "Should call custom reset behavior") { _ in
-            let value0 = context.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-                counter.update += 1
-            }
+            let value0 = context.watch(
+                atom,
+                subscriber: subscriber,
+                subscription: Subscription {
+                    counter.update += 1
+                }
+            )
 
             snapshots.removeAll()
             context.set(1, for: atom)
@@ -69,9 +73,13 @@ final class ResettableTests: XCTestCase {
                     }
                 ]
             )
-            let value = scopedContext.watch(atom, subscriber: subscriber, requiresObjectUpdate: false) {
-                counter.update += 1
-            }
+            let value = scopedContext.watch(
+                atom,
+                subscriber: subscriber,
+                subscription: Subscription {
+                    counter.update += 1
+                }
+            )
 
             XCTAssertEqual(value, 2)
             XCTAssertEqual(counter, Counter(value: 0, update: 0, reset: 0))

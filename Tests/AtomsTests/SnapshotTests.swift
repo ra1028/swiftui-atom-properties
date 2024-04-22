@@ -30,6 +30,7 @@ final class SnapshotTests: XCTestCase {
         XCTAssertEqual(snapshot.graphDescription(), "digraph {}")
     }
 
+    @MainActor
     func testGraphDescription() {
         struct Value0: Hashable {}
         struct Value1: Hashable {}
@@ -54,8 +55,7 @@ final class SnapshotTests: XCTestCase {
         let subscriberKey = SubscriberKey(token: subscriberToken)
         let subscription = Subscription(
             location: location,
-            requiresObjectUpdate: false,
-            notifyUpdate: {}
+            update: {}
         )
         let snapshot = Snapshot(
             graph: Graph(

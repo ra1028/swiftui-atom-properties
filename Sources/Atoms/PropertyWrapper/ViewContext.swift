@@ -56,8 +56,11 @@ public struct ViewContext: DynamicProperty {
     public var wrappedValue: AtomViewContext {
         AtomViewContext(
             store: store,
-            subscriber: Subscriber(state.subscriberState, location: location),
-            notifyUpdate: state.objectWillChange.send
+            subscriber: Subscriber(state.subscriberState),
+            subscription: Subscription(
+                location: location,
+                update: state.objectWillChange.send
+            )
         )
     }
 }

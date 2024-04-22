@@ -12,7 +12,7 @@ final class AtomViewContextTests: XCTestCase {
         let context = AtomViewContext(
             store: StoreContext(store: store),
             subscriber: Atoms.Subscriber(subscriberState),
-            notifyUpdate: {}
+            subscription: Subscription()
         )
 
         XCTAssertEqual(context.read(atom), 100)
@@ -26,7 +26,7 @@ final class AtomViewContextTests: XCTestCase {
         let context = AtomViewContext(
             store: StoreContext(store: store),
             subscriber: Atoms.Subscriber(subscriberState),
-            notifyUpdate: {}
+            subscription: Subscription()
         )
 
         XCTAssertEqual(context.watch(atom), 100)
@@ -44,7 +44,7 @@ final class AtomViewContextTests: XCTestCase {
         let context = AtomViewContext(
             store: StoreContext(store: store),
             subscriber: Atoms.Subscriber(subscriberState),
-            notifyUpdate: {}
+            subscription: Subscription()
         )
 
         XCTAssertTrue(context.watch(atom).isSuspending)
@@ -67,7 +67,7 @@ final class AtomViewContextTests: XCTestCase {
         let context = AtomViewContext(
             store: StoreContext(store: store),
             subscriber: Atoms.Subscriber(subscriberState),
-            notifyUpdate: {}
+            subscription: Subscription()
         )
 
         XCTAssertTrue(context.watch(atom).isSuspending)
@@ -86,7 +86,7 @@ final class AtomViewContextTests: XCTestCase {
         let context = AtomViewContext(
             store: StoreContext(store: store),
             subscriber: Atoms.Subscriber(subscriberState),
-            notifyUpdate: {}
+            subscription: Subscription()
         )
 
         XCTAssertEqual(context.watch(atom), 0)
@@ -107,7 +107,7 @@ final class AtomViewContextTests: XCTestCase {
         let context = AtomViewContext(
             store: StoreContext(store: store),
             subscriber: Atoms.Subscriber(subscriberState),
-            notifyUpdate: {}
+            subscription: Subscription()
         )
 
         let atom = TestStateAtom(defaultValue: 0)
@@ -142,7 +142,7 @@ final class AtomViewContextTests: XCTestCase {
         let context = AtomViewContext(
             store: StoreContext(store: store),
             subscriber: Atoms.Subscriber(subscriberState),
-            notifyUpdate: {}
+            subscription: Subscription()
         )
 
         XCTAssertEqual(context.watch(atom), 100)
@@ -159,7 +159,7 @@ final class AtomViewContextTests: XCTestCase {
         let context = AtomViewContext(
             store: StoreContext(store: store),
             subscriber: Atoms.Subscriber(subscriberState),
-            notifyUpdate: {}
+            subscription: Subscription()
         )
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
@@ -199,7 +199,7 @@ final class AtomViewContextTests: XCTestCase {
         let context = AtomViewContext(
             store: StoreContext(store: store),
             subscriber: Atoms.Subscriber(subscriberState!),
-            notifyUpdate: {}
+            subscription: Subscription()
         )
 
         context.watch(atom)
