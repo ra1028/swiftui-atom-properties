@@ -25,11 +25,11 @@ public struct ObservableObjectAtomLoader<Node: ObservableObjectAtom>: AtomLoader
     public func manageOverridden(value: Value, context: Context) -> Value {
         let cancellable = value
             .objectWillChange
-            .sink { _ in
+            .sink { [weak value] _ in
                 // Wait until the object's property is set, because `objectWillChange`
                 // emits an event before the property is updated.
                 RunLoop.main.perform(inModes: [.common]) {
-                    if !context.isTerminated {
+                    if !context.isTerminated, let value {
                         context.update(with: value)
                     }
                 }
