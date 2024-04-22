@@ -142,23 +142,12 @@ final class StoreContextTests: XCTestCase {
 
         XCTAssertEqual(context.read(atom), 0)
         XCTAssertNil(store.state.caches[key])
-        XCTAssertEqual(
-            snapshots.map { $0.caches.mapValues { $0.value as? Int } },
-            [
-                [key: 0],
-                [:],
-            ]
-        )
+        XCTAssertTrue(snapshots.isEmpty)
 
         snapshots.removeAll()
         store.graph.children[key] = [AtomKey(TestAtom(value: 1))]
         XCTAssertEqual(context.read(atom), 0)
-        XCTAssertEqual(
-            snapshots.map { $0.caches.mapValues { $0.value as? Int } },
-            [
-                [key: 0]
-            ]
-        )
+        XCTAssertTrue(snapshots.isEmpty)
 
         snapshots.removeAll()
         store.state.caches[key] = AtomCache(atom: atom, value: 1)
@@ -279,20 +268,14 @@ final class StoreContextTests: XCTestCase {
         XCTAssertNotNil(store.state.states[dependency0Key])
         XCTAssertTrue(snapshots.flatMap(\.caches).isEmpty)
 
-        snapshots.removeAll()
         transaction.terminate()
+
         XCTAssertEqual(context.watch(dependency1, in: transaction), 1)
         XCTAssertEqual(store.graph.dependencies, [key: [dependency0Key]])
         XCTAssertEqual(store.graph.children, [dependency0Key: [key]])
         XCTAssertNil(store.state.caches[dependency1Key])
         XCTAssertNil(store.state.states[dependency1Key])
-        XCTAssertEqual(
-            snapshots.map { $0.caches.mapValues { $0.value as? Int } },
-            [
-                [dependency0Key: 0, dependency1Key: 1],
-                [dependency0Key: 0],
-            ]
-        )
+        XCTAssertTrue(snapshots.isEmpty)
     }
 
     @MainActor

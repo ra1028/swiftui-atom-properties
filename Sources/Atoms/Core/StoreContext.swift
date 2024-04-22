@@ -71,12 +71,7 @@ internal struct StoreContext {
         }
         else {
             let cache = makeCache(of: atom, for: key, override: override)
-            notifyUpdateToObservers()
-
-            if checkAndRelease(for: key) {
-                notifyUpdateToObservers()
-            }
-
+            checkAndRelease(for: key)
             return cache.value
         }
     }
@@ -152,8 +147,7 @@ internal struct StoreContext {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
-        let state = lookupState(of: atom, for: key) ?? makeEphemeralState(of: atom)
-        let context = prepareForTransaction(of: atom, for: key, state: state)
+        let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Loader.Value
 
         if let override {
@@ -164,6 +158,7 @@ internal struct StoreContext {
         }
 
         guard let cache = lookupCache(of: atom, for: key) else {
+            checkAndRelease(for: key)
             return value
         }
 
@@ -180,11 +175,12 @@ internal struct StoreContext {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
-        let state = lookupState(of: atom, for: key) ?? makeEphemeralState(of: atom)
+        let state = getState(of: atom, for: key)
         let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
         let value = await atom.refresh(context: context)
 
         guard let transaction = state.transaction, let cache = lookupCache(of: atom, for: key) else {
+            checkAndRelease(for: key)
             return value
         }
 
@@ -214,10 +210,11 @@ internal struct StoreContext {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
-        let state = lookupState(of: atom, for: key) ?? makeEphemeralState(of: atom)
-        let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
 
-        atom.reset(context: context)
+        if let state = lookupState(of: atom, for: key) {
+            let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
+            atom.reset(context: context)
+        }
     }
 
     @usableFromInline
@@ -292,9 +289,10 @@ internal struct StoreContext {
 private extension StoreContext {
     func prepareForTransaction<Node: Atom>(
         of atom: Node,
-        for key: AtomKey,
-        state: AtomState<Node.Coordinator>
+        for key: AtomKey
     ) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
+        let state = getState(of: atom, for: key)
+
         // Terminate the ongoing transaction first.
         state.transaction?.terminate()
 
@@ -386,8 +384,7 @@ private extension StoreContext {
         notifyUpdateToObservers()
     }
 
-    @discardableResult
-    func checkAndRelease(for key: AtomKey) -> Bool {
+    func checkAndRelease(for key: AtomKey) {
         // The condition under which an atom may be released are as follows:
         //     1. It's not marked as `KeepAlive`, is marked as `Scoped`, or is scoped by override.
         //     2. It has no downstream atoms.
@@ -398,11 +395,10 @@ private extension StoreContext {
         lazy var shouldRelease = !shouldKeepAlive && isChildrenEmpty && isSubscriptionEmpty
 
         guard shouldRelease else {
-            return false
+            return
         }
 
         release(for: key)
-        return true
     }
 
     func release(for key: AtomKey) {
@@ -427,14 +423,10 @@ private extension StoreContext {
             return state
         }
 
-        let state = makeEphemeralState(of: atom)
+        let coordinator = atom.makeCoordinator()
+        let state = AtomState(coordinator: coordinator)
         store.state.states[key] = state
         return state
-    }
-
-    func makeEphemeralState<Node: Atom>(of atom: Node) -> AtomState<Node.Coordinator> {
-        let coordinator = atom.makeCoordinator()
-        return AtomState(coordinator: coordinator)
     }
 
     func lookupState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Coordinator>? {
@@ -477,8 +469,7 @@ private extension StoreContext {
         for key: AtomKey,
         override: AtomOverride<Node>?
     ) -> AtomCache<Node> {
-        let state = getState(of: atom, for: key)
-        let context = prepareForTransaction(of: atom, for: key, state: state)
+        let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Loader.Value
 
         if let override {
