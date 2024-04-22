@@ -807,7 +807,7 @@ struct FetchMoviesPhaseAtom: ValueAtom, Refreshable, Hashable {
         context.watch(FetchMoviesTaskAtom().phase)
     }
 
-    func refresh(context: RefreshContext) async -> AsyncPhase<[Movies], Error> {
+    func refresh(context: CurrentContext) async -> AsyncPhase<[Movies], Error> {
         await context.refresh(FetchMoviesTaskAtom().phase)
     }
 
@@ -838,7 +838,7 @@ struct RandomIntAtom: ValueAtom, Resettable, Hashable {
         return .random(in: 0..<100, using: &generator)
     }
 
-    func reset(context: ResetContext) {
+    func reset(context: CurrentContext) {
         context.reset(RandomNumberGeneratorAtom())
     }
 }

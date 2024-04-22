@@ -21,6 +21,10 @@ public protocol Atom {
 
     /// A type of the context structure to read, set, and otherwise interact
     /// with other atoms.
+    typealias CurrentContext = AtomCurrentContext<Loader.Coordinator>
+
+    /// A type of the context structure to read, set, and otherwise interact
+    /// with other atoms.
     typealias UpdatedContext = AtomCurrentContext<Loader.Coordinator>
 
     /// A unique value used to identify the atom internally.

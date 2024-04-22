@@ -9,6 +9,16 @@ public extension Atom {
     }
 }
 
+public extension Resettable {
+    @available(*, deprecated, renamed: "CurrentContext")
+    typealias ResetContext = AtomCurrentContext<Loader.Coordinator>
+}
+
+public extension Refreshable {
+    @available(*, deprecated, renamed: "CurrentContext")
+    typealias RefreshContext = AtomCurrentContext<Loader.Coordinator>
+}
+
 public extension AtomScope {
     @available(*, deprecated, renamed: "init(inheriting:content:)")
     init(
