@@ -57,8 +57,8 @@ jobs:
       - name: Validate format
         run: |
           make format
-          if [ -n "$(git status --porcelain)" ]; then echo "Make sure that the code is formated by 'make format'."; exit 1; fi
+          if [ -n "$(git status --porcelain)" ]; then git diff --name-only && echo "Make sure that the code is formated by 'make format'."; exit 1; fi
       - name: Validate example project
         run: |
           make proj
-          if [ -n "$(git status --porcelain)" ]; then echo "Make sure that 'Examples/App.xcodeproj' is formated by 'make proj'."; exit 1; fi
+          if [ -n "$(git status --porcelain)" ]; then git diff --name-only && echo "Make sure that 'Examples/App.xcodeproj' is formated by 'make proj'."; exit 1; fi
