@@ -9,7 +9,7 @@
 ///         context.watch(FetchUserAtom().phase)
 ///     }
 ///
-///     func refresh(context: RefreshContext) async -> AsyncPhase<User?, Never> {
+///     func refresh(context: CurrentContext) async -> AsyncPhase<User?, Never> {
 ///         await context.refresh(FetchUserAtom().phase)
 ///     }
 /// }
@@ -22,10 +22,6 @@
 /// ```
 ///
 public protocol Refreshable where Self: Atom {
-    /// A type of the context structure to read, set, and otherwise interact
-    /// with other atoms.
-    typealias RefreshContext = AtomCurrentContext<Loader.Coordinator>
-
     /// Refreshes and then return a result value.
     ///
     /// The value returned by this method will be cached as a new value when
@@ -36,5 +32,5 @@ public protocol Refreshable where Self: Atom {
     ///
     /// - Returns: A refreshed value.
     @MainActor
-    func refresh(context: RefreshContext) async -> Loader.Value
+    func refresh(context: CurrentContext) async -> Loader.Value
 }

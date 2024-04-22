@@ -88,14 +88,14 @@ struct TestCustomRefreshableAtom<Publisher: Combine.Publisher>: PublisherAtom, R
         makePublisher()
     }
 
-    func refresh(context: RefreshContext) async -> AsyncPhase<Publisher.Output, Publisher.Failure> {
+    func refresh(context: CurrentContext) async -> AsyncPhase<Publisher.Output, Publisher.Failure> {
         refresh()
     }
 }
 
 struct TestCustomResettableAtom<T>: StateAtom, Resettable {
     var defaultValue: (Context) -> T
-    var reset: (ResetContext) -> Void
+    var reset: (CurrentContext) -> Void
 
     var key: UniqueKey {
         UniqueKey()
@@ -105,7 +105,7 @@ struct TestCustomResettableAtom<T>: StateAtom, Resettable {
         defaultValue(context)
     }
 
-    func reset(context: ResetContext) {
+    func reset(context: CurrentContext) {
         reset(context)
     }
 }

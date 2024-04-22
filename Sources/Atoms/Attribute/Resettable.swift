@@ -9,7 +9,7 @@
 ///         context.watch(FetchUserAtom().phase)
 ///     }
 ///
-///     func reset(context: ResetContext) {
+///     func reset(context: CurrentContext) {
 ///         context.reset(FetchUserAtom())
 ///     }
 /// }
@@ -22,10 +22,6 @@
 /// ```
 ///
 public protocol Resettable where Self: Atom {
-    /// A type of the context structure to read, set, and otherwise interact
-    /// with other atoms.
-    typealias ResetContext = AtomCurrentContext<Loader.Coordinator>
-
     /// Arbitrary reset method to be executed on atom reset.
     ///
     /// This is arbitrary custom reset method that replaces regular atom reset functionality.
@@ -33,5 +29,5 @@ public protocol Resettable where Self: Atom {
     /// - Parameter context: A context structure to read, set, and otherwise interact
     ///                      with other atoms.
     @MainActor
-    func reset(context: ResetContext)
+    func reset(context: CurrentContext)
 }
