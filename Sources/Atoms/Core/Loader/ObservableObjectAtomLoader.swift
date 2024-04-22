@@ -29,7 +29,9 @@ public struct ObservableObjectAtomLoader<Node: ObservableObjectAtom>: AtomLoader
                 // Wait until the object's property is set, because `objectWillChange`
                 // emits an event before the property is updated.
                 RunLoop.main.perform(inModes: [.common]) {
-                    context.update(with: value)
+                    if !context.isTerminated {
+                        context.update(with: value)
+                    }
                 }
             }
 

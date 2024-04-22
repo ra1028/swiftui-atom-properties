@@ -168,7 +168,7 @@ internal struct StoreContext {
         }
 
         // Notify update unless it's cancelled or terminated by other operations.
-        if !Task.isCancelled && !context.transaction.isTerminated {
+        if !Task.isCancelled && !context.isTerminated {
             update(atom: atom, for: key, newValue: value, cache: cache)
         }
 
