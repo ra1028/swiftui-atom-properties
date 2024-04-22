@@ -77,8 +77,8 @@
 				7700279A8EA052C81A41C049 /* CrossPlatform */,
 				A62E7924E6736516B102BF53 /* iOS */,
 			);
-			name = Packages;
-			sourceTree = SOURCE_ROOT;
+			path = Packages;
+			sourceTree = "<group>";
 		};
 		E9C3DB3EC6D7655028A9C0D3 /* Products */ = {
 			isa = PBXGroup;
