@@ -1,5 +1,4 @@
 import Combine
-import Foundation
 
 /// A context structure to read, watch, and otherwise interact with atoms in testing.
 ///
@@ -49,7 +48,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Returns: A boolean value indicating whether an update has happened.
     @inlinable
     @discardableResult
-    public func waitForUpdate(timeout duration: TimeInterval? = nil) async -> Bool {
+    public func waitForUpdate(timeout duration: Double? = nil) async -> Bool {
         await withTaskGroup(of: Bool.self) { group in
             let updates = _state.makeUpdateStream()
 
@@ -104,7 +103,7 @@ public struct AtomTestContext: AtomWatchableContext {
     @discardableResult
     public func wait<Node: Atom>(
         for atom: Node,
-        timeout duration: TimeInterval? = nil,
+        timeout duration: Double? = nil,
         until predicate: @escaping (Node.Loader.Value) -> Bool
     ) async -> Bool {
         await withTaskGroup(of: Bool.self) { group in
