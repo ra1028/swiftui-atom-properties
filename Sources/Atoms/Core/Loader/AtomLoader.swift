@@ -18,18 +18,18 @@ public protocol AtomLoader {
 
     /// Returns a boolean value indicating whether it should notify updates downstream
     /// by checking the equivalence of the given old value and new value.
-    func shouldUpdate(newValue: Value, oldValue: Value) -> Bool
+    func shouldPropagateUpdate(newValue: Value, oldValue: Value) -> Bool
 
     /// Performs atom update.
-    func performUpdate(_ body: () -> Void)
+    func performPropagativeUpdate(_ body: () -> Void)
 }
 
 public extension AtomLoader {
-    func shouldUpdate(newValue: Value, oldValue: Value) -> Bool {
+    func shouldPropagateUpdate(newValue: Value, oldValue: Value) -> Bool {
         true
     }
 
-    func performUpdate(_ body: () -> Void) {
+    func performPropagativeUpdate(_ body: () -> Void) {
         body()
     }
 }

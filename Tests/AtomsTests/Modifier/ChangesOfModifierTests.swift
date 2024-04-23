@@ -37,11 +37,11 @@ final class ChangesOfModifierTests: XCTestCase {
     }
 
     @MainActor
-    func testShouldUpdate() {
+    func testShouldPropagateUpdate() {
         let modifier = ChangesOfModifier<String, Int>(keyPath: \.count)
 
-        XCTAssertFalse(modifier.shouldUpdate(newValue: 100, oldValue: 100))
-        XCTAssertTrue(modifier.shouldUpdate(newValue: 100, oldValue: 200))
+        XCTAssertFalse(modifier.shouldPropagateUpdate(newValue: 100, oldValue: 100))
+        XCTAssertTrue(modifier.shouldPropagateUpdate(newValue: 100, oldValue: 200))
     }
 
     @MainActor

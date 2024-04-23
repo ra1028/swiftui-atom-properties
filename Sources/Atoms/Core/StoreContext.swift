@@ -341,7 +341,7 @@ private extension StoreContext {
         store.state.caches[key] = AtomCache(atom: atom, value: newValue)
 
         // Check if the atom should propagate the update to downstream.
-        guard atom._loader.shouldUpdate(newValue: newValue, oldValue: oldValue) else {
+        guard atom._loader.shouldPropagateUpdate(newValue: newValue, oldValue: oldValue) else {
             return
         }
 
@@ -351,7 +351,7 @@ private extension StoreContext {
         atom.updated(newValue: newValue, oldValue: oldValue, context: context)
 
         // Calculate topological order for updating downstream efficiently.
-        let (edges, subscriptions) = topologicalSort(key: key, store: store)
+        let (edges, subscriptionEdges) = topologicalSort(key: key, store: store)
         var skippingFrom = Set<AtomKey>()
 
         // Updates the given atom.
@@ -365,7 +365,7 @@ private extension StoreContext {
             let newCache = makeCache(of: atom, for: key, override: override)
 
             // Skip if the atom should not propagate update to downstream.
-            guard atom._loader.shouldUpdate(newValue: newCache.value, oldValue: cache.value) else {
+            guard atom._loader.shouldPropagateUpdate(newValue: newCache.value, oldValue: cache.value) else {
                 // Record the atom to avoid downstream from being update.
                 skippingFrom.insert(key)
                 return
@@ -379,14 +379,14 @@ private extension StoreContext {
 
         // Performs update of the given atom with the parent's context.
         func performUpdate(atom: some Atom, for key: AtomKey, dependency: some Atom) {
-            dependency._loader.performUpdate {
+            dependency._loader.performPropagativeUpdate {
                 update(atom: atom, for: key)
             }
         }
 
         // Performs update of the given subscription with the parent's context.
         func performUpdate(subscription: Subscription, dependency: some Atom) {
-            dependency._loader.performUpdate(subscription.update)
+            dependency._loader.performPropagativeUpdate(subscription.update)
         }
 
         // Performs atom updates ahead of notifying updates to subscriptions.
@@ -404,7 +404,7 @@ private extension StoreContext {
             performUpdate(atom: cache.atom, for: edge.to, dependency: dependencyCache.atom)
         }
 
-        for edge in subscriptions {
+        for edge in subscriptionEdges {
             // Do not update if the dependency atom is marked as skipping.
             guard !skippingFrom.contains(edge.from) else {
                 continue

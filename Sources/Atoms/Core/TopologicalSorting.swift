@@ -2,14 +2,14 @@
 @MainActor
 internal func topologicalSort(key: AtomKey, store: AtomStore) -> (
     edges: some Collection<Edge<AtomKey>>,
-    subscriptions: some Collection<Edge<Subscription>>
+    subscriptionEdges: some Collection<Edge<Subscription>>
 ) {
     var sorting = TopologicalSorting(key: key, store: store)
     sorting.sort()
 
     return (
-        edges: sorting.reversedEdges.reversed(),
-        subscriptions: sorting.reversedSubscriptions.reversed()
+        edges: sorting.edges.reversed(),
+        subscriptionEdges: sorting.subscriptionEdges.reversed()
     )
 }
 
@@ -22,8 +22,8 @@ internal struct Edge<To> {
 private struct TopologicalSorting {
     private let key: AtomKey
     private let store: AtomStore
-    private(set) var reversedEdges = ContiguousArray<Edge<AtomKey>>()
-    private(set) var reversedSubscriptions = ContiguousArray<Edge<Subscription>>()
+    private(set) var edges = ContiguousArray<Edge<AtomKey>>()
+    private(set) var subscriptionEdges = ContiguousArray<Edge<Subscription>>()
     private var trace = Set<Vertex>()
 
     init(key: AtomKey, store: AtomStore) {
@@ -60,7 +60,7 @@ private extension TopologicalSorting {
                 }
 
                 let edge = Edge(from: key, to: subscription)
-                reversedSubscriptions.append(edge)
+                subscriptionEdges.append(edge)
                 trace.insert(.subscriber(key: subscriberKey))
             }
         }
@@ -71,6 +71,6 @@ private extension TopologicalSorting {
 
         trace.insert(.atom(key: key))
         traverse(key: key)
-        reversedEdges.append(edge)
+        edges.append(edge)
     }
 }

@@ -36,19 +36,19 @@ public protocol AtomModifier {
     /// Returns a boolean value indicating whether it should notify updates downstream
     /// by checking the equivalence of the given old value and new value.
     @MainActor
-    func shouldUpdate(newValue: Value, oldValue: Value) -> Bool
+    func shouldPropagateUpdate(newValue: Value, oldValue: Value) -> Bool
 
     /// Performs atom update.
     @MainActor
-    func performUpdate(_ body: () -> Void)
+    func performPropagativeUpdate(_ body: () -> Void)
 }
 
 public extension AtomModifier {
-    func shouldUpdate(newValue: Value, oldValue: Value) -> Bool {
+    func shouldPropagateUpdate(newValue: Value, oldValue: Value) -> Bool {
         true
     }
 
-    func performUpdate(_ body: () -> Void) {
+    func performPropagativeUpdate(_ body: () -> Void) {
         body()
     }
 }

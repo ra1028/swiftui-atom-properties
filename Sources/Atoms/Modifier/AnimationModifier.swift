@@ -71,7 +71,7 @@ public struct AnimationModifier<T>: AtomModifier {
     }
 
     /// Performs atom update.
-    public func performUpdate(_ body: () -> Void) {
+    public func performPropagativeUpdate(_ body: () -> Void) {
         withAnimation(animation, body)
     }
 }
