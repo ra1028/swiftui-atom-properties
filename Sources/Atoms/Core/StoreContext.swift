@@ -418,7 +418,7 @@ private extension StoreContext {
             performUpdate(subscription: edge.to, dependency: dependencyCache.atom)
         }
 
-        // Notify the observer of the update after all updates are complete.
+        // Notify the observers after all updates are complete.
         notifyUpdateToObservers()
     }
 

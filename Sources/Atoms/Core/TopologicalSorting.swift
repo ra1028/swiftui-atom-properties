@@ -24,7 +24,8 @@ private struct TopologicalSorting {
     private let store: AtomStore
     private(set) var edges = ContiguousArray<Edge<AtomKey>>()
     private(set) var subscriptionEdges = ContiguousArray<Edge<Subscription>>()
-    private var trace = Set<Vertex>()
+    private var atomTrace = Set<AtomKey>()
+    private var subscriberTrace = Set<SubscriberKey>()
 
     init(key: AtomKey, store: AtomStore) {
         self.key = key
@@ -37,15 +38,10 @@ private struct TopologicalSorting {
 }
 
 private extension TopologicalSorting {
-    enum Vertex: Hashable {
-        case atom(key: AtomKey)
-        case subscriber(key: SubscriberKey)
-    }
-
     mutating func traverse(key: AtomKey) {
         if let children = store.graph.children[key] {
             for child in ContiguousArray(children) {
-                guard !trace.contains(.atom(key: child)) else {
+                guard !atomTrace.contains(child) else {
                     continue
                 }
 
@@ -55,13 +51,13 @@ private extension TopologicalSorting {
 
         if let subscriptions = store.state.subscriptions[key] {
             for (subscriberKey, subscription) in ContiguousArray(subscriptions) {
-                guard !trace.contains(.subscriber(key: subscriberKey)) else {
+                guard !subscriberTrace.contains(subscriberKey) else {
                     continue
                 }
 
                 let edge = Edge(from: key, to: subscription)
                 subscriptionEdges.append(edge)
-                trace.insert(.subscriber(key: subscriberKey))
+                subscriberTrace.insert(subscriberKey)
             }
         }
     }
@@ -69,7 +65,7 @@ private extension TopologicalSorting {
     mutating func traverse(key: AtomKey, from fromKey: AtomKey) {
         let edge = Edge(from: fromKey, to: key)
 
-        trace.insert(.atom(key: key))
+        atomTrace.insert(key)
         traverse(key: key)
         edges.append(edge)
     }
