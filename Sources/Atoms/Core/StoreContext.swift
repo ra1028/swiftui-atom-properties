@@ -393,6 +393,7 @@ private extension StoreContext {
         for edge in edges {
             // Do not update if the dependency atom is marked as skipping.
             guard !skippingFrom.contains(edge.from) else {
+                skippingFrom.insert(edge.to)
                 continue
             }
 
