@@ -83,7 +83,7 @@ internal struct StoreContext {
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
-            update(atom: atom, for: key, newValue: value, cache: cache)
+            update(atom: atom, for: key, newValue: value, oldValue: cache.value)
         }
     }
 
@@ -95,7 +95,7 @@ internal struct StoreContext {
 
         if let cache = lookupCache(of: atom, for: key) {
             let newValue = mutating(cache.value, body)
-            update(atom: atom, for: key, newValue: newValue, cache: cache)
+            update(atom: atom, for: key, newValue: newValue, oldValue: cache.value)
         }
     }
 
@@ -164,7 +164,7 @@ internal struct StoreContext {
 
         // Notify update unless it's cancelled or terminated by other operations.
         if !Task.isCancelled && !context.isTerminated {
-            update(atom: atom, for: key, newValue: value, cache: cache)
+            update(atom: atom, for: key, newValue: value, oldValue: cache.value)
         }
 
         return value
@@ -186,7 +186,7 @@ internal struct StoreContext {
 
         // Notify update unless it's cancelled or terminated by other operations.
         if !Task.isCancelled && !transaction.isTerminated {
-            update(atom: atom, for: key, newValue: value, cache: cache)
+            update(atom: atom, for: key, newValue: value, oldValue: cache.value)
         }
 
         return value
@@ -201,7 +201,7 @@ internal struct StoreContext {
 
         if let cache = lookupCache(of: atom, for: key) {
             let newCache = makeCache(of: atom, for: key, override: override)
-            update(atom: atom, for: key, newValue: newCache.value, cache: cache)
+            update(atom: atom, for: key, newValue: newCache.value, oldValue: cache.value)
         }
     }
 
@@ -327,7 +327,7 @@ private extension StoreContext {
             coordinator: state.coordinator
         ) { newValue in
             if let cache = lookupCache(of: atom, for: key) {
-                update(atom: atom, for: key, newValue: newValue, cache: cache)
+                update(atom: atom, for: key, newValue: newValue, oldValue: cache.value)
             }
         }
     }
@@ -336,43 +336,90 @@ private extension StoreContext {
         atom: Node,
         for key: AtomKey,
         newValue: Node.Loader.Value,
-        cache: AtomCache<Node>
+        oldValue: Node.Loader.Value
     ) {
-        let oldValue = cache.value
+        store.state.caches[key] = AtomCache(atom: atom, value: newValue)
 
-        store.state.caches[key] = mutating(cache) {
-            $0.value = newValue
-        }
-
+        // Check if the atom should propagate the update to downstream.
         guard atom._loader.shouldUpdate(newValue: newValue, oldValue: oldValue) else {
             return
         }
 
-        atom._loader.performUpdate {
-            // Notifies update to view subscriptions first.
-            if let subscriptions = store.state.subscriptions[key] {
-                for subscription in ContiguousArray(subscriptions.values) {
-                    subscription.update()
-                }
+        // Perform side effecbts first.
+        let state = getState(of: atom, for: key)
+        let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
+        atom.updated(newValue: newValue, oldValue: oldValue, context: context)
+
+        // Calculate topological order for updating downstream efficiently.
+        let (edges, subscriptions) = topologicalSort(key: key, store: store)
+        var skippingFrom = Set<AtomKey>()
+
+        // Updates the given atom.
+        func update(atom: some Atom, for key: AtomKey) {
+            guard let cache = lookupCache(of: atom, for: key) else {
+                // Here is usually unreachable.
+                return
             }
 
-            // Notifies update to downstream atoms.
-            if let children = store.graph.children[key] {
-                for child in ContiguousArray(children) {
-                    // Reset the atom value and then notifies downstream atoms.
-                    if let cache = store.state.caches[child] {
-                        reset(cache.atom)
-                    }
-                }
+            let override = lookupOverride(of: atom)
+            let newCache = makeCache(of: atom, for: key, override: override)
+
+            // Skip if the atom should not propagate update to downstream.
+            guard atom._loader.shouldUpdate(newValue: newCache.value, oldValue: cache.value) else {
+                // Record the atom to avoid downstream from being update.
+                skippingFrom.insert(key)
+                return
             }
 
-            // Notify value update to observers.
-            notifyUpdateToObservers()
-
+            // Perform side effecbts before updating downstream.
             let state = getState(of: atom, for: key)
             let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
-            atom.updated(newValue: newValue, oldValue: oldValue, context: context)
+            atom.updated(newValue: newCache.value, oldValue: cache.value, context: context)
         }
+
+        // Performs update of the given atom with the parent's context.
+        func performUpdate(atom: some Atom, for key: AtomKey, dependency: some Atom) {
+            dependency._loader.performUpdate {
+                update(atom: atom, for: key)
+            }
+        }
+
+        // Performs update of the given subscription with the parent's context.
+        func performUpdate(subscription: Subscription, dependency: some Atom) {
+            dependency._loader.performUpdate(subscription.update)
+        }
+
+        // Performs atom updates ahead of notifying updates to subscriptions.
+        for edge in edges {
+            // Do not update if the dependency atom is marked as skipping.
+            guard !skippingFrom.contains(edge.from) else {
+                continue
+            }
+
+            guard let cache = store.state.caches[edge.to], let dependencyCache = store.state.caches[edge.from] else {
+                // Here is usually unreachable.
+                continue
+            }
+
+            performUpdate(atom: cache.atom, for: edge.to, dependency: dependencyCache.atom)
+        }
+
+        for edge in subscriptions {
+            // Do not update if the dependency atom is marked as skipping.
+            guard !skippingFrom.contains(edge.from) else {
+                continue
+            }
+
+            guard let dependencyCache = store.state.caches[edge.from] else {
+                // Here is usually unreachable.
+                continue
+            }
+
+            performUpdate(subscription: edge.to, dependency: dependencyCache.atom)
+        }
+
+        // Notify the observer of the update after all updates are complete.
+        notifyUpdateToObservers()
     }
 
     func unsubscribe<Keys: Sequence<AtomKey>>(_ keys: Keys, for subscriberKey: SubscriberKey) {
