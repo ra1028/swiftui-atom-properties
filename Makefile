@@ -1,6 +1,6 @@
 TOOL = scripts/swift-run.sh
-PACKAGE = SWIFTUI_ATOM_PROPERTIES_DEVELOPMENT=1 swift package -c release
-SWIFT_FILE_PATHS = Package.swift Sources Tests Examples
+PACKAGE = swift package -c release --package-path Tools
+SWIFT_FILE_PATHS = Package.swift Tools/Package.swift Sources Tests Examples
 
 .PHONY: proj
 proj:
