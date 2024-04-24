@@ -1097,6 +1097,159 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
+    func testUpdateInTopologicalOrder() {
+        struct TestAtom1: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestAtom2: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
+            }
+        }
+
+        struct TestAtom3: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
+            }
+        }
+
+        struct TestAtom4: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                let value1 = context.watch(TestAtom1())
+                let value2 = context.watch(TestAtom2())
+                let value3 = context.watch(TestAtom3())
+                return value1 + value2 + value3
+            }
+        }
+
+        let store = AtomStore()
+        let context = StoreContext(store: store)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+
+        var updateCount = 0
+        let value0 = context.watch(
+            TestAtom4(),
+            subscriber: subscriber,
+            subscription: Subscription {
+                updateCount += 1
+            }
+        )
+
+        XCTAssertEqual(value0, 0)
+        XCTAssertEqual(updateCount, 0)
+
+        context.set(1, for: TestAtom1())
+        let value1 = context.read(TestAtom4())
+
+        XCTAssertEqual(value1, 3)
+        XCTAssertEqual(updateCount, 1)
+    }
+
+    @MainActor
+    func testUpdatePropagation() {
+        struct TestAtom1: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestAtom2: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1().changes)
+            }
+        }
+
+        let store = AtomStore()
+        let context = StoreContext(store: store)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+
+        var updateCount = 0
+        let value0 = context.watch(
+            TestAtom2(),
+            subscriber: subscriber,
+            subscription: Subscription {
+                updateCount += 1
+            }
+        )
+
+        XCTAssertEqual(value0, 0)
+        XCTAssertEqual(updateCount, 0)
+
+        context.set(1, for: TestAtom1())
+        let value1 = context.read(TestAtom2())
+
+        XCTAssertEqual(value1, 1)
+        XCTAssertEqual(updateCount, 1)
+
+        context.set(1, for: TestAtom1())
+        let value2 = context.read(TestAtom2())
+
+        XCTAssertEqual(value2, 1)
+        XCTAssertEqual(updateCount, 1)
+    }
+
+    @MainActor
+    func testUpdateSkipping() {
+        struct TestAtom1: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestAtom2: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
+            }
+        }
+
+        let store = AtomStore()
+        let context = StoreContext(store: store)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+
+        var updateCount = 0
+        let value0 = context.watch(
+            TestAtom1().changes,
+            subscriber: subscriber,
+            subscription: Subscription {
+                updateCount += 1
+            }
+        )
+        let value1 = context.watch(
+            TestAtom2(),
+            subscriber: subscriber,
+            subscription: Subscription {
+                updateCount += 1
+            }
+        )
+
+        XCTAssertEqual(value0, 0)
+        XCTAssertEqual(value1, 0)
+        XCTAssertEqual(updateCount, 0)
+
+        context.set(1, for: TestAtom1())
+        let value2 = context.read(TestAtom1().changes)
+        let value3 = context.read(TestAtom2())
+
+        XCTAssertEqual(value2, 1)
+        XCTAssertEqual(value3, 1)
+        XCTAssertEqual(updateCount, 1)
+
+        context.set(1, for: TestAtom1())
+        let value4 = context.read(TestAtom1().changes)
+        let value5 = context.read(TestAtom2())
+
+        XCTAssertEqual(value4, 1)
+        XCTAssertEqual(value5, 1)
+        XCTAssertEqual(updateCount, 2)
+    }
+
+    @MainActor
     func testComplexDependencies() async {
         enum Phase {
             case first
