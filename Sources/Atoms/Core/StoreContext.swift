@@ -351,7 +351,7 @@ private extension StoreContext {
         atom.updated(newValue: newValue, oldValue: oldValue, context: context)
 
         // Calculate topological order for updating downstream efficiently.
-        let (edges, subscriptionEdges) = topologicalSort(key: key, store: store)
+        let edges = topologicalSort(key: key, store: store)
         var skippingFrom = Set<AtomKey>()
 
         // Updates the given atom.
@@ -391,32 +391,28 @@ private extension StoreContext {
 
         // Performs atom updates ahead of notifying updates to subscriptions.
         for edge in edges {
-            // Do not update if the dependency atom is marked as skipping.
-            guard !skippingFrom.contains(edge.from) else {
-                skippingFrom.insert(edge.to)
-                continue
+            switch edge.to {
+            case .atom(let key):
+                // Do not update if the dependency atom is marked as skipping.
+                guard !skippingFrom.contains(edge.from) else {
+                    skippingFrom.insert(key)
+                    continue
+                }
+
+                if let cache = store.state.caches[key], let dependencyCache = store.state.caches[edge.from] {
+                    performUpdate(atom: cache.atom, for: key, dependency: dependencyCache.atom)
+                }
+
+            case .subscriber(let key):
+                // Do not update if the dependency atom is marked as skipping.
+                guard !skippingFrom.contains(edge.from) else {
+                    continue
+                }
+
+                if let subscription = store.state.subscriptions[edge.from]?[key], let dependencyCache = store.state.caches[edge.from] {
+                    performUpdate(subscription: subscription, dependency: dependencyCache.atom)
+                }
             }
-
-            guard let cache = store.state.caches[edge.to], let dependencyCache = store.state.caches[edge.from] else {
-                // Here is usually unreachable.
-                continue
-            }
-
-            performUpdate(atom: cache.atom, for: edge.to, dependency: dependencyCache.atom)
-        }
-
-        for edge in subscriptionEdges {
-            // Do not update if the dependency atom is marked as skipping.
-            guard !skippingFrom.contains(edge.from) else {
-                continue
-            }
-
-            guard let dependencyCache = store.state.caches[edge.from] else {
-                // Here is usually unreachable.
-                continue
-            }
-
-            performUpdate(subscription: edge.to, dependency: dependencyCache.atom)
         }
 
         // Notify the observers after all updates are complete.

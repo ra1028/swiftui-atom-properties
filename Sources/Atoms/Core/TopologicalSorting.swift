@@ -1,31 +1,28 @@
 /// DFS topological sorting.
 @MainActor
-internal func topologicalSort(key: AtomKey, store: AtomStore) -> (
-    edges: some Collection<Edge<AtomKey>>,
-    subscriptionEdges: some Collection<Edge<Subscription>>
-) {
+internal func topologicalSort(key: AtomKey, store: AtomStore) -> ReversedCollection<[Edge]> {
     var sorting = TopologicalSorting(key: key, store: store)
     sorting.sort()
 
-    return (
-        edges: sorting.edges.reversed(),
-        subscriptionEdges: sorting.subscriptionEdges.reversed()
-    )
+    return sorting.edges.reversed()
 }
 
-internal struct Edge<To> {
+internal enum Vertex: Hashable {
+    case atom(key: AtomKey)
+    case subscriber(key: SubscriberKey)
+}
+
+internal struct Edge: Hashable {
     let from: AtomKey
-    let to: To
+    let to: Vertex
 }
 
 @MainActor
 private struct TopologicalSorting {
     private let key: AtomKey
     private let store: AtomStore
-    private(set) var edges = ContiguousArray<Edge<AtomKey>>()
-    private(set) var subscriptionEdges = ContiguousArray<Edge<Subscription>>()
-    private var atomTrace = Set<AtomKey>()
-    private var subscriberTrace = Set<SubscriberKey>()
+    private(set) var edges = [Edge]()
+    private var trace = Set<Vertex>()
 
     init(key: AtomKey, store: AtomStore) {
         self.key = key
@@ -41,7 +38,7 @@ private extension TopologicalSorting {
     mutating func traverse(key: AtomKey) {
         if let children = store.graph.children[key] {
             for child in ContiguousArray(children) {
-                guard !atomTrace.contains(child) else {
+                guard !trace.contains(.atom(key: child)) else {
                     continue
                 }
 
@@ -50,22 +47,22 @@ private extension TopologicalSorting {
         }
 
         if let subscriptions = store.state.subscriptions[key] {
-            for (subscriberKey, subscription) in ContiguousArray(subscriptions) {
-                guard !subscriberTrace.contains(subscriberKey) else {
+            for subscriberKey in ContiguousArray(subscriptions.keys) {
+                guard !trace.contains(.subscriber(key: subscriberKey)) else {
                     continue
                 }
 
-                let edge = Edge(from: key, to: subscription)
-                subscriptionEdges.append(edge)
-                subscriberTrace.insert(subscriberKey)
+                let edge = Edge(from: key, to: .subscriber(key: subscriberKey))
+                edges.append(edge)
+                trace.insert(.subscriber(key: subscriberKey))
             }
         }
     }
 
     mutating func traverse(key: AtomKey, from fromKey: AtomKey) {
-        let edge = Edge(from: fromKey, to: key)
+        let edge = Edge(from: fromKey, to: .atom(key: key))
 
-        atomTrace.insert(key)
+        trace.insert(.atom(key: key))
         traverse(key: key)
         edges.append(edge)
     }
