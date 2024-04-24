@@ -340,8 +340,8 @@ private extension StoreContext {
     ) {
         store.state.caches[key] = AtomCache(atom: atom, value: newValue)
 
-        // Check if the atom should propagate the update to downstream.
-        guard atom._loader.shouldPropagateUpdate(newValue: newValue, oldValue: oldValue) else {
+        // Check whether if the dependent atoms should be updated transitively.
+        guard atom._loader.shouldUpdateTransitively(newValue: newValue, oldValue: oldValue) else {
             return
         }
 
@@ -351,7 +351,7 @@ private extension StoreContext {
         atom.updated(newValue: newValue, oldValue: oldValue, context: context)
 
         // Calculate topological order for updating downstream efficiently.
-        let (edges, omitted) = topologicalSort(key: key, store: store)
+        let (edges, redundant) = topologicalSort(key: key, store: store)
         var skippingFrom = Set<AtomKey>()
 
         // Updates the given atom.
@@ -364,8 +364,8 @@ private extension StoreContext {
             let override = lookupOverride(of: atom)
             let newCache = makeCache(of: atom, for: key, override: override)
 
-            // Skip if the atom should not propagate update to downstream.
-            guard atom._loader.shouldPropagateUpdate(newValue: newCache.value, oldValue: cache.value) else {
+            // Check whether if the dependent atoms should be updated transitively.
+            guard atom._loader.shouldUpdateTransitively(newValue: newCache.value, oldValue: cache.value) else {
                 // Record the atom to avoid downstream from being update.
                 skippingFrom.insert(key)
                 return
@@ -379,14 +379,14 @@ private extension StoreContext {
 
         // Performs update of the given atom with the parent's context.
         func performUpdate(atom: some Atom, for key: AtomKey, dependency: some Atom) {
-            dependency._loader.performPropagativeUpdate {
+            dependency._loader.performTransitiveUpdate {
                 update(atom: atom, for: key)
             }
         }
 
         // Performs update of the given subscription with the parent's context.
         func performUpdate(subscription: Subscription, dependency: some Atom) {
-            dependency._loader.performPropagativeUpdate(subscription.update)
+            dependency._loader.performTransitiveUpdate(subscription.update)
         }
 
         // Do not transitively update atoms that have parent recorded not to update downstream.
@@ -397,24 +397,24 @@ private extension StoreContext {
                 return edge
             }
 
-            guard let omittedFrom = omitted[edge.to] else {
+            guard let redundantFrom = redundant[edge.to] else {
                 return nil
             }
 
-            guard let fromKey = omittedFrom.subtracting(skippingFrom).first else {
+            guard let fromKey = redundantFrom.subtracting(skippingFrom).first else {
                 return nil
             }
 
-            // Switch atom update transaction context (e.g. animation) to a non-skipped one on
-            // a best-effort basis.
-            // Topological sorting itself does not always produce an idempotent result when multiple
+            // Convert edge's `from`, which represents a dependent atom, to a non-skipped one on
+            // a best-effort basis to switch the update transaction context (e.g. animation).
+            // Topological sorting itself does not guarantee idempotent result when multiple
             // dependencies of an atom update simultaneously and there's no valid update order rule to
             // determine which atom produced the transitive update, and thus here chooses a random
-            // dependent atom from omitted ones.
+            // dependent atom from redundant edges.
             return Edge(from: fromKey, to: edge.to)
         }
 
-        // Performs atom updates ahead of notifying updates to subscriptions.
+        // Performs transitive update for dependent atoms s ahead of notifying updates to subscriptions.
         for edge in edges {
             switch edge.to {
             case .atom(let key):

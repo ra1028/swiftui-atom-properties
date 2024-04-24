@@ -59,7 +59,7 @@ public struct ChangesModifier<T: Equatable>: AtomModifier {
 
     /// Returns a boolean value that determines whether it should notify the value update to
     /// watchers with comparing the given old value and the new value.
-    public func shouldPropagateUpdate(newValue: Value, oldValue: Value) -> Bool {
+    public func shouldUpdateTransitively(newValue: Value, oldValue: Value) -> Bool {
         newValue != oldValue
     }
 }

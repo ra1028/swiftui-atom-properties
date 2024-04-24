@@ -36,11 +36,11 @@ final class ChangesModifierTests: XCTestCase {
     }
 
     @MainActor
-    func testShouldPropagateUpdate() {
+    func testShouldUpdateTransitively() {
         let modifier = ChangesModifier<Int>()
 
-        XCTAssertFalse(modifier.shouldPropagateUpdate(newValue: 100, oldValue: 100))
-        XCTAssertTrue(modifier.shouldPropagateUpdate(newValue: 100, oldValue: 200))
+        XCTAssertFalse(modifier.shouldUpdateTransitively(newValue: 100, oldValue: 100))
+        XCTAssertTrue(modifier.shouldUpdateTransitively(newValue: 100, oldValue: 200))
     }
 
     @MainActor

@@ -666,7 +666,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(scoped2Context.watch(atom, subscriber: subscriber, subscription: Subscription()), 21)
         XCTAssertEqual(scoped2Context.watch(publisherAtom, subscriber: subscriber, subscription: Subscription()), .suspending)
 
-        // Should set the value and then propagate it to the dependent atoms..
+        // Should set the value and then update the dependent atoms transitively.
         scoped2Context.set(20, for: dependency1Atom)
 
         // Should set the value because the atom depends on the shared `dependency1Atom`.
@@ -1150,7 +1150,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
-    func testUpdatePropagation() {
+    func testTransitiveUpdate() {
         struct TestAtom1: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
                 0

@@ -27,13 +27,13 @@ public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader
 
     /// Returns a boolean value indicating whether it should notify updates downstream
     /// by checking the equivalence of the given old value and new value.
-    public func shouldPropagateUpdate(newValue: Value, oldValue: Value) -> Bool {
-        modifier.shouldPropagateUpdate(newValue: newValue, oldValue: oldValue)
+    public func shouldUpdateTransitively(newValue: Value, oldValue: Value) -> Bool {
+        modifier.shouldUpdateTransitively(newValue: newValue, oldValue: oldValue)
     }
 
-    /// Performs atom update.
-    public func performPropagativeUpdate(_ body: () -> Void) {
-        modifier.performPropagativeUpdate(body)
+    /// Performs transitive update for dependent atoms .
+    public func performTransitiveUpdate(_ body: () -> Void) {
+        modifier.performTransitiveUpdate(body)
     }
 }
 
