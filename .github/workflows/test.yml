@@ -24,7 +24,7 @@ jobs:
           - tvos
           - watchos
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test library
         run: scripts/test.sh library ${{ matrix.platform }}
       - name: Test example cross platform
@@ -35,7 +35,7 @@ jobs:
     name: Test iOS examples
     runs-on: macos-13
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test example iOS
         run: scripts/test.sh example-ios ios
 
@@ -43,15 +43,15 @@ jobs:
     name: Validation
     runs-on: macos-13
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Show environments
         run: |
           swift --version
           xcodebuild -version
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
-          path: bin
-          key: spm-${{ runner.os }}-${{env.DEVELOPER_DIR}}-${{ hashFiles('Package.swift') }}-${{ github.job }}
+          path: Tools/bin
+          key: spm-${{ runner.os }}-${{env.DEVELOPER_DIR}}-${{ hashFiles('Package.swift') }}
       - name: Validate lint
         run: make lint
       - name: Validate format
