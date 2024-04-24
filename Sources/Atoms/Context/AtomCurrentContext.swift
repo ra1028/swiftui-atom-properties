@@ -82,7 +82,7 @@ public struct AtomCurrentContext<Coordinator>: AtomContext {
 
     /// Refreshes and then returns the value associated with the given refreshable atom.
     ///
-    /// This method only accepts refreshable atoms such as types conforming to:
+    /// This method accepts only asynchronous atoms such as types conforming to:
     /// ``TaskAtom``, ``ThrowingTaskAtom``, ``AsyncSequenceAtom``, ``PublisherAtom``.
     /// It refreshes the value for the given atom and then returns, so the caller can await until
     /// the atom completes the update.
