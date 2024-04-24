@@ -1207,46 +1207,114 @@ final class StoreContextTests: XCTestCase {
             }
         }
 
-        let store = AtomStore()
-        let context = StoreContext(store: store)
-        let subscriberState = SubscriberState()
-        let subscriber = Subscriber(subscriberState)
+        // Could be flaky.
+        for _ in 0..<100 {
+            let store = AtomStore()
+            let context = StoreContext(store: store)
+            let subscriberState = SubscriberState()
+            let subscriber = Subscriber(subscriberState)
 
-        var updateCount = 0
-        let value0 = context.watch(
-            TestAtom1().changes,
-            subscriber: subscriber,
-            subscription: Subscription {
-                updateCount += 1
+            var updateCount = 0
+            let value0 = context.watch(
+                TestAtom1().changes,
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
+            let value1 = context.watch(
+                TestAtom2(),
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
+
+            XCTAssertEqual(value0, 0)
+            XCTAssertEqual(value1, 0)
+            XCTAssertEqual(updateCount, 0)
+
+            context.set(1, for: TestAtom1())
+            let value2 = context.read(TestAtom1().changes)
+            let value3 = context.read(TestAtom2())
+
+            XCTAssertEqual(value2, 1)
+            XCTAssertEqual(value3, 1)
+            XCTAssertEqual(updateCount, 1)
+
+            context.set(1, for: TestAtom1())
+            let value4 = context.read(TestAtom1().changes)
+            let value5 = context.read(TestAtom2())
+
+            XCTAssertEqual(value4, 1)
+            XCTAssertEqual(value5, 1)
+            XCTAssertEqual(updateCount, 2)
+        }
+    }
+
+    @MainActor
+    func testUpdateSkipping2() {
+        struct TestAtom1: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
             }
-        )
-        let value1 = context.watch(
-            TestAtom2(),
-            subscriber: subscriber,
-            subscription: Subscription {
-                updateCount += 1
+        }
+
+        struct TestAtom2: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
             }
-        )
+        }
 
-        XCTAssertEqual(value0, 0)
-        XCTAssertEqual(value1, 0)
-        XCTAssertEqual(updateCount, 0)
+        struct TestAtom3: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
+            }
+        }
 
-        context.set(1, for: TestAtom1())
-        let value2 = context.read(TestAtom1().changes)
-        let value3 = context.read(TestAtom2())
+        // Could be flaky.
+        for _ in 0..<100 {
+            let store = AtomStore()
+            let context = StoreContext(store: store)
+            let subscriberState = SubscriberState()
+            let subscriber = Subscriber(subscriberState)
 
-        XCTAssertEqual(value2, 1)
-        XCTAssertEqual(value3, 1)
-        XCTAssertEqual(updateCount, 1)
+            var updateCount = 0
+            let value0 = context.watch(
+                TestAtom2().changes,
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
+            let value1 = context.watch(
+                TestAtom3().changes,
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
 
-        context.set(1, for: TestAtom1())
-        let value4 = context.read(TestAtom1().changes)
-        let value5 = context.read(TestAtom2())
+            XCTAssertEqual(value0, 0)
+            XCTAssertEqual(value1, 0)
+            XCTAssertEqual(updateCount, 0)
 
-        XCTAssertEqual(value4, 1)
-        XCTAssertEqual(value5, 1)
-        XCTAssertEqual(updateCount, 2)
+            context.set(1, for: TestAtom1())
+            let value2 = context.read(TestAtom2().changes)
+            let value3 = context.read(TestAtom3().changes)
+
+            XCTAssertEqual(value2, 1)
+            XCTAssertEqual(value3, 1)
+            XCTAssertEqual(updateCount, 1)
+
+            context.set(1, for: TestAtom1())
+            let value4 = context.read(TestAtom2().changes)
+            let value5 = context.read(TestAtom3().changes)
+
+            XCTAssertEqual(value4, 1)
+            XCTAssertEqual(value5, 1)
+            XCTAssertEqual(updateCount, 1)
+        }
     }
 
     @MainActor

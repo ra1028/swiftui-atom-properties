@@ -351,7 +351,7 @@ private extension StoreContext {
         atom.updated(newValue: newValue, oldValue: oldValue, context: context)
 
         // Calculate topological order for updating downstream efficiently.
-        let edges = topologicalSort(key: key, store: store)
+        let (edges, omitted) = topologicalSort(key: key, store: store)
         var skippingFrom = Set<AtomKey>()
 
         // Updates the given atom.
@@ -389,12 +389,37 @@ private extension StoreContext {
             dependency._loader.performPropagativeUpdate(subscription.update)
         }
 
+        // Do not transitively update atoms that have parent recorded not to update downstream.
+        // However, if the topological sorting has already skipped the vertex as a redundant update,
+        // it should be performed.
+        func convertToValidEdge(_ edge: Edge) -> Edge? {
+            guard skippingFrom.contains(edge.from) else {
+                return edge
+            }
+
+            guard let omittedFrom = omitted[edge.to] else {
+                return nil
+            }
+
+            guard let fromKey = omittedFrom.subtracting(skippingFrom).first else {
+                return nil
+            }
+
+            // Switch atom update transaction context (e.g. animation) to a non-skipped one on
+            // a best-effort basis.
+            // Topological sorting itself does not always produce an idempotent result when multiple
+            // dependencies of an atom update simultaneously and there's no valid update order rule to
+            // determine which atom produced the transitive update, and thus here chooses a random
+            // dependent atom from omitted ones.
+            return Edge(from: fromKey, to: edge.to)
+        }
+
         // Performs atom updates ahead of notifying updates to subscriptions.
         for edge in edges {
             switch edge.to {
             case .atom(let key):
-                // Do not update if the dependency atom is marked as skipping.
-                guard !skippingFrom.contains(edge.from) else {
+                guard let edge = convertToValidEdge(edge) else {
+                    // Record the atom to avoid downstream from being update.
                     skippingFrom.insert(key)
                     continue
                 }
@@ -404,8 +429,7 @@ private extension StoreContext {
                 }
 
             case .subscriber(let key):
-                // Do not update if the dependency atom is marked as skipping.
-                guard !skippingFrom.contains(edge.from) else {
+                guard let edge = convertToValidEdge(edge) else {
                     continue
                 }
 

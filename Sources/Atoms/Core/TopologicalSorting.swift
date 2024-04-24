@@ -1,10 +1,16 @@
 /// DFS topological sorting.
 @MainActor
-internal func topologicalSort(key: AtomKey, store: AtomStore) -> ReversedCollection<[Edge]> {
+internal func topologicalSort(key: AtomKey, store: AtomStore) -> (
+    edges: ReversedCollection<[Edge]>,
+    omitted: [Vertex: Set<AtomKey>]
+) {
     var sorting = TopologicalSorting(key: key, store: store)
     sorting.sort()
 
-    return sorting.edges.reversed()
+    return (
+        edges: sorting.edges.reversed(),
+        omitted: sorting.omitted
+    )
 }
 
 internal enum Vertex: Hashable {
@@ -21,8 +27,9 @@ internal struct Edge: Hashable {
 private struct TopologicalSorting {
     private let key: AtomKey
     private let store: AtomStore
-    private(set) var edges = [Edge]()
     private var trace = Set<Vertex>()
+    private(set) var edges = [Edge]()
+    private(set) var omitted = [Vertex: Set<AtomKey>]()
 
     init(key: AtomKey, store: AtomStore) {
         self.key = key
@@ -30,40 +37,48 @@ private struct TopologicalSorting {
     }
 
     mutating func sort() {
-        traverse(key: key)
+        traverse(key: key, isSkipping: false)
     }
 }
 
 private extension TopologicalSorting {
-    mutating func traverse(key: AtomKey) {
+    mutating func traverse(key: AtomKey, isSkipping: Bool) {
         if let children = store.graph.children[key] {
             for child in ContiguousArray(children) {
-                guard !trace.contains(.atom(key: child)) else {
-                    continue
-                }
-
-                traverse(key: child, from: key)
+                let isSkipping = isSkipping || trace.contains(.atom(key: child))
+                traverse(key: child, from: key, isSkipping: isSkipping)
             }
         }
 
         if let subscriptions = store.state.subscriptions[key] {
             for subscriberKey in ContiguousArray(subscriptions.keys) {
-                guard !trace.contains(.subscriber(key: subscriberKey)) else {
-                    continue
+                let vertex = Vertex.subscriber(key: subscriberKey)
+
+                if isSkipping || trace.contains(.subscriber(key: subscriberKey)) {
+                    omitted[vertex, default: []].insert(key)
+                }
+                else {
+                    let edge = Edge(from: key, to: vertex)
+                    edges.append(edge)
                 }
 
-                let edge = Edge(from: key, to: .subscriber(key: subscriberKey))
-                edges.append(edge)
                 trace.insert(.subscriber(key: subscriberKey))
             }
         }
     }
 
-    mutating func traverse(key: AtomKey, from fromKey: AtomKey) {
-        let edge = Edge(from: fromKey, to: .atom(key: key))
-
+    mutating func traverse(key: AtomKey, from fromKey: AtomKey, isSkipping: Bool) {
         trace.insert(.atom(key: key))
-        traverse(key: key)
-        edges.append(edge)
+        traverse(key: key, isSkipping: isSkipping)
+
+        let vertex = Vertex.atom(key: key)
+
+        if isSkipping {
+            omitted[vertex, default: []].insert(fromKey)
+        }
+        else {
+            let edge = Edge(from: fromKey, to: vertex)
+            edges.append(edge)
+        }
     }
 }
