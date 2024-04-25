@@ -31,7 +31,7 @@ public struct ModifiedAtomLoader<Node: Atom, Modifier: AtomModifier>: AtomLoader
         modifier.shouldUpdateTransitively(newValue: newValue, oldValue: oldValue)
     }
 
-    /// Performs transitive update for dependent atoms .
+    /// Performs transitive update for dependent atoms.
     public func performTransitiveUpdate(_ body: () -> Void) {
         modifier.performTransitiveUpdate(body)
     }

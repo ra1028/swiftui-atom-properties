@@ -38,7 +38,7 @@ public protocol AtomModifier {
     @MainActor
     func shouldUpdateTransitively(newValue: Value, oldValue: Value) -> Bool
 
-    /// Performs transitive update for dependent atoms .
+    /// Performs transitive update for dependent atoms.
     @MainActor
     func performTransitiveUpdate(_ body: () -> Void)
 }

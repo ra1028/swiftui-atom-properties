@@ -345,14 +345,14 @@ private extension StoreContext {
             return
         }
 
-        // Perform side effecbts first.
+        // Perform side effects first.
         let state = getState(of: atom, for: key)
         let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
         atom.updated(newValue: newValue, oldValue: oldValue, context: context)
 
         // Calculate topological order for updating downstream efficiently.
-        let (edges, redundant) = topologicalSort(key: key, store: store)
-        var skippingFrom = Set<AtomKey>()
+        let (edges, redundants) = topologicalSort(key: key, store: store)
+        var skippedDependencies = Set<AtomKey>()
 
         // Updates the given atom.
         func update(atom: some Atom, for key: AtomKey) {
@@ -367,60 +367,60 @@ private extension StoreContext {
             // Check whether if the dependent atoms should be updated transitively.
             guard atom._loader.shouldUpdateTransitively(newValue: newCache.value, oldValue: cache.value) else {
                 // Record the atom to avoid downstream from being update.
-                skippingFrom.insert(key)
+                skippedDependencies.insert(key)
                 return
             }
 
-            // Perform side effecbts before updating downstream.
+            // Perform side effects before updating downstream.
             let state = getState(of: atom, for: key)
             let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
             atom.updated(newValue: newCache.value, oldValue: cache.value, context: context)
         }
 
-        // Performs update of the given atom with the parent's context.
+        // Performs update of the given atom with the dependency's context.
         func performUpdate(atom: some Atom, for key: AtomKey, dependency: some Atom) {
             dependency._loader.performTransitiveUpdate {
                 update(atom: atom, for: key)
             }
         }
 
-        // Performs update of the given subscription with the parent's context.
+        // Performs update of the given subscription with the dependency's context.
         func performUpdate(subscription: Subscription, dependency: some Atom) {
             dependency._loader.performTransitiveUpdate(subscription.update)
         }
 
-        // Do not transitively update atoms that have parent recorded not to update downstream.
-        // However, if the topological sorting has already skipped the vertex as a redundant update,
+        // Do not transitively update atoms that have dependency recorded not to update downstream.
+        // However, if the topological sorting has already skipped the vertex as a redundant,
         // it should be performed.
         func convertToValidEdge(_ edge: Edge) -> Edge? {
-            guard skippingFrom.contains(edge.from) else {
+            guard skippedDependencies.contains(edge.from) else {
                 return edge
             }
 
-            guard let redundantFrom = redundant[edge.to] else {
+            guard let redundantDependencies = redundants[edge.to] else {
                 return nil
             }
 
-            guard let fromKey = redundantFrom.subtracting(skippingFrom).first else {
-                return nil
-            }
-
-            // Convert edge's `from`, which represents a dependent atom, to a non-skipped one on
-            // a best-effort basis to switch the update transaction context (e.g. animation).
             // Topological sorting itself does not guarantee idempotent result when multiple
-            // dependencies of an atom update simultaneously and there's no valid update order rule to
-            // determine which atom produced the transitive update, and thus here chooses a random
-            // dependent atom from redundant edges.
+            // dependencies update simultaneously and there's no valid update order to determine
+            // which atom triggered the transitive update, and thus here chooses a random
+            // dependency atom from redundant edges.
+            guard let fromKey = redundantDependencies.subtracting(skippedDependencies).first else {
+                return nil
+            }
+
+            // Convert edge's `from`, which represents a dependency atom, to a non-skipped one on
+            // a best-effort basis to switch the update transaction context (e.g. animation).
             return Edge(from: fromKey, to: edge.to)
         }
 
-        // Performs transitive update for dependent atoms s ahead of notifying updates to subscriptions.
+        // Perform transitive update for dependent atoms ahead of notifying updates to subscriptions.
         for edge in edges {
             switch edge.to {
             case .atom(let key):
                 guard let edge = convertToValidEdge(edge) else {
                     // Record the atom to avoid downstream from being update.
-                    skippingFrom.insert(key)
+                    skippedDependencies.insert(key)
                     continue
                 }
 
@@ -439,7 +439,7 @@ private extension StoreContext {
             }
         }
 
-        // Notify the observers after all updates are complete.
+        // Notify the observers after all updates are completed.
         notifyUpdateToObservers()
     }
 

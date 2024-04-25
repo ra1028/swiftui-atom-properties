@@ -20,7 +20,7 @@ public protocol AtomLoader {
     /// by checking the equivalence of the given old value and new value.
     func shouldUpdateTransitively(newValue: Value, oldValue: Value) -> Bool
 
-    /// Performs transitive update for dependent atoms .
+    /// Performs transitive update for dependent atoms.
     func performTransitiveUpdate(_ body: () -> Void)
 }
 

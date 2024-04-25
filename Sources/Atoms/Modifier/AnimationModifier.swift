@@ -70,7 +70,7 @@ public struct AnimationModifier<T>: AtomModifier {
         value
     }
 
-    /// Performs transitive update for dependent atoms .
+    /// Performs transitive update for dependent atoms.
     public func performTransitiveUpdate(_ body: () -> Void) {
         withAnimation(animation, body)
     }
