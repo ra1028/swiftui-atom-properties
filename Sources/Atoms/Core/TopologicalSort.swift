@@ -12,11 +12,11 @@ internal struct Edge: Hashable {
 @MainActor
 internal func topologicalSort(key: AtomKey, store: AtomStore) -> (
     edges: ReversedCollection<[Edge]>,
-    redundants: [Vertex: Set<AtomKey>]  // key = vertex, value = dependencies
+    redundants: [Vertex: [AtomKey]]  // key = vertex, value = dependencies
 ) {
     var trace = Set<Vertex>()
     var edges = [Edge]()
-    var redundants = [Vertex: Set<AtomKey>]()
+    var redundants = [Vertex: [AtomKey]]()
 
     func traverse(key: AtomKey, isRedundant: Bool) {
         if let children = store.graph.children[key] {
@@ -43,7 +43,7 @@ internal func topologicalSort(key: AtomKey, store: AtomStore) -> (
         traverse(key: key, isRedundant: isRedundant)
 
         if isRedundant {
-            redundants[vertex, default: []].insert(fromKey)
+            redundants[vertex, default: []].append(fromKey)
         }
         else {
             let edge = Edge(from: fromKey, to: vertex)
@@ -58,7 +58,7 @@ internal func topologicalSort(key: AtomKey, store: AtomStore) -> (
         trace.insert(vertex)
 
         if isRedundant {
-            redundants[vertex, default: []].insert(fromKey)
+            redundants[vertex, default: []].append(fromKey)
         }
         else {
             let edge = Edge(from: fromKey, to: vertex)

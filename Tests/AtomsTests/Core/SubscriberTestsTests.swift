@@ -24,7 +24,7 @@ final class SubscriberTests: XCTestCase {
     }
 
     @MainActor
-    func testSubscribingKeys() {
+    func testSubscribing() {
         var state: SubscriberState? = SubscriberState()
         let subscriber = Subscriber(state!)
         let expected: Set = [
@@ -33,13 +33,13 @@ final class SubscriberTests: XCTestCase {
             AtomKey(TestAtom(value: 2)),
         ]
 
-        subscriber.subscribingKeys = expected
+        subscriber.subscribing = expected
 
-        XCTAssertEqual(state?.subscribingKeys, expected)
+        XCTAssertEqual(state?.subscribing, expected)
 
         state = nil
 
-        XCTAssertTrue(subscriber.subscribingKeys.isEmpty)
+        XCTAssertTrue(subscriber.subscribing.isEmpty)
     }
 
     @MainActor

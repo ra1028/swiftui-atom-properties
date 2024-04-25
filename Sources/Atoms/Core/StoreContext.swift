@@ -127,9 +127,9 @@ internal struct StoreContext {
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let cache = getCache(of: atom, for: key, override: override)
-        let isNewSubscription = subscriber.subscribingKeys.insert(key).inserted
+        let isNewSubscription = subscriber.subscribing.insert(key).inserted
 
-        store.state.subscriptions[key, default: [:]].updateValue(subscription, forKey: subscriber.key)
+        store.state.subscriptions[key, default: [:]][subscriber.key] = subscription
         subscriber.unsubscribe = { keys in
             unsubscribe(keys, for: subscriber.key)
         }
@@ -233,7 +233,7 @@ internal struct StoreContext {
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
-        subscriber.subscribingKeys.remove(key)
+        subscriber.subscribing.remove(key)
         unsubscribe([key], for: subscriber.key)
     }
 
@@ -355,32 +355,27 @@ private extension StoreContext {
         var skippedDependencies = Set<AtomKey>()
 
         // Updates the given atom.
-        func update(atom: some Atom, for key: AtomKey) {
-            guard let cache = lookupCache(of: atom, for: key) else {
-                // Here is usually unreachable.
-                return
-            }
-
-            let override = lookupOverride(of: atom)
-            let newCache = makeCache(of: atom, for: key, override: override)
+        func update(for key: AtomKey, cache: some AtomCacheProtocol) {
+            let override = lookupOverride(of: cache.atom)
+            let newCache = makeCache(of: cache.atom, for: key, override: override)
 
             // Check whether if the dependent atoms should be updated transitively.
-            guard atom._loader.shouldUpdateTransitively(newValue: newCache.value, oldValue: cache.value) else {
+            guard cache.atom._loader.shouldUpdateTransitively(newValue: newCache.value, oldValue: cache.value) else {
                 // Record the atom to avoid downstream from being update.
                 skippedDependencies.insert(key)
                 return
             }
 
             // Perform side effects before updating downstream.
-            let state = getState(of: atom, for: key)
+            let state = getState(of: cache.atom, for: key)
             let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
-            atom.updated(newValue: newCache.value, oldValue: cache.value, context: context)
+            cache.atom.updated(newValue: newCache.value, oldValue: cache.value, context: context)
         }
 
         // Performs update of the given atom with the dependency's context.
-        func performUpdate(atom: some Atom, for key: AtomKey, dependency: some Atom) {
+        func performUpdate(for key: AtomKey, cache: some AtomCacheProtocol, dependency: some Atom) {
             dependency._loader.performTransitiveUpdate {
-                update(atom: atom, for: key)
+                update(for: key, cache: cache)
             }
         }
 
@@ -389,28 +384,19 @@ private extension StoreContext {
             dependency._loader.performTransitiveUpdate(subscription.update)
         }
 
-        // Do not transitively update atoms that have dependency recorded not to update downstream.
-        // However, if the topological sorting has already skipped the vertex as a redundant,
-        // it should be performed.
-        func convertToValidEdge(_ edge: Edge) -> Edge? {
+        func validEdge(_ edge: Edge) -> Edge? {
+            // Do not transitively update atoms that have dependency recorded not to update downstream.
             guard skippedDependencies.contains(edge.from) else {
                 return edge
             }
 
-            guard let redundantDependencies = redundants[edge.to] else {
+            // If the topological sorting has marked the vertex as a redundant, the update still performed.
+            guard let fromKey = redundants[edge.to]?.first(where: { !skippedDependencies.contains($0) }) else {
                 return nil
             }
 
-            // Topological sorting itself does not guarantee idempotent result when multiple
-            // dependencies update simultaneously and there's no valid update order to determine
-            // which atom triggered the transitive update, and thus here chooses a random
-            // dependency atom from redundant edges.
-            guard let fromKey = redundantDependencies.subtracting(skippedDependencies).first else {
-                return nil
-            }
-
-            // Convert edge's `from`, which represents a dependency atom, to a non-skipped one on
-            // a best-effort basis to switch the update transaction context (e.g. animation).
+            // Convert edge's `from`, which represents a dependency atom, to a non-skipped one to
+            // change the update transaction context (e.g. animation).
             return Edge(from: fromKey, to: edge.to)
         }
 
@@ -418,22 +404,28 @@ private extension StoreContext {
         for edge in edges {
             switch edge.to {
             case .atom(let key):
-                guard let edge = convertToValidEdge(edge) else {
+                guard let edge = validEdge(edge) else {
                     // Record the atom to avoid downstream from being update.
                     skippedDependencies.insert(key)
                     continue
                 }
 
-                if let cache = store.state.caches[key], let dependencyCache = store.state.caches[edge.from] {
-                    performUpdate(atom: cache.atom, for: key, dependency: dependencyCache.atom)
+                let cache = store.state.caches[key]
+                let dependencyCache = store.state.caches[edge.from]
+
+                if let cache, let dependencyCache {
+                    performUpdate(for: key, cache: cache, dependency: dependencyCache.atom)
                 }
 
             case .subscriber(let key):
-                guard let edge = convertToValidEdge(edge) else {
+                guard let edge = validEdge(edge) else {
                     continue
                 }
 
-                if let subscription = store.state.subscriptions[edge.from]?[key], let dependencyCache = store.state.caches[edge.from] {
+                let subscription = store.state.subscriptions[edge.from]?[key]
+                let dependencyCache = store.state.caches[edge.from]
+
+                if let subscription, let dependencyCache {
                     performUpdate(subscription: subscription, dependency: dependencyCache.atom)
                 }
             }
