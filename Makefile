@@ -4,7 +4,7 @@ SWIFT_FILE_PATHS = Package.swift Tools/Package.swift Sources Tests Examples
 
 .PHONY: proj
 proj:
-	SWIFT_PACKAGE_RESOURCES=.build/checkouts/XcodeGen/SettingPresets $(TOOL) xcodegen -s Examples/project.yml
+	SWIFT_PACKAGE_RESOURCES=Tools/.build/checkouts/XcodeGen/SettingPresets $(TOOL) xcodegen -s Examples/project.yml
 
 .PHONY: format
 format:
