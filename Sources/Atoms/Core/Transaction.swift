@@ -5,7 +5,7 @@ internal final class Transaction {
 
     let key: AtomKey
 
-    private(set) var terminations = ContiguousArray<@MainActor () -> Void>()
+    private(set) var terminations = ContiguousArray<Termination>()
     private(set) var isTerminated = false
 
     init(key: AtomKey, commit: @escaping () -> Void) {
@@ -25,7 +25,7 @@ internal final class Transaction {
             return termination()
         }
 
-        terminations.append(termination)
+        terminations.append(Termination(action: termination))
     }
 
     func terminate() {
@@ -36,7 +36,7 @@ internal final class Transaction {
         self.terminations.removeAll()
 
         for termination in terminations {
-            termination()
+            termination.action()
         }
     }
 }

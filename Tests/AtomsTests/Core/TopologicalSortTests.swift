@@ -68,7 +68,7 @@ final class TopologicalSortTests: XCTestCase {
                 ),
             ],
         ]
-        let expectedRedundants: [[Vertex: [AtomKey]]] = [
+        let expectedRedundants: [[Vertex: ContiguousArray<AtomKey>]] = [
             [
                 .atom(key: key2): [key0],
                 .atom(key: key3): [key2],

@@ -248,7 +248,7 @@ internal struct StoreContext {
 
     @usableFromInline
     func restore(_ snapshot: Snapshot) {
-        let keys = ContiguousArray(snapshot.caches.keys)
+        let keys = snapshot.caches.keys
         var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
 
         for key in keys {
@@ -268,7 +268,7 @@ internal struct StoreContext {
 
             // Release dependencies that are no longer dependent.
             if let dependencies = obsoletedDependencies[key] {
-                for dependency in ContiguousArray(dependencies) {
+                for dependency in dependencies {
                     store.graph.children[dependency]?.remove(key)
                     checkAndRelease(for: dependency)
                 }
@@ -276,7 +276,7 @@ internal struct StoreContext {
 
             // Notify updates only for the subscriptions of restored atoms.
             if let subscriptions = store.state.subscriptions[key] {
-                for subscription in ContiguousArray(subscriptions.values) {
+                for subscription in subscriptions.values {
                     subscription.update()
                 }
             }
@@ -300,7 +300,7 @@ private extension StoreContext {
         let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
 
         // Detatch the atom from its dependencies.
-        for dependency in ContiguousArray(oldDependencies) {
+        for dependency in oldDependencies {
             store.graph.children[dependency]?.remove(key)
         }
 
@@ -309,7 +309,7 @@ private extension StoreContext {
             let obsoletedDependencies = oldDependencies.subtracting(dependencies)
             let newDependencies = dependencies.subtracting(oldDependencies)
 
-            for dependency in ContiguousArray(obsoletedDependencies) {
+            for dependency in obsoletedDependencies {
                 checkAndRelease(for: dependency)
             }
 
@@ -436,7 +436,7 @@ private extension StoreContext {
     }
 
     func unsubscribe<Keys: Sequence<AtomKey>>(_ keys: Keys, for subscriberKey: SubscriberKey) {
-        for key in ContiguousArray(keys) {
+        for key in keys {
             store.state.subscriptions[key]?.removeValue(forKey: subscriberKey)
             checkAndRelease(for: key)
         }
@@ -471,7 +471,7 @@ private extension StoreContext {
         state?.transaction?.terminate()
 
         if let dependencies {
-            for dependency in ContiguousArray(dependencies) {
+            for dependency in dependencies {
                 store.graph.children[dependency]?.remove(key)
                 checkAndRelease(for: dependency)
             }

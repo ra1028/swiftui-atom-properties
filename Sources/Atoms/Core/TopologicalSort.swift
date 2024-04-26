@@ -11,22 +11,22 @@ internal struct Edge: Hashable {
 /// DFS topological sorting.
 @MainActor
 internal func topologicalSort(key: AtomKey, store: AtomStore) -> (
-    edges: ReversedCollection<[Edge]>,
-    redundants: [Vertex: [AtomKey]]  // key = vertex, value = dependencies
+    edges: ReversedCollection<ContiguousArray<Edge>>,
+    redundants: [Vertex: ContiguousArray<AtomKey>]  // key = vertex, value = dependencies
 ) {
     var trace = Set<Vertex>()
-    var edges = [Edge]()
-    var redundants = [Vertex: [AtomKey]]()
+    var edges = ContiguousArray<Edge>()
+    var redundants = [Vertex: ContiguousArray<AtomKey>]()
 
     func traverse(key: AtomKey, isRedundant: Bool) {
         if let children = store.graph.children[key] {
-            for child in ContiguousArray(children) {
+            for child in children {
                 traverse(key: child, from: key, isRedundant: isRedundant)
             }
         }
 
         if let subscriptions = store.state.subscriptions[key] {
-            for subscriberKey in ContiguousArray(subscriptions.keys) {
+            for subscriberKey in subscriptions.keys {
                 traverse(key: subscriberKey, from: key, isRedundant: isRedundant)
             }
         }
