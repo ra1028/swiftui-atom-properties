@@ -37,12 +37,14 @@ public struct AtomLoaderContext<Value, Coordinator> {
     }
 
     internal func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) -> T) -> T {
+        transaction.begin()
         let context = AtomTransactionContext(store: store, transaction: transaction, coordinator: coordinator)
         defer { transaction.commit() }
         return body(context)
     }
 
     internal func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) async throws -> T) async rethrows -> T {
+        transaction.begin()
         let context = AtomTransactionContext(store: store, transaction: transaction, coordinator: coordinator)
         defer { transaction.commit() }
         return try await body(context)

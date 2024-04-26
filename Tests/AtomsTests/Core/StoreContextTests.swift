@@ -256,7 +256,7 @@ final class StoreContextTests: XCTestCase {
         let key = AtomKey(atom)
         let dependency0Key = AtomKey(dependency0)
         let dependency1Key = AtomKey(dependency1)
-        let transaction = Transaction(key: key) {}
+        let transaction = Transaction(key: key)
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let context = StoreContext(store: store, observers: [observer])
@@ -318,10 +318,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual((store.state.caches[dependencyKey] as? AtomCache<DependencyAtom>)?.value, 0)
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0.value as? Int } },
-            [
-                [dependencyKey: 0],
-                [key: 0, dependencyKey: 0],
-            ]
+            [[key: 0, dependencyKey: 0]]
         )
 
         snapshots.removeAll()
@@ -599,7 +596,7 @@ final class StoreContextTests: XCTestCase {
         let transactionAtom = TestTransactionAtom()
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
-        let transaction = Transaction(key: AtomKey(transactionAtom)) {}
+        let transaction = Transaction(key: AtomKey(transactionAtom))
         let store = AtomStore()
         let scope1Token = ScopeKey.Token()
         let scope2Token = ScopeKey.Token()

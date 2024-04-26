@@ -1,22 +1,27 @@
 @usableFromInline
 @MainActor
 internal final class Transaction {
-    private var _commit: (() -> Void)?
+    private var body: (() -> () -> Void)?
+    private var cleanup: (() -> Void)?
 
     let key: AtomKey
 
     private(set) var terminations = ContiguousArray<Termination>()
     private(set) var isTerminated = false
 
-    init(key: AtomKey, commit: @escaping () -> Void) {
+    init(key: AtomKey, _ body: @escaping () -> () -> Void) {
         self.key = key
-        self._commit = commit
+        self.body = body
+    }
+
+    func begin() {
+        cleanup = body?()
+        body = nil
     }
 
     func commit() {
-        let commit = _commit
-        _commit = nil
-        commit?()
+        cleanup?()
+        cleanup = nil
     }
 
     @usableFromInline
@@ -30,6 +35,7 @@ internal final class Transaction {
 
     func terminate() {
         isTerminated = true
+        body = nil
         commit()
 
         let terminations = self.terminations

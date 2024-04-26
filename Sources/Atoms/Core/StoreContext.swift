@@ -296,25 +296,22 @@ private extension StoreContext {
         // Terminate the ongoing transaction first.
         state.transaction?.terminate()
 
-        // Remove current dependencies.
-        let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
-
-        // Detatch the atom from its dependencies.
-        for dependency in oldDependencies {
-            store.graph.children[dependency]?.remove(key)
-        }
-
         let transaction = Transaction(key: key) {
-            let dependencies = store.graph.dependencies[key] ?? []
-            let obsoletedDependencies = oldDependencies.subtracting(dependencies)
-            let newDependencies = dependencies.subtracting(oldDependencies)
+            // Remove current dependencies.
+            let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
 
-            for dependency in obsoletedDependencies {
-                checkAndRelease(for: dependency)
+            // Detatch the atom from its children.
+            for dependency in oldDependencies {
+                store.graph.children[dependency]?.remove(key)
             }
 
-            if !obsoletedDependencies.isEmpty || !newDependencies.isEmpty {
-                notifyUpdateToObservers()
+            return {
+                let dependencies = store.graph.dependencies[key] ?? []
+                let obsoletedDependencies = oldDependencies.subtracting(dependencies)
+
+                for dependency in obsoletedDependencies {
+                    checkAndRelease(for: dependency)
+                }
             }
         }
 

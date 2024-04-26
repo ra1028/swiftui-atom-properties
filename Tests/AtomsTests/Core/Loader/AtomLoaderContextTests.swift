@@ -6,7 +6,7 @@ final class AtomLoaderContextTests: XCTestCase {
     @MainActor
     func testUpdate() {
         let atom = TestValueAtom(value: 0)
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let transaction = Transaction(key: AtomKey(atom))
         var updatedValue: Int?
 
         let context = AtomLoaderContext<Int, Void>(
@@ -25,7 +25,7 @@ final class AtomLoaderContextTests: XCTestCase {
     @MainActor
     func testAddTermination() {
         let atom = TestValueAtom(value: 0)
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let transaction = Transaction(key: AtomKey(atom))
         let context = AtomLoaderContext<Int, Void>(
             store: StoreContext(),
             transaction: transaction,
@@ -46,9 +46,11 @@ final class AtomLoaderContextTests: XCTestCase {
     @MainActor
     func testTransaction() {
         let atom = TestValueAtom(value: 0)
+        var isBegan = false
         var isCommitted = false
         let transaction = Transaction(key: AtomKey(atom)) {
-            isCommitted = true
+            isBegan = true
+            return { isCommitted = true }
         }
         let context = AtomLoaderContext<Int, Void>(
             store: StoreContext(),
@@ -58,15 +60,18 @@ final class AtomLoaderContextTests: XCTestCase {
 
         context.transaction { _ in }
 
+        XCTAssertTrue(isBegan)
         XCTAssertTrue(isCommitted)
     }
 
     @MainActor
     func testAsyncTransaction() async {
         let atom = TestValueAtom(value: 0)
+        var isBegan = false
         var isCommitted = false
         let transaction = Transaction(key: AtomKey(atom)) {
-            isCommitted = true
+            isBegan = true
+            return { isCommitted = true }
         }
         let context = AtomLoaderContext<Int, Void>(
             store: StoreContext(),
@@ -78,6 +83,7 @@ final class AtomLoaderContextTests: XCTestCase {
             try? await Task.sleep(seconds: 0)
         }
 
+        XCTAssertTrue(isBegan)
         XCTAssertTrue(isCommitted)
     }
 }

@@ -96,3 +96,9 @@ extension AtomCache: Equatable where Node: Equatable, Node.Loader.Value: Equatab
         lhs.atom == rhs.atom && lhs.value == rhs.value
     }
 }
+
+extension Transaction {
+    convenience init(key: AtomKey) {
+        self.init(key: key, { {} })
+    }
+}

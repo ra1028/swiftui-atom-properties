@@ -27,7 +27,7 @@ final class TaskPhaseModifierTests: XCTestCase {
     func testModify() {
         let atom = TestValueAtom(value: 0)
         let modifier = TaskPhaseModifier<Int, Never>()
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let transaction = Transaction(key: AtomKey(atom))
         var phase: AsyncPhase<Int, Never>?
         let expectation = expectation(description: "testValue")
         let context = AtomModifierContext<AsyncPhase<Int, Never>>(transaction: transaction) { newPhase in
@@ -48,7 +48,7 @@ final class TaskPhaseModifierTests: XCTestCase {
     func testManageOverridden() {
         let atom = TestValueAtom(value: 0)
         let modifier = TaskPhaseModifier<Int, Never>()
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let transaction = Transaction(key: AtomKey(atom))
         let context = AtomModifierContext<AsyncPhase<Int, Never>>(transaction: transaction) { _ in }
         let phase = modifier.manageOverridden(value: .success(100), context: context)
 
