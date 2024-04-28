@@ -129,12 +129,11 @@ internal struct StoreContext {
         let cache = getCache(of: atom, for: key, override: override)
         let isNewSubscription = subscriber.subscribing.insert(key).inserted
 
-        store.state.subscriptions[key, default: [:]][subscriber.key] = subscription
-        subscriber.unsubscribe = { keys in
-            unsubscribe(keys, for: subscriber.key)
-        }
-
         if isNewSubscription {
+            store.state.subscriptions[key, default: [:]][subscriber.key] = subscription
+            subscriber.unsubscribe = { keys in
+                unsubscribe(keys, for: subscriber.key)
+            }
             notifyUpdateToObservers()
         }
 
