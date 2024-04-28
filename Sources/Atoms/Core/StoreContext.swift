@@ -5,10 +5,10 @@ internal struct StoreContext {
     private let scopeKey: ScopeKey
     private let inheritedScopeKeys: [ScopeID: ScopeKey]
     private let observers: [Observer]
-    private let overrides: [OverrideKey: any AtomOverrideProtocol]
+    private let overrides: [OverrideKey: any OverrideProtocol]
 
     let scopedObservers: [Observer]
-    let scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
+    let scopedOverrides: [OverrideKey: any OverrideProtocol]
 
     init(
         store: AtomStore,
@@ -16,8 +16,8 @@ internal struct StoreContext {
         inheritedScopeKeys: [ScopeID: ScopeKey],
         observers: [Observer],
         scopedObservers: [Observer],
-        overrides: [OverrideKey: any AtomOverrideProtocol],
-        scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
+        overrides: [OverrideKey: any OverrideProtocol],
+        scopedOverrides: [OverrideKey: any OverrideProtocol]
     ) {
         self.store = store
         self.scopeKey = scopeKey
@@ -30,7 +30,7 @@ internal struct StoreContext {
 
     func inherited(
         scopedObservers: [Observer],
-        scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
+        scopedOverrides: [OverrideKey: any OverrideProtocol]
     ) -> StoreContext {
         StoreContext(
             store: store,
@@ -47,7 +47,7 @@ internal struct StoreContext {
         scopeKey: ScopeKey,
         scopeID: ScopeID,
         observers: [Observer],
-        overrides: [OverrideKey: any AtomOverrideProtocol]
+        overrides: [OverrideKey: any OverrideProtocol]
     ) -> StoreContext {
         StoreContext(
             store: store,
@@ -291,11 +291,6 @@ private extension StoreContext {
         of atom: Node,
         for key: AtomKey
     ) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
-        let state = getState(of: atom, for: key)
-
-        // Terminate the ongoing transaction first.
-        state.transaction?.terminate()
-
         let transaction = Transaction(key: key) {
             // Remove current dependencies.
             let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
@@ -315,6 +310,9 @@ private extension StoreContext {
             }
         }
 
+        let state = getState(of: atom, for: key)
+        // Terminate the ongoing transaction first.
+        state.transaction?.terminate()
         // Register the transaction state so it can be terminated from anywhere.
         state.transaction = transaction
 
@@ -516,7 +514,7 @@ private extension StoreContext {
     func getCache<Node: Atom>(
         of atom: Node,
         for key: AtomKey,
-        override: AtomOverride<Node>?
+        override: Override<Node>?
     ) -> AtomCache<Node> {
         lookupCache(of: atom, for: key) ?? makeCache(of: atom, for: key, override: override)
     }
@@ -524,7 +522,7 @@ private extension StoreContext {
     func makeCache<Node: Atom>(
         of atom: Node,
         for key: AtomKey,
-        override: AtomOverride<Node>?
+        override: Override<Node>?
     ) -> AtomCache<Node> {
         let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Loader.Value
@@ -569,7 +567,7 @@ private extension StoreContext {
         return cache
     }
 
-    func lookupOverride<Node: Atom>(of atom: Node) -> AtomOverride<Node>? {
+    func lookupOverride<Node: Atom>(of atom: Node) -> Override<Node>? {
         lazy var overrideKey = OverrideKey(atom)
         lazy var typeOverrideKey = OverrideKey(Node.self)
 
@@ -581,14 +579,14 @@ private extension StoreContext {
             return nil
         }
 
-        guard let override = baseOverride as? AtomOverride<Node> else {
+        guard let override = baseOverride as? Override<Node> else {
             assertionFailure(
                 """
                 [Atoms]
                 Detected an illegal override.
                 There might be duplicate keys or logic failure.
                 Detected: \(type(of: baseOverride))
-                Expected: AtomOverride<\(Node.self)>
+                Expected: Override<\(Node.self)>
                 """
             )
 

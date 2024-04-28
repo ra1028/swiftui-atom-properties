@@ -19,7 +19,7 @@ final class StoreContextTests: XCTestCase {
             observers: [],
             scopedObservers: [],
             overrides: [
-                OverrideKey(atom): AtomOverride<TestAtom<Int>>(isScoped: false) { _ in
+                OverrideKey(atom): Override<TestAtom<Int>>(isScoped: false) { _ in
                     10
                 }
             ],
@@ -61,7 +61,7 @@ final class StoreContextTests: XCTestCase {
                 Observer { snapshots1.append($0) }
             ],
             overrides: [
-                OverrideKey(atom0): AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
+                OverrideKey(atom0): Override<TestAtom<Int>>(isScoped: true) { _ in
                     10
                 }
             ]
@@ -71,7 +71,7 @@ final class StoreContextTests: XCTestCase {
                 Observer { snapshots2.append($0) }
             ],
             scopedOverrides: mutating(scopedContext.scopedOverrides) {
-                $0[OverrideKey(atom1)] = AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
+                $0[OverrideKey(atom1)] = Override<TestAtom<Int>>(isScoped: true) { _ in
                     20
                 }
             }
@@ -114,7 +114,7 @@ final class StoreContextTests: XCTestCase {
                 Observer { snapshots1.append($0) }
             ],
             overrides: [
-                OverrideKey(atom): AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
+                OverrideKey(atom): Override<TestAtom<Int>>(isScoped: true) { _ in
                     10
                 }
             ]
@@ -382,7 +382,7 @@ final class StoreContextTests: XCTestCase {
             scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [
-                OverrideKey(atom): AtomOverride<TestPublisherAtom<Just<Int>>>(isScoped: true) { _ in .success(1) }
+                OverrideKey(atom): Override<TestPublisherAtom<Just<Int>>>(isScoped: true) { _ in .success(1) }
             ]
         )
 
@@ -510,7 +510,7 @@ final class StoreContextTests: XCTestCase {
             scopeKey: rootScopeKey,
             overrides: [
                 // Should override atoms used in any scopes.
-                OverrideKey(atom0): AtomOverride<TestAtom<Int>>(isScoped: false) { _ in
+                OverrideKey(atom0): Override<TestAtom<Int>>(isScoped: false) { _ in
                     10
                 }
             ]
@@ -521,7 +521,7 @@ final class StoreContextTests: XCTestCase {
             observers: [],
             overrides: [
                 // Should scoped to this scope.
-                OverrideKey(atom1): AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
+                OverrideKey(atom1): Override<TestAtom<Int>>(isScoped: true) { _ in
                     20
                 }
             ]
@@ -532,7 +532,7 @@ final class StoreContextTests: XCTestCase {
             observers: [],
             overrides: [
                 // Should override the atoms overridden in the ancestor scopes.
-                OverrideKey(TestAtom<Int>.self): AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
+                OverrideKey(TestAtom<Int>.self): Override<TestAtom<Int>>(isScoped: true) { _ in
                     30
                 }
             ]
@@ -608,7 +608,7 @@ final class StoreContextTests: XCTestCase {
             scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [
-                OverrideKey(dependency1Atom): AtomOverride<TestDependency1Atom>(isScoped: true) { _ in
+                OverrideKey(dependency1Atom): Override<TestDependency1Atom>(isScoped: true) { _ in
                     10
                 }
             ]
@@ -618,7 +618,7 @@ final class StoreContextTests: XCTestCase {
             scopeID: ScopeID(DefaultScopeID()),
             observers: [],
             overrides: [
-                OverrideKey(dependency2Atom): AtomOverride<TestDependency2Atom>(isScoped: true) { _ in
+                OverrideKey(dependency2Atom): Override<TestDependency2Atom>(isScoped: true) { _ in
                     20
                 }
             ]
@@ -860,8 +860,8 @@ final class StoreContextTests: XCTestCase {
         let scope1Key = ScopeKey(token: scope1Token)
         let scope2Key = ScopeKey(token: scope2Token)
 
-        var scopedOverride = [OverrideKey: any AtomOverrideProtocol]()
-        scopedOverride[OverrideKey(atom1)] = AtomOverride<TestAtom<Int>>(isScoped: true) { _ in
+        var scopedOverride = [OverrideKey: any OverrideProtocol]()
+        scopedOverride[OverrideKey(atom1)] = Override<TestAtom<Int>>(isScoped: true) { _ in
             100
         }
 

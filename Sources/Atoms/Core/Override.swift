@@ -1,5 +1,5 @@
 @usableFromInline
-internal protocol AtomOverrideProtocol {
+internal protocol OverrideProtocol {
     associatedtype Node: Atom
 
     var isScoped: Bool { get }
@@ -7,7 +7,7 @@ internal protocol AtomOverrideProtocol {
 }
 
 @usableFromInline
-internal struct AtomOverride<Node: Atom>: AtomOverrideProtocol {
+internal struct Override<Node: Atom>: OverrideProtocol {
     @usableFromInline
     let isScoped: Bool
     @usableFromInline

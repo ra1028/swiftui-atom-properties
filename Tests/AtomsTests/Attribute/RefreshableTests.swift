@@ -64,7 +64,7 @@ final class RefreshableTests: XCTestCase {
                 scopeID: ScopeID(DefaultScopeID()),
                 observers: [],
                 overrides: [
-                    OverrideKey(atom): AtomOverride<TestCustomRefreshableAtom<Just<Int>>>(isScoped: true) { _ in .success(2) }
+                    OverrideKey(atom): Override<TestCustomRefreshableAtom<Just<Int>>>(isScoped: true) { _ in .success(2) }
                 ]
             )
 
