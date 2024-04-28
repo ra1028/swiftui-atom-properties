@@ -46,11 +46,11 @@ final class AtomLoaderContextTests: XCTestCase {
     @MainActor
     func testTransaction() {
         let atom = TestValueAtom(value: 0)
-        var isBegan = false
-        var isCommitted = false
+        var didBegin = false
+        var didCommit = false
         let transaction = Transaction(key: AtomKey(atom)) {
-            isBegan = true
-            return { isCommitted = true }
+            didBegin = true
+            return { didCommit = true }
         }
         let context = AtomLoaderContext<Int, Void>(
             store: StoreContext(),
@@ -60,18 +60,18 @@ final class AtomLoaderContextTests: XCTestCase {
 
         context.transaction { _ in }
 
-        XCTAssertTrue(isBegan)
-        XCTAssertTrue(isCommitted)
+        XCTAssertTrue(didBegin)
+        XCTAssertTrue(didCommit)
     }
 
     @MainActor
     func testAsyncTransaction() async {
         let atom = TestValueAtom(value: 0)
-        var isBegan = false
-        var isCommitted = false
+        var didBegin = false
+        var didCommit = false
         let transaction = Transaction(key: AtomKey(atom)) {
-            isBegan = true
-            return { isCommitted = true }
+            didBegin = true
+            return { didCommit = true }
         }
         let context = AtomLoaderContext<Int, Void>(
             store: StoreContext(),
@@ -83,7 +83,7 @@ final class AtomLoaderContextTests: XCTestCase {
             try? await Task.sleep(seconds: 0)
         }
 
-        XCTAssertTrue(isBegan)
-        XCTAssertTrue(isCommitted)
+        XCTAssertTrue(didBegin)
+        XCTAssertTrue(didCommit)
     }
 }

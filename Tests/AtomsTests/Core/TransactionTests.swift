@@ -53,39 +53,39 @@ final class TransactionTests: XCTestCase {
     @MainActor
     func testTerminate() {
         let key = AtomKey(TestValueAtom(value: 0))
-        var isBegan = false
-        var isCommitted = false
-        var isTerminationCalled = false
+        var didBegin = false
+        var didCommit = false
+        var didTerminate = false
         let transaction = Transaction(key: key) {
-            isBegan = true
-            return { isCommitted = true }
+            didBegin = true
+            return { didCommit = true }
         }
 
         transaction.addTermination {
-            isTerminationCalled = true
+            didTerminate = true
         }
 
-        XCTAssertFalse(isBegan)
-        XCTAssertFalse(isCommitted)
-        XCTAssertFalse(isTerminationCalled)
+        XCTAssertFalse(didBegin)
+        XCTAssertFalse(didCommit)
+        XCTAssertFalse(didTerminate)
         XCTAssertFalse(transaction.isTerminated)
         XCTAssertFalse(transaction.terminations.isEmpty)
 
         transaction.begin()
         transaction.terminate()
 
-        XCTAssertTrue(isBegan)
-        XCTAssertTrue(isCommitted)
-        XCTAssertTrue(isTerminationCalled)
+        XCTAssertTrue(didBegin)
+        XCTAssertTrue(didCommit)
+        XCTAssertTrue(didTerminate)
         XCTAssertTrue(transaction.isTerminated)
         XCTAssertTrue(transaction.terminations.isEmpty)
 
-        isTerminationCalled = false
+        didTerminate = false
         transaction.addTermination {
-            isTerminationCalled = true
+            didTerminate = true
         }
 
-        XCTAssertTrue(isTerminationCalled)
+        XCTAssertTrue(didTerminate)
         XCTAssertTrue(transaction.terminations.isEmpty)
     }
 }
