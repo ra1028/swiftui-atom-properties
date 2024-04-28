@@ -60,7 +60,7 @@ public struct TaskPhaseModifier<Success, Failure: Error>: RefreshableAtomModifie
             }
         }
 
-        context.addTermination(task.cancel)
+        context.onTermination = task.cancel
 
         return .suspending
     }
@@ -73,7 +73,7 @@ public struct TaskPhaseModifier<Success, Failure: Error>: RefreshableAtomModifie
     /// Refreshes and waits for the passed original value to finish outputting values
     /// and returns a final value.
     public func refresh(modifying value: BaseValue, context: Context) async -> Value {
-        context.addTermination(value.cancel)
+        context.onTermination = value.cancel
 
         return await withTaskCancellationHandler {
             await AsyncPhase(value.result)

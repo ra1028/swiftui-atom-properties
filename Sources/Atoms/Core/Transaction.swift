@@ -6,12 +6,25 @@ internal final class Transaction {
 
     let key: AtomKey
 
-    private(set) var terminations = ContiguousArray<Termination>()
+    private var termination: (@MainActor () -> Void)?
     private(set) var isTerminated = false
 
     init(key: AtomKey, _ body: @escaping () -> () -> Void) {
         self.key = key
         self.body = body
+    }
+
+    var onTermination: (@MainActor () -> Void)? {
+        get { termination }
+        set {
+            guard !isTerminated else {
+                newValue?()
+                return
+            }
+
+            termination = newValue
+        }
+
     }
 
     func begin() {
@@ -24,25 +37,12 @@ internal final class Transaction {
         cleanup = nil
     }
 
-    @usableFromInline
-    func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        guard !isTerminated else {
-            return termination()
-        }
-
-        terminations.append(Termination(action: termination))
-    }
-
     func terminate() {
         isTerminated = true
+
+        termination?()
+        termination = nil
         body = nil
         commit()
-
-        let terminations = self.terminations
-        self.terminations.removeAll()
-
-        for termination in terminations {
-            termination.action()
-        }
     }
 }

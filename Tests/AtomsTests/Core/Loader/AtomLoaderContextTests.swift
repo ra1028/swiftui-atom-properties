@@ -23,7 +23,7 @@ final class AtomLoaderContextTests: XCTestCase {
     }
 
     @MainActor
-    func testAddTermination() {
+    func testOnTermination() {
         let atom = TestValueAtom(value: 0)
         let transaction = Transaction(key: AtomKey(atom))
         let context = AtomLoaderContext<Int, Void>(
@@ -32,15 +32,14 @@ final class AtomLoaderContextTests: XCTestCase {
             coordinator: ()
         ) { _ in }
 
-        context.addTermination {}
-        context.addTermination {}
-
-        XCTAssertEqual(transaction.terminations.count, 2)
+        context.onTermination = {}
+        XCTAssertNotNil(context.onTermination)
 
         transaction.terminate()
-        context.addTermination {}
+        XCTAssertNil(context.onTermination)
 
-        XCTAssertTrue(transaction.terminations.isEmpty)
+        context.onTermination = {}
+        XCTAssertNil(context.onTermination)
     }
 
     @MainActor

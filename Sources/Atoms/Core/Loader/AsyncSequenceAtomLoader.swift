@@ -30,7 +30,7 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
             }
         }
 
-        context.addTermination(task.cancel)
+        context.onTermination = task.cancel
 
         return .suspending
     }
@@ -61,7 +61,7 @@ public struct AsyncSequenceAtomLoader<Node: AsyncSequenceAtom>: RefreshableAtomL
             return phase
         }
 
-        context.addTermination(task.cancel)
+        context.onTermination = task.cancel
 
         return await withTaskCancellationHandler {
             await task.value

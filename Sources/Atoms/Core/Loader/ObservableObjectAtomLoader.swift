@@ -35,7 +35,7 @@ public struct ObservableObjectAtomLoader<Node: ObservableObjectAtom>: AtomLoader
                 }
             }
 
-        context.addTermination(cancellable.cancel)
+        context.onTermination = cancellable.cancel
 
         return value
     }

@@ -1482,8 +1482,8 @@ final class StoreContextTests: XCTestCase {
 
             let state = store.state.states[AtomKey(atom)]
 
-            // Should be 1 (TestAtom's Task cancellation)
-            XCTAssertEqual(1, state?.transaction?.terminations.count)
+            // TestAtom's Task cancellation
+            XCTAssertNotNil(state?.transaction?.onTermination)
         }
 
         do {
@@ -1511,8 +1511,8 @@ final class StoreContextTests: XCTestCase {
 
             let state = store.state.states[AtomKey(atom)]
 
-            // Should be 1 (TestAtom's Task cancellation)
-            XCTAssertEqual(1, state?.transaction?.terminations.count)
+            // TestAtom's Task cancellation
+            XCTAssertNotNil(state?.transaction?.onTermination)
         }
 
         do {
@@ -1539,8 +1539,8 @@ final class StoreContextTests: XCTestCase {
 
             let state = store.state.states[AtomKey(atom)]
 
-            // Should be 1 (TestAtom's Task cancellation)
-            XCTAssertEqual(1, state?.transaction?.terminations.count)
+            // TestAtom's Task cancellation
+            XCTAssertNotNil(state?.transaction?.onTermination)
         }
 
         do {

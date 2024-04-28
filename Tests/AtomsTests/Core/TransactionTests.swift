@@ -39,15 +39,20 @@ final class TransactionTests: XCTestCase {
     }
 
     @MainActor
-    func testAddTermination() {
+    func testOnTermination() {
         let key = AtomKey(TestValueAtom(value: 0))
         let transaction = Transaction(key: key)
 
-        XCTAssertTrue(transaction.terminations.isEmpty)
-        transaction.addTermination {}
-        XCTAssertEqual(transaction.terminations.count, 1)
-        transaction.addTermination {}
-        XCTAssertEqual(transaction.terminations.count, 2)
+        XCTAssertNil(transaction.onTermination)
+
+        transaction.onTermination = {}
+        XCTAssertNotNil(transaction.onTermination)
+
+        transaction.terminate()
+        XCTAssertNil(transaction.onTermination)
+
+        transaction.onTermination = {}
+        XCTAssertNil(transaction.onTermination)
     }
 
     @MainActor
@@ -61,7 +66,7 @@ final class TransactionTests: XCTestCase {
             return { didCommit = true }
         }
 
-        transaction.addTermination {
+        transaction.onTermination = {
             didTerminate = true
         }
 
@@ -69,7 +74,7 @@ final class TransactionTests: XCTestCase {
         XCTAssertFalse(didCommit)
         XCTAssertFalse(didTerminate)
         XCTAssertFalse(transaction.isTerminated)
-        XCTAssertFalse(transaction.terminations.isEmpty)
+        XCTAssertNotNil(transaction.onTermination)
 
         transaction.begin()
         transaction.terminate()
@@ -78,14 +83,14 @@ final class TransactionTests: XCTestCase {
         XCTAssertTrue(didCommit)
         XCTAssertTrue(didTerminate)
         XCTAssertTrue(transaction.isTerminated)
-        XCTAssertTrue(transaction.terminations.isEmpty)
+        XCTAssertNil(transaction.onTermination)
 
         didTerminate = false
-        transaction.addTermination {
+        transaction.onTermination = {
             didTerminate = true
         }
 
         XCTAssertTrue(didTerminate)
-        XCTAssertTrue(transaction.terminations.isEmpty)
+        XCTAssertNil(transaction.onTermination)
     }
 }

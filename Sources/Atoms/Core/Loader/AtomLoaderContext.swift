@@ -28,12 +28,13 @@ public struct AtomLoaderContext<Value, Coordinator> {
         }
     }
 
-    internal func update(with value: Value) {
-        update(value)
+    internal var onTermination: (@MainActor () -> Void)? {
+        get { transaction.onTermination }
+        nonmutating set { transaction.onTermination = newValue }
     }
 
-    internal func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        transaction.addTermination(termination)
+    internal func update(with value: Value) {
+        update(value)
     }
 
     internal func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) -> T) -> T {

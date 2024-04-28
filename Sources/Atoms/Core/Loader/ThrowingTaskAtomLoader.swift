@@ -28,7 +28,7 @@ public struct ThrowingTaskAtomLoader<Node: ThrowingTaskAtom>: AsyncAtomLoader {
 
     /// Manage given overridden value updates and cancellations.
     public func manageOverridden(value: Value, context: Context) -> Value {
-        context.addTermination(value.cancel)
+        context.onTermination = value.cancel
         return value
     }
 
@@ -43,7 +43,7 @@ public struct ThrowingTaskAtomLoader<Node: ThrowingTaskAtom>: AsyncAtomLoader {
     /// Refreshes and waits for the passed value to finish outputting values
     /// and returns a final value.
     public func refresh(overridden value: Value, context: Context) async -> Value {
-        context.addTermination(value.cancel)
+        context.onTermination = value.cancel
 
         return await withTaskCancellationHandler {
             _ = await value.result
