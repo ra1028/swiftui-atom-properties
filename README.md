@@ -1037,7 +1037,7 @@ A context available through the `@ViewContext` property wrapper when using atoms
 
 |API|Use|
 |:--|:--|
-|[binding](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomwatchablecontext/binding(_:))|Gets a binding to the atom state.|
+|[binding](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/binding(_:))|Gets a binding to the atom state.|
 |[snapshot()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/snapshot())|For debugging, takes a snapshot that captures specific set of values of atoms.|
 
 <details><summary><code>📖 Example</code></summary>
