@@ -1,3 +1,5 @@
+import SwiftUI
+
 /// A context structure to read, watch, and otherwise interact with atoms.
 ///
 /// When an atom is watched through this context, and that atom is updated,
@@ -199,6 +201,34 @@ public struct AtomViewContext: AtomWatchableContext {
             atom,
             subscriber: _subscriber,
             subscription: _subscription
+        )
+    }
+
+    /// Creates a `Binding` that accesses the value of the given read-write atom.
+    ///
+    /// This method only accepts read-write atoms such as ones conforming to ``StateAtom``,
+    /// and returns a binding that accesses the value or set a new value for the atom.
+    /// When you set a new value to the `wrappedValue` of the returned binding, it assigns the value
+    /// to the atom, and immediately notifies downstream atoms and views.
+    /// Note that the binding initiates watching the given atom when the value is accessed through the
+    /// `wrappedValue`.
+    ///
+    /// ```swift
+    /// let context = ...
+    /// let binding = context.binding(TextAtom())
+    /// binding.wrappedValue = "New text"
+    /// binding.wrappedValue.append(" is mutated!")
+    /// print(binding.wrappedValue) // Prints "New text is mutated!"
+    /// ```
+    ///
+    /// - Parameter atom: An atom to create binding to.
+    ///
+    /// - Returns: A binding to the atom value.
+    @inlinable
+    public func binding<Node: StateAtom>(_ atom: Node) -> Binding<Node.Loader.Value> {
+        Binding(
+            get: { watch(atom) },
+            set: { set($0, for: atom) }
         )
     }
 

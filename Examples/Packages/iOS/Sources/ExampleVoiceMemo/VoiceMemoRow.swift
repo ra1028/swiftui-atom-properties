@@ -9,7 +9,7 @@ struct VoiceMemoRow: View {
     var context
 
     var isPlaying: Binding<Bool> {
-        context.state(IsPlayingAtom(voiceMemo: voiceMemo))
+        context.binding(IsPlayingAtom(voiceMemo: voiceMemo))
     }
 
     var elapsedTime: TimeInterval {

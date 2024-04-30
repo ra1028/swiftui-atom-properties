@@ -190,33 +190,3 @@ public protocol AtomWatchableContext: AtomContext {
     @discardableResult
     func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value
 }
-
-public extension AtomWatchableContext {
-    /// Creates a `Binding` that accesses the value associated with the given read-write atom.
-    ///
-    /// This method only accepts read-write atoms such as types conforming to ``StateAtom``,
-    /// and returns a binding that accesses the value or assigns a new value for the atom.
-    /// When you set a new value to the `wrappedValue` property of the binding, it assigns the value
-    /// to the atom, and immediately notifies downstream atoms and views.
-    /// Note that the binding initiates watching the given atom when the value is accessed through the
-    /// `wrappedValue` property.
-    ///
-    /// ```swift
-    /// let context = ...
-    /// let binding = context.state(TextAtom())
-    /// binding.wrappedValue = "New text"
-    /// binding.wrappedValue.append(" is mutated!")
-    /// print(binding.wrappedValue) // Prints "New text is mutated!"
-    /// ```
-    ///
-    /// - Parameter atom: An atom to create binding for.
-    ///
-    /// - Returns: The value associated with the given atom.
-    @inlinable
-    func state<Node: StateAtom>(_ atom: Node) -> Binding<Node.Loader.Value> {
-        Binding(
-            get: { watch(atom) },
-            set: { self[atom] = $0 }
-        )
-    }
-}

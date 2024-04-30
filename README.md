@@ -1025,7 +1025,6 @@ Context is a structure for using and interacting with atom values from views or 
 |[set](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/set(_:for:))|Sets a new value to the atom.|
 |[modify](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/modify(_:body:))|Modifies the cached atom value.|
 |[subscript[]](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/subscript(_:))|Read-write access for applying mutating methods.|
-|[state](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomwatchablecontext/state(_:))|Gets a binding to the atom state.|
 |[refresh](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/refresh(_:)-1gb3a)|Produce a new value of the atom after waiting until asynchronous operation is complete.|
 |[reset](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/reset(_:))|Reset an atom to the default value or a first output.|
 
@@ -1038,6 +1037,7 @@ A context available through the `@ViewContext` property wrapper when using atoms
 
 |API|Use|
 |:--|:--|
+|[binding](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/binding(_:))|Gets a binding to the atom state.|
 |[snapshot()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/snapshot())|For debugging, takes a snapshot that captures specific set of values of atoms.|
 
 <details><summary><code>📖 Example</code></summary>
@@ -1063,8 +1063,8 @@ struct BooksView: View {
     var body: some View {
         // watch
         let booksTask = context.watch(FetchBooksAtom())     // Task<[Book], Error>
-        // state
-        let searchQuery = context.state(SearchQueryAtom())  // Binding<String>
+        // binding
+        let searchQuery = context.binding(SearchQueryAtom())  // Binding<String>
 
         List {
             Suspense(booksTask) { books in
