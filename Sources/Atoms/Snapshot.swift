@@ -23,9 +23,9 @@ public struct Snapshot: CustomStringConvertible {
         """
     }
 
-    /// Lookup a value associated with the given atom from the set captured in this snapshot..
+    /// Lookup a value associated with the given atom from the set captured in this snapshot.
     ///
-    /// Note that this does not look up a overridden atom.
+    /// Note that this does not look up scoped or overridden atoms.
     ///
     /// - Parameter atom: An atom to lookup.
     ///
