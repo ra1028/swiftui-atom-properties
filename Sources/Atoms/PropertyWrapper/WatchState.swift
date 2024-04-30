@@ -62,6 +62,6 @@ public struct WatchState<Node: StateAtom>: DynamicProperty {
     /// Accessing this property itself does not start watching the atom, but does when
     /// the view accesses to the getter of the binding.
     public var projectedValue: Binding<Node.Loader.Value> {
-        context.state(atom)
+        context.binding(atom)
     }
 }

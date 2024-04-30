@@ -9,6 +9,16 @@ public extension Atom {
     }
 }
 
+public extension AtomWatchableContext {
+    @available(*, deprecated, renamed: "AtomViewContext.binding(_:)")
+    func state<Node: StateAtom>(_ atom: Node) -> Binding<Node.Loader.Value> {
+        Binding(
+            get: { watch(atom) },
+            set: { set($0, for: atom) }
+        )
+    }
+}
+
 public extension Resettable {
     @available(*, deprecated, renamed: "CurrentContext")
     typealias ResetContext = AtomCurrentContext<Loader.Coordinator>
