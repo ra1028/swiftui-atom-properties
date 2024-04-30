@@ -11,7 +11,7 @@ final class AtomViewContextTests: XCTestCase {
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
             store: StoreContext(store: store),
-            subscriber: Atoms.Subscriber(subscriberState),
+            subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
 
@@ -25,7 +25,7 @@ final class AtomViewContextTests: XCTestCase {
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
             store: StoreContext(store: store),
-            subscriber: Atoms.Subscriber(subscriberState),
+            subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
 
@@ -43,7 +43,7 @@ final class AtomViewContextTests: XCTestCase {
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
             store: StoreContext(store: store),
-            subscriber: Atoms.Subscriber(subscriberState),
+            subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
 
@@ -66,7 +66,7 @@ final class AtomViewContextTests: XCTestCase {
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
             store: StoreContext(store: store),
-            subscriber: Atoms.Subscriber(subscriberState),
+            subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
 
@@ -85,7 +85,7 @@ final class AtomViewContextTests: XCTestCase {
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
             store: StoreContext(store: store),
-            subscriber: Atoms.Subscriber(subscriberState),
+            subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
 
@@ -106,7 +106,7 @@ final class AtomViewContextTests: XCTestCase {
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
             store: StoreContext(store: store),
-            subscriber: Atoms.Subscriber(subscriberState),
+            subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
 
@@ -141,7 +141,7 @@ final class AtomViewContextTests: XCTestCase {
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
             store: StoreContext(store: store),
-            subscriber: Atoms.Subscriber(subscriberState),
+            subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
 
@@ -153,12 +153,33 @@ final class AtomViewContextTests: XCTestCase {
     }
 
     @MainActor
+    func testBinding() {
+        let atom = TestStateAtom(defaultValue: 0)
+        let store = AtomStore()
+        let subscriberState = SubscriberState()
+        let context = AtomViewContext(
+            store: StoreContext(store: store),
+            subscriber: Subscriber(subscriberState),
+            subscription: Subscription()
+        )
+
+        let binding = context.binding(atom)
+
+        XCTAssertEqual(context.read(atom), 0)
+
+        binding.wrappedValue = 100
+
+        XCTAssertEqual(binding.wrappedValue, 100)
+        XCTAssertEqual(context.read(atom), 100)
+    }
+
+    @MainActor
     func testSnapshot() {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
             store: StoreContext(store: store),
-            subscriber: Atoms.Subscriber(subscriberState),
+            subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
         let atom0 = TestAtom(value: 0)
@@ -198,7 +219,7 @@ final class AtomViewContextTests: XCTestCase {
         var subscriberState: SubscriberState? = SubscriberState()
         let context = AtomViewContext(
             store: StoreContext(store: store),
-            subscriber: Atoms.Subscriber(subscriberState!),
+            subscriber: Subscriber(subscriberState!),
             subscription: Subscription()
         )
 
