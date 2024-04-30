@@ -345,7 +345,7 @@ private extension StoreContext {
         atom.updated(newValue: newValue, oldValue: oldValue, context: context)
 
         // Calculate topological order for updating downstream efficiently.
-        let (edges, redundants) = topologicalSort(key: key, store: store)
+        let (edges, redundantDependencies) = store.topologicalSorted(key: key)
         var skippedDependencies = Set<AtomKey>()
 
         // Updates the given atom.
@@ -385,7 +385,7 @@ private extension StoreContext {
             }
 
             // If the topological sorting has marked the vertex as a redundant, the update still performed.
-            guard let fromKey = redundants[edge.to]?.first(where: { !skippedDependencies.contains($0) }) else {
+            guard let fromKey = redundantDependencies[edge.to]?.first(where: { !skippedDependencies.contains($0) }) else {
                 return nil
             }
 

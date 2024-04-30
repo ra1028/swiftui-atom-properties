@@ -29,7 +29,7 @@ final class TopologicalSortTests: XCTestCase {
             key3: [subscriberKey: Subscription()],
         ]
 
-        let sorted = topologicalSort(key: key0, store: store)
+        let sorted = store.topologicalSorted(key: key0)
         let expectedEdges = [
             [
                 Edge(
@@ -82,6 +82,6 @@ final class TopologicalSortTests: XCTestCase {
         ]
 
         XCTAssertTrue(expectedEdges.contains(Array(sorted.edges)))
-        XCTAssertTrue(expectedRedundants.contains(sorted.redundants))
+        XCTAssertTrue(expectedRedundants.contains(sorted.redundantDependencies))
     }
 }
