@@ -51,14 +51,14 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: Tools/bin
-          key: spm-${{ runner.os }}-${{env.DEVELOPER_DIR}}-${{ hashFiles('Package.swift') }}
+          key: spm-${{ runner.os }}-${{env.DEVELOPER_DIR}}-${{ hashFiles('Tools/Package.swift') }}
       - name: Validate lint
         run: make lint
       - name: Validate format
         run: |
           make format
-          if [ -n "$(git status --porcelain)" ]; then git diff --name-only && echo "Make sure that the code is formated by 'make format'."; exit 1; fi
+          if [ -n "$(git status --porcelain)" ]; then git diff && echo "Make sure that the code is formated by 'make format'."; exit 1; fi
       - name: Validate example project
         run: |
           make proj
-          if [ -n "$(git status --porcelain)" ]; then git diff --name-only && echo "Make sure that 'Examples/App.xcodeproj' is formated by 'make proj'."; exit 1; fi
+          if [ -n "$(git status --porcelain)" ]; then git diff && echo "Make sure that 'Examples/App.xcodeproj' is formated by 'make proj'."; exit 1; fi

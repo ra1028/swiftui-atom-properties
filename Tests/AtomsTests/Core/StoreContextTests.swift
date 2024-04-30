@@ -312,7 +312,7 @@ final class StoreContextTests: XCTestCase {
         )
 
         XCTAssertEqual(initialValue, 0)
-        XCTAssertTrue(subscriber.subscribingKeys.contains(key))
+        XCTAssertTrue(subscriber.subscribing.contains(key))
         XCTAssertNotNil(store.state.subscriptions[key]?[subscriber.key])
         XCTAssertEqual((store.state.caches[key] as? AtomCache<TestAtom>)?.value, 0)
         XCTAssertEqual((store.state.caches[dependencyKey] as? AtomCache<DependencyAtom>)?.value, 0)
@@ -666,7 +666,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(scoped2Context.watch(atom, subscriber: subscriber, subscription: Subscription()), 21)
         XCTAssertEqual(scoped2Context.watch(publisherAtom, subscriber: subscriber, subscription: Subscription()), .suspending)
 
-        // Should set the value and then propagate it to the dependent atoms..
+        // Should set the value and then update the dependent atoms transitively.
         scoped2Context.set(20, for: dependency1Atom)
 
         // Should set the value because the atom depends on the shared `dependency1Atom`.
@@ -1094,6 +1094,275 @@ final class StoreContextTests: XCTestCase {
                 AtomKey(atom2): AtomCache(atom: atom2, value: 2)
             ]
         )
+    }
+
+    @MainActor
+    func testUpdateInTopologicalOrder() {
+        struct TestAtom1: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestAtom2: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1()) * 2
+            }
+        }
+
+        struct TestAtom3: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1()) * 3
+            }
+        }
+
+        struct TestAtom4: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                let value1 = context.watch(TestAtom1())
+                let value2 = context.watch(TestAtom2())
+                let value3 = context.watch(TestAtom3())
+                return value1 + value2 + value3
+            }
+        }
+
+        let store = AtomStore()
+        let context = StoreContext(store: store)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+
+        var updateCount = 0
+        let value0 = context.watch(
+            TestAtom4(),
+            subscriber: subscriber,
+            subscription: Subscription {
+                updateCount += 1
+            }
+        )
+
+        XCTAssertEqual(value0, 0)
+        XCTAssertEqual(updateCount, 0)
+
+        context.set(1, for: TestAtom1())
+        let value1 = context.read(TestAtom4())
+
+        XCTAssertEqual(value1, 6)
+        XCTAssertEqual(updateCount, 1)
+    }
+
+    @MainActor
+    func testTransitiveUpdate() {
+        struct TestAtom1: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestAtom2: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1().changes)
+            }
+        }
+
+        let store = AtomStore()
+        let context = StoreContext(store: store)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+
+        var updateCount = 0
+        let value0 = context.watch(
+            TestAtom2(),
+            subscriber: subscriber,
+            subscription: Subscription {
+                updateCount += 1
+            }
+        )
+
+        XCTAssertEqual(value0, 0)
+        XCTAssertEqual(updateCount, 0)
+
+        context.set(1, for: TestAtom1())
+        let value1 = context.read(TestAtom2())
+
+        XCTAssertEqual(value1, 1)
+        XCTAssertEqual(updateCount, 1)
+
+        context.set(1, for: TestAtom1())
+        let value2 = context.read(TestAtom2())
+
+        XCTAssertEqual(value2, 1)
+        XCTAssertEqual(updateCount, 1)
+    }
+
+    @MainActor
+    func testUpdateSkipping() {
+        struct TestAtom1: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestAtom2: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
+            }
+        }
+
+        struct TestAtom3: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
+            }
+        }
+
+        struct TestAtom4: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
+            }
+        }
+
+        // Scenario:
+        // If multiple atoms with the same update source are subscribed to and
+        // a transitive update from one of them is skipped, from other will take effect.
+        // Flaky.
+        for _ in 0..<100 {
+            let store = AtomStore()
+            let context = StoreContext(store: store)
+            let subscriberState = SubscriberState()
+            let subscriber = Subscriber(subscriberState)
+
+            var updateCount = 0
+            let value0 = context.watch(
+                TestAtom2().changes,
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
+            let value1 = context.watch(
+                TestAtom3().changes,
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
+            let value2 = context.watch(
+                TestAtom4(),
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
+
+            XCTAssertEqual(value0, 0)
+            XCTAssertEqual(value1, 0)
+            XCTAssertEqual(value2, 0)
+            XCTAssertEqual(updateCount, 0)
+
+            context.set(1, for: TestAtom1())
+            let value3 = context.read(TestAtom2().changes)
+            let value4 = context.read(TestAtom3().changes)
+            let value5 = context.read(TestAtom4())
+
+            XCTAssertEqual(value3, 1)
+            XCTAssertEqual(value4, 1)
+            XCTAssertEqual(value5, 1)
+            XCTAssertEqual(updateCount, 1)
+
+            context.set(1, for: TestAtom1())
+            let value6 = context.read(TestAtom2().changes)
+            let value7 = context.read(TestAtom3().changes)
+            let value8 = context.read(TestAtom4())
+
+            XCTAssertEqual(value6, 1)
+            XCTAssertEqual(value7, 1)
+            XCTAssertEqual(value8, 1)
+            XCTAssertEqual(updateCount, 2)
+        }
+    }
+
+    @MainActor
+    func testUpdateSkipping2() {
+        struct TestAtom1: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestAtom2: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
+            }
+        }
+
+        struct TestAtom3: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
+            }
+        }
+
+        struct TestAtom4: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom3().changes) * 2
+            }
+        }
+
+        // Scenario:
+        // When all subscribing atoms skip transitive updates somewhere in their
+        // dependencies, the subscriber will not receive updates.
+        // Flaky.
+        for _ in 0..<100 {
+            let store = AtomStore()
+            let context = StoreContext(store: store)
+            let subscriberState = SubscriberState()
+            let subscriber = Subscriber(subscriberState)
+
+            var updateCount = 0
+            let value0 = context.watch(
+                TestAtom2().changes,
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
+            let value1 = context.watch(
+                TestAtom3().changes,
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
+            let value2 = context.watch(
+                TestAtom4(),
+                subscriber: subscriber,
+                subscription: Subscription {
+                    updateCount += 1
+                }
+            )
+
+            XCTAssertEqual(value0, 0)
+            XCTAssertEqual(value1, 0)
+            XCTAssertEqual(value2, 0)
+            XCTAssertEqual(updateCount, 0)
+
+            context.set(1, for: TestAtom1())
+            let value3 = context.read(TestAtom2().changes)
+            let value4 = context.read(TestAtom3().changes)
+            let value5 = context.read(TestAtom4())
+
+            XCTAssertEqual(value3, 1)
+            XCTAssertEqual(value4, 1)
+            XCTAssertEqual(value5, 2)
+            XCTAssertEqual(updateCount, 1)
+
+            context.set(1, for: TestAtom1())
+            let value6 = context.read(TestAtom2().changes)
+            let value7 = context.read(TestAtom3().changes)
+            let value8 = context.read(TestAtom4())
+
+            XCTAssertEqual(value6, 1)
+            XCTAssertEqual(value7, 1)
+            XCTAssertEqual(value8, 2)
+            XCTAssertEqual(updateCount, 1)
+        }
     }
 
     @MainActor
