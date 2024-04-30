@@ -22,6 +22,6 @@ public struct AtomModifierContext<Value> {
     ///
     /// - Parameter value: An updated value.
     public func update(with value: Value) {
-        self.update(value)
+        update(value)
     }
 }

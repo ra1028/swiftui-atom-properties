@@ -303,6 +303,7 @@ private extension StoreContext {
                 let dependencies = store.graph.dependencies[key] ?? []
                 let obsoletedDependencies = oldDependencies.subtracting(dependencies)
 
+                // Release obsoleted dependencies if no longer used.
                 for dependency in obsoletedDependencies {
                     checkAndRelease(for: dependency)
                 }

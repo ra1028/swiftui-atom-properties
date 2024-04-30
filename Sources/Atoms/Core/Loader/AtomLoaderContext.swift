@@ -23,9 +23,7 @@ public struct AtomLoaderContext<Value, Coordinator> {
     }
 
     internal var modifierContext: AtomModifierContext<Value> {
-        AtomModifierContext(transaction: transaction) { value in
-            update(with: value)
-        }
+        AtomModifierContext(transaction: transaction, update: update)
     }
 
     internal var onTermination: (@MainActor () -> Void)? {
