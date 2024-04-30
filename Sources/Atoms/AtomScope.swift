@@ -49,7 +49,7 @@ import SwiftUI
 ///
 public struct AtomScope<Content: View>: View {
     private let inheritance: Inheritance
-    private var overrides: [OverrideKey: any AtomOverrideProtocol]
+    private var overrides: [OverrideKey: any OverrideProtocol]
     private var observers: [Observer]
     private let content: Content
 
@@ -130,7 +130,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func scopedOverride<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atom)] = AtomOverride(isScoped: true, value: value) }
+        mutating(self) { $0.overrides[OverrideKey(atom)] = Override(isScoped: true, value: value) }
     }
 
     /// Override the atoms used in this scope with the given value.
@@ -148,7 +148,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func scopedOverride<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atomType)] = AtomOverride(isScoped: true, value: value) }
+        mutating(self) { $0.overrides[OverrideKey(atomType)] = Override(isScoped: true, value: value) }
     }
 }
 
@@ -166,7 +166,7 @@ private extension AtomScope {
 
         let id: ScopeID
         let content: Content
-        let overrides: [OverrideKey: any AtomOverrideProtocol]
+        let overrides: [OverrideKey: any OverrideProtocol]
         let observers: [Observer]
 
         @StateObject
@@ -190,7 +190,7 @@ private extension AtomScope {
     struct InheritedContext: View {
         let content: Content
         let store: StoreContext
-        let overrides: [OverrideKey: any AtomOverrideProtocol]
+        let overrides: [OverrideKey: any OverrideProtocol]
         let observers: [Observer]
 
         var body: some View {

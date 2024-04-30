@@ -5,10 +5,10 @@ internal struct StoreContext {
     private let scopeKey: ScopeKey
     private let inheritedScopeKeys: [ScopeID: ScopeKey]
     private let observers: [Observer]
-    private let overrides: [OverrideKey: any AtomOverrideProtocol]
+    private let overrides: [OverrideKey: any OverrideProtocol]
 
     let scopedObservers: [Observer]
-    let scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
+    let scopedOverrides: [OverrideKey: any OverrideProtocol]
 
     init(
         store: AtomStore,
@@ -16,8 +16,8 @@ internal struct StoreContext {
         inheritedScopeKeys: [ScopeID: ScopeKey],
         observers: [Observer],
         scopedObservers: [Observer],
-        overrides: [OverrideKey: any AtomOverrideProtocol],
-        scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
+        overrides: [OverrideKey: any OverrideProtocol],
+        scopedOverrides: [OverrideKey: any OverrideProtocol]
     ) {
         self.store = store
         self.scopeKey = scopeKey
@@ -30,7 +30,7 @@ internal struct StoreContext {
 
     func inherited(
         scopedObservers: [Observer],
-        scopedOverrides: [OverrideKey: any AtomOverrideProtocol]
+        scopedOverrides: [OverrideKey: any OverrideProtocol]
     ) -> StoreContext {
         StoreContext(
             store: store,
@@ -47,7 +47,7 @@ internal struct StoreContext {
         scopeKey: ScopeKey,
         scopeID: ScopeID,
         observers: [Observer],
-        overrides: [OverrideKey: any AtomOverrideProtocol]
+        overrides: [OverrideKey: any OverrideProtocol]
     ) -> StoreContext {
         StoreContext(
             store: store,
@@ -129,12 +129,11 @@ internal struct StoreContext {
         let cache = getCache(of: atom, for: key, override: override)
         let isNewSubscription = subscriber.subscribing.insert(key).inserted
 
-        store.state.subscriptions[key, default: [:]][subscriber.key] = subscription
-        subscriber.unsubscribe = { keys in
-            unsubscribe(keys, for: subscriber.key)
-        }
-
         if isNewSubscription {
+            store.state.subscriptions[key, default: [:]][subscriber.key] = subscription
+            subscriber.unsubscribe = { keys in
+                unsubscribe(keys, for: subscriber.key)
+            }
             notifyUpdateToObservers()
         }
 
@@ -248,7 +247,7 @@ internal struct StoreContext {
 
     @usableFromInline
     func restore(_ snapshot: Snapshot) {
-        let keys = ContiguousArray(snapshot.caches.keys)
+        let keys = snapshot.caches.keys
         var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
 
         for key in keys {
@@ -268,7 +267,7 @@ internal struct StoreContext {
 
             // Release dependencies that are no longer dependent.
             if let dependencies = obsoletedDependencies[key] {
-                for dependency in ContiguousArray(dependencies) {
+                for dependency in dependencies {
                     store.graph.children[dependency]?.remove(key)
                     checkAndRelease(for: dependency)
                 }
@@ -276,7 +275,7 @@ internal struct StoreContext {
 
             // Notify updates only for the subscriptions of restored atoms.
             if let subscriptions = store.state.subscriptions[key] {
-                for subscription in ContiguousArray(subscriptions.values) {
+                for subscription in subscriptions.values {
                     subscription.update()
                 }
             }
@@ -291,33 +290,29 @@ private extension StoreContext {
         of atom: Node,
         for key: AtomKey
     ) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
-        let state = getState(of: atom, for: key)
+        let transaction = Transaction(key: key) {
+            // Remove current dependencies.
+            let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
 
+            // Detatch the atom from its children.
+            for dependency in oldDependencies {
+                store.graph.children[dependency]?.remove(key)
+            }
+
+            return {
+                let dependencies = store.graph.dependencies[key] ?? []
+                let obsoletedDependencies = oldDependencies.subtracting(dependencies)
+
+                // Release obsoleted dependencies if no longer used.
+                for dependency in obsoletedDependencies {
+                    checkAndRelease(for: dependency)
+                }
+            }
+        }
+
+        let state = getState(of: atom, for: key)
         // Terminate the ongoing transaction first.
         state.transaction?.terminate()
-
-        // Remove current dependencies.
-        let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
-
-        // Detatch the atom from its dependencies.
-        for dependency in ContiguousArray(oldDependencies) {
-            store.graph.children[dependency]?.remove(key)
-        }
-
-        let transaction = Transaction(key: key) {
-            let dependencies = store.graph.dependencies[key] ?? []
-            let obsoletedDependencies = oldDependencies.subtracting(dependencies)
-            let newDependencies = dependencies.subtracting(oldDependencies)
-
-            for dependency in ContiguousArray(obsoletedDependencies) {
-                checkAndRelease(for: dependency)
-            }
-
-            if !obsoletedDependencies.isEmpty || !newDependencies.isEmpty {
-                notifyUpdateToObservers()
-            }
-        }
-
         // Register the transaction state so it can be terminated from anywhere.
         state.transaction = transaction
 
@@ -351,7 +346,7 @@ private extension StoreContext {
         atom.updated(newValue: newValue, oldValue: oldValue, context: context)
 
         // Calculate topological order for updating downstream efficiently.
-        let (edges, redundants) = topologicalSort(key: key, store: store)
+        let (edges, redundantDependencies) = store.topologicalSorted(key: key)
         var skippedDependencies = Set<AtomKey>()
 
         // Updates the given atom.
@@ -391,7 +386,7 @@ private extension StoreContext {
             }
 
             // If the topological sorting has marked the vertex as a redundant, the update still performed.
-            guard let fromKey = redundants[edge.to]?.first(where: { !skippedDependencies.contains($0) }) else {
+            guard let fromKey = redundantDependencies[edge.to]?.first(where: { !skippedDependencies.contains($0) }) else {
                 return nil
             }
 
@@ -436,7 +431,7 @@ private extension StoreContext {
     }
 
     func unsubscribe<Keys: Sequence<AtomKey>>(_ keys: Keys, for subscriberKey: SubscriberKey) {
-        for key in ContiguousArray(keys) {
+        for key in keys {
             store.state.subscriptions[key]?.removeValue(forKey: subscriberKey)
             checkAndRelease(for: key)
         }
@@ -471,7 +466,7 @@ private extension StoreContext {
         state?.transaction?.terminate()
 
         if let dependencies {
-            for dependency in ContiguousArray(dependencies) {
+            for dependency in dependencies {
                 store.graph.children[dependency]?.remove(key)
                 checkAndRelease(for: dependency)
             }
@@ -519,7 +514,7 @@ private extension StoreContext {
     func getCache<Node: Atom>(
         of atom: Node,
         for key: AtomKey,
-        override: AtomOverride<Node>?
+        override: Override<Node>?
     ) -> AtomCache<Node> {
         lookupCache(of: atom, for: key) ?? makeCache(of: atom, for: key, override: override)
     }
@@ -527,7 +522,7 @@ private extension StoreContext {
     func makeCache<Node: Atom>(
         of atom: Node,
         for key: AtomKey,
-        override: AtomOverride<Node>?
+        override: Override<Node>?
     ) -> AtomCache<Node> {
         let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Loader.Value
@@ -572,7 +567,7 @@ private extension StoreContext {
         return cache
     }
 
-    func lookupOverride<Node: Atom>(of atom: Node) -> AtomOverride<Node>? {
+    func lookupOverride<Node: Atom>(of atom: Node) -> Override<Node>? {
         lazy var overrideKey = OverrideKey(atom)
         lazy var typeOverrideKey = OverrideKey(Node.self)
 
@@ -584,14 +579,14 @@ private extension StoreContext {
             return nil
         }
 
-        guard let override = baseOverride as? AtomOverride<Node> else {
+        guard let override = baseOverride as? Override<Node> else {
             assertionFailure(
                 """
                 [Atoms]
                 Detected an illegal override.
                 There might be duplicate keys or logic failure.
                 Detected: \(type(of: baseOverride))
-                Expected: AtomOverride<\(Node.self)>
+                Expected: Override<\(Node.self)>
                 """
             )
 

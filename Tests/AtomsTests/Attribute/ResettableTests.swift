@@ -68,7 +68,7 @@ final class ResettableTests: XCTestCase {
                 scopeID: ScopeID(DefaultScopeID()),
                 observers: [],
                 overrides: [
-                    OverrideKey(atom): AtomOverride<TestCustomResettableAtom<Int>>(isScoped: true) { _ in
+                    OverrideKey(atom): Override<TestCustomResettableAtom<Int>>(isScoped: true) { _ in
                         2
                     }
                 ]

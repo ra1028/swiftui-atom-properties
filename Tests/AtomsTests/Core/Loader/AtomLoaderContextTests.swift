@@ -6,7 +6,7 @@ final class AtomLoaderContextTests: XCTestCase {
     @MainActor
     func testUpdate() {
         let atom = TestValueAtom(value: 0)
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let transaction = Transaction(key: AtomKey(atom))
         var updatedValue: Int?
 
         let context = AtomLoaderContext<Int, Void>(
@@ -23,32 +23,33 @@ final class AtomLoaderContextTests: XCTestCase {
     }
 
     @MainActor
-    func testAddTermination() {
+    func testOnTermination() {
         let atom = TestValueAtom(value: 0)
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let transaction = Transaction(key: AtomKey(atom))
         let context = AtomLoaderContext<Int, Void>(
             store: StoreContext(),
             transaction: transaction,
             coordinator: ()
         ) { _ in }
 
-        context.addTermination {}
-        context.addTermination {}
-
-        XCTAssertEqual(transaction.terminations.count, 2)
+        context.onTermination = {}
+        XCTAssertNotNil(context.onTermination)
 
         transaction.terminate()
-        context.addTermination {}
+        XCTAssertNil(context.onTermination)
 
-        XCTAssertTrue(transaction.terminations.isEmpty)
+        context.onTermination = {}
+        XCTAssertNil(context.onTermination)
     }
 
     @MainActor
     func testTransaction() {
         let atom = TestValueAtom(value: 0)
-        var isCommitted = false
+        var didBegin = false
+        var didCommit = false
         let transaction = Transaction(key: AtomKey(atom)) {
-            isCommitted = true
+            didBegin = true
+            return { didCommit = true }
         }
         let context = AtomLoaderContext<Int, Void>(
             store: StoreContext(),
@@ -58,15 +59,18 @@ final class AtomLoaderContextTests: XCTestCase {
 
         context.transaction { _ in }
 
-        XCTAssertTrue(isCommitted)
+        XCTAssertTrue(didBegin)
+        XCTAssertTrue(didCommit)
     }
 
     @MainActor
     func testAsyncTransaction() async {
         let atom = TestValueAtom(value: 0)
-        var isCommitted = false
+        var didBegin = false
+        var didCommit = false
         let transaction = Transaction(key: AtomKey(atom)) {
-            isCommitted = true
+            didBegin = true
+            return { didCommit = true }
         }
         let context = AtomLoaderContext<Int, Void>(
             store: StoreContext(),
@@ -78,6 +82,7 @@ final class AtomLoaderContextTests: XCTestCase {
             try? await Task.sleep(seconds: 0)
         }
 
-        XCTAssertTrue(isCommitted)
+        XCTAssertTrue(didBegin)
+        XCTAssertTrue(didCommit)
     }
 }

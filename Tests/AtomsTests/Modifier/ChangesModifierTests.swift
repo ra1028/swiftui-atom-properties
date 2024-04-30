@@ -47,7 +47,7 @@ final class ChangesModifierTests: XCTestCase {
     func testModify() {
         let atom = TestValueAtom(value: 0)
         let modifier = ChangesModifier<Int>()
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let transaction = Transaction(key: AtomKey(atom))
         let context = AtomModifierContext<Int>(transaction: transaction) { _ in }
         let value = modifier.modify(value: 100, context: context)
 
@@ -58,7 +58,7 @@ final class ChangesModifierTests: XCTestCase {
     func testManageOverridden() {
         let atom = TestValueAtom(value: 0)
         let modifier = ChangesModifier<Int>()
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let transaction = Transaction(key: AtomKey(atom))
         let context = AtomModifierContext<Int>(transaction: transaction) { _ in }
         let value = modifier.manageOverridden(value: 100, context: context)
 

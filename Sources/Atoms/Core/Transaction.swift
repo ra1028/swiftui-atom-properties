@@ -1,42 +1,48 @@
 @usableFromInline
 @MainActor
 internal final class Transaction {
-    private var _commit: (() -> Void)?
+    private var body: (() -> () -> Void)?
+    private var cleanup: (() -> Void)?
 
     let key: AtomKey
 
-    private(set) var terminations = ContiguousArray<@MainActor () -> Void>()
+    private var termination: (@MainActor () -> Void)?
     private(set) var isTerminated = false
 
-    init(key: AtomKey, commit: @escaping () -> Void) {
+    init(key: AtomKey, _ body: @escaping () -> () -> Void) {
         self.key = key
-        self._commit = commit
+        self.body = body
+    }
+
+    var onTermination: (@MainActor () -> Void)? {
+        get { termination }
+        set {
+            guard !isTerminated else {
+                newValue?()
+                return
+            }
+
+            termination = newValue
+        }
+
+    }
+
+    func begin() {
+        cleanup = body?()
+        body = nil
     }
 
     func commit() {
-        let commit = _commit
-        _commit = nil
-        commit?()
-    }
-
-    @usableFromInline
-    func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        guard !isTerminated else {
-            return termination()
-        }
-
-        terminations.append(termination)
+        cleanup?()
+        cleanup = nil
     }
 
     func terminate() {
         isTerminated = true
+
+        termination?()
+        termination = nil
+        body = nil
         commit()
-
-        let terminations = self.terminations
-        self.terminations.removeAll()
-
-        for termination in terminations {
-            termination()
-        }
     }
 }

@@ -25,7 +25,7 @@ public struct PublisherAtomLoader<Node: PublisherAtom>: RefreshableAtomLoader {
             }
         }
 
-        context.addTermination(task.cancel)
+        context.onTermination = task.cancel
 
         return .suspending
     }
@@ -50,7 +50,7 @@ public struct PublisherAtomLoader<Node: PublisherAtom>: RefreshableAtomLoader {
             return phase
         }
 
-        context.addTermination(task.cancel)
+        context.onTermination = task.cancel
 
         return await withTaskCancellationHandler {
             await task.value

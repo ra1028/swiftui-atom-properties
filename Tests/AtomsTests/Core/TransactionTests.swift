@@ -6,61 +6,91 @@ final class TransactionTests: XCTestCase {
     @MainActor
     func testCommit() {
         let key = AtomKey(TestValueAtom(value: 0))
+        var beginCount = 0
         var commitCount = 0
         let transaction = Transaction(key: key) {
-            commitCount += 1
+            beginCount += 1
+            return { commitCount += 1 }
         }
 
+        XCTAssertEqual(beginCount, 0)
         XCTAssertEqual(commitCount, 0)
+
         transaction.commit()
+
+        XCTAssertEqual(beginCount, 0)
+        XCTAssertEqual(commitCount, 0)
+
+        transaction.begin()
+
+        XCTAssertEqual(beginCount, 1)
+        XCTAssertEqual(commitCount, 0)
+
+        transaction.commit()
+
+        XCTAssertEqual(beginCount, 1)
         XCTAssertEqual(commitCount, 1)
+
+        transaction.begin()
         transaction.commit()
+
+        XCTAssertEqual(beginCount, 1)
         XCTAssertEqual(commitCount, 1)
     }
 
     @MainActor
-    func testAddTermination() {
+    func testOnTermination() {
         let key = AtomKey(TestValueAtom(value: 0))
-        let transaction = Transaction(key: key) {}
+        let transaction = Transaction(key: key)
 
-        XCTAssertTrue(transaction.terminations.isEmpty)
-        transaction.addTermination {}
-        XCTAssertEqual(transaction.terminations.count, 1)
-        transaction.addTermination {}
-        XCTAssertEqual(transaction.terminations.count, 2)
+        XCTAssertNil(transaction.onTermination)
+
+        transaction.onTermination = {}
+        XCTAssertNotNil(transaction.onTermination)
+
+        transaction.terminate()
+        XCTAssertNil(transaction.onTermination)
+
+        transaction.onTermination = {}
+        XCTAssertNil(transaction.onTermination)
     }
 
     @MainActor
     func testTerminate() {
         let key = AtomKey(TestValueAtom(value: 0))
-        var isCommitted = false
-        var isTerminationCalled = false
+        var didBegin = false
+        var didCommit = false
+        var didTerminate = false
         let transaction = Transaction(key: key) {
-            isCommitted = true
+            didBegin = true
+            return { didCommit = true }
         }
 
-        transaction.addTermination {
-            isTerminationCalled = true
+        transaction.onTermination = {
+            didTerminate = true
         }
 
-        XCTAssertFalse(isCommitted)
-        XCTAssertFalse(isTerminationCalled)
+        XCTAssertFalse(didBegin)
+        XCTAssertFalse(didCommit)
+        XCTAssertFalse(didTerminate)
         XCTAssertFalse(transaction.isTerminated)
-        XCTAssertFalse(transaction.terminations.isEmpty)
+        XCTAssertNotNil(transaction.onTermination)
 
+        transaction.begin()
         transaction.terminate()
 
-        XCTAssertTrue(isCommitted)
-        XCTAssertTrue(isTerminationCalled)
+        XCTAssertTrue(didBegin)
+        XCTAssertTrue(didCommit)
+        XCTAssertTrue(didTerminate)
         XCTAssertTrue(transaction.isTerminated)
-        XCTAssertTrue(transaction.terminations.isEmpty)
+        XCTAssertNil(transaction.onTermination)
 
-        isTerminationCalled = false
-        transaction.addTermination {
-            isTerminationCalled = true
+        didTerminate = false
+        transaction.onTermination = {
+            didTerminate = true
         }
 
-        XCTAssertTrue(isTerminationCalled)
-        XCTAssertTrue(transaction.terminations.isEmpty)
+        XCTAssertTrue(didTerminate)
+        XCTAssertNil(transaction.onTermination)
     }
 }

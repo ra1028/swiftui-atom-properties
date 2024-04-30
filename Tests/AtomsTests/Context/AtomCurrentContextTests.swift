@@ -18,7 +18,7 @@ final class AtomCurrentContextTests: XCTestCase {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 100)
         let store = AtomStore()
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let transaction = Transaction(key: AtomKey(atom))
         let storeContext = StoreContext(store: store)
         let context = AtomCurrentContext(store: storeContext, coordinator: ())
 
@@ -58,7 +58,7 @@ final class AtomCurrentContextTests: XCTestCase {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)
         let store = AtomStore()
-        let transaction = Transaction(key: AtomKey(atom)) {}
+        let transaction = Transaction(key: AtomKey(atom))
         let storeContext = StoreContext(store: store)
         let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction, coordinator: ())
 
@@ -80,7 +80,7 @@ final class AtomCurrentContextTests: XCTestCase {
         let storeContext = StoreContext(store: store)
         let transactionAtom = TestValueAtom(value: 0)
         let atom = TestStateAtom(defaultValue: 0)
-        let transaction = Transaction(key: AtomKey(transactionAtom)) {}
+        let transaction = Transaction(key: AtomKey(transactionAtom))
 
         let resettableAtom = TestCustomResettableAtom(
             defaultValue: { context in

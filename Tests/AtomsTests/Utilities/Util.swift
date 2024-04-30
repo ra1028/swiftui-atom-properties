@@ -13,23 +13,14 @@ struct Pair<T: Equatable>: Equatable {
 
 final class AsyncThrowingStreamPipe<Element> {
     private(set) var stream: AsyncThrowingStream<Element, Error>
-    private(set) var continuation: AsyncThrowingStream<Element, Error>.Continuation!
+    private(set) var continuation: AsyncThrowingStream<Element, Error>.Continuation
 
     init() {
-        (stream, continuation) = Self.pipe()
+        (stream, continuation) = AsyncThrowingStream.makeStream()
     }
 
     func reset() {
-        (stream, continuation) = Self.pipe()
-    }
-
-    private static func pipe() -> (
-        AsyncThrowingStream<Element, Error>,
-        AsyncThrowingStream<Element, Error>.Continuation
-    ) {
-        var continuation: AsyncThrowingStream<Element, Error>.Continuation!
-        let stream = AsyncThrowingStream { continuation = $0 }
-        return (stream, continuation)
+        (stream, continuation) = AsyncThrowingStream.makeStream()
     }
 }
 
@@ -62,7 +53,7 @@ extension StoreContext {
         store: AtomStore = AtomStore(),
         scopeKey: ScopeKey = ScopeKey(token: ScopeKey.Token()),
         observers: [Observer] = [],
-        overrides: [OverrideKey: any AtomOverrideProtocol] = [:]
+        overrides: [OverrideKey: any OverrideProtocol] = [:]
     ) {
         self.init(
             store: store,
@@ -94,5 +85,11 @@ extension AtomCache: Equatable where Node: Equatable, Node.Loader.Value: Equatab
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.atom == rhs.atom && lhs.value == rhs.value
+    }
+}
+
+extension Transaction {
+    convenience init(key: AtomKey) {
+        self.init(key: key, { {} })
     }
 }

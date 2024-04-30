@@ -23,26 +23,27 @@ public struct AtomLoaderContext<Value, Coordinator> {
     }
 
     internal var modifierContext: AtomModifierContext<Value> {
-        AtomModifierContext(transaction: transaction) { value in
-            update(with: value)
-        }
+        AtomModifierContext(transaction: transaction, update: update)
+    }
+
+    internal var onTermination: (@MainActor () -> Void)? {
+        get { transaction.onTermination }
+        nonmutating set { transaction.onTermination = newValue }
     }
 
     internal func update(with value: Value) {
         update(value)
     }
 
-    internal func addTermination(_ termination: @MainActor @escaping () -> Void) {
-        transaction.addTermination(termination)
-    }
-
     internal func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) -> T) -> T {
+        transaction.begin()
         let context = AtomTransactionContext(store: store, transaction: transaction, coordinator: coordinator)
         defer { transaction.commit() }
         return body(context)
     }
 
     internal func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) async throws -> T) async rethrows -> T {
+        transaction.begin()
         let context = AtomTransactionContext(store: store, transaction: transaction, coordinator: coordinator)
         defer { transaction.commit() }
         return try await body(context)
