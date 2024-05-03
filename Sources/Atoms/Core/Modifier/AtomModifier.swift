@@ -13,56 +13,35 @@ public protocol AtomModifier {
     /// A type representing the stable identity of this modifier.
     associatedtype Key: Hashable
 
+    /// A type to coordinate with the atom.
+    associatedtype Coordinator = Void
+
     /// A type of base value to be modified.
-    associatedtype BaseValue
+    associatedtype Base
 
     /// A type of modified value to provide.
-    associatedtype Value
-
-    /// A type of the context structure for notifying modifier value updates.
-    typealias Context = AtomModifierContext<Value>
+    associatedtype Produced
 
     /// A unique value used to identify the modifier internally.
     var key: Key { get }
 
-    /// Returns a new value for the corresponding atom.
+    /// Creates the custom coordinator instance that you use to preserve arbitrary state of
+    /// the atom.
+    ///
+    /// It's called when the atom is initialized, and the same instance is preserved until
+    /// the atom is no longer used and is deinitialized.
+    ///
+    /// - Returns: The atom's associated coordinator instance.
     @MainActor
-    func modify(value: BaseValue, context: Context) -> Value
+    func makeCoordinator() -> Coordinator
 
-    /// Manage given overridden value updates and cancellations.
-    @MainActor
-    func manageOverridden(value: Value, context: Context) -> Value
+    // --- Internal ---
 
-    /// Returns a boolean value indicating whether it should notify updates downstream
-    /// by checking the equivalence of the given old value and new value.
-    @MainActor
-    func shouldUpdateTransitively(newValue: Value, oldValue: Value) -> Bool
-
-    /// Performs transitive update for dependent atoms.
-    @MainActor
-    func performTransitiveUpdate(_ body: () -> Void)
+    func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator>
 }
 
 public extension AtomModifier {
-    func shouldUpdateTransitively(newValue: Value, oldValue: Value) -> Bool {
-        true
+    func makeCoordinator() -> Coordinator where Coordinator == Void {
+        ()
     }
-
-    func performTransitiveUpdate(_ body: () -> Void) {
-        body()
-    }
-}
-
-/// A modifier that you apply to an atom, producing a new value modified from the original value,
-/// and waits until it has finished outputting values.
-public protocol RefreshableAtomModifier: AtomModifier {
-    /// Refreshes and waits for the passed original value to finish outputting values
-    /// and returns a final value.
-    @MainActor
-    func refresh(modifying value: BaseValue, context: Context) async -> Value
-
-    /// Refreshes and waits for the passed value to finish outputting values
-    /// and returns a final value.
-    @MainActor
-    func refresh(overridden value: Value, context: Context) async -> Value
 }

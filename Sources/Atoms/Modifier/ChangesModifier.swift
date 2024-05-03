@@ -32,12 +32,9 @@ public extension Atom where Produced: Equatable {
 /// its new value is the same as its old value.
 ///
 /// Use ``Atom/changes`` instead of using this modifier directly.
-public struct ChangesModifier<T: Equatable>: AtomModifier {
-    /// A type of base value to be modified.
-    public typealias BaseValue = T
-
-    /// A type of modified value to provide.
-    public typealias Value = T
+public struct ChangesModifier<Produced: Equatable>: AtomModifier {
+    public typealias Base = Produced
+    public typealias Produced = Produced
 
     /// A type representing the stable identity of this atom associated with an instance.
     public struct Key: Hashable {}
@@ -47,19 +44,15 @@ public struct ChangesModifier<T: Equatable>: AtomModifier {
         Key()
     }
 
-    /// Returns a new value for the corresponding atom.
-    public func modify(value: BaseValue, context: Context) -> Value {
-        value
-    }
-
-    /// Manage given overridden value updates and cancellations.
-    public func manageOverridden(value: Value, context: Context) -> Value {
-        value
-    }
-
-    /// Returns a boolean value that determines whether it should notify the value update to
-    /// watchers with comparing the given old value and the new value.
-    public func shouldUpdateTransitively(newValue: Value, oldValue: Value) -> Bool {
-        newValue != oldValue
+    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            context.transaction { $0.watch(atom) }
+        } manageValue: { value, _ in
+            value
+        } shouldUpdate: { oldValue, newValue in
+            oldValue != newValue
+        } performUpdate: { update in
+            update()
+        }
     }
 }

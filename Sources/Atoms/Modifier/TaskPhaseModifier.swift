@@ -71,12 +71,10 @@ public extension ThrowingTaskAtom {
 /// representation ``AsyncPhase`` that changes overtime.
 ///
 /// Use ``Atom/phase`` instead of using this modifier directly.
-public struct TaskPhaseModifier<Success, Failure: Error>: RefreshableAtomModifier {
+public struct TaskPhaseModifier<Success, Failure: Error>: AsyncAtomModifier {
     /// A type of base value to be modified.
-    public typealias BaseValue = Task<Success, Failure>
-
-    /// A type of modified value to provide.
-    public typealias Value = AsyncPhase<Success, Failure>
+    public typealias Base = Task<Success, Failure>
+    public typealias Produced = AsyncPhase<Success, Failure>
 
     /// A type representing the stable identity of this atom associated with an instance.
     public struct Key: Hashable {}
@@ -86,41 +84,38 @@ public struct TaskPhaseModifier<Success, Failure: Error>: RefreshableAtomModifie
         Key()
     }
 
-    /// Returns a new value for the corresponding atom.
-    public func modify(value: BaseValue, context: Context) -> Value {
-        let task = Task {
-            let phase = await AsyncPhase(value.result)
+    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            let baseTask = context.transaction { $0.watch(atom) }
+            let task = Task {
+                let phase = await AsyncPhase(baseTask.result)
 
-            if !Task.isCancelled {
-                context.update(with: phase)
+                if !Task.isCancelled {
+                    context.update(with: phase)
+                }
             }
-        }
 
-        context.onTermination = task.cancel
-
-        return .suspending
-    }
-
-    /// Manage given overridden value updates and cancellations.
-    public func manageOverridden(value: Value, context: Context) -> Value {
-        value
-    }
-
-    /// Refreshes and waits for the passed original value to finish outputting values
-    /// and returns a final value.
-    public func refresh(modifying value: BaseValue, context: Context) async -> Value {
-        context.onTermination = value.cancel
-
-        return await withTaskCancellationHandler {
-            await AsyncPhase(value.result)
-        } onCancel: {
-            value.cancel()
+            context.onTermination = task.cancel
+            return .suspending
+        } manageValue: { value, _ in
+            value
+        } shouldUpdate: { _, _ in
+            true
+        } performUpdate: { update in
+            update()
         }
     }
 
-    /// Refreshes and waits for the passed value to finish outputting values
-    /// and returns a final value.
-    public func refresh(overridden value: Value, context: Context) async -> Value {
-        value
+    public func refreshProducer(atom: some AsyncAtom<Base>) -> AtomRefreshProducer<Produced, Coordinator> {
+        AtomRefreshProducer { context in
+            let task = await context.transaction { context in
+                await context.refresh(atom)
+                return context.watch(atom)
+            }
+
+            return await AsyncPhase(task.result)
+        } refreshValue: { value, _ in
+            value
+        }
     }
 }

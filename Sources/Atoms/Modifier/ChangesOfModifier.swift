@@ -33,22 +33,22 @@ public extension Atom {
 /// and prevent it from updating its downstream when its new value is equivalent to old value.
 ///
 /// Use ``Atom/changes(of:)`` instead of using this modifier directly.
-public struct ChangesOfModifier<BaseValue, T: Equatable>: AtomModifier {
-    /// A type of modified value to provide.
-    public typealias Value = T
+public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
+    public typealias Base = Base
+    public typealias Produced = Produced
 
     /// A type representing the stable identity of this modifier.
     public struct Key: Hashable {
-        private let keyPath: KeyPath<BaseValue, Value>
+        private let keyPath: KeyPath<Base, Produced>
 
-        fileprivate init(keyPath: KeyPath<BaseValue, Value>) {
+        fileprivate init(keyPath: KeyPath<Base, Produced>) {
             self.keyPath = keyPath
         }
     }
 
-    private let keyPath: KeyPath<BaseValue, Value>
+    private let keyPath: KeyPath<Base, Produced>
 
-    internal init(keyPath: KeyPath<BaseValue, Value>) {
+    internal init(keyPath: KeyPath<Base, Produced>) {
         self.keyPath = keyPath
     }
 
@@ -57,19 +57,16 @@ public struct ChangesOfModifier<BaseValue, T: Equatable>: AtomModifier {
         Key(keyPath: keyPath)
     }
 
-    /// Returns a new value for the corresponding atom.
-    public func modify(value: BaseValue, context: Context) -> Value {
-        value[keyPath: keyPath]
-    }
-
-    /// Manage given overridden value updates and cancellations.
-    public func manageOverridden(value: Value, context: Context) -> Value {
-        value
-    }
-
-    /// Returns a boolean value that determines whether it should notify the value update to
-    /// watchers with comparing the given old value and the new value.
-    public func shouldUpdateTransitively(newValue: Value, oldValue: Value) -> Bool {
-        newValue != oldValue
+    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            let value = context.transaction { $0.watch(atom) }
+            return value[keyPath: keyPath]
+        } manageValue: { value, _ in
+            value
+        } shouldUpdate: { oldValue, newValue in
+            oldValue != newValue
+        } performUpdate: { update in
+            update()
+        }
     }
 }

@@ -21,10 +21,6 @@ internal struct AtomProducerContext<Value, Coordinator> {
         transaction.isTerminated
     }
 
-    var modifierContext: AtomModifierContext<Value> {
-        AtomModifierContext(transaction: transaction, update: update)
-    }
-
     var onTermination: (@MainActor () -> Void)? {
         get { transaction.onTermination }
         nonmutating set { transaction.onTermination = newValue }

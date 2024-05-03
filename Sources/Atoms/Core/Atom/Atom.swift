@@ -5,7 +5,7 @@
 ///
 /// If the atom value needs to be preserved even if no longer watched, you can consider
 /// conform the ``KeepAlive`` protocol to the atom.
-public protocol Atom: AtomPrimitive {
+public protocol Atom<Produced>: AtomPrimitive {
     associatedtype Produced
 
     /// Notifies the atom that the associated value is updated.
@@ -24,7 +24,6 @@ public protocol Atom: AtomPrimitive {
 
     // --- Internal ---
 
-    @MainActor
     var producer: AtomProducer<Produced, Coordinator> { get }
 }
 

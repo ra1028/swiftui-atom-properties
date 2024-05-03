@@ -33,12 +33,10 @@ public extension Atom {
 /// A modifier that animates the view watching the atom when the value updates.
 ///
 /// Use ``Atom/animation(_:)`` instead of using this modifier directly.
-public struct AnimationModifier<T>: AtomModifier {
+public struct AnimationModifier<Produced>: AtomModifier {
     /// A type of base value to be modified.
-    public typealias BaseValue = T
-
-    /// A type of modified value to provide.
-    public typealias Value = T
+    public typealias Base = Produced
+    public typealias Produced = Produced
 
     /// A type representing the stable identity of this atom associated with an instance.
     public struct Key: Hashable {
@@ -60,18 +58,15 @@ public struct AnimationModifier<T>: AtomModifier {
         Key(animation: animation)
     }
 
-    /// Returns a new value for the corresponding atom.
-    public func modify(value: BaseValue, context: Context) -> Value {
-        value
-    }
-
-    /// Manage given overridden value updates and cancellations.
-    public func manageOverridden(value: Value, context: Context) -> Value {
-        value
-    }
-
-    /// Performs transitive update for dependent atoms.
-    public func performTransitiveUpdate(_ body: () -> Void) {
-        withAnimation(animation, body)
+    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            context.transaction { $0.watch(atom) }
+        } manageValue: { value, _ in
+            value
+        } shouldUpdate: { _, _ in
+            true
+        } performUpdate: { update in
+            withAnimation(animation, update)
+        }
     }
 }
