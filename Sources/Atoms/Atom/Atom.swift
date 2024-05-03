@@ -5,18 +5,8 @@
 ///
 /// If the atom value needs to be preserved even if no longer watched, you can consider
 /// conform the ``KeepAlive`` protocol to the atom.
-public protocol Atom: AtomBase {
-    /// A type representing the stable identity of this atom.
-    associatedtype Key: Hashable
-
+public protocol Atom: AtomPrimitive {
     associatedtype Produced
-
-    /// A unique value used to identify the atom internally.
-    ///
-    /// This key don't have to be unique with respect to other atoms in the entire application
-    /// because it is identified respecting the metatype of this atom.
-    /// If this atom conforms to `Hashable`, it will adopt itself as the `key` by default.
-    var key: Key { get }
 
     /// Notifies the atom that the associated value is updated.
     ///
@@ -39,6 +29,10 @@ public protocol Atom: AtomBase {
 }
 
 public extension Atom {
+    func makeCoordinator() -> Coordinator where Coordinator == Void {
+        ()
+    }
+
     func updated(newValue: Produced, oldValue: Produced, context: UpdatedContext) {}
 }
 
@@ -48,7 +42,10 @@ public extension Atom where Self == Key {
     }
 }
 
-public protocol AtomBase {
+public protocol AtomPrimitive {
+    /// A type representing the stable identity of this atom.
+    associatedtype Key: Hashable
+
     /// A type to coordinate with the atom.
     associatedtype Coordinator = Void
 
@@ -64,6 +61,13 @@ public protocol AtomBase {
     /// with other atoms.
     typealias UpdatedContext = AtomCurrentContext<Coordinator>
 
+    /// A unique value used to identify the atom internally.
+    ///
+    /// This key don't have to be unique with respect to other atoms in the entire application
+    /// because it is identified respecting the metatype of this atom.
+    /// If this atom conforms to `Hashable`, it will adopt itself as the `key` by default.
+    var key: Key { get }
+
     /// Creates the custom coordinator instance that you use to preserve arbitrary state of
     /// the atom.
     ///
@@ -73,10 +77,4 @@ public protocol AtomBase {
     /// - Returns: The atom's associated coordinator instance.
     @MainActor
     func makeCoordinator() -> Coordinator
-}
-
-public extension AtomBase {
-    func makeCoordinator() -> Coordinator where Coordinator == Void {
-        ()
-    }
 }
