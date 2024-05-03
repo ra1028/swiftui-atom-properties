@@ -1,4 +1,4 @@
-public extension Atom where Loader: AsyncAtomLoader {
+public extension TaskAtom {
     /// Converts the `Task` that the original atom provides into ``AsyncPhase`` that
     /// changes overtime.
     ///
@@ -26,7 +26,43 @@ public extension Atom where Loader: AsyncAtomLoader {
     /// }
     /// ```
     ///
-    var phase: ModifiedAtom<Self, TaskPhaseModifier<Loader.Success, Loader.Failure>> {
+    var phase: ModifiedAtom<Self, TaskPhaseModifier<Success, Never>> {
+        modifier(TaskPhaseModifier())
+    }
+}
+
+public extension ThrowingTaskAtom {
+    /// Converts the `Task` that the original atom provides into ``AsyncPhase`` that
+    /// changes overtime.
+    ///
+    /// ```swift
+    /// struct AsyncIntAtom: ThrowingTaskAtom, Hashable {
+    ///     func value(context: Context) async throws -> Int {
+    ///         try await Task.sleep(nanoseconds: 1_000_000_000)
+    ///         return 12345
+    ///     }
+    /// }
+    ///
+    /// struct ExampleView: View {
+    ///     @Watch(AsyncIntAtom().phase)
+    ///     var intPhase
+    ///
+    ///     var body: some View {
+    ///         switch intPhase {
+    ///         case .success(let value):
+    ///             Text("Value is \(value)")
+    ///
+    ///         case .failure(let error):
+    ///             Text("Error is \(error)")
+    ///
+    ///         case .suspending:
+    ///             Text("Loading")
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    ///
+    var phase: ModifiedAtom<Self, TaskPhaseModifier<Success, Error>> {
         modifier(TaskPhaseModifier())
     }
 }

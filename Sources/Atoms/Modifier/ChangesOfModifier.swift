@@ -23,8 +23,8 @@ public extension Atom {
     ///
     /// - Returns: An atom that provides the partial property of the original atom value.
     func changes<T: Equatable>(
-        of keyPath: KeyPath<Loader.Value, T>
-    ) -> ModifiedAtom<Self, ChangesOfModifier<Loader.Value, T>> {
+        of keyPath: KeyPath<Produced, T>
+    ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
         modifier(ChangesOfModifier(keyPath: keyPath))
     }
 }

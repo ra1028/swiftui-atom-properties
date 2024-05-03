@@ -3,15 +3,15 @@ import SwiftUI
 public extension Atom {
     @available(*, deprecated, renamed: "changes(of:)")
     func select<Selected: Equatable>(
-        _ keyPath: KeyPath<Loader.Value, Selected>
-    ) -> ModifiedAtom<Self, ChangesOfModifier<Loader.Value, Selected>> {
+        _ keyPath: KeyPath<Produced, Selected>
+    ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, Selected>> {
         changes(of: keyPath)
     }
 }
 
 public extension AtomWatchableContext {
     @available(*, deprecated, renamed: "AtomViewContext.binding(_:)")
-    func state<Node: StateAtom>(_ atom: Node) -> Binding<Node.Loader.Value> {
+    func state<Node: StateAtom>(_ atom: Node) -> Binding<Node.Produced> {
         Binding(
             get: { watch(atom) },
             set: { set($0, for: atom) }
@@ -21,12 +21,12 @@ public extension AtomWatchableContext {
 
 public extension Resettable {
     @available(*, deprecated, renamed: "CurrentContext")
-    typealias ResetContext = AtomCurrentContext<Loader.Coordinator>
+    typealias ResetContext = AtomCurrentContext<Coordinator>
 }
 
 public extension Refreshable {
     @available(*, deprecated, renamed: "CurrentContext")
-    typealias RefreshContext = AtomCurrentContext<Loader.Coordinator>
+    typealias RefreshContext = AtomCurrentContext<Coordinator>
 }
 
 public extension AtomScope {
@@ -54,12 +54,12 @@ public extension AtomScope {
     }
 
     @available(*, deprecated, renamed: "scopedOverride(_:with:)")
-    func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
+    func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Produced) -> Self {
         scopedOverride(atom, with: value)
     }
 
     @available(*, deprecated, renamed: "scopedOverride(_:with:)")
-    func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
+    func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Produced) -> Self {
         scopedOverride(atomType, with: value)
     }
 }

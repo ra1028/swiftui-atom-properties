@@ -31,7 +31,7 @@ public struct Snapshot: CustomStringConvertible {
     ///
     /// - Returns: The captured value associated with the given atom if it exists.
     @MainActor
-    public func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
+    public func lookup<Node: Atom>(_ atom: Node) -> Node.Produced? {
         let key = AtomKey(atom, scopeKey: nil)
         let cache = caches[key] as? AtomCache<Node>
         return cache?.value

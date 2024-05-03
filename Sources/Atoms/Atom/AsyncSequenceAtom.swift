@@ -44,7 +44,7 @@
 /// }
 /// ```
 ///
-public protocol AsyncSequenceAtom: Atom {
+public protocol AsyncSequenceAtom: AsyncAtom where Produced == AsyncPhase<Sequence.Element, Error> {
     /// The type of asynchronous sequence that this atom manages.
     associatedtype Sequence: AsyncSequence
 
@@ -63,8 +63,64 @@ public protocol AsyncSequenceAtom: Atom {
 }
 
 public extension AsyncSequenceAtom {
-    @MainActor
-    var _loader: AsyncSequenceAtomLoader<Self> {
-        AsyncSequenceAtomLoader(atom: self)
+    var producer: AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            let sequence = context.transaction(sequence)
+            let task = Task {
+                do {
+                    for try await element in sequence {
+                        if !Task.isCancelled {
+                            context.update(with: .success(element))
+                        }
+                    }
+                }
+                catch {
+                    if !Task.isCancelled {
+                        context.update(with: .failure(error))
+                    }
+                }
+            }
+
+            context.onTermination = task.cancel
+            return .suspending
+        } manageValue: { phase, _ in
+            phase
+        } shouldUpdate: { _, _ in
+            true
+        } performUpdate: { update in
+            update()
+        }
+    }
+
+    var refreshProducer: AtomRefreshProducer<Produced, Coordinator> {
+        AtomRefreshProducer { context in
+            let sequence = context.transaction(sequence)
+            let task = Task {
+                var phase = Produced.suspending
+
+                do {
+                    for try await element in sequence {
+                        if !Task.isCancelled {
+                            phase = .success(element)
+                        }
+                    }
+                }
+                catch {
+                    phase = .failure(error)
+                }
+
+                return phase
+            }
+
+            context.onTermination = task.cancel
+
+            return await withTaskCancellationHandler {
+                await task.value
+            } onCancel: {
+                task.cancel()
+            }
+        } refreshValue: { phase, _ in
+            phase
+        }
     }
 }

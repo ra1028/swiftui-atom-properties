@@ -40,7 +40,7 @@ public struct Watch<Node: Atom>: DynamicProperty {
     /// access ``wrappedValue`` directly. Instead, you use the property variable created
     /// with the `@Watch` attribute.
     /// Accessing this property starts watching the atom.
-    public var wrappedValue: Node.Loader.Value {
+    public var wrappedValue: Node.Produced {
         context.watch(atom)
     }
 }

@@ -25,7 +25,7 @@ public extension Atom {
     /// - Parameter animation: The animation to apply to the value.
     ///
     /// - Returns: An atom that animates the view watching the atom when the value updates.
-    func animation(_ animation: Animation? = .default) -> ModifiedAtom<Self, AnimationModifier<Loader.Value>> {
+    func animation(_ animation: Animation? = .default) -> ModifiedAtom<Self, AnimationModifier<Produced>> {
         modifier(AnimationModifier(animation: animation))
     }
 }

@@ -61,7 +61,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
+    func read<Node: Atom>(_ atom: Node) -> Node.Produced {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
@@ -77,30 +77,30 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
+    func set<Node: StateAtom>(_ value: Node.Produced, for atom: Node) {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
-            update(atom: atom, for: key, newValue: value, oldValue: cache.value)
+            update(atom: atom, for: key, oldValue: cache.value, newValue: value)
         }
     }
 
     @usableFromInline
-    func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void) {
+    func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Produced) -> Void) {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
 
         if let cache = lookupCache(of: atom, for: key) {
             let newValue = mutating(cache.value, body)
-            update(atom: atom, for: key, newValue: newValue, oldValue: cache.value)
+            update(atom: atom, for: key, oldValue: cache.value, newValue: newValue)
         }
     }
 
     @usableFromInline
-    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Loader.Value {
+    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Produced {
         guard !transaction.isTerminated else {
             return read(atom)
         }
@@ -122,7 +122,7 @@ internal struct StoreContext {
         _ atom: Node,
         subscriber: Subscriber,
         subscription: Subscription
-    ) -> Node.Loader.Value {
+    ) -> Node.Produced {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
@@ -142,18 +142,18 @@ internal struct StoreContext {
 
     @usableFromInline
     @_disfavoredOverload
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
+    func refresh<Node: AsyncAtom>(_ atom: Node) async -> Node.Produced {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let context = prepareForTransaction(of: atom, for: key)
-        let value: Node.Loader.Value
+        let value: Node.Produced
 
         if let override {
-            value = await atom._loader.refresh(overridden: override.value(atom), context: context)
+            value = await atom.refreshProducer.refreshValue(override.value(atom), context)
         }
         else {
-            value = await atom._loader.refresh(context: context)
+            value = await atom.refreshProducer.refresh(context)
         }
 
         guard let cache = lookupCache(of: atom, for: key) else {
@@ -163,14 +163,14 @@ internal struct StoreContext {
 
         // Notify update unless it's cancelled or terminated by other operations.
         if !Task.isCancelled && !context.isTerminated {
-            update(atom: atom, for: key, newValue: value, oldValue: cache.value)
+            update(atom: atom, for: key, oldValue: cache.value, newValue: value)
         }
 
         return value
     }
 
     @usableFromInline
-    func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value {
+    func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Produced {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
@@ -185,7 +185,7 @@ internal struct StoreContext {
 
         // Notify update unless it's cancelled or terminated by other operations.
         if !Task.isCancelled && !transaction.isTerminated {
-            update(atom: atom, for: key, newValue: value, oldValue: cache.value)
+            update(atom: atom, for: key, oldValue: cache.value, newValue: value)
         }
 
         return value
@@ -200,7 +200,7 @@ internal struct StoreContext {
 
         if let cache = lookupCache(of: atom, for: key) {
             let newCache = makeCache(of: atom, for: key, override: override)
-            update(atom: atom, for: key, newValue: newCache.value, oldValue: cache.value)
+            update(atom: atom, for: key, oldValue: cache.value, newValue: newCache.value)
         }
     }
 
@@ -217,7 +217,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func lookup<Node: Atom>(_ atom: Node) -> Node.Loader.Value? {
+    func lookup<Node: Atom>(_ atom: Node) -> Node.Produced? {
         let override = lookupOverride(of: atom)
         let scopeKey = lookupScopeKey(of: atom, isScopedOverriden: override?.isScoped ?? false)
         let key = AtomKey(atom, scopeKey: scopeKey)
@@ -289,7 +289,7 @@ private extension StoreContext {
     func prepareForTransaction<Node: Atom>(
         of atom: Node,
         for key: AtomKey
-    ) -> AtomLoaderContext<Node.Loader.Value, Node.Loader.Coordinator> {
+    ) -> AtomProducerContext<Node.Produced, Node.Coordinator> {
         let transaction = Transaction(key: key) {
             // Remove current dependencies.
             let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
@@ -316,13 +316,13 @@ private extension StoreContext {
         // Register the transaction state so it can be terminated from anywhere.
         state.transaction = transaction
 
-        return AtomLoaderContext(
+        return AtomProducerContext(
             store: self,
             transaction: transaction,
             coordinator: state.coordinator
         ) { newValue in
             if let cache = lookupCache(of: atom, for: key) {
-                update(atom: atom, for: key, newValue: newValue, oldValue: cache.value)
+                update(atom: atom, for: key, oldValue: cache.value, newValue: newValue)
             }
         }
     }
@@ -330,13 +330,13 @@ private extension StoreContext {
     func update<Node: Atom>(
         atom: Node,
         for key: AtomKey,
-        newValue: Node.Loader.Value,
-        oldValue: Node.Loader.Value
+        oldValue: Node.Produced,
+        newValue: Node.Produced
     ) {
         store.state.caches[key] = AtomCache(atom: atom, value: newValue)
 
         // Check whether if the dependent atoms should be updated transitively.
-        guard atom._loader.shouldUpdateTransitively(newValue: newValue, oldValue: oldValue) else {
+        guard atom.producer.shouldUpdate(oldValue, newValue) else {
             return
         }
 
@@ -355,7 +355,7 @@ private extension StoreContext {
             let newCache = makeCache(of: cache.atom, for: key, override: override)
 
             // Check whether if the dependent atoms should be updated transitively.
-            guard cache.atom._loader.shouldUpdateTransitively(newValue: newCache.value, oldValue: cache.value) else {
+            guard cache.atom.producer.shouldUpdate(cache.value, newCache.value) else {
                 // Record the atom to avoid downstream from being update.
                 skippedDependencies.insert(key)
                 return
@@ -369,14 +369,14 @@ private extension StoreContext {
 
         // Performs update of the given atom with the dependency's context.
         func performUpdate(for key: AtomKey, cache: some AtomCacheProtocol, dependency: some Atom) {
-            dependency._loader.performTransitiveUpdate {
+            dependency.producer.performUpdate {
                 update(for: key, cache: cache)
             }
         }
 
         // Performs update of the given subscription with the dependency's context.
         func performUpdate(subscription: Subscription, dependency: some Atom) {
-            dependency._loader.performTransitiveUpdate(subscription.update)
+            dependency.producer.performUpdate(subscription.update)
         }
 
         func validEdge(_ edge: Edge) -> Edge? {
@@ -525,13 +525,13 @@ private extension StoreContext {
         override: Override<Node>?
     ) -> AtomCache<Node> {
         let context = prepareForTransaction(of: atom, for: key)
-        let value: Node.Loader.Value
+        let value: Node.Produced
 
         if let override {
-            value = atom._loader.manageOverridden(value: override.value(atom), context: context)
+            value = atom.producer.manageValue(override.value(atom), context)
         }
         else {
-            value = atom._loader.value(context: context)
+            value = atom.producer.getValue(context)
         }
 
         let cache = AtomCache(atom: atom, value: value)

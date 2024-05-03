@@ -32,5 +32,5 @@ public protocol Refreshable where Self: Atom {
     ///
     /// - Returns: A refreshed value.
     @MainActor
-    func refresh(context: CurrentContext) async -> Loader.Value
+    func refresh(context: CurrentContext) async -> Produced
 }

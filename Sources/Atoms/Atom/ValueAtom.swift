@@ -30,7 +30,6 @@
 /// ```
 ///
 public protocol ValueAtom: Atom {
-    /// The type of value that this atom produces.
     associatedtype Value
 
     /// Creates a constant value to be provided via this atom.
@@ -47,8 +46,15 @@ public protocol ValueAtom: Atom {
 }
 
 public extension ValueAtom {
-    @MainActor
-    var _loader: ValueAtomLoader<Self> {
-        ValueAtomLoader(atom: self)
+    var producer: AtomProducer<Value, Coordinator> {
+        AtomProducer { context in
+            context.transaction(value)
+        } manageValue: { value, _ in
+            value
+        } shouldUpdate: { _, _ in
+            true
+        } performUpdate: { update in
+            update()
+        }
     }
 }

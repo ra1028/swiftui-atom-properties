@@ -36,9 +36,9 @@
 /// }
 /// ```
 ///
-public protocol ThrowingTaskAtom: Atom {
-    /// The type of value that this atom produces.
-    associatedtype Value
+public protocol ThrowingTaskAtom: AsyncAtom where Produced == Task<Success, Error> {
+    /// The type of success value that this atom produces.
+    associatedtype Success
 
     /// Asynchronously produces a value to be provided via this atom.
     ///
@@ -52,12 +52,56 @@ public protocol ThrowingTaskAtom: Atom {
     ///
     /// - Returns: A throwing `Task` that produces asynchronous value.
     @MainActor
-    func value(context: Context) async throws -> Value
+    func value(context: Context) async throws -> Success
 }
 
 public extension ThrowingTaskAtom {
-    @MainActor
-    var _loader: ThrowingTaskAtomLoader<Self> {
-        ThrowingTaskAtomLoader(atom: self)
+    var producer: AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            let task = Task {
+                try await context.transaction(value)
+            }
+
+            context.onTermination = task.cancel
+            return task
+        } manageValue: { task, context in
+            context.onTermination = task.cancel
+            return task
+        } shouldUpdate: { _, _ in
+            true
+        } performUpdate: { update in
+            update()
+        }
+    }
+
+    var refreshProducer: AtomRefreshProducer<Produced, Coordinator> {
+        AtomRefreshProducer { context in
+            Task {
+                try await context.transaction(value)
+            }
+        } refreshTask: { task, context in
+            context.onTermination = task.cancel
+
+            return await withTaskCancellationHandler {
+                _ = await task.result
+                return task
+            } onCancel: {
+                task.cancel()
+            }
+        }
+    }
+}
+
+private extension AtomRefreshProducer {
+    init(
+        getTask: @MainActor @escaping (Context) -> Value,
+        refreshTask: @MainActor @escaping (Value, Context) async -> Value
+    ) {
+        self.init { context in
+            let task = getTask(context)
+            return await refreshTask(task, context)
+        } refreshValue: { task, context in
+            await refreshTask(task, context)
+        }
     }
 }

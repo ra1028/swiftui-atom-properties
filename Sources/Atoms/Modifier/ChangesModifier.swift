@@ -1,4 +1,4 @@
-public extension Atom where Loader.Value: Equatable {
+public extension Atom where Produced: Equatable {
     /// Prevents the atom from updating its downstream when its new value is equivalent to old value.
     ///
     /// ```swift
@@ -23,7 +23,7 @@ public extension Atom where Loader.Value: Equatable {
     /// }
     /// ```
     ///
-    var changes: ModifiedAtom<Self, ChangesModifier<Loader.Value>> {
+    var changes: ModifiedAtom<Self, ChangesModifier<Produced>> {
         modifier(ChangesModifier())
     }
 }
