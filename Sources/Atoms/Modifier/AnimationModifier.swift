@@ -61,10 +61,6 @@ public struct AnimationModifier<Produced>: AtomModifier {
     public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
         AtomProducer { context in
             context.transaction { $0.watch(atom) }
-        } manageValue: { value, _ in
-            value
-        } shouldUpdate: { _, _ in
-            true
         } performUpdate: { update in
             withAnimation(animation, update)
         }

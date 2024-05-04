@@ -150,11 +150,13 @@ internal struct StoreContext {
         let value: Node.Produced
 
         if let override {
-            value = await atom.refreshProducer.refreshValue(override.value(atom), context)
+            value = override.value(atom)
         }
         else {
-            value = await atom.refreshProducer.refresh(context)
+            value = await atom.refreshProducer.getValue(context)
         }
+
+        await atom.refreshProducer.refreshValue(value, context)
 
         guard let cache = lookupCache(of: atom, for: key) else {
             checkAndRelease(for: key)
@@ -528,11 +530,13 @@ private extension StoreContext {
         let value: Node.Produced
 
         if let override {
-            value = atom.producer.manageValue(override.value(atom), context)
+            value = override.value(atom)
         }
         else {
             value = atom.producer.getValue(context)
         }
+
+        atom.producer.manageValue(value, context)
 
         let cache = AtomCache(atom: atom, value: value)
         store.state.caches[key] = cache

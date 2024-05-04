@@ -1,3 +1,3 @@
 public protocol AsyncAtomModifier: AtomModifier {
-    func refreshProducer<Node: AsyncAtom<Base>>(atom: Node) -> AtomRefreshProducer<Produced, Coordinator>
+    func refreshProducer(atom: some AsyncAtom<Base>) -> AtomRefreshProducer<Produced, Coordinator>
 }

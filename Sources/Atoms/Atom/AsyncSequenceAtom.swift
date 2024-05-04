@@ -83,12 +83,6 @@ public extension AsyncSequenceAtom {
 
             context.onTermination = task.cancel
             return .suspending
-        } manageValue: { phase, _ in
-            phase
-        } shouldUpdate: { _, _ in
-            true
-        } performUpdate: { update in
-            update()
         }
     }
 
@@ -106,7 +100,9 @@ public extension AsyncSequenceAtom {
                     }
                 }
                 catch {
-                    phase = .failure(error)
+                    if !Task.isCancelled {
+                        phase = .failure(error)
+                    }
                 }
 
                 return phase
@@ -119,8 +115,6 @@ public extension AsyncSequenceAtom {
             } onCancel: {
                 task.cancel()
             }
-        } refreshValue: { phase, _ in
-            phase
         }
     }
 }

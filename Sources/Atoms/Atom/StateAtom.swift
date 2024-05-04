@@ -46,12 +46,6 @@ public extension StateAtom {
     var producer: AtomProducer<Value, Coordinator> {
         AtomProducer { context in
             context.transaction(defaultValue)
-        } manageValue: { value, _ in
-            value
-        } shouldUpdate: { _, _ in
-            true
-        } performUpdate: { update in
-            update()
         }
     }
 }

@@ -69,7 +69,7 @@ public extension ObservableObjectAtom {
     var producer: AtomProducer<Produced, Coordinator> {
         AtomProducer { context in
             context.transaction(object)
-        } manageObject: { object, context in
+        } manageValue: { object, context in
             let cancellable = object
                 .objectWillChange
                 .sink { [weak object] _ in
@@ -83,25 +83,6 @@ public extension ObservableObjectAtom {
                 }
 
             context.onTermination = cancellable.cancel
-            return object
-        }
-    }
-}
-
-private extension AtomProducer {
-    init(
-        getObject: @MainActor @escaping (Context) -> Value,
-        manageObject: @MainActor @escaping (Value, Context) -> Value
-    ) {
-        self.init { context in
-            let object = getObject(context)
-            return manageObject(object, context)
-        } manageValue: { object, context in
-            manageObject(object, context)
-        } shouldUpdate: { _, _ in
-            true
-        } performUpdate: { update in
-            update()
         }
     }
 }

@@ -61,12 +61,8 @@ public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
         AtomProducer { context in
             let value = context.transaction { $0.watch(atom) }
             return value[keyPath: keyPath]
-        } manageValue: { value, _ in
-            value
         } shouldUpdate: { oldValue, newValue in
             oldValue != newValue
-        } performUpdate: { update in
-            update()
         }
     }
 }

@@ -47,12 +47,8 @@ public struct ChangesModifier<Produced: Equatable>: AtomModifier {
     public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
         AtomProducer { context in
             context.transaction { $0.watch(atom) }
-        } manageValue: { value, _ in
-            value
         } shouldUpdate: { oldValue, newValue in
             oldValue != newValue
-        } performUpdate: { update in
-            update()
         }
     }
 }

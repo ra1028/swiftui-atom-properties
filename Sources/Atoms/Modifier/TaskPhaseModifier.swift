@@ -97,12 +97,6 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AsyncAtomModifier {
 
             context.onTermination = task.cancel
             return .suspending
-        } manageValue: { value, _ in
-            value
-        } shouldUpdate: { _, _ in
-            true
-        } performUpdate: { update in
-            update()
         }
     }
 
@@ -114,8 +108,6 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AsyncAtomModifier {
             }
 
             return await AsyncPhase(task.result)
-        } refreshValue: { value, _ in
-            value
         }
     }
 }

@@ -58,19 +58,11 @@ public protocol ThrowingTaskAtom: AsyncAtom where Produced == Task<Success, Erro
 public extension ThrowingTaskAtom {
     var producer: AtomProducer<Produced, Coordinator> {
         AtomProducer { context in
-            let task = Task {
+            Task {
                 try await context.transaction(value)
             }
-
-            context.onTermination = task.cancel
-            return task
         } manageValue: { task, context in
             context.onTermination = task.cancel
-            return task
-        } shouldUpdate: { _, _ in
-            true
-        } performUpdate: { update in
-            update()
         }
     }
 
@@ -79,29 +71,14 @@ public extension ThrowingTaskAtom {
             Task {
                 try await context.transaction(value)
             }
-        } refreshTask: { task, context in
+        } refreshValue: { task, context in
             context.onTermination = task.cancel
 
-            return await withTaskCancellationHandler {
+            await withTaskCancellationHandler {
                 _ = await task.result
-                return task
             } onCancel: {
                 task.cancel()
             }
-        }
-    }
-}
-
-private extension AtomRefreshProducer {
-    init(
-        getTask: @MainActor @escaping (Context) -> Value,
-        refreshTask: @MainActor @escaping (Value, Context) async -> Value
-    ) {
-        self.init { context in
-            let task = getTask(context)
-            return await refreshTask(task, context)
-        } refreshValue: { task, context in
-            await refreshTask(task, context)
         }
     }
 }

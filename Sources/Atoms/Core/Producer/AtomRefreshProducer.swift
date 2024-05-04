@@ -1,14 +1,14 @@
 public struct AtomRefreshProducer<Value, Coordinator> {
     internal typealias Context = AtomProducerContext<Value, Coordinator>
 
-    internal let refresh: @MainActor (Context) async -> Value
-    internal let refreshValue: @MainActor (Value, Context) async -> Value
+    internal let getValue: @MainActor (Context) async -> Value
+    internal let refreshValue: @MainActor (Value, Context) async -> Void
 
     internal init(
-        refresh: @MainActor @escaping (Context) async -> Value,
-        refreshValue: @MainActor @escaping (Value, Context) async -> Value
+        getValue: @MainActor @escaping (Context) async -> Value,
+        refreshValue: @MainActor @escaping (Value, Context) async -> Void = { _, _ in }
     ) {
-        self.refresh = refresh
+        self.getValue = getValue
         self.refreshValue = refreshValue
     }
 }
