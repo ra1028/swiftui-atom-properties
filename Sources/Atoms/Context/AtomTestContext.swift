@@ -367,7 +367,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
     public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Produced) {
-        _state.overrides[OverrideKey(atom)] = Override(isScoped: false, value: value)
+        _state.overrides[OverrideKey(atom)] = Override(isScoped: false, getValue: value)
     }
 
     /// Overrides the atom value with the given value.
@@ -382,7 +382,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Produced) {
-        _state.overrides[OverrideKey(atomType)] = Override(isScoped: false, value: value)
+        _state.overrides[OverrideKey(atomType)] = Override(isScoped: false, getValue: value)
     }
 }
 

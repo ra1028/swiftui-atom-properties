@@ -150,7 +150,7 @@ internal struct StoreContext {
         let value: Node.Produced
 
         if let override {
-            value = override.value(atom)
+            value = override.getValue(atom)
         }
         else {
             value = await atom.refreshProducer.getValue(context)
@@ -530,7 +530,7 @@ private extension StoreContext {
         let value: Node.Produced
 
         if let override {
-            value = override.value(atom)
+            value = override.getValue(atom)
         }
         else {
             value = atom.producer.getValue(context)
