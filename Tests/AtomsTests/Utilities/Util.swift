@@ -80,7 +80,7 @@ extension Atoms.Subscription {
     }
 }
 
-extension AtomCache: Equatable where Node: Equatable, Node.Loader.Value: Equatable {
+extension AtomCache: Equatable where Node: Equatable, Node.Produced: Equatable {
     // NB: Synthesized Equatable conformance doesn't work well in Xcode 14.0.1.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func == (lhs: Self, rhs: Self) -> Bool {

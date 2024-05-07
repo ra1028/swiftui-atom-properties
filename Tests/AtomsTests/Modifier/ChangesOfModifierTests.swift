@@ -35,34 +35,4 @@ final class ChangesOfModifierTests: XCTestCase {
         XCTAssertNotEqual(modifier0.key, modifier1.key)
         XCTAssertNotEqual(modifier0.key.hashValue, modifier1.key.hashValue)
     }
-
-    @MainActor
-    func testShouldUpdateTransitively() {
-        let modifier = ChangesOfModifier<String, Int>(keyPath: \.count)
-
-        XCTAssertFalse(modifier.shouldUpdateTransitively(newValue: 100, oldValue: 100))
-        XCTAssertTrue(modifier.shouldUpdateTransitively(newValue: 100, oldValue: 200))
-    }
-
-    @MainActor
-    func testModify() {
-        let atom = TestValueAtom(value: 0)
-        let modifier = ChangesOfModifier<Int, String>(keyPath: \.description)
-        let transaction = Transaction(key: AtomKey(atom))
-        let context = AtomModifierContext<String>(transaction: transaction) { _ in }
-        let value = modifier.modify(value: 100, context: context)
-
-        XCTAssertEqual(value, "100")
-    }
-
-    @MainActor
-    func testManageOverridden() {
-        let atom = TestValueAtom(value: 0)
-        let modifier = ChangesOfModifier<Int, String>(keyPath: \.description)
-        let transaction = Transaction(key: AtomKey(atom))
-        let context = AtomModifierContext<String>(transaction: transaction) { _ in }
-        let value = modifier.manageOverridden(value: "100", context: context)
-
-        XCTAssertEqual(value, "100")
-    }
 }

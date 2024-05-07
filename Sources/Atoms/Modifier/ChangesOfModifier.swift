@@ -23,8 +23,8 @@ public extension Atom {
     ///
     /// - Returns: An atom that provides the partial property of the original atom value.
     func changes<T: Equatable>(
-        of keyPath: KeyPath<Loader.Value, T>
-    ) -> ModifiedAtom<Self, ChangesOfModifier<Loader.Value, T>> {
+        of keyPath: KeyPath<Produced, T>
+    ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
         modifier(ChangesOfModifier(keyPath: keyPath))
     }
 }
@@ -33,22 +33,25 @@ public extension Atom {
 /// and prevent it from updating its downstream when its new value is equivalent to old value.
 ///
 /// Use ``Atom/changes(of:)`` instead of using this modifier directly.
-public struct ChangesOfModifier<BaseValue, T: Equatable>: AtomModifier {
-    /// A type of modified value to provide.
-    public typealias Value = T
+public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
+    /// A type of base value to be modified.
+    public typealias Base = Base
+
+    /// A type of value the modified atom produces.
+    public typealias Produced = Produced
 
     /// A type representing the stable identity of this modifier.
     public struct Key: Hashable {
-        private let keyPath: KeyPath<BaseValue, Value>
+        private let keyPath: KeyPath<Base, Produced>
 
-        fileprivate init(keyPath: KeyPath<BaseValue, Value>) {
+        fileprivate init(keyPath: KeyPath<Base, Produced>) {
             self.keyPath = keyPath
         }
     }
 
-    private let keyPath: KeyPath<BaseValue, Value>
+    private let keyPath: KeyPath<Base, Produced>
 
-    internal init(keyPath: KeyPath<BaseValue, Value>) {
+    internal init(keyPath: KeyPath<Base, Produced>) {
         self.keyPath = keyPath
     }
 
@@ -57,19 +60,13 @@ public struct ChangesOfModifier<BaseValue, T: Equatable>: AtomModifier {
         Key(keyPath: keyPath)
     }
 
-    /// Returns a new value for the corresponding atom.
-    public func modify(value: BaseValue, context: Context) -> Value {
-        value[keyPath: keyPath]
-    }
-
-    /// Manage given overridden value updates and cancellations.
-    public func manageOverridden(value: Value, context: Context) -> Value {
-        value
-    }
-
-    /// Returns a boolean value that determines whether it should notify the value update to
-    /// watchers with comparing the given old value and the new value.
-    public func shouldUpdateTransitively(newValue: Value, oldValue: Value) -> Bool {
-        newValue != oldValue
+    /// A producer that produces the value of this atom.
+    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            let value = context.transaction { $0.watch(atom) }
+            return value[keyPath: keyPath]
+        } shouldUpdate: { oldValue, newValue in
+            oldValue != newValue
+        }
     }
 }

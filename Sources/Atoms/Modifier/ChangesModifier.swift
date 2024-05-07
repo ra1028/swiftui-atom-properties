@@ -1,4 +1,4 @@
-public extension Atom where Loader.Value: Equatable {
+public extension Atom where Produced: Equatable {
     /// Prevents the atom from updating its downstream when its new value is equivalent to old value.
     ///
     /// ```swift
@@ -23,7 +23,7 @@ public extension Atom where Loader.Value: Equatable {
     /// }
     /// ```
     ///
-    var changes: ModifiedAtom<Self, ChangesModifier<Loader.Value>> {
+    var changes: ModifiedAtom<Self, ChangesModifier<Produced>> {
         modifier(ChangesModifier())
     }
 }
@@ -32,12 +32,12 @@ public extension Atom where Loader.Value: Equatable {
 /// its new value is the same as its old value.
 ///
 /// Use ``Atom/changes`` instead of using this modifier directly.
-public struct ChangesModifier<T: Equatable>: AtomModifier {
+public struct ChangesModifier<Produced: Equatable>: AtomModifier {
     /// A type of base value to be modified.
-    public typealias BaseValue = T
+    public typealias Base = Produced
 
-    /// A type of modified value to provide.
-    public typealias Value = T
+    /// A type of value the modified atom produces.
+    public typealias Produced = Produced
 
     /// A type representing the stable identity of this atom associated with an instance.
     public struct Key: Hashable {}
@@ -47,19 +47,12 @@ public struct ChangesModifier<T: Equatable>: AtomModifier {
         Key()
     }
 
-    /// Returns a new value for the corresponding atom.
-    public func modify(value: BaseValue, context: Context) -> Value {
-        value
-    }
-
-    /// Manage given overridden value updates and cancellations.
-    public func manageOverridden(value: Value, context: Context) -> Value {
-        value
-    }
-
-    /// Returns a boolean value that determines whether it should notify the value update to
-    /// watchers with comparing the given old value and the new value.
-    public func shouldUpdateTransitively(newValue: Value, oldValue: Value) -> Bool {
-        newValue != oldValue
+    /// A producer that produces the value of this atom.
+    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            context.transaction { $0.watch(atom) }
+        } shouldUpdate: { oldValue, newValue in
+            oldValue != newValue
+        }
     }
 }

@@ -1,4 +1,4 @@
-import Combine
+import Foundation
 
 /// An atom type that instantiates an observable object.
 ///
@@ -48,7 +48,7 @@ import Combine
 /// }
 /// ```
 ///
-public protocol ObservableObjectAtom: Atom {
+public protocol ObservableObjectAtom: Atom where Produced == ObjectType {
     /// The type of observable object that this atom produces.
     associatedtype ObjectType: ObservableObject
 
@@ -66,8 +66,23 @@ public protocol ObservableObjectAtom: Atom {
 }
 
 public extension ObservableObjectAtom {
-    @MainActor
-    var _loader: ObservableObjectAtomLoader<Self> {
-        ObservableObjectAtomLoader(atom: self)
+    var producer: AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            context.transaction(object)
+        } manageValue: { object, context in
+            let cancellable = object
+                .objectWillChange
+                .sink { [weak object] _ in
+                    // Wait until the object's property is set, because `objectWillChange`
+                    // emits an event before the property is updated.
+                    RunLoop.main.perform(inModes: [.common]) {
+                        if !context.isTerminated, let object {
+                            context.update(with: object)
+                        }
+                    }
+                }
+
+            context.onTermination = cancellable.cancel
+        }
     }
 }

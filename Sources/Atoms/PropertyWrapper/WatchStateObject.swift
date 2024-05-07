@@ -47,21 +47,21 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     /// its properties using dynamic member lookup.
     @dynamicMemberLookup
     public struct Wrapper {
-        private let object: Node.Loader.Value
+        private let object: Node.Produced
 
         /// Returns a binding to the resulting value of the given key path.
         ///
         /// - Parameter keyPath: A key path to a specific resulting value.
         ///
         /// - Returns: A new binding.
-        public subscript<T>(dynamicMember keyPath: ReferenceWritableKeyPath<Node.Loader.Value, T>) -> Binding<T> {
+        public subscript<T>(dynamicMember keyPath: ReferenceWritableKeyPath<Node.Produced, T>) -> Binding<T> {
             Binding(
                 get: { object[keyPath: keyPath] },
                 set: { object[keyPath: keyPath] = $0 }
             )
         }
 
-        fileprivate init(_ object: Node.Loader.Value) {
+        fileprivate init(_ object: Node.Produced) {
             self.object = object
         }
     }
@@ -83,7 +83,7 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     /// access ``wrappedValue`` directly. Instead, you use the property variable created
     /// with the `@WatchStateObject` attribute.
     /// Accessing this property starts watching the atom.
-    public var wrappedValue: Node.Loader.Value {
+    public var wrappedValue: Node.Produced {
         context.watch(atom)
     }
 

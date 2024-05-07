@@ -19,7 +19,7 @@ public protocol AtomContext {
     /// - Parameter atom: An atom to read.
     ///
     /// - Returns: The value associated with the given atom.
-    func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value
+    func read<Node: Atom>(_ atom: Node) -> Node.Produced
 
     /// Sets the new value for the given writable atom.
     ///
@@ -39,7 +39,7 @@ public protocol AtomContext {
     /// - Parameters:
     ///   - value: A value to be set.
     ///   - atom: A writable atom to update.
-    func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node)
+    func set<Node: StateAtom>(_ value: Node.Produced, for atom: Node)
 
     /// Modifies the cached value of the given writable atom.
     ///
@@ -60,7 +60,7 @@ public protocol AtomContext {
     /// - Parameters:
     ///   - atom: A writable atom to modify.
     ///   - body: A value modification body.
-    func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void)
+    func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Produced) -> Void)
 
     /// Refreshes and then returns the value associated with the given refreshable atom.
     ///
@@ -81,7 +81,7 @@ public protocol AtomContext {
     /// - Returns: The value after the refreshing associated with the given atom is completed.
     @_disfavoredOverload
     @discardableResult
-    func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader
+    func refresh<Node: AsyncAtom>(_ atom: Node) async -> Node.Produced
 
     /// Refreshes and then returns the value associated with the given refreshable atom.
     ///
@@ -100,7 +100,7 @@ public protocol AtomContext {
     ///
     /// - Returns: The value after the refreshing associated with the given atom is completed.
     @discardableResult
-    func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value
+    func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Produced
 
     /// Resets the value associated with the given atom, and then notifies.
     ///
@@ -158,7 +158,7 @@ public extension AtomContext {
     /// - Parameter atom: An atom to read or write.
     ///
     /// - Returns: The value associated with the given atom.
-    subscript<Node: StateAtom>(_ atom: Node) -> Node.Loader.Value {
+    subscript<Node: StateAtom>(_ atom: Node) -> Node.Produced {
         get { read(atom) }
         nonmutating set { set(newValue, for: atom) }
     }
@@ -188,5 +188,5 @@ public protocol AtomWatchableContext: AtomContext {
     ///
     /// - Returns: The value associated with the given atom.
     @discardableResult
-    func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value
+    func watch<Node: Atom>(_ atom: Node) -> Node.Produced
 }

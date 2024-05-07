@@ -27,7 +27,7 @@
 /// ```
 ///
 public protocol StateAtom: Atom {
-    /// The type of state value that this atom produces.
+    /// The type of value that this atom produces.
     associatedtype Value
 
     /// Creates a default value of the state to be provided via this atom.
@@ -44,8 +44,9 @@ public protocol StateAtom: Atom {
 }
 
 public extension StateAtom {
-    @MainActor
-    var _loader: StateAtomLoader<Self> {
-        StateAtomLoader(atom: self)
+    var producer: AtomProducer<Value, Coordinator> {
+        AtomProducer { context in
+            context.transaction(defaultValue)
+        }
     }
 }

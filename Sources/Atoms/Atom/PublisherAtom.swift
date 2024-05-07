@@ -37,7 +37,7 @@ import Combine
 /// }
 /// ```
 ///
-public protocol PublisherAtom: Atom {
+public protocol PublisherAtom: AsyncAtom where Produced == AsyncPhase<Publisher.Output, Publisher.Failure> {
     /// The type of publisher that this atom manages.
     associatedtype Publisher: Combine.Publisher
 
@@ -56,8 +56,67 @@ public protocol PublisherAtom: Atom {
 }
 
 public extension PublisherAtom {
-    @MainActor
-    var _loader: PublisherAtomLoader<Self> {
-        PublisherAtomLoader(atom: self)
+    var producer: AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            let results = context.transaction(publisher).results
+            let task = Task {
+                for await result in results {
+                    if !Task.isCancelled {
+                        context.update(with: AsyncPhase(result))
+                    }
+                }
+            }
+
+            context.onTermination = task.cancel
+            return .suspending
+        }
+    }
+
+    var refreshProducer: AtomRefreshProducer<Produced, Coordinator> {
+        AtomRefreshProducer { context in
+            let results = context.transaction(publisher).results
+            let task = Task {
+                var phase = Produced.suspending
+
+                for await result in results {
+                    if !Task.isCancelled {
+                        phase = AsyncPhase(result)
+                    }
+                }
+
+                return phase
+            }
+
+            context.onTermination = task.cancel
+
+            return await withTaskCancellationHandler {
+                await task.value
+            } onCancel: {
+                task.cancel()
+            }
+        }
+    }
+}
+
+private extension Publisher {
+    var results: AsyncStream<Result<Output, Failure>> {
+        AsyncStream { continuation in
+            let cancellable = map(Result.success)
+                .catch { Just(.failure($0)) }
+                .sink(
+                    receiveCompletion: { _ in
+                        continuation.finish()
+                    },
+                    receiveValue: { result in
+                        continuation.yield(result)
+                    }
+                )
+
+            continuation.onTermination = { termination in
+                if case .cancelled = termination {
+                    cancellable.cancel()
+                }
+            }
+        }
     }
 }

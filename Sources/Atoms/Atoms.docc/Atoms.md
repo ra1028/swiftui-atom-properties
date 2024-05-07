@@ -29,8 +29,9 @@ Building state by compositing atoms automatically optimizes rendering based on i
 
 - ``Atom/changes``
 - ``Atom/changes(of:)``
-- ``Atom/phase``
 - ``Atom/animation(_:)``
+- ``TaskAtom/phase``
+- ``ThrowingTaskAtom/phase``
 
 ### Attributes
 
@@ -56,6 +57,7 @@ Building state by compositing atoms automatically optimizes rendering based on i
 
 - ``AsyncPhase``
 - ``Snapshot``
+- ``DefaultScopeID``
 
 ### Contexts
 
@@ -65,28 +67,18 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``AtomViewContext``
 - ``AtomTestContext``
 - ``AtomCurrentContext``
-- ``AtomModifierContext``
 
 ### Misc
 
 - ``Atom``
+- ``AsyncAtom``
+- ``AtomPrimitive``
 - ``AtomStore``
 - ``AtomModifier``
-- ``RefreshableAtomModifier``
+- ``AsyncAtomModifier``
 - ``ChangesModifier``
 - ``ChangesOfModifier``
 - ``TaskPhaseModifier``
 - ``AnimationModifier``
-- ``AtomLoader``
-- ``RefreshableAtomLoader``
-- ``AsyncAtomLoader``
-- ``ValueAtomLoader``
-- ``StateAtomLoader``
-- ``TaskAtomLoader``
-- ``ThrowingTaskAtomLoader``
-- ``AsyncSequenceAtomLoader``
-- ``PublisherAtomLoader``
-- ``ObservableObjectAtomLoader``
-- ``ModifiedAtomLoader``
-- ``AtomLoaderContext``
-- ``DefaultScopeID``
+- ``AtomProducer``
+- ``AtomRefreshProducer``

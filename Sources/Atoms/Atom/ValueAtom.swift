@@ -47,8 +47,9 @@ public protocol ValueAtom: Atom {
 }
 
 public extension ValueAtom {
-    @MainActor
-    var _loader: ValueAtomLoader<Self> {
-        ValueAtomLoader(atom: self)
+    var producer: AtomProducer<Value, Coordinator> {
+        AtomProducer { context in
+            context.transaction(value)
+        }
     }
 }

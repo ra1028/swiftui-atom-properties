@@ -1,12 +1,11 @@
-/// The context structure to interact with an atom store.
 @MainActor
-public struct AtomLoaderContext<Value, Coordinator> {
+internal struct AtomProducerContext<Value, Coordinator> {
     private let store: StoreContext
     private let transaction: Transaction
     private let coordinator: Coordinator
     private let update: @MainActor (Value) -> Void
 
-    internal init(
+    init(
         store: StoreContext,
         transaction: Transaction,
         coordinator: Coordinator,
@@ -18,31 +17,27 @@ public struct AtomLoaderContext<Value, Coordinator> {
         self.update = update
     }
 
-    internal var isTerminated: Bool {
+    var isTerminated: Bool {
         transaction.isTerminated
     }
 
-    internal var modifierContext: AtomModifierContext<Value> {
-        AtomModifierContext(transaction: transaction, update: update)
-    }
-
-    internal var onTermination: (@MainActor () -> Void)? {
+    var onTermination: (@MainActor () -> Void)? {
         get { transaction.onTermination }
         nonmutating set { transaction.onTermination = newValue }
     }
 
-    internal func update(with value: Value) {
+    func update(with value: Value) {
         update(value)
     }
 
-    internal func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) -> T) -> T {
+    func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) -> T) -> T {
         transaction.begin()
         let context = AtomTransactionContext(store: store, transaction: transaction, coordinator: coordinator)
         defer { transaction.commit() }
         return body(context)
     }
 
-    internal func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) async throws -> T) async rethrows -> T {
+    func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) async throws -> T) async rethrows -> T {
         transaction.begin()
         let context = AtomTransactionContext(store: store, transaction: transaction, coordinator: coordinator)
         defer { transaction.commit() }

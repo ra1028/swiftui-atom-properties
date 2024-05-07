@@ -36,9 +36,9 @@
 /// }
 /// ```
 ///
-public protocol ThrowingTaskAtom: Atom {
-    /// The type of value that this atom produces.
-    associatedtype Value
+public protocol ThrowingTaskAtom: AsyncAtom where Produced == Task<Success, Error> {
+    /// The type of success value that this atom produces.
+    associatedtype Success
 
     /// Asynchronously produces a value to be provided via this atom.
     ///
@@ -52,12 +52,33 @@ public protocol ThrowingTaskAtom: Atom {
     ///
     /// - Returns: A throwing `Task` that produces asynchronous value.
     @MainActor
-    func value(context: Context) async throws -> Value
+    func value(context: Context) async throws -> Success
 }
 
 public extension ThrowingTaskAtom {
-    @MainActor
-    var _loader: ThrowingTaskAtomLoader<Self> {
-        ThrowingTaskAtomLoader(atom: self)
+    var producer: AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            Task {
+                try await context.transaction(value)
+            }
+        } manageValue: { task, context in
+            context.onTermination = task.cancel
+        }
+    }
+
+    var refreshProducer: AtomRefreshProducer<Produced, Coordinator> {
+        AtomRefreshProducer { context in
+            Task {
+                try await context.transaction(value)
+            }
+        } refreshValue: { task, context in
+            context.onTermination = task.cancel
+
+            await withTaskCancellationHandler {
+                _ = await task.result
+            } onCancel: {
+                task.cancel()
+            }
+        }
     }
 }

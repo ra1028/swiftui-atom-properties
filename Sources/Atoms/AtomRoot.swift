@@ -128,8 +128,8 @@ public struct AtomRoot<Content: View>: View {
     ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atom)] = Override(isScoped: false, value: value) }
+    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Produced) -> Self {
+        mutating(self) { $0.overrides[OverrideKey(atom)] = Override(isScoped: false, getValue: value) }
     }
 
     /// Overrides the atoms with the given value.
@@ -144,8 +144,8 @@ public struct AtomRoot<Content: View>: View {
     ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Loader.Value) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atomType)] = Override(isScoped: false, value: value) }
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Produced) -> Self {
+        mutating(self) { $0.overrides[OverrideKey(atomType)] = Override(isScoped: false, getValue: value) }
     }
 }
 

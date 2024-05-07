@@ -2,14 +2,14 @@ import XCTest
 
 @testable import Atoms
 
-final class AtomLoaderContextTests: XCTestCase {
+final class AtomProducerContextTests: XCTestCase {
     @MainActor
     func testUpdate() {
         let atom = TestValueAtom(value: 0)
         let transaction = Transaction(key: AtomKey(atom))
         var updatedValue: Int?
 
-        let context = AtomLoaderContext<Int, Void>(
+        let context = AtomProducerContext<Int, Void>(
             store: StoreContext(),
             transaction: transaction,
             coordinator: ()
@@ -26,7 +26,7 @@ final class AtomLoaderContextTests: XCTestCase {
     func testOnTermination() {
         let atom = TestValueAtom(value: 0)
         let transaction = Transaction(key: AtomKey(atom))
-        let context = AtomLoaderContext<Int, Void>(
+        let context = AtomProducerContext<Int, Void>(
             store: StoreContext(),
             transaction: transaction,
             coordinator: ()
@@ -51,7 +51,7 @@ final class AtomLoaderContextTests: XCTestCase {
             didBegin = true
             return { didCommit = true }
         }
-        let context = AtomLoaderContext<Int, Void>(
+        let context = AtomProducerContext<Int, Void>(
             store: StoreContext(),
             transaction: transaction,
             coordinator: ()
@@ -72,7 +72,7 @@ final class AtomLoaderContextTests: XCTestCase {
             didBegin = true
             return { didCommit = true }
         }
-        let context = AtomLoaderContext<Int, Void>(
+        let context = AtomProducerContext<Int, Void>(
             store: StoreContext(),
             transaction: transaction,
             coordinator: ()

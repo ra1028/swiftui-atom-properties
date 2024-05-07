@@ -37,7 +37,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     ///
     /// - Returns: The value associated with the given atom.
     @inlinable
-    public func read<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
+    public func read<Node: Atom>(_ atom: Node) -> Node.Produced {
         _store.read(atom)
     }
 
@@ -60,7 +60,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     ///   - value: A value to be set.
     ///   - atom: A writable atom to update.
     @inlinable
-    public func set<Node: StateAtom>(_ value: Node.Loader.Value, for atom: Node) {
+    public func set<Node: StateAtom>(_ value: Node.Produced, for atom: Node) {
         _store.set(value, for: atom)
     }
 
@@ -84,7 +84,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     ///   - atom: A writable atom to modify.
     ///   - body: A value modification body.
     @inlinable
-    public func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Loader.Value) -> Void) {
+    public func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Produced) -> Void) {
         _store.modify(atom, body: body)
     }
 
@@ -108,7 +108,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     @inlinable
     @_disfavoredOverload
     @discardableResult
-    public func refresh<Node: Atom>(_ atom: Node) async -> Node.Loader.Value where Node.Loader: RefreshableAtomLoader {
+    public func refresh<Node: AsyncAtom>(_ atom: Node) async -> Node.Produced {
         await _store.refresh(atom)
     }
 
@@ -130,7 +130,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     /// - Returns: The value after the refreshing associated with the given atom is completed.
     @inlinable
     @discardableResult
-    public func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Loader.Value {
+    public func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Produced {
         await _store.refresh(atom)
     }
 
@@ -195,7 +195,7 @@ public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
     /// - Returns: The value associated with the given atom.
     @inlinable
     @discardableResult
-    public func watch<Node: Atom>(_ atom: Node) -> Node.Loader.Value {
+    public func watch<Node: Atom>(_ atom: Node) -> Node.Produced {
         _store.watch(atom, in: _transaction)
     }
 }

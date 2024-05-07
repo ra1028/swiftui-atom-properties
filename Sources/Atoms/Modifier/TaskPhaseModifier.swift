@@ -1,4 +1,4 @@
-public extension Atom where Loader: AsyncAtomLoader {
+public extension TaskAtom {
     /// Converts the `Task` that the original atom provides into ``AsyncPhase`` that
     /// changes overtime.
     ///
@@ -26,7 +26,43 @@ public extension Atom where Loader: AsyncAtomLoader {
     /// }
     /// ```
     ///
-    var phase: ModifiedAtom<Self, TaskPhaseModifier<Loader.Success, Loader.Failure>> {
+    var phase: ModifiedAtom<Self, TaskPhaseModifier<Success, Never>> {
+        modifier(TaskPhaseModifier())
+    }
+}
+
+public extension ThrowingTaskAtom {
+    /// Converts the `Task` that the original atom provides into ``AsyncPhase`` that
+    /// changes overtime.
+    ///
+    /// ```swift
+    /// struct AsyncIntAtom: ThrowingTaskAtom, Hashable {
+    ///     func value(context: Context) async throws -> Int {
+    ///         try await Task.sleep(nanoseconds: 1_000_000_000)
+    ///         return 12345
+    ///     }
+    /// }
+    ///
+    /// struct ExampleView: View {
+    ///     @Watch(AsyncIntAtom().phase)
+    ///     var intPhase
+    ///
+    ///     var body: some View {
+    ///         switch intPhase {
+    ///         case .success(let value):
+    ///             Text("Value is \(value)")
+    ///
+    ///         case .failure(let error):
+    ///             Text("Error is \(error)")
+    ///
+    ///         case .suspending:
+    ///             Text("Loading")
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    ///
+    var phase: ModifiedAtom<Self, TaskPhaseModifier<Success, Error>> {
         modifier(TaskPhaseModifier())
     }
 }
@@ -34,13 +70,13 @@ public extension Atom where Loader: AsyncAtomLoader {
 /// An atom that provides a sequential value of the base atom as an enum
 /// representation ``AsyncPhase`` that changes overtime.
 ///
-/// Use ``Atom/phase`` instead of using this modifier directly.
-public struct TaskPhaseModifier<Success, Failure: Error>: RefreshableAtomModifier {
+/// Use ``TaskAtom/phase`` or ``ThrowingTaskAtom/phase`` instead of using this modifier directly.
+public struct TaskPhaseModifier<Success, Failure: Error>: AsyncAtomModifier {
     /// A type of base value to be modified.
-    public typealias BaseValue = Task<Success, Failure>
+    public typealias Base = Task<Success, Failure>
 
-    /// A type of modified value to provide.
-    public typealias Value = AsyncPhase<Success, Failure>
+    /// A type of value the modified atom produces.
+    public typealias Produced = AsyncPhase<Success, Failure>
 
     /// A type representing the stable identity of this atom associated with an instance.
     public struct Key: Hashable {}
@@ -50,41 +86,32 @@ public struct TaskPhaseModifier<Success, Failure: Error>: RefreshableAtomModifie
         Key()
     }
 
-    /// Returns a new value for the corresponding atom.
-    public func modify(value: BaseValue, context: Context) -> Value {
-        let task = Task {
-            let phase = await AsyncPhase(value.result)
+    /// A producer that produces the value of this atom.
+    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
+        AtomProducer { context in
+            let baseTask = context.transaction { $0.watch(atom) }
+            let task = Task {
+                let phase = await AsyncPhase(baseTask.result)
 
-            if !Task.isCancelled {
-                context.update(with: phase)
+                if !Task.isCancelled {
+                    context.update(with: phase)
+                }
             }
-        }
 
-        context.onTermination = task.cancel
-
-        return .suspending
-    }
-
-    /// Manage given overridden value updates and cancellations.
-    public func manageOverridden(value: Value, context: Context) -> Value {
-        value
-    }
-
-    /// Refreshes and waits for the passed original value to finish outputting values
-    /// and returns a final value.
-    public func refresh(modifying value: BaseValue, context: Context) async -> Value {
-        context.onTermination = value.cancel
-
-        return await withTaskCancellationHandler {
-            await AsyncPhase(value.result)
-        } onCancel: {
-            value.cancel()
+            context.onTermination = task.cancel
+            return .suspending
         }
     }
 
-    /// Refreshes and waits for the passed value to finish outputting values
-    /// and returns a final value.
-    public func refresh(overridden value: Value, context: Context) async -> Value {
-        value
+    /// A producer that produces the refreshable value of this atom.
+    public func refreshProducer(atom: some AsyncAtom<Base>) -> AtomRefreshProducer<Produced, Coordinator> {
+        AtomRefreshProducer { context in
+            let task = await context.transaction { context in
+                await context.refresh(atom)
+                return context.watch(atom)
+            }
+
+            return await AsyncPhase(task.result)
+        }
     }
 }
