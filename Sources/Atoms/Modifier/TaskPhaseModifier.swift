@@ -70,7 +70,7 @@ public extension ThrowingTaskAtom {
 /// An atom that provides a sequential value of the base atom as an enum
 /// representation ``AsyncPhase`` that changes overtime.
 ///
-/// Use ``Atom/phase`` instead of using this modifier directly.
+/// Use ``TaskAtom/phase`` or ``ThrowingTaskAtom/phase`` instead of using this modifier directly.
 public struct TaskPhaseModifier<Success, Failure: Error>: AsyncAtomModifier {
     /// A type of base value to be modified.
     public typealias Base = Task<Success, Failure>
