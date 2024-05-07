@@ -74,6 +74,8 @@ public extension ThrowingTaskAtom {
 public struct TaskPhaseModifier<Success, Failure: Error>: AsyncAtomModifier {
     /// A type of base value to be modified.
     public typealias Base = Task<Success, Failure>
+
+    /// A type of value the modified atom produces.
     public typealias Produced = AsyncPhase<Success, Failure>
 
     /// A type representing the stable identity of this atom associated with an instance.
@@ -84,6 +86,7 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AsyncAtomModifier {
         Key()
     }
 
+    /// A producer that produces the value of this atom.
     public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
         AtomProducer { context in
             let baseTask = context.transaction { $0.watch(atom) }
@@ -100,6 +103,7 @@ public struct TaskPhaseModifier<Success, Failure: Error>: AsyncAtomModifier {
         }
     }
 
+    /// A producer that produces the refreshable value of this atom.
     public func refreshProducer(atom: some AsyncAtom<Base>) -> AtomRefreshProducer<Produced, Coordinator> {
         AtomRefreshProducer { context in
             let task = await context.transaction { context in

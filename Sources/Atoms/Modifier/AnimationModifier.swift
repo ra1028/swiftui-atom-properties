@@ -36,6 +36,8 @@ public extension Atom {
 public struct AnimationModifier<Produced>: AtomModifier {
     /// A type of base value to be modified.
     public typealias Base = Produced
+
+    /// A type of value the modified atom produces.
     public typealias Produced = Produced
 
     /// A type representing the stable identity of this atom associated with an instance.
@@ -58,6 +60,7 @@ public struct AnimationModifier<Produced>: AtomModifier {
         Key(animation: animation)
     }
 
+    /// A producer that produces the value of this atom.
     public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
         AtomProducer { context in
             context.transaction { $0.watch(atom) }

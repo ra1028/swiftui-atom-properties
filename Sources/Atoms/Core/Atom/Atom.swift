@@ -2,10 +2,8 @@
 ///
 /// The value produced by an atom is created only when the atom is watched from somewhere,
 /// and is immediately released when no longer watched.
-///
-/// If the atom value needs to be preserved even if no longer watched, you can consider
-/// conform the ``KeepAlive`` protocol to the atom.
 public protocol Atom<Produced>: AtomPrimitive {
+    /// The type of value that this atom produces.
     associatedtype Produced
 
     /// Notifies the atom that the associated value is updated.
@@ -24,6 +22,7 @@ public protocol Atom<Produced>: AtomPrimitive {
 
     // --- Internal ---
 
+    /// A producer that produces the value of this atom.
     var producer: AtomProducer<Produced, Coordinator> { get }
 }
 
@@ -41,11 +40,12 @@ public extension Atom where Self == Key {
     }
 }
 
+/// Declares primitive components of an atom.
 public protocol AtomPrimitive {
     /// A type representing the stable identity of this atom.
     associatedtype Key: Hashable
 
-    /// A type to coordinate with the atom.
+    /// A type of the coordinator that you use to preserve arbitrary state of this atom.
     associatedtype Coordinator = Void
 
     /// A type of the context structure to read, watch, and otherwise interact
@@ -60,15 +60,14 @@ public protocol AtomPrimitive {
     /// with other atoms.
     typealias UpdatedContext = AtomCurrentContext<Coordinator>
 
-    /// A unique value used to identify the atom internally.
+    /// A unique value used to identify the atom.
     ///
     /// This key don't have to be unique with respect to other atoms in the entire application
     /// because it is identified respecting the metatype of this atom.
     /// If this atom conforms to `Hashable`, it will adopt itself as the `key` by default.
     var key: Key { get }
 
-    /// Creates the custom coordinator instance that you use to preserve arbitrary state of
-    /// the atom.
+    /// Creates a coordinator instance that you use to preserve arbitrary state of this atom.
     ///
     /// It's called when the atom is initialized, and the same instance is preserved until
     /// the atom is no longer used and is deinitialized.

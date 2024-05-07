@@ -13,13 +13,13 @@ public protocol AtomModifier {
     /// A type representing the stable identity of this modifier.
     associatedtype Key: Hashable
 
-    /// A type to coordinate with the atom.
+    /// A type of the coordinator that you use to preserve arbitrary state of this atom.
     associatedtype Coordinator = Void
 
     /// A type of base value to be modified.
     associatedtype Base
 
-    /// A type of modified value to provide.
+    /// A type of value the modified atom produces.
     associatedtype Produced
 
     /// A unique value used to identify the modifier internally.
@@ -37,6 +37,7 @@ public protocol AtomModifier {
 
     // --- Internal ---
 
+    /// A producer that produces the value of this atom.
     func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator>
 }
 

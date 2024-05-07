@@ -34,7 +34,10 @@ public extension Atom {
 ///
 /// Use ``Atom/changes(of:)`` instead of using this modifier directly.
 public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
+    /// A type of base value to be modified.
     public typealias Base = Base
+
+    /// A type of value the modified atom produces.
     public typealias Produced = Produced
 
     /// A type representing the stable identity of this modifier.
@@ -57,6 +60,7 @@ public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
         Key(keyPath: keyPath)
     }
 
+    /// A producer that produces the value of this atom.
     public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
         AtomProducer { context in
             let value = context.transaction { $0.watch(atom) }

@@ -1,3 +1,4 @@
+/// Produces the refreshed value of an atom.
 public struct AtomRefreshProducer<Value, Coordinator> {
     internal typealias Context = AtomProducerContext<Value, Coordinator>
 

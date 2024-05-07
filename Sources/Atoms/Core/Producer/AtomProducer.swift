@@ -1,3 +1,4 @@
+/// Produces the value of an atom.
 public struct AtomProducer<Value, Coordinator> {
     internal typealias Context = AtomProducerContext<Value, Coordinator>
 
