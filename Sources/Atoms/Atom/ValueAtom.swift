@@ -30,6 +30,7 @@
 /// ```
 ///
 public protocol ValueAtom: Atom {
+    /// The type of value that this atom produces.
     associatedtype Value
 
     /// Creates a constant value to be provided via this atom.

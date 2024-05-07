@@ -416,15 +416,8 @@ internal extension AtomTestContext {
                 )
 
                 continuation.onTermination = { termination in
-                    switch termination {
-                    case .cancelled:
+                    if case .cancelled = termination {
                         cancellable.cancel()
-
-                    case .finished:
-                        break
-
-                    @unknown default:
-                        break
                     }
                 }
             }

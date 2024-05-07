@@ -27,6 +27,7 @@
 /// ```
 ///
 public protocol StateAtom: Atom {
+    /// The type of value that this atom produces.
     associatedtype Value
 
     /// Creates a default value of the state to be provided via this atom.
