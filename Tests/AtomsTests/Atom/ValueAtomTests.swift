@@ -24,20 +24,49 @@ final class ValueAtomTests: XCTestCase {
     }
 
     @MainActor
-    func testUpdated() async {
-        var updatedValues = [Pair<Int>]()
-        let atom = TestValueAtom(value: 0) { new, old in
-            let values = Pair(first: new, second: old)
-            updatedValues.append(values)
-        }
+    func testEffect() async {
+        var state = EffectState()
+        let effect = TestEffect(
+            onInitialize: { state.initialized += 1 },
+            onUpdate: { state.updated += 1 },
+            onRelease: { state.released += 1 }
+        )
+        let atom = TestValueAtom(value: 0, effect: effect)
         let context = AtomTestContext()
 
         context.watch(atom)
 
-        XCTAssertTrue(updatedValues.isEmpty)
+        XCTAssertEqual(
+            state,
+            EffectState(
+                initialized: 1,
+                updated: 0,
+                released: 0
+            )
+        )
 
         context.reset(atom)
+        context.reset(atom)
+        context.reset(atom)
 
-        XCTAssertEqual(updatedValues, [Pair(first: 0, second: 0)])
+        XCTAssertEqual(
+            state,
+            EffectState(
+                initialized: 1,
+                updated: 3,
+                released: 0
+            )
+        )
+
+        context.unwatch(atom)
+
+        XCTAssertEqual(
+            state,
+            EffectState(
+                initialized: 1,
+                updated: 3,
+                released: 1
+            )
+        )
     }
 }

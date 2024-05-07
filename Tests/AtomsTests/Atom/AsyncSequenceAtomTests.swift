@@ -133,20 +133,29 @@ final class AsyncSequenceAtomTests: XCTestCase {
     }
 
     @MainActor
-    func testUpdated() async {
+    func testEffect() async {
+        var state = EffectState()
+        let effect = TestEffect(
+            onInitialize: { state.initialized += 1 },
+            onUpdate: { state.updated += 1 },
+            onRelease: { state.released += 1 }
+        )
         let pipe = AsyncThrowingStreamPipe<Int>()
-        var updatedValues = [Pair<Int?>]()
-        let atom = TestAsyncSequenceAtom {
+        let atom = TestAsyncSequenceAtom(effect: effect) {
             pipe.stream
-        } onUpdated: { new, old in
-            let values = Pair(first: new.value, second: old.value)
-            updatedValues.append(values)
         }
         let context = AtomTestContext()
 
         context.watch(atom)
 
-        XCTAssertTrue(updatedValues.isEmpty)
+        XCTAssertEqual(
+            state,
+            EffectState(
+                initialized: 1,
+                updated: 0,
+                released: 0
+            )
+        )
 
         pipe.continuation.yield(0)
         await context.waitForUpdate()
@@ -158,12 +167,23 @@ final class AsyncSequenceAtomTests: XCTestCase {
         await context.waitForUpdate()
 
         XCTAssertEqual(
-            updatedValues,
-            [
-                Pair(first: 0, second: nil),
-                Pair(first: 1, second: 0),
-                Pair(first: 2, second: 1),
-            ]
+            state,
+            EffectState(
+                initialized: 1,
+                updated: 3,
+                released: 0
+            )
+        )
+
+        context.unwatch(atom)
+
+        XCTAssertEqual(
+            state,
+            EffectState(
+                initialized: 1,
+                updated: 3,
+                released: 1
+            )
         )
     }
 }

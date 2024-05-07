@@ -120,32 +120,8 @@ struct RecordingDataAtom: StateAtom, Hashable {
         return nil
     }
 
-    func updated(newValue: RecordingData?, oldValue: RecordingData?, context: UpdatedContext) {
-        let audioRecorder = context.read(AudioRecorderAtom())
-        let audioSession = context.read(AudioSessionAtom())
-
-        if let data = oldValue {
-            let voiceMemo = VoiceMemo(
-                url: data.url,
-                date: data.date,
-                duration: audioRecorder.currentTime
-            )
-
-            context[VoiceMemosAtom()].insert(voiceMemo, at: 0)
-            audioRecorder.stop()
-            try? audioSession.setActive(false, options: [])
-        }
-
-        if let data = newValue {
-            do {
-                try audioSession.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
-                try audioSession.setActive(true, options: [])
-                try audioRecorder.record(url: data.url)
-            }
-            catch {
-                context[IsRecordingFailedAtom()] = true
-            }
-        }
+    func effect(context: CurrentContext) -> some AtomEffect {
+        RecordingEffect()
     }
 }
 

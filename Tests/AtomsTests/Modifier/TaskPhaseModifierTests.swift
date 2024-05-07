@@ -6,7 +6,7 @@ import XCTest
 final class TaskPhaseModifierTests: XCTestCase {
     @MainActor
     func testPhase() async {
-        let atom = TestTaskAtom(value: 0).phase
+        let atom = TestTaskAtom { 0 }.phase
         let context = AtomTestContext()
 
         XCTAssertEqual(context.watch(atom), .suspending)
@@ -18,7 +18,7 @@ final class TaskPhaseModifierTests: XCTestCase {
 
     @MainActor
     func testRefresh() async {
-        let atom = TestTaskAtom(value: 0).phase
+        let atom = TestTaskAtom { 0 }.phase
         let context = AtomTestContext()
 
         XCTAssertEqual(context.watch(atom), .suspending)

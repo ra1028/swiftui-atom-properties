@@ -175,7 +175,7 @@ final class StoreContextTests: XCTestCase {
 
         snapshots.removeAll()
         store.state.caches[key] = AtomCache(atom: atom, value: 0)
-        store.state.states[key] = AtomState(coordinator: atom.makeCoordinator())
+        store.state.states[key] = AtomState(coordinator: atom.makeCoordinator(), effect: TestEffect())
         store.state.subscriptions[key, default: [:]][subscriberKey] = Subscription(
             location: SourceLocation(),
             update: { updateCount += 1 }
@@ -221,7 +221,7 @@ final class StoreContextTests: XCTestCase {
 
         snapshots.removeAll()
         store.state.caches[key] = AtomCache(atom: atom, value: 0)
-        store.state.states[key] = AtomState(coordinator: atom.makeCoordinator())
+        store.state.states[key] = AtomState(coordinator: atom.makeCoordinator(), effect: TestEffect())
         store.state.subscriptions[key, default: [:]][subscriberKey] = Subscription(
             location: SourceLocation(),
             update: { updateCount += 1 }
@@ -781,7 +781,6 @@ final class StoreContextTests: XCTestCase {
             final class Coordinator {}
 
             var onValue: (Coordinator) -> Void
-            var onUpdated: (Coordinator) -> Void
 
             var key: UniqueKey {
                 UniqueKey()
@@ -795,10 +794,6 @@ final class StoreContextTests: XCTestCase {
                 onValue(context.coordinator)
                 return 0
             }
-
-            func updated(newValue: Int, oldValue: Int, context: UpdatedContext) {
-                onUpdated(context.coordinator)
-            }
         }
 
         let store = AtomStore()
@@ -806,28 +801,22 @@ final class StoreContextTests: XCTestCase {
         let subscriber = Subscriber(subscriberState)
         let context = StoreContext(store: store)
         var valueCoordinator: TestAtom.Coordinator?
-        var updatedCoordinator: TestAtom.Coordinator?
-        let atom = TestAtom(
-            onValue: { valueCoordinator = $0 },
-            onUpdated: { updatedCoordinator = $0 }
-        )
+        let atom = TestAtom { valueCoordinator = $0 }
         let key = AtomKey(atom)
 
         _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
 
-        let state = store.state.states[key] as? AtomState<TestAtom.Coordinator>
+        let state = store.state.states[key] as? AtomState<TestAtom.Coordinator, TestAtom.Effect>
 
         XCTAssertNotNil(state?.coordinator)
         XCTAssertIdentical(state?.coordinator, valueCoordinator)
-        XCTAssertNil(updatedCoordinator)
 
         context.reset(atom)
 
-        let newState = store.state.states[key] as? AtomState<TestAtom.Coordinator>
+        let newState = store.state.states[key] as? AtomState<TestAtom.Coordinator, TestAtom.Effect>
 
         XCTAssertIdentical(state?.coordinator, newState?.coordinator)
         XCTAssertIdentical(newState?.coordinator, valueCoordinator)
-        XCTAssertIdentical(newState?.coordinator, updatedCoordinator)
     }
 
     @MainActor

@@ -1,5 +1,10 @@
 import SwiftUI
 
+public extension AtomPrimitive {
+    @available(*, deprecated, message: "`Atom.updated(newValue:oldValue:context:)` is also deprecated. Use `Atom.effect(context:)` instead.")
+    typealias UpdatedContext = AtomCurrentContext<Coordinator>
+}
+
 public extension Atom {
     @available(*, deprecated, renamed: "changes(of:)")
     func select<Selected: Equatable>(
