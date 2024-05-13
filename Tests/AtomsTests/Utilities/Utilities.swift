@@ -6,27 +6,21 @@ final class Object {}
 
 struct UniqueKey: Hashable {}
 
-struct EffectState: Equatable {
-    var initialized = 0
-    var updated = 0
-    var released = 0
-}
-
-struct TestEffect: AtomEffect {
-    var onInitialize: (() -> Void)?
-    var onUpdate: (() -> Void)?
-    var onRelease: (() -> Void)?
+final class TestEffect: AtomEffect {
+    var initializedCount = 0
+    var updatedCount = 0
+    var releasedCount = 0
 
     func initialized(context: Context) {
-        onInitialize?()
+        initializedCount += 1
     }
 
     func updated(context: Context) {
-        onUpdate?()
+        updatedCount += 1
     }
 
     func released(context: Context) {
-        onRelease?()
+        releasedCount += 1
     }
 }
 

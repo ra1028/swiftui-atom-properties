@@ -1083,6 +1083,64 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
+    func testEffect() {
+
+        let store = AtomStore()
+        let context = StoreContext(store: store)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+        let effect = TestEffect()
+        let atom = TestStateAtom(defaultValue: 0, effect: effect)
+        let upstreamAtom = TestStateAtom(defaultValue: "")
+        let key = AtomKey(atom)
+
+        _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
+        _ = context.watch(upstreamAtom, in: Transaction(key: key))
+
+        XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 0)
+        XCTAssertEqual(effect.releasedCount, 0)
+
+        context.set(1, for: atom)
+
+        XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 1)
+        XCTAssertEqual(effect.releasedCount, 0)
+
+        context.set(2, for: atom)
+        context.set(3, for: atom)
+        context.set(4, for: atom)
+
+        XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 4)
+        XCTAssertEqual(effect.releasedCount, 0)
+
+        context.set("Updated", for: upstreamAtom)
+
+        XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 5)
+        XCTAssertEqual(effect.releasedCount, 0)
+
+        context.unwatch(atom, subscriber: subscriber)
+
+        XCTAssertNil(store.state.states[key])
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 5)
+        XCTAssertEqual(effect.releasedCount, 1)
+
+        context.set(5, for: atom)
+
+        XCTAssertNil(store.state.states[key])
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 5)
+        XCTAssertEqual(effect.releasedCount, 1)
+    }
+
+    @MainActor
     func testUpdateInTopologicalOrder() {
         struct TestAtom1: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {

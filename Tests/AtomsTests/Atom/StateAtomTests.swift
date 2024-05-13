@@ -86,48 +86,28 @@ final class StateAtomTests: XCTestCase {
 
     @MainActor
     func testEffect() {
-        var state = EffectState()
-        let effect = TestEffect(
-            onInitialize: { state.initialized += 1 },
-            onUpdate: { state.updated += 1 },
-            onRelease: { state.released += 1 }
-        )
+        let effect = TestEffect()
         let atom = TestStateAtom(defaultValue: 0, effect: effect)
         let context = AtomTestContext()
 
         context.watch(atom)
 
-        XCTAssertEqual(
-            state,
-            EffectState(
-                initialized: 1,
-                updated: 0,
-                released: 0
-            )
-        )
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 0)
+        XCTAssertEqual(effect.releasedCount, 0)
 
         context.set(1, for: atom)
         context.set(2, for: atom)
         context.set(3, for: atom)
 
-        XCTAssertEqual(
-            state,
-            EffectState(
-                initialized: 1,
-                updated: 3,
-                released: 0
-            )
-        )
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 3)
+        XCTAssertEqual(effect.releasedCount, 0)
 
         context.unwatch(atom)
 
-        XCTAssertEqual(
-            state,
-            EffectState(
-                initialized: 1,
-                updated: 3,
-                released: 1
-            )
-        )
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 3)
+        XCTAssertEqual(effect.releasedCount, 1)
     }
 }
