@@ -1,8 +1,8 @@
 /// Declares side effects that are synchronized with the atom's lifecycle.
 ///
-/// If this effect is declared for a particular atom by ``Atom/effect(context:)``,
-/// it is initialized the first time the atom is used, and the same instance will be
-/// retained until the atom is released, thus allowing to declare stateful side effects.
+/// If this effect is attached to atoms via ``Atom/effect(context:)``, the effect is
+/// initialized the first time the atom is used, and the instance will be retained
+/// until the atom is released, thus it allows to declare stateful side effects.
 ///
 /// SeeAlso: ``InitializeEffect``
 /// SeeAlso: ``UpdateEffect``

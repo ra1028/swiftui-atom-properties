@@ -1336,7 +1336,7 @@ struct CounterAtom: StateAtom, Hashable {
 }
 ```
 
-Each atom initializes its effect when the atom is initialized, and the effect is retained until the atom is no longer used from anywhere and is released, thus allowing to declare stateful side effects.  
+Each atom initializes its effect when the atom is initialized, and the effect is retained until the atom is no longer used from anywhere and is released, thus it allows to declare stateful side effects.  
 
 ```swift
 struct CounterAtom: StateAtom, Hashable {

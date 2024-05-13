@@ -6,12 +6,19 @@ public protocol Atom<Produced>: AtomPrimitive {
     /// The type of value that this atom produces.
     associatedtype Produced
 
+    /// The type of effect for managing side effects.
     associatedtype Effect: AtomEffect = EmptyEffect
 
+    /// An effect for managing side effects that are synchronized with this atom's lifecycle.
+    ///
+    /// - Parameter context: A context structure to read, set, and otherwise
+    ///                      interact with other atoms.
+    ///
+    /// - Returns: An effect for managing side effects.
     @MainActor
     func effect(context: CurrentContext) -> Effect
 
-    // Deprecated. use `Atom.effect(context:)` instead.
+    /// Deprecated. use `Atom.effect(context:)` instead.
     @MainActor
     func updated(newValue: Produced, oldValue: Produced, context: AtomCurrentContext<Coordinator>)
 
