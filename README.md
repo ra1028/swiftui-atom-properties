@@ -811,9 +811,11 @@ struct FetchMoviesPhaseAtom: ValueAtom, Refreshable, Hashable {
         await context.refresh(FetchMoviesTaskAtom().phase)
     }
 
-    func updated(newValue: AsyncPhase<[Movies], Error>, oldValue: AsyncPhase<[Movies], Error>, context: UpdatedContext) {
-        if case .failure = newValue {
-            print("Failed to fetch movies.")
+    func effect(context: CurrentContext) -> some AtomEffect {
+        UpdateEffect {
+            if case .failure = context.read(self) {
+                print("Failed to fetch movies.")
+            }
         }
     }
 }
@@ -1305,6 +1307,69 @@ AtomScope(id: TextScopeID()) {
 This is also useful when multiple identical screens are stacked and each screen needs isolated states such as user inputs.  
 Note that other atoms that depend on scoped atoms will be in a shared state and must be given `Scoped` attribute as well in order to scope them as well.  
 
+#### Atom Effects
+
+Atom effects are an API for managing side effects that are synchronized with the atom's lifecycle. They are widely applicable for variety of usage such as state synchronization, state persistence, logging, and etc, by observing and reacting to state changes.  
+
+You can create custom effects that conform to the [`AtomEffect`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomeffect) protocol, but there are several predefined effects.  
+
+|API|Use|
+|:--|:--|
+|[InitializeEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/initializeeffect)|Performs an arbitrary action when the atom is initialized.|
+|[UpdateEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/updateeffect)|Performs an arbitrary action when the atom is updated.|
+|[ReleaseEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/releaseeffect)|Performs an arbitrary action when the atom is released.|
+|[MergedEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/mergedeffect)|Merges multiple atom effects into one.|
+
+Atom effects are attached to atoms via the [`Atom.effect(context:)`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/effect(context:)-2kcbd) function.  
+
+```swift
+struct CounterAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> Int {
+        UserDefaults.standard.integer(forKey: "persistence_key")
+    }
+
+    func effect(context: CurrentContext) -> some AtomEffect {
+        UpdateEffect {
+            UserDefaults.standard.set(context.read(self), forKey: "persistence_key")
+        }
+    }
+}
+```
+
+Each atom initializes its effect when the atom is initialized, and the effect is retained until the atom is no longer used from anywhere and is released, thus it allows to declare stateful side effects.  
+
+```swift
+struct CounterAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> Int {
+        0
+    }
+
+    func effect(context: CurrentContext) -> some AtomEffect {
+        CountTimerEffect()
+    }
+}
+
+
+final class CountTimerEffect: AtomEffect {
+    private var timer: Timer?
+
+    func initialized(context: Context) {
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            context[CounterAtom()] += 1
+        }
+    }
+
+    func updated(context: Context) {
+        print("Count: \(context.read(CounterAtom()))")
+    }
+
+    func released(context: Context) {
+        timer?.invalidate()
+        timer = nil
+    }
+}
+```
+
 #### Override Atoms
 
 You can override atoms in [AtomRoot](#atomroot) or [AtomScope](#atomscope) to overwirete the atom states for dependency injection or faking state in particular view, which is useful especially for testing.  
@@ -1652,29 +1717,6 @@ class MessageLoader: ObservableObject {
             try await api.fetchMessages(offset: messages.count)
         }
         phase = nextPhase.map { messages + $0 }
-    }
-}
-```
-
-</details>
-
-#### Side effects
-
-All atom types can optionally implement [`updated(newValue:oldValue:context:)`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/updated(newvalue:oldvalue:context:)-98n6k) method to manage arbitrary side-effects of value updates, such as state persistence, state synchronization, logging, and etc.  
-In the above example, the initial state of the atom is retrieved from UserDefaults, and when the user updates the state, the value is reflected into UserDefaults as a side effect.
-
-<details><summary><code>📖 Example</code></summary>
-
-```swift
-struct PersistentCounterAtom: StateAtom, Hashable {
-    func defaultValue(context: Context) -> Int {
-        UserDefaults.standard.integer(forKey: "persistence_key")
-    }
-
-    func updated(newValue: Int, oldValue: Int, context: UpdatedContext) {
-        if newValue != oldValue {
-            UserDefaults.standard.set(newValue, forKey: "persistence_key")
-        }
     }
 }
 ```

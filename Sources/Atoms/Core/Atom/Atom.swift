@@ -6,19 +6,21 @@ public protocol Atom<Produced>: AtomPrimitive {
     /// The type of value that this atom produces.
     associatedtype Produced
 
-    /// Notifies the atom that the associated value is updated.
+    /// The type of effect for managing side effects.
+    associatedtype Effect: AtomEffect = EmptyEffect
+
+    /// An effect for managing side effects that are synchronized with this atom's lifecycle.
     ///
-    /// Use it to manage arbitrary side-effects of value updates, such as state persistence,
-    /// state synchronization, logging, and etc.
-    /// You can also access other atom values via `context` passed as a parameter.
+    /// - Parameter context: A context structure to read, set, and otherwise
+    ///                      interact with other atoms.
     ///
-    /// - Parameters:
-    ///   - newValue: A new value after update.
-    ///   - oldValue: An old value before update.
-    ///   - context: A context structure to read, set, and otherwise
-    ///              interact with other atoms.
+    /// - Returns: An effect for managing side effects.
     @MainActor
-    func updated(newValue: Produced, oldValue: Produced, context: UpdatedContext)
+    func effect(context: CurrentContext) -> Effect
+
+    /// Deprecated. use `Atom.effect(context:)` instead.
+    @MainActor
+    func updated(newValue: Produced, oldValue: Produced, context: AtomCurrentContext<Coordinator>)
 
     // --- Internal ---
 
@@ -31,7 +33,12 @@ public extension Atom {
         ()
     }
 
-    func updated(newValue: Produced, oldValue: Produced, context: UpdatedContext) {}
+    @MainActor
+    func effect(context: CurrentContext) -> Effect where Effect == EmptyEffect {
+        EmptyEffect()
+    }
+
+    func updated(newValue: Produced, oldValue: Produced, context: AtomCurrentContext<Coordinator>) {}
 }
 
 public extension Atom where Self == Key {
@@ -55,10 +62,6 @@ public protocol AtomPrimitive {
     /// A type of the context structure to read, set, and otherwise interact
     /// with other atoms.
     typealias CurrentContext = AtomCurrentContext<Coordinator>
-
-    /// A type of the context structure to read, set, and otherwise interact
-    /// with other atoms.
-    typealias UpdatedContext = AtomCurrentContext<Coordinator>
 
     /// A unique value used to identify the atom.
     ///

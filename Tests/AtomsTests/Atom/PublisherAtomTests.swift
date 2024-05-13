@@ -132,20 +132,17 @@ final class PublisherAtomTests: XCTestCase {
     }
 
     @MainActor
-    func testUpdated() async {
+    func testEffect() async {
+        let effect = TestEffect()
         let subject = ResettableSubject<Int, URLError>()
-        var updatedValues = [Pair<Int?>]()
-        let atom = TestPublisherAtom {
-            subject
-        } onUpdated: { new, old in
-            let values = Pair(first: new.value, second: old.value)
-            updatedValues.append(values)
-        }
+        let atom = TestPublisherAtom(effect: effect) { subject }
         let context = AtomTestContext()
 
         context.watch(atom)
 
-        XCTAssertTrue(updatedValues.isEmpty)
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 0)
+        XCTAssertEqual(effect.releasedCount, 0)
 
         subject.send(0)
         await context.waitForUpdate()
@@ -156,13 +153,14 @@ final class PublisherAtomTests: XCTestCase {
         subject.send(2)
         await context.waitForUpdate()
 
-        XCTAssertEqual(
-            updatedValues,
-            [
-                Pair(first: 0, second: nil),
-                Pair(first: 1, second: 0),
-                Pair(first: 2, second: 1),
-            ]
-        )
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 3)
+        XCTAssertEqual(effect.releasedCount, 0)
+
+        context.unwatch(atom)
+
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 3)
+        XCTAssertEqual(effect.releasedCount, 1)
     }
 }

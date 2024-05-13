@@ -6,9 +6,31 @@ final class Object {}
 
 struct UniqueKey: Hashable {}
 
-struct Pair<T: Equatable>: Equatable {
-    let first: T
-    let second: T
+final class TestEffect: AtomEffect {
+    var initializedCount = 0
+    var updatedCount = 0
+    var releasedCount = 0
+
+    func initialized(context: Context) {
+        initializedCount += 1
+    }
+
+    func updated(context: Context) {
+        updatedCount += 1
+    }
+
+    func released(context: Context) {
+        releasedCount += 1
+    }
+}
+
+final class TestObservableObject: ObservableObject {
+    @Published
+    private(set) var updatedCount = 0
+
+    func update() {
+        updatedCount += 1
+    }
 }
 
 final class AsyncThrowingStreamPipe<Element> {

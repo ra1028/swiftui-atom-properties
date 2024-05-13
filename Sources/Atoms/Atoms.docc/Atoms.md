@@ -33,6 +33,14 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``TaskAtom/phase``
 - ``ThrowingTaskAtom/phase``
 
+### Effects
+
+- ``AtomEffect``
+- ``InitializeEffect``
+- ``UpdateEffect``
+- ``ReleaseEffect``
+- ``MergedEffect``
+
 ### Attributes
 
 - ``Scoped``
@@ -67,6 +75,7 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``AtomViewContext``
 - ``AtomTestContext``
 - ``AtomCurrentContext``
+- ``AtomEffectContext``
 
 ### Misc
 
@@ -80,5 +89,6 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``ChangesOfModifier``
 - ``TaskPhaseModifier``
 - ``AnimationModifier``
+- ``EmptyEffect``
 - ``AtomProducer``
 - ``AtomRefreshProducer``

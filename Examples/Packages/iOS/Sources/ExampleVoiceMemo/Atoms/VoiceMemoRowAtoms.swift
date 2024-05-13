@@ -17,18 +17,21 @@ struct IsPlayingAtom: StateAtom {
         return false
     }
 
-    func updated(newValue: Bool, oldValue: Bool, context: UpdatedContext) {
-        let audioPlayer = context.read(AudioPlayerAtom(voiceMemo: voiceMemo))
+    func effect(context: CurrentContext) -> some AtomEffect {
+        UpdateEffect {
+            let audioPlayer = context.read(AudioPlayerAtom(voiceMemo: voiceMemo))
+            let isPlaying = context.read(self)
 
-        guard newValue else {
-            return audioPlayer.stop()
-        }
+            guard isPlaying else {
+                return audioPlayer.stop()
+            }
 
-        do {
-            try audioPlayer.play(url: voiceMemo.url)
-        }
-        catch {
-            context[IsPlaybackFailedAtom()] = true
+            do {
+                try audioPlayer.play(url: voiceMemo.url)
+            }
+            catch {
+                context[IsPlaybackFailedAtom()] = true
+            }
         }
     }
 }

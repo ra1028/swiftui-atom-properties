@@ -5,7 +5,7 @@ import XCTest
 final class TaskAtomTests: XCTestCase {
     @MainActor
     func testValue() async {
-        let atom = TestTaskAtom(value: 0)
+        let atom = TestTaskAtom { 0 }
         let context = AtomTestContext()
 
         do {
@@ -142,23 +142,29 @@ final class TaskAtomTests: XCTestCase {
     }
 
     @MainActor
-    func testUpdated() {
-        var updatedTaskHashValues = [Int]()
-        let atom = TestTaskAtom {
-            0
-        } onUpdated: { new, _ in
-            updatedTaskHashValues.append(new.hashValue)
-        }
+    func testEffect() {
+        let effect = TestEffect()
+        let atom = TestTaskAtom(effect: effect) { 0 }
         let context = AtomTestContext()
 
         context.watch(atom)
 
-        XCTAssertTrue(updatedTaskHashValues.isEmpty)
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 0)
+        XCTAssertEqual(effect.releasedCount, 0)
 
         context.reset(atom)
+        context.reset(atom)
+        context.reset(atom)
 
-        let task = context.watch(atom)
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 3)
+        XCTAssertEqual(effect.releasedCount, 0)
 
-        XCTAssertEqual(updatedTaskHashValues, [task.hashValue])
+        context.unwatch(atom)
+
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 3)
+        XCTAssertEqual(effect.releasedCount, 1)
     }
 }

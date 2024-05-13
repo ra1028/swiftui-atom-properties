@@ -4,34 +4,8 @@ import XCTest
 
 final class ObservableObjectAtomTests: XCTestCase {
     @MainActor
-    final class TestObject: ObservableObject {
-        @Published
-        private(set) var updatedCount = 0
-
-        func update() {
-            updatedCount += 1
-        }
-    }
-
-    struct TestAtom: ObservableObjectAtom {
-        var onUpdated: ((TestObject, TestObject) -> Void)?
-
-        var key: UniqueKey {
-            UniqueKey()
-        }
-
-        func object(context: Context) -> TestObject {
-            TestObject()
-        }
-
-        func updated(newValue: TestObject, oldValue: TestObject, context: UpdatedContext) {
-            onUpdated?(newValue, oldValue)
-        }
-    }
-
-    @MainActor
     func test() async {
-        let atom = TestAtom()
+        let atom = TestObservableObjectAtom()
         let context = AtomTestContext()
 
         do {
@@ -75,7 +49,7 @@ final class ObservableObjectAtomTests: XCTestCase {
 
         do {
             // Override
-            let overrideObject = TestObject()
+            let overrideObject = TestObservableObject()
             context.unwatch(atom)
             context.override(atom) { _ in overrideObject }
 
@@ -94,7 +68,7 @@ final class ObservableObjectAtomTests: XCTestCase {
 
         do {
             // Override termination
-            let overrideObject = TestObject()
+            let overrideObject = TestObservableObject()
             context.unwatch(atom)
             context.override(atom) { _ in overrideObject }
 
@@ -113,19 +87,33 @@ final class ObservableObjectAtomTests: XCTestCase {
     }
 
     @MainActor
-    func testUpdated() async {
-        var updatedObjects = [TestObject]()
-        let atom = TestAtom { object, _ in
-            updatedObjects.append(object)
-        }
+    func testEffect() async {
+        let effect = TestEffect()
+        let atom = TestObservableObjectAtom(effect: effect)
         let context = AtomTestContext()
         let object = context.watch(atom)
 
-        XCTAssertTrue(updatedObjects.isEmpty)
-        object.update()
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 0)
+        XCTAssertEqual(effect.releasedCount, 0)
 
+        object.update()
         await context.waitForUpdate()
 
-        XCTAssertEqual(updatedObjects.last?.updatedCount, 1)
+        object.update()
+        await context.waitForUpdate()
+
+        object.update()
+        await context.waitForUpdate()
+
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 3)
+        XCTAssertEqual(effect.releasedCount, 0)
+
+        context.unwatch(atom)
+
+        XCTAssertEqual(effect.initializedCount, 1)
+        XCTAssertEqual(effect.updatedCount, 3)
+        XCTAssertEqual(effect.releasedCount, 1)
     }
 }
