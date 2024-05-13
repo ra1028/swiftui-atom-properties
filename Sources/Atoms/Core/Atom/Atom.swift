@@ -11,7 +11,7 @@ public protocol Atom<Produced>: AtomPrimitive {
     @MainActor
     func effect(context: CurrentContext) -> Effect
 
-    // Deprecated. use `Atom.effect(context: CurrentContext)` instead.
+    // Deprecated. use `Atom.effect(context:)` instead.
     @MainActor
     func updated(newValue: Produced, oldValue: Produced, context: AtomCurrentContext<Coordinator>)
 
