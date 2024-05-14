@@ -78,7 +78,7 @@ struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom {
     }
 }
 
-struct TestCustomRefreshableAtom<T>: ValueAtom, Refreshable {
+struct TestCustomRefreshableAtom<T: Sendable>: ValueAtom, Refreshable {
     var getValue: (Context) -> T
     var refresh: (CurrentContext) async -> T
 
@@ -112,7 +112,7 @@ struct TestCustomResettableAtom<T>: StateAtom, Resettable {
     }
 }
 
-struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom {
+struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom where Publisher.Output: Sendable {
     var effect: TestEffect?
     var makePublisher: () -> Publisher
 
@@ -129,7 +129,7 @@ struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom {
     }
 }
 
-struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom {
+struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom where Sequence.Element: Sendable {
     var effect: TestEffect?
     var makeSequence: () -> Sequence
 

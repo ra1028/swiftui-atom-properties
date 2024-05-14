@@ -27,7 +27,7 @@ import SwiftUI
 /// }
 /// ```
 ///
-public struct Suspense<Value, Failure: Error, Content: View, Suspending: View, FailureContent: View>: View {
+public struct Suspense<Value: Sendable, Failure: Error, Content: View, Suspending: View, FailureContent: View>: View {
     private let task: Task<Value, Failure>
     private let content: (Value) -> Content
     private let suspending: () -> Suspending

@@ -1,4 +1,11 @@
+import SwiftUI
 import iOSApp
 
 @main
-extension iOSApp {}
+struct iOSApp: App {
+    var body: some Scene {
+        WindowGroup {
+            iOSRoot()
+        }
+    }
+}

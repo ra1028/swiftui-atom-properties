@@ -5,6 +5,8 @@ set -eu
 TARGET=$1
 PLATFORM=$2
 
+export DEVELOPMENT=1
+
 pushd "$(cd $(dirname $0)/.. && pwd)" &>/dev/null
 
 case $PLATFORM in

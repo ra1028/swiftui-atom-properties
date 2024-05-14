@@ -39,7 +39,7 @@
 ///
 public protocol PublisherAtom: AsyncAtom where Produced == AsyncPhase<Publisher.Output, Publisher.Failure> {
     /// The type of publisher that this atom manages.
-    associatedtype Publisher: Combine.Publisher
+    associatedtype Publisher: Combine.Publisher where Publisher.Output: Sendable
 
     /// Creates a publisher to be subscribed when this atom is actually used.
     ///

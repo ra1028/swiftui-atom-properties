@@ -2,6 +2,10 @@ TOOL = scripts/swift-run.sh
 PACKAGE = swift package -c release --package-path Tools
 SWIFT_FILE_PATHS = Package.swift Tools/Package.swift Sources Tests Examples
 
+.PHONY: open-dev
+open-dev:
+	DEVELOPMENT=1 open Package.swift
+
 .PHONY: proj
 proj:
 	SWIFT_PACKAGE_RESOURCES=Tools/.build/checkouts/XcodeGen/SettingPresets $(TOOL) xcodegen -s Examples/project.yml

@@ -12,9 +12,6 @@ settings:
   CODE_SIGNING_REQUIRED: NO
   CODE_SIGN_IDENTITY: "-"
   CODE_SIGN_STYLE: Manual
-  OTHER_SWIFT_FLAGS:
-    - -Xfrontend
-    - -enable-actor-data-race-checks
 
 targetTemplates:
   App:

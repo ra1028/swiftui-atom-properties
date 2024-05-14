@@ -1,4 +1,4 @@
-struct PagedResponse<T: Decodable>: Decodable {
+struct PagedResponse<T: Decodable & Sendable>: Decodable, Sendable {
     let page: Int
     let totalPages: Int
     let results: [T]

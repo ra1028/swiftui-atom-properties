@@ -1,7 +1,7 @@
 import Combine
 import UIKit
 
-protocol APIClientProtocol {
+protocol APIClientProtocol: Sendable {
     func getImage(path: String, size: ImageSize) async throws -> UIImage
     func getNowPlaying(page: Int) async throws -> PagedResponse<Movie>
     func getPopular(page: Int) async throws -> PagedResponse<Movie>
@@ -94,7 +94,7 @@ private extension APIClient {
     }
 }
 
-final class MockAPIClient: APIClientProtocol {
+final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
     var imageResponse = Result<UIImage, Error>.failure(URLError(.unknown))
     var filteredMovieResponse = Result<PagedResponse<Movie>, Error>.failure(URLError(.unknown))
     var creditsResponse = Result<Credits, Error>.failure(URLError(.unknown))

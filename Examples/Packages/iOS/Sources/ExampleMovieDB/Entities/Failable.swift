@@ -1,5 +1,5 @@
 @propertyWrapper
-struct Failable<T: Decodable>: Decodable {
+struct Failable<T: Decodable & Sendable>: Decodable & Sendable {
     var wrappedValue: T?
 
     init(wrappedValue: T?) {
