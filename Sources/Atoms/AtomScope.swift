@@ -129,7 +129,7 @@ public struct AtomScope<Content: View>: View {
     ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func scopedOverride<Node: Atom>(_ atom: Node, with value: @escaping @Sendable (Node) -> Node.Produced) -> Self {
+    public func scopedOverride<Node: Atom>(_ atom: Node, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) -> Self {
         mutating(self) { $0.overrides[OverrideKey(atom)] = Override(isScoped: true, getValue: value) }
     }
 
@@ -147,7 +147,7 @@ public struct AtomScope<Content: View>: View {
     ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func scopedOverride<Node: Atom>(_ atomType: Node.Type, with value: @escaping @Sendable (Node) -> Node.Produced) -> Self {
+    public func scopedOverride<Node: Atom>(_ atomType: Node.Type, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) -> Self {
         mutating(self) { $0.overrides[OverrideKey(atomType)] = Override(isScoped: true, getValue: value) }
     }
 }
