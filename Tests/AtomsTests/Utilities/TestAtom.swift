@@ -78,20 +78,20 @@ struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom {
     }
 }
 
-struct TestCustomRefreshableAtom<Publisher: Combine.Publisher>: PublisherAtom, Refreshable {
-    var makePublisher: () -> Publisher
-    var refresh: () -> AsyncPhase<Publisher.Output, Publisher.Failure>
+struct TestCustomRefreshableAtom<T>: ValueAtom, Refreshable {
+    var getValue: (Context) -> T
+    var refresh: (CurrentContext) async -> T
 
     var key: UniqueKey {
         UniqueKey()
     }
 
-    func publisher(context: Context) -> Publisher {
-        makePublisher()
+    func value(context: Context) -> T {
+        getValue(context)
     }
 
-    func refresh(context: CurrentContext) async -> AsyncPhase<Publisher.Output, Publisher.Failure> {
-        refresh()
+    func refresh(context: CurrentContext) async -> T {
+        await refresh(context)
     }
 }
 

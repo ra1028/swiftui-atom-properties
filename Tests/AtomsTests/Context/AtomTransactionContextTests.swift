@@ -48,21 +48,20 @@ final class AtomTransactionContextTests: XCTestCase {
     @MainActor
     func testCustomRefresh() async {
         let atom0 = TestValueAtom(value: 0)
-        let atom1 = TestCustomRefreshableAtom {
-            Just(100)
-        } refresh: {
-            .success(200)
+        let atom1 = TestCustomRefreshableAtom { _ in
+            100
+        } refresh: { _ in
+            200
         }
         let store = AtomStore()
         let transaction = Transaction(key: AtomKey(atom0))
         let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction, coordinator: ())
 
-        XCTAssertTrue(context.watch(atom1).isSuspending)
+        XCTAssertEqual(context.watch(atom1), 100)
 
-        let value = await context.refresh(atom1).value
-
+        let value = await context.refresh(atom1)
         XCTAssertEqual(value, 200)
-        XCTAssertEqual(context.watch(atom1).value, 200)
+        XCTAssertEqual(context.watch(atom1), 200)
     }
 
     @MainActor

@@ -211,10 +211,10 @@ final class AtomTestContextTests: XCTestCase {
 
     @MainActor
     func testCustomRefresh() async {
-        let atom = TestCustomRefreshableAtom {
-            Just(100)
-        } refresh: {
-            .success(200)
+        let atom = TestCustomRefreshableAtom { _ in
+            100
+        } refresh: { _ in
+            200
         }
         let context = AtomTestContext()
         var updateCount = 0
@@ -223,17 +223,13 @@ final class AtomTestContextTests: XCTestCase {
             updateCount += 1
         }
 
-        XCTAssertTrue(context.watch(atom).isSuspending)
+        XCTAssertEqual(context.watch(atom), 100)
 
-        await context.waitForUpdate()
-
-        XCTAssertEqual(context.watch(atom).value, 100)
-
-        let value = await context.refresh(atom).value
+        let value = await context.refresh(atom)
 
         XCTAssertEqual(value, 200)
-        XCTAssertEqual(context.watch(atom).value, 200)
-        XCTAssertEqual(updateCount, 2)
+        XCTAssertEqual(context.watch(atom), 200)
+        XCTAssertEqual(updateCount, 1)
     }
 
     @MainActor
