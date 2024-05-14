@@ -99,6 +99,7 @@ final class AsyncPhaseTests: XCTestCase {
         XCTAssertEqual(phase.error, URLError(.badURL))
     }
 
+    @MainActor
     func testFlatMap() {
         XCTContext.runActivity(named: "To suspending") { _ in
             let transformed = phases.map { phase in
@@ -147,6 +148,7 @@ final class AsyncPhaseTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testFlatMapError() {
         XCTContext.runActivity(named: "To suspending") { _ in
             let transformed = phases.map { phase in

@@ -1,4 +1,11 @@
 import CrossPlatformApp
+import SwiftUI
 
 @main
-extension CrossPlatformApp {}
+struct CrossPlatformApp: App {
+    var body: some Scene {
+        WindowGroup {
+            CrossPlatformRoot()
+        }
+    }
+}

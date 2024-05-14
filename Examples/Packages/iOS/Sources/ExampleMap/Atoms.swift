@@ -1,7 +1,7 @@
 import Atoms
 import CoreLocation
 
-final class LocationObserver: NSObject, ObservableObject, CLLocationManagerDelegate {
+final class LocationObserver: NSObject, ObservableObject, CLLocationManagerDelegate, @unchecked Sendable {
     let manager: LocationManagerProtocol
 
     deinit {

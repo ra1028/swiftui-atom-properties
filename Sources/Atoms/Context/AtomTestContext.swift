@@ -1,4 +1,4 @@
-import Combine
+@preconcurrency import Combine
 
 /// A context structure to read, watch, and otherwise interact with atoms in testing.
 ///
@@ -53,9 +53,10 @@ public struct AtomTestContext: AtomWatchableContext {
             let updates = _state.makeUpdateStream()
 
             group.addTask { @MainActor in
-                var iterator = updates.makeAsyncIterator()
-                await iterator.next()
-                return true
+                for await _ in updates {
+                    return true
+                }
+                return false
             }
 
             if let duration {
@@ -65,10 +66,12 @@ public struct AtomTestContext: AtomWatchableContext {
                 }
             }
 
-            let didUpdate = await group.next() ?? false
-            group.cancelAll()
+            for await didUpdate in group {
+                group.cancelAll()
+                return didUpdate
+            }
 
-            return didUpdate
+            return false
         }
     }
 
@@ -139,10 +142,12 @@ public struct AtomTestContext: AtomWatchableContext {
                 }
             }
 
-            let didUpdate = await group.next() ?? false
-            group.cancelAll()
+            for await didUpdate in group {
+                group.cancelAll()
+                return didUpdate
+            }
 
-            return didUpdate
+            return false
         }
     }
 
@@ -366,7 +371,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atom: An atom to be overridden.
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
-    public func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Produced) {
+    public func override<Node: Atom>(_ atom: Node, with value: @escaping @Sendable (Node) -> Node.Produced) {
         _state.overrides[OverrideKey(atom)] = Override(isScoped: false, getValue: value)
     }
 
@@ -381,7 +386,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atomType: An atom type to be overridden.
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
-    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Produced) {
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping @Sendable (Node) -> Node.Produced) {
         _state.overrides[OverrideKey(atomType)] = Override(isScoped: false, getValue: value)
     }
 }

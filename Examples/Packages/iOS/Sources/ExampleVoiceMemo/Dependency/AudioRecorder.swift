@@ -50,7 +50,7 @@ final class AudioRecorder: NSObject, AVAudioRecorderDelegate, AudioRecorderProto
     }
 }
 
-final class MockAudioRecorder: AudioRecorderProtocol {
+final class MockAudioRecorder: AudioRecorderProtocol, @unchecked Sendable {
     var isRecording = false
     var recordingError: Error?
     var currentTime: TimeInterval = 10

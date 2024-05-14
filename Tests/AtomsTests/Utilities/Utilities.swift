@@ -24,7 +24,7 @@ final class TestEffect: AtomEffect {
     }
 }
 
-final class TestObservableObject: ObservableObject {
+final class TestObservableObject: ObservableObject, @unchecked Sendable {
     @Published
     private(set) var updatedCount = 0
 

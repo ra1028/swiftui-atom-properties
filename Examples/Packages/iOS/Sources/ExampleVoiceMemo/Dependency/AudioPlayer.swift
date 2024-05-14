@@ -41,7 +41,7 @@ final class AudioPlayer: NSObject, AVAudioPlayerDelegate, AudioPlayerProtocol {
     }
 }
 
-final class MockAudioPlayer: AudioPlayerProtocol {
+final class MockAudioPlayer: AudioPlayerProtocol, @unchecked Sendable {
     private(set) var isPlaying = false
     var playingError: Error?
 

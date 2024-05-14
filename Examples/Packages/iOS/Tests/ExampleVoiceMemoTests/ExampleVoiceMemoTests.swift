@@ -87,19 +87,20 @@ final class ExampleVoiceMemoTests: XCTestCase {
         let actions = VoiceMemoActions(context: context)
         let audioSession = MockAudioSession()
         let generator = ValueGenerator.stub()
-        var recordPermission = AVAudioSession.RecordPermission.undetermined
 
         context.override(IsRecordingAtom()) { _ in false }
         context.override(ValueGeneratorAtom()) { _ in generator }
-        context.override(AudioRecordPermissionAtom()) { _ in recordPermission }
         context.override(AudioSessionAtom()) { _ in audioSession }
+        context.override(AudioRecorderAtom()) { _ in MockAudioRecorder() }
+
+        audioSession.recordPermission = .undetermined
 
         XCTAssertEqual(context.watch(AudioRecordPermissionAtom()), .undetermined)
         XCTAssertFalse(context.watch(IsRecordingFailedAtom()))
         XCTAssertNil(context.watch(RecordingDataAtom()))
 
         actions.toggleRecording()
-        recordPermission = .denied
+        audioSession.recordPermission = .denied
         audioSession.requestRecordPermissionResponse!(true)
 
         XCTAssertEqual(context.watch(AudioRecordPermissionAtom()), .denied)
@@ -108,7 +109,7 @@ final class ExampleVoiceMemoTests: XCTestCase {
 
         XCTAssertTrue(context.watch(IsRecordingFailedAtom()))
 
-        recordPermission = .granted
+        audioSession.recordPermission = .granted
         context.reset(AudioRecordPermissionAtom())
         actions.toggleRecording()
 

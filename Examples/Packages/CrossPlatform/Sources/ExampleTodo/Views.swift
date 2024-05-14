@@ -66,8 +66,10 @@ struct TodoCreator: View {
                     .textFieldStyle(.roundedBorder)
                 #endif
 
-            Button("Add", action: addTodo)
-                .disabled(text.isEmpty)
+            Button("Add") {
+                addTodo()
+            }
+            .disabled(text.isEmpty)
         }
         .padding(.vertical)
     }

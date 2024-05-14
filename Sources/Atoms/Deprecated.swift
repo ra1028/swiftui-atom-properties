@@ -54,17 +54,17 @@ public extension AtomScope {
     }
 
     @available(*, deprecated, renamed: "scopedObserve(_:)")
-    func observe(_ onUpdate: @escaping @MainActor (Snapshot) -> Void) -> Self {
+    func observe(_ onUpdate: @escaping @MainActor @Sendable (Snapshot) -> Void) -> Self {
         scopedObserve(onUpdate)
     }
 
     @available(*, deprecated, renamed: "scopedOverride(_:with:)")
-    func override<Node: Atom>(_ atom: Node, with value: @escaping (Node) -> Node.Produced) -> Self {
+    func override<Node: Atom>(_ atom: Node, with value: @escaping @Sendable (Node) -> Node.Produced) -> Self {
         scopedOverride(atom, with: value)
     }
 
     @available(*, deprecated, renamed: "scopedOverride(_:with:)")
-    func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping (Node) -> Node.Produced) -> Self {
+    func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping @Sendable (Node) -> Node.Produced) -> Self {
         scopedOverride(atomType, with: value)
     }
 }

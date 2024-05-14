@@ -38,7 +38,7 @@
 ///
 public protocol ThrowingTaskAtom: AsyncAtom where Produced == Task<Success, Error> {
     /// The type of success value that this atom produces.
-    associatedtype Success
+    associatedtype Success: Sendable
 
     /// Asynchronously produces a value to be provided via this atom.
     ///
@@ -58,7 +58,7 @@ public protocol ThrowingTaskAtom: AsyncAtom where Produced == Task<Success, Erro
 public extension ThrowingTaskAtom {
     var producer: AtomProducer<Produced, Coordinator> {
         AtomProducer { context in
-            Task {
+            Task { [value] in
                 try await context.transaction(value)
             }
         } manageValue: { task, context in
@@ -68,7 +68,7 @@ public extension ThrowingTaskAtom {
 
     var refreshProducer: AtomRefreshProducer<Produced, Coordinator> {
         AtomRefreshProducer { context in
-            Task {
+            Task { [value] in
                 try await context.transaction(value)
             }
         } refreshValue: { task, context in

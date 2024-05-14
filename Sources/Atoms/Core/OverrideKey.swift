@@ -1,5 +1,5 @@
 @usableFromInline
-internal struct OverrideKey: Hashable {
+internal struct OverrideKey: Hashable, Sendable {
     private let identifier: Identifier
 
     @usableFromInline
@@ -17,7 +17,7 @@ internal struct OverrideKey: Hashable {
 }
 
 private extension OverrideKey {
-    enum Identifier: Hashable {
+    enum Identifier: Hashable, @unchecked Sendable {
         case node(key: AnyHashable, type: ObjectIdentifier)
         case type(ObjectIdentifier)
     }

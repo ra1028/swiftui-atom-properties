@@ -75,7 +75,7 @@ public extension ObservableObjectAtom {
                 .sink { [weak object] _ in
                     // Wait until the object's property is set, because `objectWillChange`
                     // emits an event before the property is updated.
-                    RunLoop.main.perform(inModes: [.common]) {
+                    Task { @MainActor in
                         if !context.isTerminated, let object {
                             context.update(with: object)
                         }

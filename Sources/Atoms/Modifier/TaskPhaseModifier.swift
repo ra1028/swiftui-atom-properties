@@ -71,7 +71,7 @@ public extension ThrowingTaskAtom {
 /// representation ``AsyncPhase`` that changes overtime.
 ///
 /// Use ``TaskAtom/phase`` or ``ThrowingTaskAtom/phase`` instead of using this modifier directly.
-public struct TaskPhaseModifier<Success, Failure: Error>: AsyncAtomModifier {
+public struct TaskPhaseModifier<Success: Sendable, Failure: Error>: AsyncAtomModifier {
     /// A type of base value to be modified.
     public typealias Base = Task<Success, Failure>
 

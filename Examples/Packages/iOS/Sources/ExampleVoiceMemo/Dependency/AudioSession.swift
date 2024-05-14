@@ -3,13 +3,13 @@ import AVFAudio
 protocol AudioSessionProtocol {
     var recordPermission: AVAudioSession.RecordPermission { get }
 
-    func requestRecordPermissionOnMain(_ response: @escaping (Bool) -> Void)
+    func requestRecordPermissionOnMain(_ response: @escaping @MainActor @Sendable (Bool) -> Void)
     func setActive(_ active: Bool, options: AVAudioSession.SetActiveOptions) throws
     func setCategory(_ category: AVAudioSession.Category, mode: AVAudioSession.Mode, options: AVAudioSession.CategoryOptions) throws
 }
 
 extension AVAudioSession: AudioSessionProtocol {
-    func requestRecordPermissionOnMain(_ response: @escaping (Bool) -> Void) {
+    func requestRecordPermissionOnMain(_ response: @escaping @MainActor @Sendable (Bool) -> Void) {
         requestRecordPermission { isGranted in
             Task { @MainActor in
                 response(isGranted)
@@ -18,16 +18,15 @@ extension AVAudioSession: AudioSessionProtocol {
     }
 }
 
-final class MockAudioSession: AudioSessionProtocol {
-    var requestRecordPermissionResponse: ((Bool) -> Void)?
+final class MockAudioSession: AudioSessionProtocol, @unchecked Sendable {
+    var requestRecordPermissionResponse: (@MainActor @Sendable (Bool) -> Void)?
     var isActive = false
     var currentCategory: AVAudioSession.Category?
     var currentMode: AVAudioSession.Mode?
     var currentOptions: AVAudioSession.CategoryOptions?
-
     var recordPermission = AVAudioSession.RecordPermission.granted
 
-    func requestRecordPermissionOnMain(_ response: @escaping (Bool) -> Void) {
+    func requestRecordPermissionOnMain(_ response: @escaping @MainActor @Sendable (Bool) -> Void) {
         requestRecordPermissionResponse = response
     }
 

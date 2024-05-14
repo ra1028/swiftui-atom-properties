@@ -46,7 +46,7 @@
 ///
 public protocol AsyncSequenceAtom: AsyncAtom where Produced == AsyncPhase<Sequence.Element, Error> {
     /// The type of asynchronous sequence that this atom manages.
-    associatedtype Sequence: AsyncSequence
+    associatedtype Sequence: AsyncSequence where Sequence.Element: Sendable
 
     /// Creates an asynchronous sequence to be started when this atom is actually used.
     ///
