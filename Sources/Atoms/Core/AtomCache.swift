@@ -1,4 +1,3 @@
-@MainActor
 internal protocol AtomCacheProtocol {
     associatedtype Node: Atom
 

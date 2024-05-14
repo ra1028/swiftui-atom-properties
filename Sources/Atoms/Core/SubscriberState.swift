@@ -1,4 +1,3 @@
-@MainActor
 final class SubscriberState {
     let token = SubscriberKey.Token()
     var subscribing = Set<AtomKey>()
