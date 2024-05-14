@@ -180,7 +180,14 @@ internal struct StoreContext {
         let key = AtomKey(atom, scopeKey: scopeKey)
         let state = getState(of: atom, for: key)
         let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
+
+        // Detach the dependencies once to delay updating the downstream until
+        // this atom's value refresh is complete.
+        let dependencies = detachDependencies(for: key)
         let value = await atom.refresh(context: context)
+
+        // Restore dependencies when the refresh is completed.
+        attachDependencies(dependencies, for: key)
 
         guard let transaction = state.transaction, let cache = lookupCache(of: atom, for: key) else {
             checkAndRelease(for: key)
@@ -454,6 +461,28 @@ private extension StoreContext {
         release(for: key)
     }
 
+    func detachDependencies(for key: AtomKey) -> Set<AtomKey> {
+        // Remove current dependencies.
+        let dependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
+
+        // Detatch the atom from its children.
+        for dependency in dependencies {
+            store.graph.children[dependency]?.remove(key)
+        }
+
+        return dependencies
+    }
+
+    func attachDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey) {
+        // Set dependencies.
+        store.graph.dependencies[key] = dependencies
+
+        // Attach the atom to its children.
+        for dependency in dependencies {
+            store.graph.children[dependency]?.insert(key)
+        }
+    }
+
     func unsubscribe<Keys: Sequence<AtomKey>>(_ keys: Keys, for subscriberKey: SubscriberKey) {
         for key in keys {
             store.state.subscriptions[key]?.removeValue(forKey: subscriberKey)
@@ -468,13 +497,7 @@ private extension StoreContext {
         for key: AtomKey
     ) -> AtomProducerContext<Node.Produced, Node.Coordinator> {
         let transaction = Transaction(key: key) {
-            // Remove current dependencies.
-            let oldDependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
-
-            // Detatch the atom from its children.
-            for dependency in oldDependencies {
-                store.graph.children[dependency]?.remove(key)
-            }
+            let oldDependencies = detachDependencies(for: key)
 
             return {
                 let dependencies = store.graph.dependencies[key] ?? []

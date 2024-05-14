@@ -1,4 +1,3 @@
-import Combine
 import XCTest
 
 @testable import Atoms
@@ -9,10 +8,10 @@ final class RefreshableTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
-        let atom = TestCustomRefreshableAtom {
-            Just(0)
-        } refresh: {
-            .success(1)
+        let atom = TestCustomRefreshableAtom { _ in
+            0
+        } refresh: { _ in
+            1
         }
         let key = AtomKey(atom)
         var snapshots = [Snapshot]()
@@ -22,14 +21,14 @@ final class RefreshableTests: XCTestCase {
         do {
             // Should call custom refresh behavior
 
-            let phase0 = await context.refresh(atom)
-            XCTAssertEqual(phase0.value, 1)
+            let value0 = await context.refresh(atom)
+            XCTAssertEqual(value0, 1)
             XCTAssertNil(store.state.caches[key])
             XCTAssertNil(store.state.states[key])
             XCTAssertTrue(snapshots.isEmpty)
 
             var updateCount = 0
-            let phase1 = context.watch(
+            let value1 = context.watch(
                 atom,
                 subscriber: subscriber,
                 subscription: Subscription {
@@ -37,18 +36,17 @@ final class RefreshableTests: XCTestCase {
                 }
             )
 
-            XCTAssertTrue(phase1.isSuspending)
+            XCTAssertEqual(value1, 0)
 
             snapshots.removeAll()
-
-            let phase2 = await context.refresh(atom)
-            XCTAssertEqual(phase2.value, 1)
+            let value2 = await context.refresh(atom)
+            XCTAssertEqual(value2, 1)
             XCTAssertNotNil(store.state.states[key])
-            XCTAssertEqual((store.state.caches[key] as? AtomCache<TestCustomRefreshableAtom<Just<Int>>>)?.value, .success(1))
+            XCTAssertEqual((store.state.caches[key] as? AtomCache<TestCustomRefreshableAtom<Int>>)?.value, 1)
             XCTAssertEqual(updateCount, 1)
             XCTAssertEqual(
-                snapshots.map { $0.caches.mapValues { $0.value as? AsyncPhase<Int, Never> } },
-                [[key: .success(1)]]
+                snapshots.map { $0.caches.mapValues { $0.value as? Int } },
+                [[key: 1]]
             )
 
             context.unwatch(atom, subscriber: subscriber)
@@ -64,30 +62,58 @@ final class RefreshableTests: XCTestCase {
                 scopeID: ScopeID(DefaultScopeID()),
                 observers: [],
                 overrides: [
-                    OverrideKey(atom): Override<TestCustomRefreshableAtom<Just<Int>>>(isScoped: true) { _ in .success(2) }
+                    OverrideKey(atom): Override<TestCustomRefreshableAtom<Int>>(isScoped: true) { _ in 2 }
                 ]
             )
 
-            let phase0 = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertEqual(phase0.value, 2)
+            let value0 = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
+            XCTAssertEqual(value0, 2)
 
-            let phase1 = await scopedContext.refresh(atom)
-            XCTAssertEqual(phase1.value, 1)
+            let value1 = await scopedContext.refresh(atom)
+            XCTAssertEqual(value1, 1)
             XCTAssertNotNil(store.state.states[overrideAtomKey])
             XCTAssertEqual(
-                (store.state.caches[overrideAtomKey] as? AtomCache<TestCustomRefreshableAtom<Just<Int>>>)?.value,
-                .success(1)
+                (store.state.caches[overrideAtomKey] as? AtomCache<TestCustomRefreshableAtom<Int>>)?.value,
+                1
             )
         }
 
         do {
             // Should not make new state and cache
 
-            let phase = await context.refresh(atom)
+            let value = await context.refresh(atom)
 
-            XCTAssertEqual(phase.value, 1)
+            XCTAssertEqual(value, 1)
             XCTAssertNil(store.state.states[key])
             XCTAssertNil(store.state.caches[key])
         }
+    }
+
+    @MainActor
+    func testTransitiveRefresh() async {
+        let parentAtom = TestTaskAtom { 0 }
+        let atom = TestCustomRefreshableAtom { context in
+            context.watch(parentAtom.phase)
+        } refresh: { context in
+            await context.refresh(parentAtom.phase)
+        }
+        let context = AtomTestContext()
+
+        var updateCount = 0
+        context.onUpdate = {
+            updateCount += 1
+        }
+
+        XCTAssertTrue(context.watch(atom).isSuspending)
+
+        await context.waitForUpdate()
+        XCTAssertEqual(context.watch(atom).value, 0)
+        XCTAssertEqual(updateCount, 1)
+
+        let value = await context.refresh(atom).value
+
+        XCTAssertEqual(value, 0)
+        XCTAssertEqual(context.watch(atom).value, 0)
+        XCTAssertEqual(updateCount, 2)
     }
 }

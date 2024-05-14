@@ -99,4 +99,28 @@ final class ResettableTests: XCTestCase {
             XCTAssertNil(store.state.caches[key])
         }
     }
+
+    @MainActor
+    func testTransitiveReset() {
+        let parentAtom = TestValueAtom(value: 0)
+        let atom = TestCustomResettableAtom { context in
+            context.watch(parentAtom)
+        } reset: { context in
+            context.reset(parentAtom)
+        }
+        let context = AtomTestContext()
+
+        var updateCount = 0
+        context.onUpdate = {
+            updateCount += 1
+        }
+
+        XCTAssertEqual(context.watch(atom), 0)
+        XCTAssertEqual(updateCount, 0)
+
+        context.reset(atom)
+
+        XCTAssertEqual(context.watch(atom), 0)
+        XCTAssertEqual(updateCount, 1)
+    }
 }

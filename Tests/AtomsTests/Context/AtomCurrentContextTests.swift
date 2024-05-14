@@ -41,15 +41,15 @@ final class AtomCurrentContextTests: XCTestCase {
 
     @MainActor
     func testCustomRefresh() async {
-        let atom = TestCustomRefreshableAtom {
-            Just(100)
-        } refresh: {
-            .success(200)
+        let atom = TestCustomRefreshableAtom { _ in
+            100
+        } refresh: { _ in
+            200
         }
         let store = AtomStore()
         let context = AtomCurrentContext(store: StoreContext(store: store), coordinator: ())
-        let value = await context.refresh(atom).value
 
+        let value = await context.refresh(atom)
         XCTAssertEqual(value, 200)
     }
 
