@@ -3,18 +3,18 @@ import Atoms
 import Combine
 import Foundation
 
-struct ValueGenerator {
-    var date: () -> Date
-    var uuid: () -> UUID
-    var temporaryDirectory: () -> String
+struct ValueGenerator: Sendable {
+    var date: @Sendable () -> Date
+    var uuid: @Sendable () -> UUID
+    var temporaryDirectory: @Sendable () -> String
 }
 
 struct ValueGeneratorAtom: ValueAtom, Hashable {
     func value(context: Context) -> ValueGenerator {
         ValueGenerator(
-            date: Date.init,
-            uuid: UUID.init,
-            temporaryDirectory: NSTemporaryDirectory
+            date: { Date.now },
+            uuid: { UUID() },
+            temporaryDirectory: { NSTemporaryDirectory() }
         )
     }
 }

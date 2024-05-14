@@ -11,7 +11,7 @@ protocol LocationManagerProtocol: AnyObject {
 
 extension CLLocationManager: LocationManagerProtocol {}
 
-final class MockLocationManager: LocationManagerProtocol {
+final class MockLocationManager: LocationManagerProtocol, @unchecked Sendable {
     weak var delegate: CLLocationManagerDelegate?
     var desiredAccuracy = kCLLocationAccuracyKilometer
     var location: CLLocation? = nil

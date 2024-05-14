@@ -18,13 +18,12 @@ extension AVAudioSession: AudioSessionProtocol {
     }
 }
 
-final class MockAudioSession: AudioSessionProtocol {
+final class MockAudioSession: AudioSessionProtocol, @unchecked Sendable {
     var requestRecordPermissionResponse: (@MainActor @Sendable (Bool) -> Void)?
     var isActive = false
     var currentCategory: AVAudioSession.Category?
     var currentMode: AVAudioSession.Mode?
     var currentOptions: AVAudioSession.CategoryOptions?
-
     var recordPermission = AVAudioSession.RecordPermission.granted
 
     func requestRecordPermissionOnMain(_ response: @escaping @MainActor @Sendable (Bool) -> Void) {
