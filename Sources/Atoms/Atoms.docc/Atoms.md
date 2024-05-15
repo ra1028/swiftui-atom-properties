@@ -75,13 +75,11 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``AtomViewContext``
 - ``AtomTestContext``
 - ``AtomCurrentContext``
-- ``AtomEffectContext``
 
 ### Misc
 
 - ``Atom``
 - ``AsyncAtom``
-- ``AtomPrimitive``
 - ``AtomStore``
 - ``AtomModifier``
 - ``AsyncAtomModifier``

@@ -5,9 +5,6 @@ public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.
     /// The type of value that this atom produces.
     public typealias Produced = Modifier.Produced
 
-    /// A type of the coordinator that you use to preserve arbitrary state of this atom.
-    public typealias Coordinator = Modifier.Coordinator
-
     /// A type representing the stable identity of this atom.
     public struct Key: Hashable {
         private let atomKey: Node.Key
@@ -36,25 +33,14 @@ public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.
     }
 
     /// A producer that produces the value of this atom.
-    public var producer: AtomProducer<Produced, Coordinator> {
+    public var producer: AtomProducer<Produced> {
         modifier.producer(atom: atom)
-    }
-
-    /// Creates a custom coordinator instance that you use to preserve arbitrary state of
-    /// the atom.
-    ///
-    /// It's called when the atom is initialized, and the same instance is preserved until
-    /// the atom is no longer used and is deinitialized.
-    ///
-    /// - Returns: The atom's associated coordinator instance.
-    public func makeCoordinator() -> Coordinator {
-        modifier.makeCoordinator()
     }
 }
 
 extension ModifiedAtom: AsyncAtom where Node: AsyncAtom, Modifier: AsyncAtomModifier {
     /// A producer that produces the refreshable value of this atom.
-    public var refreshProducer: AtomRefreshProducer<Produced, Coordinator> {
+    public var refreshProducer: AtomRefreshProducer<Produced> {
         modifier.refreshProducer(atom: atom)
     }
 }

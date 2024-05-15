@@ -56,7 +56,7 @@ public protocol ThrowingTaskAtom: AsyncAtom where Produced == Task<Success, Erro
 }
 
 public extension ThrowingTaskAtom {
-    var producer: AtomProducer<Produced, Coordinator> {
+    var producer: AtomProducer<Produced> {
         AtomProducer { context in
             Task { [value] in
                 try await context.transaction(value)
@@ -66,7 +66,7 @@ public extension ThrowingTaskAtom {
         }
     }
 
-    var refreshProducer: AtomRefreshProducer<Produced, Coordinator> {
+    var refreshProducer: AtomRefreshProducer<Produced> {
         AtomRefreshProducer { context in
             Task { [value] in
                 try await context.transaction(value)

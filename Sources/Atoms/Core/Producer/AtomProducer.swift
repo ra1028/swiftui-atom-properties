@@ -1,6 +1,6 @@
 /// Produces the value of an atom.
-public struct AtomProducer<Value, Coordinator> {
-    internal typealias Context = AtomProducerContext<Value, Coordinator>
+public struct AtomProducer<Value> {
+    internal typealias Context = AtomProducerContext<Value>
 
     internal let getValue: @MainActor (Context) -> Value
     internal let manageValue: @MainActor (Value, Context) -> Void

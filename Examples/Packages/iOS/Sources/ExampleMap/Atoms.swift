@@ -37,15 +37,18 @@ final class LocationObserver: NSObject, ObservableObject, CLLocationManagerDeleg
     }
 }
 
-struct LocationObserverAtom: ObservableObjectAtom, Hashable {
-    func makeCoordinator() -> LocationManagerProtocol {
+struct LocationManagerAtom: ValueAtom, Hashable {
+    func value(context: Context) -> LocationManagerProtocol {
         let manager = CLLocationManager()
         manager.desiredAccuracy = kCLLocationAccuracyBest
         return manager
     }
+}
 
+struct LocationObserverAtom: ObservableObjectAtom, Hashable {
     func object(context: Context) -> LocationObserver {
-        LocationObserver(manager: context.coordinator)
+        let manager = context.watch(LocationManagerAtom())
+        return LocationObserver(manager: manager)
     }
 }
 

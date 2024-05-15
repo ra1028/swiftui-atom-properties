@@ -1,20 +1,16 @@
 @MainActor
 internal protocol AtomStateProtocol: AnyObject {
-    associatedtype Coordinator
     associatedtype Effect: AtomEffect
 
-    var coordinator: Coordinator { get }
     var effect: Effect { get }
     var transaction: Transaction? { get set }
 }
 
-internal final class AtomState<Coordinator, Effect: AtomEffect>: AtomStateProtocol {
-    let coordinator: Coordinator
+internal final class AtomState<Effect: AtomEffect>: AtomStateProtocol {
     let effect: Effect
     var transaction: Transaction?
 
-    init(coordinator: Coordinator, effect: Effect) {
-        self.coordinator = coordinator
+    init(effect: Effect) {
         self.effect = effect
     }
 }

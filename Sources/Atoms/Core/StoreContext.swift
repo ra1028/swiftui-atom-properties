@@ -179,7 +179,7 @@ internal struct StoreContext {
         let scopeKey = lookupScopeKey(of: atom, override: override)
         let key = AtomKey(atom, scopeKey: scopeKey)
         let state = getState(of: atom, for: key)
-        let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
+        let context = AtomCurrentContext(store: self)
 
         // Detach the dependencies once to delay updating the downstream until
         // this atom's value refresh is complete.
@@ -217,14 +217,8 @@ internal struct StoreContext {
 
     @usableFromInline
     func reset<Node: Resettable>(_ atom: Node) {
-        let override = lookupOverride(of: atom)
-        let scopeKey = lookupScopeKey(of: atom, override: override)
-        let key = AtomKey(atom, scopeKey: scopeKey)
-
-        if let state = lookupState(of: atom, for: key) {
-            let context = AtomCurrentContext(store: self, coordinator: state.coordinator)
-            atom.reset(context: context)
-        }
+        let context = AtomCurrentContext(store: self)
+        atom.reset(context: context)
     }
 
     @usableFromInline
@@ -259,7 +253,7 @@ internal struct StoreContext {
     @usableFromInline
     func restore(_ snapshot: Snapshot) {
         let keys = snapshot.caches.keys
-        var obsoletedDependencies = [AtomKey: Set<AtomKey>]()
+        var disusedDependencies = [AtomKey: Set<AtomKey>]()
 
         for key in keys {
             let oldDependencies = store.graph.dependencies[key]
@@ -269,7 +263,7 @@ internal struct StoreContext {
             store.state.caches[key] = snapshot.caches[key]
             store.graph.dependencies[key] = newDependencies
             store.graph.children[key] = snapshot.graph.children[key]
-            obsoletedDependencies[key] = oldDependencies?.subtracting(newDependencies ?? [])
+            disusedDependencies[key] = oldDependencies?.subtracting(newDependencies ?? [])
         }
 
         for key in keys {
@@ -277,7 +271,7 @@ internal struct StoreContext {
             checkAndRelease(for: key)
 
             // Release dependencies that are no longer dependent.
-            if let dependencies = obsoletedDependencies[key] {
+            if let dependencies = disusedDependencies[key] {
                 for dependency in dependencies {
                     store.graph.children[dependency]?.remove(key)
                     checkAndRelease(for: dependency)
@@ -307,7 +301,7 @@ private extension StoreContext {
 
         store.state.caches[key] = AtomCache(atom: atom, value: value)
 
-        let context = AtomEffectContext(store: self)
+        let context = AtomCurrentContext(store: self)
         state.effect.initialized(context: context)
 
         return value
@@ -328,11 +322,9 @@ private extension StoreContext {
 
         // Perform side effects first.
         let state = getState(of: atom, for: key)
-        let updateContext = AtomCurrentContext(store: self, coordinator: state.coordinator)
-        atom.updated(newValue: newValue, oldValue: oldValue, context: updateContext)
-
-        let effectContext = AtomEffectContext(store: self)
-        state.effect.updated(context: effectContext)
+        let context = AtomCurrentContext(store: self)
+        atom.updated(newValue: newValue, oldValue: oldValue, context: context)
+        state.effect.updated(context: context)
 
         // Calculate topological order for updating downstream efficiently.
         let (edges, redundantDependencies) = store.topologicalSorted(key: key)
@@ -354,10 +346,8 @@ private extension StoreContext {
 
             // Perform side effects before updating downstream.
             let state = getState(of: cache.atom, for: key)
-            let updateContext = AtomCurrentContext(store: self, coordinator: state.coordinator)
-            cache.atom.updated(newValue: newValue, oldValue: cache.value, context: updateContext)
-
-            state.effect.updated(context: effectContext)
+            cache.atom.updated(newValue: newValue, oldValue: cache.value, context: context)
+            state.effect.updated(context: context)
         }
 
         // Performs update of the given atom with the dependency's context.
@@ -440,8 +430,8 @@ private extension StoreContext {
 
         state?.transaction?.terminate()
 
-        let effectContext = AtomEffectContext(store: self)
-        state?.effect.released(context: effectContext)
+        let context = AtomCurrentContext(store: self)
+        state?.effect.released(context: context)
     }
 
     func checkAndRelease(for key: AtomKey) {
@@ -495,16 +485,16 @@ private extension StoreContext {
     func prepareForTransaction<Node: Atom>(
         of atom: Node,
         for key: AtomKey
-    ) -> AtomProducerContext<Node.Produced, Node.Coordinator> {
+    ) -> AtomProducerContext<Node.Produced> {
         let transaction = Transaction(key: key) {
             let oldDependencies = detachDependencies(for: key)
 
             return {
                 let dependencies = store.graph.dependencies[key] ?? []
-                let obsoletedDependencies = oldDependencies.subtracting(dependencies)
+                let disusedDependencies = oldDependencies.subtracting(dependencies)
 
-                // Release obsoleted dependencies if no longer used.
-                for dependency in obsoletedDependencies {
+                // Release disused dependencies if no longer used.
+                for dependency in disusedDependencies {
                     checkAndRelease(for: dependency)
                 }
             }
@@ -516,11 +506,7 @@ private extension StoreContext {
         // Register the transaction state so it can be terminated from anywhere.
         state.transaction = transaction
 
-        return AtomProducerContext(
-            store: self,
-            transaction: transaction,
-            coordinator: state.coordinator
-        ) { newValue in
+        return AtomProducerContext(store: self, transaction: transaction) { newValue in
             if let cache = lookupCache(of: atom, for: key) {
                 update(atom: atom, for: key, oldValue: cache.value, newValue: newValue)
             }
@@ -546,25 +532,24 @@ private extension StoreContext {
         return value
     }
 
-    func getState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Coordinator, Node.Effect> {
+    func getState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Effect> {
         if let state = lookupState(of: atom, for: key) {
             return state
         }
 
-        let coordinator = atom.makeCoordinator()
-        let context = AtomCurrentContext(store: self, coordinator: coordinator)
+        let context = AtomCurrentContext(store: self)
         let effect = atom.effect(context: context)
-        let state = AtomState(coordinator: coordinator, effect: effect)
+        let state = AtomState(effect: effect)
         store.state.states[key] = state
         return state
     }
 
-    func lookupState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Coordinator, Node.Effect>? {
+    func lookupState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Effect>? {
         guard let baseState = store.state.states[key] else {
             return nil
         }
 
-        guard let state = baseState as? AtomState<Node.Coordinator, Node.Effect> else {
+        guard let state = baseState as? AtomState<Node.Effect> else {
             assertionFailure(
                 """
                 [Atoms]
@@ -574,7 +559,7 @@ private extension StoreContext {
                 Atom: \(Node.self)
                 Key: \(type(of: atom.key))
                 Detected: \(type(of: baseState))
-                Expected: AtomState<\(Node.Coordinator.self), \(Node.Effect.self)>
+                Expected: AtomState<\(Node.Effect.self)>
                 """
             )
 

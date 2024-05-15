@@ -1,6 +1,6 @@
 /// Produces the refreshed value of an atom.
-public struct AtomRefreshProducer<Value, Coordinator> {
-    internal typealias Context = AtomProducerContext<Value, Coordinator>
+public struct AtomRefreshProducer<Value> {
+    internal typealias Context = AtomProducerContext<Value>
 
     internal let getValue: @MainActor (Context) async -> Value
     internal let refreshValue: @MainActor (Value, Context) async -> Void

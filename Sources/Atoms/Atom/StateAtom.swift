@@ -44,7 +44,7 @@ public protocol StateAtom: Atom {
 }
 
 public extension StateAtom {
-    var producer: AtomProducer<Value, Coordinator> {
+    var producer: AtomProducer<Value> {
         AtomProducer { context in
             context.transaction(defaultValue)
         }

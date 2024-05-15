@@ -1022,8 +1022,7 @@ Context is a structure for using and interacting with atom values from views or 
 
 |API|Use|
 |:--|:--|
-|[watch](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomwatchablecontext/watch(_:))|Obtains an atom value and starts watching its update.|
-|[read](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/read(_:))|Obtains an atom value but does not watch its update.|
+|[read](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/read(_:))|Gets an atom value but does not watch its update.|
 |[set](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/set(_:for:))|Sets a new value to the atom.|
 |[modify](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/modify(_:body:))|Modifies the cached atom value.|
 |[subscript[]](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/subscript(_:))|Read-write access for applying mutating methods.|
@@ -1039,6 +1038,7 @@ A context available through the `@ViewContext` property wrapper when using atoms
 
 |API|Use|
 |:--|:--|
+|[watch](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/watch(_:))|Gets an atom value and starts watching its update.|
 |[binding](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/binding(_:))|Gets a binding to the atom state.|
 |[snapshot()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/snapshot())|For debugging, takes a snapshot that captures specific set of values of atoms.|
 
@@ -1117,33 +1117,28 @@ struct BooksView: View {
 #### [AtomTransactionContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext)
 
 A context passed as a parameter to the primary function of each atom type.  
-This context type has a `coordinator` property that preserves an instance from the time an atom is used and initialized until it is unused and cleaned up, so it can be used to cache values or as a lifecycle for an atom.  
 
 |API|Use|
 |:--|:--|
-|[coordinator](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext/coordinator)|The atom’s associated coordinator that preservess a state until the atom will no longer be used.|
+|[watch](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext/watch(_:))|Gets an atom value and starts watching its update.|
 
 <details><summary><code>📖 Example</code></summary>
 
 ```swift
-struct LocationManagerAtom: ValueAtom, Hashable {
-    final class Coordinator: NSObject, CLLocationManagerDelegate { ... }
+final class LocationManagerDelegate: NSObject, CLLocationManagerDelegate { ... }
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
-
-    func value(context: Context) -> LocationManagerProtocol {
-        let manager = CLLocationManager()
-        manager.delegate = context.coordinator
-        return manager
+struct LocationManagerDelegateAtom: ValueAtom, Hashable {
+    func value(context: Context) -> LocationManagerDelegate {
+        LocationManagerDelegate()
     }
 }
 
-struct CoordinateAtom: ValueAtom, Hashable {
-    func value(context: Context) -> CLLocationCoordinate2D? {
-        let manager = context.watch(LocationManagerAtom())
-        return manager.location?.coordinate
+struct LocationManagerAtom: ValueAtom, Hashable {
+    func value(context: Context) -> LocationManagerProtocol {
+        let delegate = context.watch(LocationManagerDelegateAtom())
+        let manager = CLLocationManager()
+        manager.delegate = delegate
+        return manager
     }
 }
 ```
@@ -1156,6 +1151,8 @@ A context that can simulate any scenarios in which atoms are used from a view or
 
 |API|Use|
 |:--|:--|
+|[watch](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/watch(_:))|Gets an atom value and starts watching its update.|
+|[lookup](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/lookup(_:))|Gets an atom value without creating a cache.|
 |[unwatch(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/unwatch(_:))|Simulates a scenario in which the atom is no longer watched.|
 |[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-40pb3)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
 |[waitForUpdate(timeout:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/waitforupdate(timeout:))|Waits until any of the atoms watched through this context have been updated.|

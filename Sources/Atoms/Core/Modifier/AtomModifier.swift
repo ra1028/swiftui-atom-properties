@@ -13,9 +13,6 @@ public protocol AtomModifier {
     /// A type representing the stable identity of this modifier.
     associatedtype Key: Hashable
 
-    /// A type of the coordinator that you use to preserve arbitrary state of this atom.
-    associatedtype Coordinator = Void
-
     /// A type of base value to be modified.
     associatedtype Base
 
@@ -25,24 +22,8 @@ public protocol AtomModifier {
     /// A unique value used to identify the modifier internally.
     var key: Key { get }
 
-    /// Creates the custom coordinator instance that you use to preserve arbitrary state of
-    /// the atom.
-    ///
-    /// It's called when the atom is initialized, and the same instance is preserved until
-    /// the atom is no longer used and is deinitialized.
-    ///
-    /// - Returns: The atom's associated coordinator instance.
-    @MainActor
-    func makeCoordinator() -> Coordinator
-
     // --- Internal ---
 
     /// A producer that produces the value of this atom.
-    func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator>
-}
-
-public extension AtomModifier {
-    func makeCoordinator() -> Coordinator where Coordinator == Void {
-        ()
-    }
+    func producer(atom: some Atom<Base>) -> AtomProducer<Produced>
 }

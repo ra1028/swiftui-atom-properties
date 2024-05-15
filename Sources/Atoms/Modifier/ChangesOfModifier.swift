@@ -61,7 +61,7 @@ public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
     }
 
     /// A producer that produces the value of this atom.
-    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
+    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced> {
         AtomProducer { context in
             let value = context.transaction { $0.watch(atom) }
             return value[keyPath: keyPath]
