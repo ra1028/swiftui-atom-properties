@@ -130,8 +130,14 @@ final class ScopedTests: XCTestCase {
                 scoped2Context.watch(atom, subscriber: subscriber, subscription: Subscription()),
                 0
             )
-            XCTAssertEqual(store.state.caches[scoped1BaseAtomKey]?.value as? Int, 0)
-            XCTAssertEqual(store.state.caches[scoped1AtomKey]?.value as? Int, 0)
+            XCTAssertEqual(
+                (store.state.caches[scoped1BaseAtomKey] as? AtomCache<ScopedAtom<String, Int>>)?.value,
+                0
+            )
+            XCTAssertEqual(
+                (store.state.caches[scoped1AtomKey] as? AtomCache<ModifiedAtom<ScopedAtom<String, Int>, ChangesModifier<Int>>>)?.value,
+                0
+            )
             XCTAssertNil(store.state.caches[scoped2BaseAtomKey])
             XCTAssertNil(store.state.caches[scoped2AtomKey])
             XCTAssertNil(store.state.caches[baseAtomKey])
