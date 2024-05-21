@@ -58,3 +58,10 @@ extension ModifiedAtom: AsyncAtom where Node: AsyncAtom, Modifier: AsyncAtomModi
         modifier.refreshProducer(atom: atom)
     }
 }
+
+extension ModifiedAtom: Scoped where Node: Scoped {
+    /// A scope ID which is to find a matching scope.
+    public var scopeID: Node.ScopeID {
+        atom.scopeID
+    }
+}
