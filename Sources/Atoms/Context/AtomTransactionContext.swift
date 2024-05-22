@@ -3,23 +3,18 @@
 /// When an atom is watched through this context, and that atom is updated,
 /// the value of the atom where this context is provided will be updated transitively.
 @MainActor
-public struct AtomTransactionContext<Coordinator>: AtomWatchableContext {
+public struct AtomTransactionContext: AtomWatchableContext {
     @usableFromInline
     internal let _store: StoreContext
     @usableFromInline
     internal let _transaction: Transaction
 
-    /// The atom's associated coordinator.
-    public let coordinator: Coordinator
-
     internal init(
         store: StoreContext,
-        transaction: Transaction,
-        coordinator: Coordinator
+        transaction: Transaction
     ) {
         self._store = store
         self._transaction = transaction
-        self.coordinator = coordinator
     }
 
     /// Accesses the value associated with the given atom without watching it.

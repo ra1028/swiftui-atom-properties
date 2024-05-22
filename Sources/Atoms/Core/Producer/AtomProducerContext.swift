@@ -1,19 +1,16 @@
 @MainActor
-internal struct AtomProducerContext<Value, Coordinator> {
+internal struct AtomProducerContext<Value> {
     private let store: StoreContext
     private let transaction: Transaction
-    private let coordinator: Coordinator
     private let update: @MainActor (Value) -> Void
 
     init(
         store: StoreContext,
         transaction: Transaction,
-        coordinator: Coordinator,
         update: @escaping @MainActor (Value) -> Void
     ) {
         self.store = store
         self.transaction = transaction
-        self.coordinator = coordinator
         self.update = update
     }
 
@@ -30,16 +27,16 @@ internal struct AtomProducerContext<Value, Coordinator> {
         update(value)
     }
 
-    func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) -> T) -> T {
+    func transaction<T>(_ body: @MainActor (AtomTransactionContext) -> T) -> T {
         transaction.begin()
-        let context = AtomTransactionContext(store: store, transaction: transaction, coordinator: coordinator)
+        let context = AtomTransactionContext(store: store, transaction: transaction)
         defer { transaction.commit() }
         return body(context)
     }
 
-    func transaction<T>(_ body: @MainActor (AtomTransactionContext<Coordinator>) async throws -> T) async rethrows -> T {
+    func transaction<T>(_ body: @MainActor (AtomTransactionContext) async throws -> T) async rethrows -> T {
         transaction.begin()
-        let context = AtomTransactionContext(store: store, transaction: transaction, coordinator: coordinator)
+        let context = AtomTransactionContext(store: store, transaction: transaction)
         defer { transaction.commit() }
         return try await body(context)
     }

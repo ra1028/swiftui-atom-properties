@@ -4,5 +4,5 @@
 /// its final value.
 public protocol AsyncAtom<Produced>: Atom {
     /// A producer that produces the refreshable value of this atom.
-    var refreshProducer: AtomRefreshProducer<Produced, Coordinator> { get }
+    var refreshProducer: AtomRefreshProducer<Produced> { get }
 }

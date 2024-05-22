@@ -56,7 +56,7 @@ public protocol PublisherAtom: AsyncAtom where Produced == AsyncPhase<Publisher.
 }
 
 public extension PublisherAtom {
-    var producer: AtomProducer<Produced, Coordinator> {
+    var producer: AtomProducer<Produced> {
         AtomProducer { context in
             let results = context.transaction(publisher).results
             let task = Task {
@@ -72,7 +72,7 @@ public extension PublisherAtom {
         }
     }
 
-    var refreshProducer: AtomRefreshProducer<Produced, Coordinator> {
+    var refreshProducer: AtomRefreshProducer<Produced> {
         AtomRefreshProducer { context in
             let results = context.transaction(publisher).results
             let task = Task {

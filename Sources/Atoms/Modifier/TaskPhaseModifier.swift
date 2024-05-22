@@ -87,7 +87,7 @@ public struct TaskPhaseModifier<Success: Sendable, Failure: Error>: AsyncAtomMod
     }
 
     /// A producer that produces the value of this atom.
-    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced, Coordinator> {
+    public func producer(atom: some Atom<Base>) -> AtomProducer<Produced> {
         AtomProducer { context in
             let baseTask = context.transaction { $0.watch(atom) }
             let task = Task {
@@ -104,7 +104,7 @@ public struct TaskPhaseModifier<Success: Sendable, Failure: Error>: AsyncAtomMod
     }
 
     /// A producer that produces the refreshable value of this atom.
-    public func refreshProducer(atom: some AsyncAtom<Base>) -> AtomRefreshProducer<Produced, Coordinator> {
+    public func refreshProducer(atom: some AsyncAtom<Base>) -> AtomRefreshProducer<Produced> {
         AtomRefreshProducer { context in
             let task = await context.transaction { context in
                 await context.refresh(atom)

@@ -66,7 +66,7 @@ public protocol ObservableObjectAtom: Atom where Produced == ObjectType {
 }
 
 public extension ObservableObjectAtom {
-    var producer: AtomProducer<Produced, Coordinator> {
+    var producer: AtomProducer<Produced> {
         AtomProducer { context in
             context.transaction(object)
         } manageValue: { object, context in

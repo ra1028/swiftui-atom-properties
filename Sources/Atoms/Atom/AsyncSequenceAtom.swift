@@ -63,7 +63,7 @@ public protocol AsyncSequenceAtom: AsyncAtom where Produced == AsyncPhase<Sequen
 }
 
 public extension AsyncSequenceAtom {
-    var producer: AtomProducer<Produced, Coordinator> {
+    var producer: AtomProducer<Produced> {
         AtomProducer { context in
             let sequence = context.transaction(sequence)
             let task = Task {
@@ -86,7 +86,7 @@ public extension AsyncSequenceAtom {
         }
     }
 
-    var refreshProducer: AtomRefreshProducer<Produced, Coordinator> {
+    var refreshProducer: AtomRefreshProducer<Produced> {
         AtomRefreshProducer { context in
             let sequence = context.transaction(sequence)
             let task = Task {

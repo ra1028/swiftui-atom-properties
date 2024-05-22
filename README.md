@@ -20,12 +20,12 @@
 - [Basic Tutorial](#basic-tutorial)
 - [Guides](#guides)
   - [AtomRoot](#atomroot)
-  - [Atoms](#atoms-1)
-  - [Modifiers](#modifiers)
-  - [Attributes](#attributes)
-  - [Property Wrappers](#property-wrappers)
+  - [Atom](#atom)
+  - [Modifier](#modifier)
+  - [Attribute](#attribute)
+  - [Property Wrapper](#property-wrapper)
   - [Context](#context)
-  - [Views](#views)
+  - [View](#view)
   - [Techniques](#techniques)
   - [Advanced Usage](#advanced-usage)
   - [Dealing with Known SwiftUI Bugs](#dealing-with-known-swiftui-bugs)
@@ -365,7 +365,7 @@ struct ExampleApp: App {
 
 ---
 
-### Atoms
+### Atom
 
 An atom represents a piece of state and is the source of truth for your app. It can also represent a derived data by combining and transforming one or more other atoms.  
 Each atom does not actually have a global data inside, and retrieve values from the store provided by the `AtomRoot`. That's why *they can be accessed from anywhere, but never lose testability.*  
@@ -630,7 +630,7 @@ struct ContactView: View {
 
 ---
 
-### Modifiers
+### Modifier
 
 Modifiers can be applied to an atom to produce a different versions of the original atom to make it more coding friendly or to reduce view re-computation for performance optimization.
 
@@ -735,7 +735,7 @@ struct WeatherReportView: View {
 
 ---
 
-### Attributes
+### Attribute
 
 The attributes allow control over how the atoms essentially work, for example, cache control of the state.
 
@@ -856,7 +856,7 @@ private struct RandomNumberGeneratorAtom: ValueAtom, Hashable {
 
 ---
 
-### Property Wrappers
+### Property Wrapper
 
 The following property wrappers are used to bind atoms to view and recompute the view with data changes.  
 By retrieving the atom through these property wrappers, the internal system marks the atom as in-use and the values are cached until that view is dismantled.
@@ -1022,16 +1022,15 @@ Context is a structure for using and interacting with atom values from views or 
 
 |API|Use|
 |:--|:--|
-|[watch](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomwatchablecontext/watch(_:))|Obtains an atom value and starts watching its update.|
-|[read](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/read(_:))|Obtains an atom value but does not watch its update.|
-|[set](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/set(_:for:))|Sets a new value to the atom.|
-|[modify](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/modify(_:body:))|Modifies the cached atom value.|
+|[watch(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/watch(_:))|Gets an atom value and starts watching its update.|
+|[read(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/read(_:))|Gets an atom value but does not watch its update.|
+|[set(_:for:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/set(_:for:))|Sets a new value to the atom.|
+|[modify(_:body:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/modify(_:body:))|Modifies the cached atom value.|
 |[subscript[]](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/subscript(_:))|Read-write access for applying mutating methods.|
-|[refresh](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/refresh(_:)-1gb3a)|Produce a new value of the atom after waiting until asynchronous operation is complete.|
-|[reset](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/reset(_:))|Reset an atom to the default value or a first output.|
+|[refresh(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/refresh(_:)-1gb3a)|Produce a new value of the atom after waiting until asynchronous operation is complete.|
+|[reset(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/reset(_:))|Reset an atom to the default value or a first output.|
 
-There are the following types context as different contextual environments.  
-The APIs described in each section below are their own specific functionality depending on the environment in which it is used, in addition to the above common APIs.  
+Contexts are provided in the following types depending on the environment where they are provided. In addition to the common APIs described above, each context type may have its unique functionalities.  
 
 #### [AtomViewContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext)
 
@@ -1039,7 +1038,7 @@ A context available through the `@ViewContext` property wrapper when using atoms
 
 |API|Use|
 |:--|:--|
-|[binding](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/binding(_:))|Gets a binding to the atom state.|
+|[binding(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/binding(_:))|Gets a binding to the atom state.|
 |[snapshot()](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomviewcontext/snapshot())|For debugging, takes a snapshot that captures specific set of values of atoms.|
 
 <details><summary><code>📖 Example</code></summary>
@@ -1117,33 +1116,24 @@ struct BooksView: View {
 #### [AtomTransactionContext](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext)
 
 A context passed as a parameter to the primary function of each atom type.  
-This context type has a `coordinator` property that preserves an instance from the time an atom is used and initialized until it is unused and cleaned up, so it can be used to cache values or as a lifecycle for an atom.  
-
-|API|Use|
-|:--|:--|
-|[coordinator](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtransactioncontext/coordinator)|The atom’s associated coordinator that preservess a state until the atom will no longer be used.|
 
 <details><summary><code>📖 Example</code></summary>
 
 ```swift
-struct LocationManagerAtom: ValueAtom, Hashable {
-    final class Coordinator: NSObject, CLLocationManagerDelegate { ... }
+final class LocationManagerDelegate: NSObject, CLLocationManagerDelegate { ... }
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
-
-    func value(context: Context) -> LocationManagerProtocol {
-        let manager = CLLocationManager()
-        manager.delegate = context.coordinator
-        return manager
+struct LocationManagerDelegateAtom: ValueAtom, Hashable {
+    func value(context: Context) -> LocationManagerDelegate {
+        LocationManagerDelegate()
     }
 }
 
-struct CoordinateAtom: ValueAtom, Hashable {
-    func value(context: Context) -> CLLocationCoordinate2D? {
-        let manager = context.watch(LocationManagerAtom())
-        return manager.location?.coordinate
+struct LocationManagerAtom: ValueAtom, Hashable {
+    func value(context: Context) -> LocationManagerProtocol {
+        let delegate = context.watch(LocationManagerDelegateAtom())
+        let manager = CLLocationManager()
+        manager.delegate = delegate
+        return manager
     }
 }
 ```
@@ -1156,6 +1146,7 @@ A context that can simulate any scenarios in which atoms are used from a view or
 
 |API|Use|
 |:--|:--|
+|[lookup(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/lookup(_:))|Gets an atom value without creating a cache.|
 |[unwatch(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/unwatch(_:))|Simulates a scenario in which the atom is no longer watched.|
 |[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-40pb3)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
 |[waitForUpdate(timeout:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/waitforupdate(timeout:))|Waits until any of the atoms watched through this context have been updated.|
@@ -1205,7 +1196,7 @@ class FetchMusicsTests: XCTestCase {
 
 ---
 
-### Views
+### View
 
 #### [AtomScope](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomscope)
 
@@ -1249,7 +1240,7 @@ struct NewsView: View {
 
 ### Techniques
 
-#### Scoped Atoms
+#### Scoped Atom
 
 This library is designed with the shared state as a single source of truth first principle, but also the state can be scoped depending on the intended use.  
 Scoped atoms preserves the atom state in the [AtomScope](#atomscope) nearest to the ancestor of where it is used and prevents it from being shared out of scope. `Scoped` is the attribute for that feature.  
@@ -1307,7 +1298,7 @@ AtomScope(id: TextScopeID()) {
 This is also useful when multiple identical screens are stacked and each screen needs isolated states such as user inputs.  
 Note that other atoms that depend on scoped atoms will be in a shared state and must be given `Scoped` attribute as well in order to scope them as well.  
 
-#### Atom Effects
+#### Atom Effect
 
 Atom effects are an API for managing side effects that are synchronized with the atom's lifecycle. They are widely applicable for variety of usage such as state synchronization, state persistence, logging, and etc, by observing and reacting to state changes.  
 
@@ -1370,7 +1361,7 @@ final class CountTimerEffect: AtomEffect {
 }
 ```
 
-#### Override Atoms
+#### Atom Override
 
 You can override atoms in [AtomRoot](#atomroot) or [AtomScope](#atomscope) to overwirete the atom states for dependency injection or faking state in particular view, which is useful especially for testing.  
 

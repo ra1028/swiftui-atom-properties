@@ -12,7 +12,7 @@
 public protocol AtomEffect {
     /// A type of the context structure to read, set, and otherwise interact
     /// with other atoms.
-    typealias Context = AtomEffectContext
+    typealias Context = AtomCurrentContext
 
     /// A lifecycle event that is triggered when the atom is first used and initialized,
     /// or once it is released and re-initialized again.

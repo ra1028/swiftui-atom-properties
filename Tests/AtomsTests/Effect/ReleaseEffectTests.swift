@@ -6,7 +6,7 @@ final class ReleaseEffectTests: XCTestCase {
     @MainActor
     func testEvent() {
         let store = StoreContext()
-        let context = AtomEffectContext(store: store)
+        let context = AtomCurrentContext(store: store)
         var performedCount = 0
         let effect = ReleaseEffect {
             performedCount += 1

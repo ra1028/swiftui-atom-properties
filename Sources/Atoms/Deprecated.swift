@@ -1,11 +1,9 @@
 import SwiftUI
 
-public extension AtomPrimitive {
-    @available(*, deprecated, message: "`Atom.updated(newValue:oldValue:context:)` is also deprecated. Use `Atom.effect(context:)` instead.")
-    typealias UpdatedContext = AtomCurrentContext<Coordinator>
-}
-
 public extension Atom {
+    @available(*, deprecated, message: "`Atom.updated(newValue:oldValue:context:)` is also deprecated. Use `Atom.effect(context:)` instead.")
+    typealias UpdatedContext = AtomCurrentContext
+
     @available(*, deprecated, renamed: "changes(of:)")
     func select<Selected: Equatable>(
         _ keyPath: KeyPath<Produced, Selected>
@@ -24,14 +22,28 @@ public extension AtomWatchableContext {
     }
 }
 
+public extension AtomTransactionContext {
+    @available(*, unavailable, message: "Use `AtomEffect` or create another atom to manage coordinator.")
+    var coordinator: Never {
+        fatalError("Obsoleted.")
+    }
+}
+
+public extension AtomCurrentContext {
+    @available(*, unavailable, message: "Use `AtomEffect` or create another atom to manage coordinator.")
+    var coordinator: Never {
+        fatalError("Obsoleted.")
+    }
+}
+
 public extension Resettable {
     @available(*, deprecated, renamed: "CurrentContext")
-    typealias ResetContext = AtomCurrentContext<Coordinator>
+    typealias ResetContext = AtomCurrentContext
 }
 
 public extension Refreshable {
     @available(*, deprecated, renamed: "CurrentContext")
-    typealias RefreshContext = AtomCurrentContext<Coordinator>
+    typealias RefreshContext = AtomCurrentContext
 }
 
 public extension AtomScope {

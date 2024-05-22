@@ -1,18 +1,11 @@
 /// A context structure to read, set, and otherwise interact with atoms.
 @MainActor
-public struct AtomCurrentContext<Coordinator>: AtomContext {
+public struct AtomCurrentContext: AtomContext {
     @usableFromInline
     internal let _store: StoreContext
 
-    /// The atom's associated coordinator.
-    public let coordinator: Coordinator
-
-    internal init(
-        store: StoreContext,
-        coordinator: Coordinator
-    ) {
+    internal init(store: StoreContext) {
         self._store = store
-        self.coordinator = coordinator
     }
 
     /// Accesses the value associated with the given atom without watching it.
