@@ -1,15 +1,18 @@
 @usableFromInline
 @MainActor
 internal final class TransactionState {
-    private var body: (() -> () -> Void)?
-    private var cleanup: (() -> Void)?
+    private var body: (@MainActor () -> @MainActor () -> Void)?
+    private var cleanup: (@MainActor () -> Void)?
 
     let key: AtomKey
 
     private var termination: (@MainActor () -> Void)?
     private(set) var isTerminated = false
 
-    init(key: AtomKey, _ body: @escaping () -> () -> Void) {
+    init(
+        key: AtomKey,
+        _ body: @MainActor @escaping () -> @MainActor () -> Void
+    ) {
         self.key = key
         self.body = body
     }

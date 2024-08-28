@@ -73,7 +73,20 @@ final class ResettableSubject<Output, Failure: Error>: Publisher, Subject {
 extension StoreContext {
     init(
         store: AtomStore = AtomStore(),
-        scopeKey: ScopeKey = ScopeKey(token: ScopeKey.Token()),
+        observers: [Observer] = [],
+        overrides: [OverrideKey: any OverrideProtocol] = [:]
+    ) {
+        self.init(
+            store: store,
+            scopeKey: ScopeKey(token: ScopeKey.Token()),
+            observers: observers,
+            overrides: overrides
+        )
+    }
+
+    init(
+        store: AtomStore = AtomStore(),
+        scopeKey: ScopeKey,
         observers: [Observer] = [],
         overrides: [OverrideKey: any OverrideProtocol] = [:]
     ) {
@@ -96,7 +109,7 @@ extension AtomKey {
 }
 
 extension Atoms.Subscription {
-    init(update: @escaping () -> Void = {}) {
+    init(update: @MainActor @Sendable @escaping () -> Void = {}) {
         let location = SourceLocation()
         self.init(location: location, update: update)
     }

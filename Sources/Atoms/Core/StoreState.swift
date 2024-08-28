@@ -1,3 +1,4 @@
+@MainActor
 internal final class StoreState {
     var caches = [AtomKey: any AtomCacheProtocol]()
     var states = [AtomKey: any AtomStateProtocol]()

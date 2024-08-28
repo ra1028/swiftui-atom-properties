@@ -1380,7 +1380,7 @@ final class StoreContextTests: XCTestCase {
         }
 
         final class SubscriberHost {
-            var subscriberState: SubscriberState? = SubscriberState()
+            var subscriberState: SubscriberState?
         }
 
         // Flaky.
@@ -1388,6 +1388,8 @@ final class StoreContextTests: XCTestCase {
             let store = AtomStore()
             let context = StoreContext(store: store)
             let host = SubscriberHost()
+            host.subscriberState = SubscriberState()
+
             let subscriber = Subscriber(host.subscriberState!)
 
             _ = context.watch(
@@ -1426,6 +1428,7 @@ final class StoreContextTests: XCTestCase {
             wait(for: [expectation], timeout: 0.5)
             XCTAssertNil(context.lookup(TestAtom1()))
             XCTAssertNil(context.lookup(TestAtom2()))
+            XCTAssertTrue(store.state.subscriptions.isEmpty)
         }
     }
 

@@ -1,6 +1,5 @@
 @usableFromInline
-@MainActor
 internal struct Subscription {
     let location: SourceLocation
-    let update: () -> Void
+    let update: @MainActor @Sendable () -> Void
 }

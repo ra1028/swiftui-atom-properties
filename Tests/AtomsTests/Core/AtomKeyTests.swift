@@ -39,6 +39,7 @@ final class AtomKeyTests: XCTestCase {
         XCTAssertEqual(dictionary[key2], 300)
     }
 
+    @MainActor
     func testDescription() {
         let atom = TestAtom(value: 0)
         let token = ScopeKey.Token()

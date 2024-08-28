@@ -6,6 +6,7 @@ internal protocol AtomStateProtocol: AnyObject {
     var transactionState: TransactionState? { get set }
 }
 
+@MainActor
 internal final class AtomState<Effect: AtomEffect>: AtomStateProtocol {
     let effect: Effect
     var transactionState: TransactionState?

@@ -58,7 +58,9 @@ public struct ViewContext: DynamicProperty {
             subscriber: Subscriber(state.subscriberState),
             subscription: Subscription(
                 location: location,
-                update: state.objectWillChange.send
+                update: { [weak state] in
+                    state?.objectWillChange.send()
+                }
             )
         )
     }

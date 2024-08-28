@@ -1,4 +1,5 @@
-func `mutating`<T>(_ value: T, _ mutation: (inout T) -> Void) -> T {
+@inlinable
+internal func `mutating`<T>(_ value: T, _ mutation: (inout T) -> Void) -> T {
     var value = value
     mutation(&value)
     return value
