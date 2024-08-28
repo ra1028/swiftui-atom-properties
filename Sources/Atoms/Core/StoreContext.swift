@@ -100,8 +100,8 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func watch<Node: Atom>(_ atom: Node, in transaction: Transaction) -> Node.Produced {
-        guard !transaction.isTerminated else {
+    func watch<Node: Atom>(_ atom: Node, in transactionState: TransactionState) -> Node.Produced {
+        guard !transactionState.isTerminated else {
             return read(atom)
         }
 
@@ -112,8 +112,8 @@ internal struct StoreContext {
         let value = cache?.value ?? initialize(of: atom, for: key, override: override)
 
         // Add an `Edge` from the upstream to downstream.
-        store.graph.dependencies[transaction.key, default: []].insert(key)
-        store.graph.children[key, default: []].insert(transaction.key)
+        store.graph.dependencies[transactionState.key, default: []].insert(key)
+        store.graph.children[key, default: []].insert(transactionState.key)
 
         return value
     }
@@ -189,13 +189,13 @@ internal struct StoreContext {
         // Restore dependencies when the refresh is completed.
         attachDependencies(dependencies, for: key)
 
-        guard let transaction = state.transaction, let cache = lookupCache(of: atom, for: key) else {
+        guard let transactionState = state.transactionState, let cache = lookupCache(of: atom, for: key) else {
             checkAndRelease(for: key)
             return value
         }
 
         // Notify update unless it's cancelled or terminated by other operations.
-        if !Task.isCancelled && !transaction.isTerminated {
+        if !Task.isCancelled && !transactionState.isTerminated {
             update(atom: atom, for: key, oldValue: cache.value, newValue: value)
         }
 
@@ -428,7 +428,7 @@ private extension StoreContext {
             }
         }
 
-        state?.transaction?.terminate()
+        state?.transactionState?.terminate()
 
         let context = AtomCurrentContext(store: self)
         state?.effect.released(context: context)
@@ -486,7 +486,7 @@ private extension StoreContext {
         of atom: Node,
         for key: AtomKey
     ) -> AtomProducerContext<Node.Produced> {
-        let transaction = Transaction(key: key) {
+        let transactionState = TransactionState(key: key) {
             let oldDependencies = detachDependencies(for: key)
 
             return {
@@ -502,11 +502,11 @@ private extension StoreContext {
 
         let state = getState(of: atom, for: key)
         // Terminate the ongoing transaction first.
-        state.transaction?.terminate()
+        state.transactionState?.terminate()
         // Register the transaction state so it can be terminated from anywhere.
-        state.transaction = transaction
+        state.transactionState = transactionState
 
-        return AtomProducerContext(store: self, transaction: transaction) { newValue in
+        return AtomProducerContext(store: self, transactionState: transactionState) { newValue in
             if let cache = lookupCache(of: atom, for: key) {
                 update(atom: atom, for: key, oldValue: cache.value, newValue: newValue)
             }

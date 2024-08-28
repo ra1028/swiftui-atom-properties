@@ -7,14 +7,14 @@ public struct AtomTransactionContext: AtomWatchableContext {
     @usableFromInline
     internal let _store: StoreContext
     @usableFromInline
-    internal let _transaction: Transaction
+    internal let _transactionState: TransactionState
 
     internal init(
         store: StoreContext,
-        transaction: Transaction
+        transactionState: TransactionState
     ) {
         self._store = store
-        self._transaction = transaction
+        self._transactionState = transactionState
     }
 
     /// Accesses the value associated with the given atom without watching it.
@@ -191,6 +191,6 @@ public struct AtomTransactionContext: AtomWatchableContext {
     @inlinable
     @discardableResult
     public func watch<Node: Atom>(_ atom: Node) -> Node.Produced {
-        _store.watch(atom, in: _transaction)
+        _store.watch(atom, in: _transactionState)
     }
 }

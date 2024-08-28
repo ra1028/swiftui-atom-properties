@@ -1,6 +1,6 @@
 @usableFromInline
 @MainActor
-internal final class Transaction {
+internal final class TransactionState {
     private var body: (() -> () -> Void)?
     private var cleanup: (() -> Void)?
 

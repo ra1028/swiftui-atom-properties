@@ -110,7 +110,7 @@ extension AtomCache: Equatable where Node: Equatable, Node.Produced: Equatable {
     }
 }
 
-extension Transaction {
+extension TransactionState {
     convenience init(key: AtomKey) {
         self.init(key: key, { {} })
     }
