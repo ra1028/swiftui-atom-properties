@@ -1366,6 +1366,70 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
+    func testUnsubscribeOnBackgroundThread() {
+        struct TestAtom1: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                0
+            }
+        }
+
+        struct TestAtom2: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(TestAtom1())
+            }
+        }
+
+        final class SubscriberHost {
+            var subscriberState: SubscriberState? = SubscriberState()
+        }
+
+        // Flaky.
+        for _ in 0..<100 {
+            let store = AtomStore()
+            let context = StoreContext(store: store)
+            let host = SubscriberHost()
+            let subscriber = Subscriber(host.subscriberState!)
+
+            _ = context.watch(
+                TestAtom2(),
+                subscriber: subscriber,
+                subscription: Subscription()
+            )
+
+            let expectation = expectation(description: #function)
+            expectation.expectedFulfillmentCount = 3
+
+            // Release the subscriber state on the detached background thread.
+            Task.detached {
+                host.subscriberState = nil
+                expectation.fulfill()
+            }
+
+            // Set a new value to the root atom.
+            // This causes data race in the internal mechanism
+            // if main actor isolation is not working correctly.
+            Task {
+                context.set(100, for: TestAtom1())
+                expectation.fulfill()
+            }
+
+            // Waits until unsubscription is performed.
+            Task.detached {
+                for _ in 0... {
+                    if await context.lookup(TestAtom1()) == nil {
+                        expectation.fulfill()
+                        break
+                    }
+                }
+            }
+
+            wait(for: [expectation], timeout: 0.5)
+            XCTAssertNil(context.lookup(TestAtom1()))
+            XCTAssertNil(context.lookup(TestAtom2()))
+        }
+    }
+
+    @MainActor
     func testComplexDependencies() async {
         enum Phase {
             case first
