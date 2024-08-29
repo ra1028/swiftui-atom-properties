@@ -694,7 +694,7 @@ struct CountDisplayView: View {
 
 </details>
 
-#### [animation](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/animation(_:))
+#### [animation(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/animation(_:))
 
 |               |Description|
 |:--------------|:----------|
@@ -724,7 +724,7 @@ struct ExampleView: View {
 
 </details>
 
-#### [phase](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/phase)
+#### [TaskAtom/phase](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/taskatom/phase) | [ThrowingTaskAtom/phase](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/throwingtaskatom/phase)
 
 |               |Description|
 |:--------------|:----------|
@@ -1057,8 +1057,8 @@ Context is a structure for using and interacting with atom values from views or 
 |[set(_:for:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/set(_:for:))|Sets a new value to the atom.|
 |[modify(_:body:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/modify(_:body:))|Modifies the cached atom value.|
 |[subscript[]](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/subscript(_:))|Read-write access for applying mutating methods.|
-|[refresh(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/refresh(_:)-1gb3a)|Produce a new value of the atom after waiting until asynchronous operation is complete.|
-|[reset(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/reset(_:))|Reset an atom to the default value or a first output.|
+|[refresh(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/refresh(_:)-7xzm9)|Produce a new value of the atom after waiting until asynchronous operation is complete.|
+|[reset(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomcontext/reset(_:)-8u78a)|Reset an atom to the default value or a first output.|
 
 Contexts are provided in the following types depending on the environment where they are provided. In addition to the common APIs described above, each context type may have its unique functionalities.  
 
@@ -1178,7 +1178,7 @@ A context that can simulate any scenarios in which atoms are used from a view or
 |:--|:--|
 |[lookup(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/lookup(_:))|Gets an atom value without creating a cache.|
 |[unwatch(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/unwatch(_:))|Simulates a scenario in which the atom is no longer watched.|
-|[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-40pb3)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
+|[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-82t4q)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
 |[waitForUpdate(timeout:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/waitforupdate(timeout:))|Waits until any of the atoms watched through this context have been updated.|
 |[wait(for:timeout:until:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/wait(for:timeout:until:))|Waits for the given atom until it will be a certain state.|
 |[onUpdate](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/onupdate)|Sets a closure that notifies there has been an update to one of the atoms.|
@@ -1231,7 +1231,7 @@ class FetchMusicsTests: XCTestCase {
 #### [AtomScope](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomscope)
 
 `AtomScope` allows you to monitor changes or override atoms used in descendant views. Unlike `AtomRoot`, they affect only those in scope.  
-See the [Override Atoms](#override-atoms) and [Debugging](#debugging) sections for specific uses.  
+See the [Atom Override](#atom-override) and [Debugging](#debugging) sections for specific uses.  
 
 ```swift
 AtomScope {
@@ -1341,7 +1341,7 @@ You can create custom effects that conform to the [`AtomEffect`](https://ra1028.
 |[ReleaseEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/releaseeffect)|Performs an arbitrary action when the atom is released.|
 |[MergedEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/mergedeffect)|Merges multiple atom effects into one.|
 
-Atom effects are attached to atoms via the [`Atom.effect(context:)`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/effect(context:)-2kcbd) function.  
+Atom effects are attached to atoms via the [`Atom.effect(context:)`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/effect(context:)-4wm5m) function.  
 
 ```swift
 struct CounterAtom: StateAtom, Hashable {
@@ -1438,7 +1438,7 @@ var body: some {
 }
 ```
 
-Note that overridden atoms in `AtomScope` automatically be scoped, but other atoms that depend on them will be in a shared state and must be given `Scoped` attribute (See also: [Scoped Atoms](#scoped-atoms)) in order to avoid it from being shared across out of scope.  
+Note that overridden atoms in `AtomScope` automatically be scoped, but other atoms that depend on them will be in a shared state and must be given `Scoped` attribute (See also: [Scoped Atom](#scoped-atom)) in order to avoid it from being shared across out of scope.  
 
 See [Testing](#testing) section for details on dependency injection on unit tests.  
 
@@ -1657,7 +1657,7 @@ struct TextCopyView: View {
 
 #### Dynamically initiate atom families
 
-Each atom must have a unique `key` to be uniquely associated with its value. As described in the [Atoms](#atoms) section, it is automatically synthesized by conforming to `Hashable`, but with explicitly specifying a `key` allowing you to pass arbitrary external parameters to the atom. It is commonly used, for example, to retrieve user information associated with a dynamically specified ID from a server.
+Each atom must have a unique `key` to be uniquely associated with its value. As described in the [Atom](#atom) section, it is automatically synthesized by conforming to `Hashable`, but with explicitly specifying a `key` allowing you to pass arbitrary external parameters to the atom. It is commonly used, for example, to retrieve user information associated with a dynamically specified ID from a server.
 
 <details><summary><code>📖 Example</code></summary>
 
