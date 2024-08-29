@@ -694,6 +694,36 @@ struct CountDisplayView: View {
 
 </details>
 
+#### [animation](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/animation(_:))
+
+|               |Description|
+|:--------------|:----------|
+|Summary        |Animates the view watching the atom when the value updates.|
+|Output         |`T`|
+|Compatible     |All atom types.|
+|Use Case       |Apply animation to a view|
+
+<details><summary><code>📖 Example</code></summary>
+
+```swift
+struct TextAtom: ValueAtom, Hashable {
+    func value(context: Context) -> String {
+        ""
+    }
+}
+
+struct ExampleView: View {
+    @Watch(TextAtom().animation())
+    var text
+
+    var body: some View {
+        Text(text)
+    }
+}
+```
+
+</details>
+
 #### [phase](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/phase)
 
 |               |Description|
