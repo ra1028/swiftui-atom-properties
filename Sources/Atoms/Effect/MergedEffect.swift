@@ -2,9 +2,9 @@
 // MergedEffect<each Effect: AtomEffect>
 /// An atom effect that merges multiple atom effects into one.
 public struct MergedEffect: AtomEffect {
-    private let initialized: (Context) -> Void
-    private let updated: (Context) -> Void
-    private let released: (Context) -> Void
+    private let initialized: @MainActor (Context) -> Void
+    private let updated: @MainActor (Context) -> Void
+    private let released: @MainActor (Context) -> Void
 
     /// Creates an atom effect that merges multiple atom effects into one.
     public init<each Effect: AtomEffect>(_ effect: repeat each Effect) {

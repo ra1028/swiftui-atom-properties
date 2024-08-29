@@ -8,8 +8,8 @@ final class AtomTransactionContextTests: XCTestCase {
     func testRead() {
         let atom = TestValueAtom(value: 100)
         let store = AtomStore()
-        let transaction = Transaction(key: AtomKey(atom))
-        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction)
+        let transactionState = TransactionState(key: AtomKey(atom))
+        let context = AtomTransactionContext(store: StoreContext(store: store), transactionState: transactionState)
 
         XCTAssertEqual(context.read(atom), 100)
     }
@@ -19,8 +19,8 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 100)
         let store = AtomStore()
-        let transaction = Transaction(key: AtomKey(atom))
-        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction)
+        let transactionState = TransactionState(key: AtomKey(atom))
+        let context = AtomTransactionContext(store: StoreContext(store: store), transactionState: transactionState)
 
         XCTAssertEqual(context.watch(dependency), 100)
 
@@ -34,8 +34,8 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom0 = TestValueAtom(value: 0)
         let atom1 = TestPublisherAtom { Just(100) }
         let store = AtomStore()
-        let transaction = Transaction(key: AtomKey(atom0))
-        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction)
+        let transactionState = TransactionState(key: AtomKey(atom0))
+        let context = AtomTransactionContext(store: StoreContext(store: store), transactionState: transactionState)
 
         XCTAssertTrue(context.watch(atom1).isSuspending)
 
@@ -54,8 +54,8 @@ final class AtomTransactionContextTests: XCTestCase {
             200
         }
         let store = AtomStore()
-        let transaction = Transaction(key: AtomKey(atom0))
-        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction)
+        let transactionState = TransactionState(key: AtomKey(atom0))
+        let context = AtomTransactionContext(store: StoreContext(store: store), transactionState: transactionState)
 
         XCTAssertEqual(context.watch(atom1), 100)
 
@@ -69,8 +69,8 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)
         let store = AtomStore()
-        let transaction = Transaction(key: AtomKey(atom))
-        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction)
+        let transactionState = TransactionState(key: AtomKey(atom))
+        let context = AtomTransactionContext(store: StoreContext(store: store), transactionState: transactionState)
 
         XCTAssertEqual(context.watch(dependency), 0)
 
@@ -97,8 +97,8 @@ final class AtomTransactionContextTests: XCTestCase {
         )
 
         let store = AtomStore()
-        let transaction = Transaction(key: AtomKey(transactionAtom))
-        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction)
+        let transactionState = TransactionState(key: AtomKey(transactionAtom))
+        let context = AtomTransactionContext(store: StoreContext(store: store), transactionState: transactionState)
 
         XCTAssertEqual(context.watch(atom), 0)
         XCTAssertEqual(context.watch(resettableAtom), 0)
@@ -119,8 +119,8 @@ final class AtomTransactionContextTests: XCTestCase {
         let atom0 = TestValueAtom(value: 100)
         let atom1 = TestStateAtom(defaultValue: 200)
         let store = AtomStore()
-        let transaction = Transaction(key: AtomKey(atom0))
-        let context = AtomTransactionContext(store: StoreContext(store: store), transaction: transaction)
+        let transactionState = TransactionState(key: AtomKey(atom0))
+        let context = AtomTransactionContext(store: StoreContext(store: store), transactionState: transactionState)
 
         let value = context.watch(atom1)
 
