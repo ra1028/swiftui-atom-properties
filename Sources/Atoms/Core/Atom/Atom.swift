@@ -52,6 +52,7 @@ public extension Atom {
         EmptyEffect()
     }
 
+    @MainActor
     func updated(newValue: Produced, oldValue: Produced, context: CurrentContext) {}
 }
 

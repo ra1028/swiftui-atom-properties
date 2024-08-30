@@ -1,4 +1,4 @@
-@preconcurrency import Combine
+import Combine
 
 /// An atom type that provides a sequence of values of the given `Publisher` as an ``AsyncPhase`` value.
 ///
