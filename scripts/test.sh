@@ -36,4 +36,8 @@ example-cross-platform)
     cd Examples/Packages/CrossPlatform
     xcodebuild test -scheme CrossPlatformExamples -destination platform="$platform"
     ;;
+benchmark)
+    cd Benchmarks
+    xcodebuild test -scheme BenchmarkTests -destination platform="$platform"
+    ;;
 esac

@@ -39,6 +39,14 @@ jobs:
       - name: Test example iOS
         run: scripts/test.sh example-ios ios
 
+  benchmark:
+    name: Benchmark
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run benchmark test
+        run: scripts/test.sh benchmark ios
+
   validation:
     name: Validation
     runs-on: macos-13
