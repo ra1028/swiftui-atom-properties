@@ -1,0 +1,50 @@
+name: Test
+
+options:
+  bundleIdPrefix: com.ryo.swiftui-atom-properties.examples
+  createIntermediateGroups: true
+
+settings:
+  CODE_SIGNING_REQUIRED: NO
+  CODE_SIGN_IDENTITY: "-"
+  CODE_SIGN_STYLE: Manual
+
+packages:
+  swiftui-atom-properties:
+    path: ..
+
+schemes:
+  BenchmarkTests:
+    build:
+      targets:
+        BenchmarkTests: all
+    test:
+      targets:
+        - BenchmarkTests
+
+targets:
+  TestHostApp:
+    type: application
+    platform: iOS
+    info:
+      path: App/Info-iOS.plist
+      properties:
+        UILaunchScreen:
+        UIRequiresFullScreen: true
+        CFBundleDisplayName: Benchmarks
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    sources:
+      - App/iOS.swift
+
+  BenchmarkTests:
+    type: bundle.unit-test
+    platform: iOS
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: TestHostApp
+      - package: swiftui-atom-properties
+        product: Atoms
+    sources:
+      - Tests
