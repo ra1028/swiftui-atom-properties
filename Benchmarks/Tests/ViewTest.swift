@@ -1,5 +1,4 @@
 import SwiftUI
-import XCTest
 
 struct ViewTest<Content: View>: _ViewTest {
     let rootView: () -> Content
