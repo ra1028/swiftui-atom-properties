@@ -1,6 +1,6 @@
 TOOL = scripts/swift-run.sh
 PACKAGE = swift package -c release --package-path Tools
-SWIFT_FILE_PATHS = Package.swift Tools/Package.swift Sources Tests Examples
+SWIFT_FILE_PATHS = Package.swift Tools/Package.swift Sources Tests Examples Benchmarks
 XCODEGEN = SWIFT_PACKAGE_RESOURCES=Tools/.build/checkouts/XcodeGen/SettingPresets $(TOOL) xcodegen
 SWIFTFORMAT = $(TOOL) swift-format
 
