@@ -1,4 +1,4 @@
-@preconcurrency import Combine
+import Combine
 
 /// A context structure to read, watch, and otherwise interact with atoms in testing.
 ///
