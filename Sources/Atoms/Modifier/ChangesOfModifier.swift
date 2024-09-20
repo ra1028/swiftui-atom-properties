@@ -23,7 +23,7 @@ public extension Atom {
     ///
     /// - Returns: An atom that provides the partial property of the original atom value.
     func changes<T: Equatable>(
-        of keyPath: KeyPath<Produced, T>
+        of keyPath: KeyPath<Produced, T> & Sendable
     ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
         modifier(ChangesOfModifier(keyPath: keyPath))
     }
@@ -49,9 +49,9 @@ public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
         }
     }
 
-    private let keyPath: KeyPath<Base, Produced>
+    private let keyPath: KeyPath<Base, Produced> & Sendable
 
-    internal init(keyPath: KeyPath<Base, Produced>) {
+    internal init(keyPath: KeyPath<Base, Produced> & Sendable) {
         self.keyPath = keyPath
     }
 

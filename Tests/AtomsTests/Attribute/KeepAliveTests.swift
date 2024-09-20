@@ -5,7 +5,7 @@ import XCTest
 final class KeepAliveTests: XCTestCase {
     @MainActor
     func testKeepAliveAtoms() {
-        struct KeepAliveAtom<T: Hashable>: ValueAtom, KeepAlive, Hashable {
+        struct KeepAliveAtom<T: Hashable & Sendable>: ValueAtom, KeepAlive, Hashable {
             let value: T
 
             func value(context: Context) -> T {
@@ -13,7 +13,7 @@ final class KeepAliveTests: XCTestCase {
             }
         }
 
-        struct ScopedKeepAliveAtom<T: Hashable>: ValueAtom, KeepAlive, Scoped, Hashable {
+        struct ScopedKeepAliveAtom<T: Hashable & Sendable>: ValueAtom, KeepAlive, Scoped, Hashable {
             let value: T
 
             func value(context: Context) -> T {

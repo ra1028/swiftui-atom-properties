@@ -33,7 +33,7 @@ final class TestObservableObject: ObservableObject, @unchecked Sendable {
     }
 }
 
-final class AsyncThrowingStreamPipe<Element> {
+final class AsyncThrowingStreamPipe<Element>: @unchecked Sendable {
     private(set) var stream: AsyncThrowingStream<Element, Error>
     private(set) var continuation: AsyncThrowingStream<Element, Error>.Continuation
 

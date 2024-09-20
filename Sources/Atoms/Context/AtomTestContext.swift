@@ -1,4 +1,4 @@
-import Combine
+@preconcurrency import Combine
 
 /// A context structure to read, watch, and otherwise interact with atoms in testing.
 ///
@@ -52,7 +52,7 @@ public struct AtomTestContext: AtomWatchableContext {
         await withTaskGroup(of: Bool.self) { group in
             let updates = _state.makeUpdateStream()
 
-            group.addTask { @MainActor in
+            group.addTask { @MainActor @Sendable in
                 for await _ in updates {
                     return true
                 }
@@ -121,7 +121,7 @@ public struct AtomTestContext: AtomWatchableContext {
 
             let updates = _state.makeUpdateStream()
 
-            group.addTask { @MainActor in
+            group.addTask { @MainActor @Sendable in
                 guard !check() else {
                     return false
                 }

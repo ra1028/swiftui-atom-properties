@@ -52,6 +52,7 @@ public struct ViewContext: DynamicProperty {
     /// This property provides primary access to the view context. However you don't
     /// access ``wrappedValue`` directly.
     /// Instead, you use the property variable created with the `@ViewContext` attribute.
+    @MainActor
     public var wrappedValue: AtomViewContext {
         AtomViewContext(
             store: store,
@@ -72,6 +73,7 @@ private extension ViewContext {
         let subscriberState = SubscriberState()
     }
 
+    @MainActor
     var store: StoreContext {
         guard let _store else {
             assertionFailure(

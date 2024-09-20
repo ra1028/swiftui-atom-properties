@@ -54,6 +54,7 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
         /// - Parameter keyPath: A key path to a specific resulting value.
         ///
         /// - Returns: A new binding.
+        @MainActor
         public subscript<T>(dynamicMember keyPath: ReferenceWritableKeyPath<Node.Produced, T>) -> Binding<T> {
             Binding(
                 get: { object[keyPath: keyPath] },
@@ -83,6 +84,7 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     /// access ``wrappedValue`` directly. Instead, you use the property variable created
     /// with the `@WatchStateObject` attribute.
     /// Accessing this property starts watching the atom.
+    @MainActor
     public var wrappedValue: Node.Produced {
         context.watch(atom)
     }
@@ -91,6 +93,7 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     ///
     /// Use the projected value to pass a binding value down a view hierarchy.
     /// To get the projected value, prefix the property variable with `$`.
+    @MainActor
     public var projectedValue: Wrapper {
         Wrapper(wrappedValue)
     }

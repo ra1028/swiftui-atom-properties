@@ -5,7 +5,7 @@ import XCTest
 final class ScopedTests: XCTestCase {
     @MainActor
     func testScopedAtoms() {
-        struct ScopedAtom<ID: Hashable, T: Hashable>: ValueAtom, Scoped, Equatable {
+        struct ScopedAtom<ID: Hashable & Sendable, T: Hashable & Sendable>: ValueAtom, Scoped, Equatable {
             let key = UniqueKey()
             let scopeID: ID
             let value: T

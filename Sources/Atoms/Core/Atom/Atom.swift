@@ -2,7 +2,7 @@
 ///
 /// The value produced by an atom is created only when the atom is watched from somewhere,
 /// and is immediately released when no longer watched.
-public protocol Atom<Produced> {
+public protocol Atom<Produced>: Sendable {
     /// A type representing the stable identity of this atom.
     associatedtype Key: Hashable
 

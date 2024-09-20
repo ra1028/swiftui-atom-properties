@@ -45,7 +45,7 @@ public extension Scoped where ScopeID == DefaultScopeID {
 }
 
 /// A default scope ID to find a matching scope inbetween scoped atoms and ``AtomScope``.
-public struct DefaultScopeID: Hashable {
+public struct DefaultScopeID: Hashable & Sendable {
     /// Creates a new default scope ID which is always indentical.
     public init() {}
 }

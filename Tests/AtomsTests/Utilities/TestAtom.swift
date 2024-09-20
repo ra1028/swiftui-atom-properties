@@ -3,7 +3,7 @@ import Combine
 @testable import Atoms
 
 struct TestAtom<T: Hashable>: ValueAtom, Hashable {
-    var value: T
+    nonisolated(unsafe) var value: T
 
     func value(context: Context) -> T {
         value
@@ -11,7 +11,7 @@ struct TestAtom<T: Hashable>: ValueAtom, Hashable {
 }
 
 struct TestValueAtom<T>: ValueAtom {
-    var value: T
+    nonisolated(unsafe) var value: T
     var effect: TestEffect?
 
     var key: UniqueKey {
@@ -28,7 +28,7 @@ struct TestValueAtom<T>: ValueAtom {
 }
 
 struct TestStateAtom<T>: StateAtom {
-    var defaultValue: T
+    nonisolated(unsafe) var defaultValue: T
     var effect: TestEffect?
 
     var key: UniqueKey {
@@ -46,7 +46,7 @@ struct TestStateAtom<T>: StateAtom {
 
 struct TestTaskAtom<T: Sendable>: TaskAtom {
     var effect: TestEffect?
-    var getValue: () -> T
+    nonisolated(unsafe) var getValue: () -> T
 
     var key: UniqueKey {
         UniqueKey()
@@ -63,7 +63,7 @@ struct TestTaskAtom<T: Sendable>: TaskAtom {
 
 struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom {
     var effect: TestEffect?
-    var getResult: () -> Result<Success, Error>
+    nonisolated(unsafe) var getResult: () -> Result<Success, Error>
 
     var key: UniqueKey {
         UniqueKey()
@@ -79,8 +79,8 @@ struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom {
 }
 
 struct TestCustomRefreshableAtom<T: Sendable>: ValueAtom, Refreshable {
-    var getValue: (Context) -> T
-    var refresh: (CurrentContext) async -> T
+    nonisolated(unsafe) var getValue: (Context) -> T
+    nonisolated(unsafe) var refresh: (CurrentContext) async -> T
 
     var key: UniqueKey {
         UniqueKey()
@@ -96,8 +96,8 @@ struct TestCustomRefreshableAtom<T: Sendable>: ValueAtom, Refreshable {
 }
 
 struct TestCustomResettableAtom<T>: StateAtom, Resettable {
-    var defaultValue: (Context) -> T
-    var reset: (CurrentContext) -> Void
+    nonisolated(unsafe) var defaultValue: (Context) -> T
+    nonisolated(unsafe) var reset: (CurrentContext) -> Void
 
     var key: UniqueKey {
         UniqueKey()
@@ -114,7 +114,7 @@ struct TestCustomResettableAtom<T>: StateAtom, Resettable {
 
 struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom where Publisher.Output: Sendable {
     var effect: TestEffect?
-    var makePublisher: () -> Publisher
+    nonisolated(unsafe) var makePublisher: () -> Publisher
 
     var key: UniqueKey {
         UniqueKey()
@@ -131,7 +131,7 @@ struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom where Publ
 
 struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom where Sequence.Element: Sendable {
     var effect: TestEffect?
-    var makeSequence: () -> Sequence
+    nonisolated(unsafe) var makeSequence: () -> Sequence
 
     var key: UniqueKey {
         UniqueKey()
