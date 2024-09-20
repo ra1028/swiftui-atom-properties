@@ -1,4 +1,5 @@
 import AVFoundation
+import os
 
 protocol AudioRecorderProtocol {
     var currentTime: TimeInterval { get }
@@ -7,8 +8,8 @@ protocol AudioRecorderProtocol {
     func stop()
 }
 
-final class AudioRecorder: NSObject, AVAudioRecorderDelegate, AudioRecorderProtocol {
-    private var recorder: AVAudioRecorder?
+final class AudioRecorder: NSObject, AVAudioRecorderDelegate, AudioRecorderProtocol, @unchecked Sendable {
+    private var recorder = OSAllocatedUnfairLock<AVAudioRecorder?>(uncheckedState: nil)
     private let onFail: () -> Void
 
     init(onFail: @escaping () -> Void) {
@@ -17,26 +18,30 @@ final class AudioRecorder: NSObject, AVAudioRecorderDelegate, AudioRecorderProto
     }
 
     var currentTime: TimeInterval {
-        recorder?.currentTime ?? .zero
+        recorder.withLock(\.?.currentTime) ?? .zero
     }
 
     func record(url: URL) throws {
-        recorder = try AVAudioRecorder(
-            url: url,
-            settings: [
-                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-                AVSampleRateKey: 44100,
-                AVNumberOfChannelsKey: 1,
-                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
-            ]
-        )
-        recorder?.delegate = self
-        recorder?.record()
+        try recorder.withLock { recorder in
+            recorder = try AVAudioRecorder(
+                url: url,
+                settings: [
+                    AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                    AVSampleRateKey: 44100,
+                    AVNumberOfChannelsKey: 1,
+                    AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+                ]
+            )
+            recorder?.delegate = self
+            recorder?.record()
+        }
     }
 
     func stop() {
-        recorder?.stop()
-        recorder = nil
+        recorder.withLock { recorder in
+            recorder?.stop()
+            recorder = nil
+        }
     }
 
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
