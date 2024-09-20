@@ -1,6 +1,8 @@
 TOOL = scripts/swift-run.sh
 PACKAGE = swift package -c release --package-path Tools
-SWIFT_FILE_PATHS = Package.swift Tools/Package.swift Sources Tests Examples
+SWIFT_FILE_PATHS = Package.swift Tools/Package.swift Sources Tests Examples Benchmarks
+XCODEGEN = SWIFT_PACKAGE_RESOURCES=Tools/.build/checkouts/XcodeGen/SettingPresets $(TOOL) xcodegen
+SWIFTFORMAT = $(TOOL) swift-format
 
 .PHONY: open-dev
 open-dev:
@@ -8,15 +10,16 @@ open-dev:
 
 .PHONY: proj
 proj:
-	SWIFT_PACKAGE_RESOURCES=Tools/.build/checkouts/XcodeGen/SettingPresets $(TOOL) xcodegen -s Examples/project.yml
+	$(XCODEGEN) -s Examples/project.yml
+	$(XCODEGEN) -s Benchmarks/project.yml
 
 .PHONY: format
 format:
-	$(TOOL) swift-format format -i -p -r $(SWIFT_FILE_PATHS)
+	$(SWIFTFORMAT) format -i -p -r $(SWIFT_FILE_PATHS)
 
 .PHONY: lint
 lint:
-	$(TOOL) swift-format lint -s -p -r $(SWIFT_FILE_PATHS)
+	$(SWIFTFORMAT) lint -s -p -r $(SWIFT_FILE_PATHS)
 
 .PHONY: docs
 docs:
