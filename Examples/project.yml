@@ -34,6 +34,22 @@ packages:
   CrossPlatformApp:
     path: Packages/CrossPlatform
 
+schemes:
+  iOS:
+    build:
+      targets:
+        iOS: all
+
+  CrossPlatform_macOS:
+    build:
+      targets:
+        CrossPlatform_macOS: all
+
+  CrossPlatform_tvOS:
+    build:
+      targets:
+        CrossPlatform_tvOS: all
+
 targets:
   iOS:
     templates:

@@ -155,6 +155,9 @@
 				en,
 			);
 			mainGroup = 5071FF1E3D9776144CA101D1;
+			packageReferences = (
+				BF2795A13208F1083E80780C /* XCLocalSwiftPackageReference ".." */,
+			);
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -414,6 +417,13 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		BF2795A13208F1083E80780C /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		8FA28D81FB67542B978C77EC /* Atoms */ = {
