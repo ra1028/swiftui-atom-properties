@@ -32,8 +32,11 @@ import SwiftUI
 ///
 @propertyWrapper
 public struct ViewContext: DynamicProperty {
-    @StateObject
-    private var state = State()
+    @State
+    private var phase = false
+
+    @State
+    private var subscriberState = SubscriberState()
 
     @Environment(\.store)
     private var _store
@@ -54,13 +57,18 @@ public struct ViewContext: DynamicProperty {
     /// Instead, you use the property variable created with the `@ViewContext` attribute.
     @MainActor
     public var wrappedValue: AtomViewContext {
-        AtomViewContext(
+        let phase = $phase
+
+        // Initializes State and starts observing for updates.
+        _ = phase.wrappedValue
+
+        return AtomViewContext(
             store: store,
-            subscriber: Subscriber(state.subscriberState),
+            subscriber: Subscriber(subscriberState),
             subscription: Subscription(
                 location: location,
-                update: { [weak state] in
-                    state?.objectWillChange.send()
+                update: {
+                    phase.wrappedValue.toggle()
                 }
             )
         )
@@ -68,11 +76,6 @@ public struct ViewContext: DynamicProperty {
 }
 
 private extension ViewContext {
-    @MainActor
-    final class State: ObservableObject {
-        let subscriberState = SubscriberState()
-    }
-
     @MainActor
     var store: StoreContext {
         guard let _store else {
