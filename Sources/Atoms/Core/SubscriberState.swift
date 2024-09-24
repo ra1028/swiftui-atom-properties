@@ -3,8 +3,8 @@ import Foundation
 @MainActor
 internal final class SubscriberState {
     let token = SubscriberKey.Token()
-    var subscribing = LockSendable(Set<AtomKey>())
-    var unsubscribe = LockSendable<((Set<AtomKey>) -> Void)?>(nil)
+    let subscribing = LockSendable(Set<AtomKey>())
+    let unsubscribe = LockSendable<((Set<AtomKey>) -> Void)?>(nil)
 
     // TODO: Use isolated synchronous deinit once it's available.
     // 0371-isolated-synchronous-deinit
