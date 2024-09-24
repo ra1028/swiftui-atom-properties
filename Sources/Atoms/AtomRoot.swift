@@ -61,7 +61,7 @@ import SwiftUI
 /// ```
 ///
 public struct AtomRoot<Content: View>: View {
-    private var storeHost: StoreHost
+    private var storage: Storage
     private var overrides = [OverrideKey: any OverrideProtocol]()
     private var observers = [Observer]()
     private let content: Content
@@ -70,7 +70,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Parameter content: The descendant view content that provides context for atoms.
     public init(@ViewBuilder content: () -> Content) {
-        self.storeHost = .tree
+        self.storage = .managed
         self.content = content()
     }
 
@@ -84,26 +84,26 @@ public struct AtomRoot<Content: View>: View {
         storesIn store: AtomStore,
         @ViewBuilder content: () -> Content
     ) {
-        self.storeHost = .unmanaged(store: store)
+        self.storage = .unmanaged(store: store)
         self.content = content()
     }
 
     /// The content and behavior of the view.
     public var body: some View {
-        switch storeHost {
-        case .tree:
-            TreeManaged(
-                content: content,
+        switch storage {
+        case .managed:
+            Managed(
                 overrides: overrides,
-                observers: observers
+                observers: observers,
+                content: content
             )
 
         case .unmanaged(let store):
             Unmanaged(
-                content: content,
                 store: store,
                 overrides: overrides,
-                observers: observers
+                observers: observers,
+                content: content
             )
         }
     }
@@ -150,31 +150,28 @@ public struct AtomRoot<Content: View>: View {
 }
 
 private extension AtomRoot {
-    enum StoreHost {
-        case tree
+    enum Storage {
+        case managed
         case unmanaged(store: AtomStore)
     }
 
-    struct TreeManaged: View {
-        @MainActor
-        final class State: ObservableObject {
-            let store = AtomStore()
-            let token = ScopeKey.Token()
-        }
-
-        let content: Content
+    struct Managed: View {
         let overrides: [OverrideKey: any OverrideProtocol]
         let observers: [Observer]
+        let content: Content
 
-        @StateObject
-        private var state = State()
+        @State
+        private var store = AtomStore()
+
+        @State
+        private var token = ScopeKey.Token()
 
         var body: some View {
             content.environment(
                 \.store,
                 StoreContext(
-                    store: state.store,
-                    scopeKey: ScopeKey(token: state.token),
+                    store: store,
+                    scopeKey: ScopeKey(token: token),
                     inheritedScopeKeys: [:],
                     observers: observers,
                     scopedObservers: [],
@@ -186,25 +183,20 @@ private extension AtomRoot {
     }
 
     struct Unmanaged: View {
-        @MainActor
-        final class State: ObservableObject {
-            let token = ScopeKey.Token()
-        }
-
-        let content: Content
         let store: AtomStore
         let overrides: [OverrideKey: any OverrideProtocol]
         let observers: [Observer]
+        let content: Content
 
-        @StateObject
-        private var state = State()
+        @State
+        private var token = ScopeKey.Token()
 
         var body: some View {
             content.environment(
                 \.store,
                 StoreContext(
                     store: store,
-                    scopeKey: ScopeKey(token: state.token),
+                    scopeKey: ScopeKey(token: token),
                     inheritedScopeKeys: [:],
                     observers: observers,
                     scopedObservers: [],
