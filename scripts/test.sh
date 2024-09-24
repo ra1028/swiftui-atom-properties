@@ -11,7 +11,7 @@ pushd "$(cd $(dirname $0)/.. && pwd)" &>/dev/null
 
 case $PLATFORM in
 ios)
-    platform="iOS Simulator,name=iPhone 15 Pro"
+    platform="iOS Simulator,name=iPhone 16 Pro"
     ;;
 macos)
     platform="macOS"
