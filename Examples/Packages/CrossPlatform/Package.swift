@@ -2,24 +2,17 @@
 
 import PackageDescription
 
-let swiftSettings: [SwiftSetting] = [
-    .unsafeFlags(["-Xfrontend", "-strict-concurrency=complete"]),
-    .unsafeFlags(["-Xfrontend", "-enable-actor-data-race-checks"]),
-]
-
 func target(name: String, dependencies: [Target.Dependency] = []) -> Target {
     .target(
         name: name,
-        dependencies: [.product(name: "Atoms", package: "swiftui-atom-properties")] + dependencies,
-        swiftSettings: swiftSettings
+        dependencies: [.product(name: "Atoms", package: "swiftui-atom-properties")] + dependencies
     )
 }
 
 func testTarget(name: String, dependencies: [Target.Dependency]) -> Target {
     .testTarget(
         name: name,
-        dependencies: dependencies,
-        swiftSettings: swiftSettings
+        dependencies: dependencies
     )
 }
 

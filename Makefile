@@ -4,10 +4,6 @@ SWIFT_FILE_PATHS = Package.swift Tools/Package.swift Sources Tests Examples Benc
 XCODEGEN = SWIFT_PACKAGE_RESOURCES=Tools/.build/checkouts/XcodeGen/SettingPresets $(TOOL) xcodegen
 SWIFTFORMAT = $(TOOL) swift-format
 
-.PHONY: open-dev
-open-dev:
-	DEVELOPMENT=1 open Package.swift
-
 .PHONY: proj
 proj:
 	$(XCODEGEN) -s Examples/project.yml

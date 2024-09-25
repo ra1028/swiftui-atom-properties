@@ -23,12 +23,3 @@ let package = Package(
     ],
     swiftLanguageModes: [.v6]
 )
-
-if ProcessInfo.processInfo.environment["DEVELOPMENT"] != nil {
-    for target in package.targets {
-        target.swiftSettings = [
-            .unsafeFlags(["-Xfrontend", "-strict-concurrency=complete"]),
-            .unsafeFlags(["-Xfrontend", "-enable-actor-data-race-checks"]),
-        ]
-    }
-}
