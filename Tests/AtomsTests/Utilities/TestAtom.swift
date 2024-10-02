@@ -2,7 +2,7 @@ import Combine
 
 @testable import Atoms
 
-struct TestAtom<T: Hashable>: ValueAtom, Hashable {
+struct TestAtom<T: Hashable>: ValueAtom, Hashable, @unchecked Sendable {
     var value: T
 
     func value(context: Context) -> T {
@@ -10,7 +10,7 @@ struct TestAtom<T: Hashable>: ValueAtom, Hashable {
     }
 }
 
-struct TestValueAtom<T>: ValueAtom {
+struct TestValueAtom<T>: ValueAtom, @unchecked Sendable {
     var value: T
     var effect: TestEffect?
 
@@ -27,7 +27,7 @@ struct TestValueAtom<T>: ValueAtom {
     }
 }
 
-struct TestStateAtom<T>: StateAtom {
+struct TestStateAtom<T>: StateAtom, @unchecked Sendable {
     var defaultValue: T
     var effect: TestEffect?
 
@@ -44,7 +44,7 @@ struct TestStateAtom<T>: StateAtom {
     }
 }
 
-struct TestTaskAtom<T: Sendable>: TaskAtom {
+struct TestTaskAtom<T: Sendable>: TaskAtom, @unchecked Sendable {
     var effect: TestEffect?
     var getValue: () -> T
 
@@ -61,7 +61,7 @@ struct TestTaskAtom<T: Sendable>: TaskAtom {
     }
 }
 
-struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom {
+struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom, @unchecked Sendable {
     var effect: TestEffect?
     var getResult: () -> Result<Success, Error>
 
@@ -78,7 +78,7 @@ struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom {
     }
 }
 
-struct TestCustomRefreshableAtom<T: Sendable>: ValueAtom, Refreshable {
+struct TestCustomRefreshableAtom<T: Sendable>: ValueAtom, Refreshable, @unchecked Sendable {
     var getValue: (Context) -> T
     var refresh: (CurrentContext) async -> T
 
@@ -95,7 +95,7 @@ struct TestCustomRefreshableAtom<T: Sendable>: ValueAtom, Refreshable {
     }
 }
 
-struct TestCustomResettableAtom<T>: StateAtom, Resettable {
+struct TestCustomResettableAtom<T>: StateAtom, Resettable, @unchecked Sendable {
     var defaultValue: (Context) -> T
     var reset: (CurrentContext) -> Void
 
@@ -112,7 +112,7 @@ struct TestCustomResettableAtom<T>: StateAtom, Resettable {
     }
 }
 
-struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom where Publisher.Output: Sendable {
+struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom, @unchecked Sendable where Publisher.Output: Sendable {
     var effect: TestEffect?
     var makePublisher: () -> Publisher
 
@@ -129,7 +129,7 @@ struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom where Publ
     }
 }
 
-struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom where Sequence.Element: Sendable {
+struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom, @unchecked Sendable where Sequence.Element: Sendable {
     var effect: TestEffect?
     var makeSequence: () -> Sequence
 
@@ -146,7 +146,7 @@ struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom where S
     }
 }
 
-struct TestObservableObjectAtom: ObservableObjectAtom {
+struct TestObservableObjectAtom: ObservableObjectAtom, @unchecked Sendable {
     var effect: TestEffect?
 
     var key: UniqueKey {

@@ -6,7 +6,7 @@ public extension Atom {
 
     @available(*, deprecated, renamed: "changes(of:)")
     func select<Selected: Equatable>(
-        _ keyPath: KeyPath<Produced, Selected>
+        _ keyPath: KeyPath<Produced, Selected> & Sendable
     ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, Selected>> {
         changes(of: keyPath)
     }

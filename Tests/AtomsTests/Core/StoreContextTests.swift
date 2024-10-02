@@ -1379,7 +1379,7 @@ final class StoreContextTests: XCTestCase {
             }
         }
 
-        final class SubscriberHost {
+        final class SubscriberHost: @unchecked Sendable {
             var subscriberState: SubscriberState?
         }
 
