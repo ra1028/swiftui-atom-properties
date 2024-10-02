@@ -112,7 +112,7 @@ struct CounterView: View {
 <sub>A simple demo that demonstrates how to do [time travel debugging](https://en.wikipedia.org/wiki/Time_travel_debugging) with this library.</sub>
 
 Each example has a test target too to demonstrate how to test your atoms with dependency injection.  
-Open `Examples/App.xcodeproj` and play around with it!
+Open `Examples/Project.xcodeproj` and play around with it!
 
 ---
 

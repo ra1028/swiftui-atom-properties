@@ -1,4 +1,4 @@
-name: Test
+name: Project
 
 options:
   bundleIdPrefix: com.ryo.swiftui-atom-properties.examples
