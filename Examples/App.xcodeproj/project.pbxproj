@@ -179,6 +179,10 @@
 				en,
 			);
 			mainGroup = 4102E3E068508DD683953C7D;
+			packageReferences = (
+				263B59300A73460F3EC004F2 /* XCLocalSwiftPackageReference "Packages/CrossPlatform" */,
+				B5EB40B15A9876E9D1761363 /* XCLocalSwiftPackageReference "Packages/iOS" */,
+			);
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -482,6 +486,17 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		263B59300A73460F3EC004F2 /* XCLocalSwiftPackageReference "Packages/CrossPlatform" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/CrossPlatform;
+		};
+		B5EB40B15A9876E9D1761363 /* XCLocalSwiftPackageReference "Packages/iOS" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/iOS;
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		A708E16BF51AE12E22A59212 /* CrossPlatformApp */ = {
