@@ -1,14 +1,18 @@
 import SwiftUI
 
 struct ViewTest<Content: View>: _ViewTest {
-    let rootView: () -> Content
+    let rootView: @MainActor () -> Content
 
     func initRootView() -> some View {
-        rootView()
+        MainActor.assumeIsolated {
+            rootView()
+        }
     }
 
     func initSize() -> CGSize {
-        UIScreen.main.bounds.size
+        MainActor.assumeIsolated {
+            UIScreen.main.bounds.size
+        }
     }
 
     func perform(_ body: () -> Void) {
