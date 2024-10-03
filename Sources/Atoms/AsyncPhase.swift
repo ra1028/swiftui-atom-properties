@@ -24,11 +24,11 @@ public enum AsyncPhase<Success, Failure: Error> {
         }
     }
 
-    /// Creates a new phase by evaluating a async throwing closure, capturing the
-    /// returned value as a success, or any thrown error as a failure.
-    ///
-    /// - Parameter body: A async throwing closure to evaluate.
     #if compiler(>=6)
+        /// Creates a new phase by evaluating a async throwing closure, capturing the
+        /// returned value as a success, or thrown error as a failure.
+        ///
+        /// - Parameter body: A async throwing closure to evaluate.
         public init(catching body: @Sendable () async throws(Failure) -> Success) async {
             do {
                 let value = try await body()
@@ -39,6 +39,10 @@ public enum AsyncPhase<Success, Failure: Error> {
             }
         }
     #else
+        /// Creates a new phase by evaluating a async throwing closure, capturing the
+        /// returned value as a success, or thrown error as a failure.
+        ///
+        /// - Parameter body: A async throwing closure to evaluate.
         public init(catching body: @Sendable () async throws -> Success) async where Failure == Error {
             do {
                 let value = try await body()
