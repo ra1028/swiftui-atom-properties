@@ -8,7 +8,7 @@ final class SubscriberStateTests: XCTestCase {
         var subscriberState: SubscriberState? = SubscriberState()
         var unsubscribedCount = 0
 
-        subscriberState!.unsubscribe.value = { _ in
+        subscriberState!.unsubscribe = { _ in
             unsubscribedCount += 1
         }
 

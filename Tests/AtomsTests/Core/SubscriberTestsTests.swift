@@ -35,7 +35,7 @@ final class SubscriberTests: XCTestCase {
 
         subscriber.subscribing = expected
 
-        XCTAssertEqual(state?.subscribing.value, expected)
+        XCTAssertEqual(state?.subscribing, expected)
 
         state = nil
 
@@ -52,7 +52,7 @@ final class SubscriberTests: XCTestCase {
             isUnsubscribed = true
         }
 
-        state?.unsubscribe.value?([])
+        state?.unsubscribe?([])
 
         XCTAssertTrue(isUnsubscribed)
 

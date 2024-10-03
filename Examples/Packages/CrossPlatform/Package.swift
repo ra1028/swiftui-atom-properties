@@ -1,26 +1,8 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 
 import PackageDescription
 
-let swiftSettings: [SwiftSetting] = [
-    .enableExperimentalFeature("StrictConcurrency")
-]
-
-func target(name: String, dependencies: [Target.Dependency] = []) -> Target {
-    .target(
-        name: name,
-        dependencies: [.product(name: "Atoms", package: "swiftui-atom-properties")] + dependencies,
-        swiftSettings: swiftSettings
-    )
-}
-
-func testTarget(name: String, dependencies: [Target.Dependency]) -> Target {
-    .testTarget(
-        name: name,
-        dependencies: dependencies,
-        swiftSettings: swiftSettings
-    )
-}
+let atoms = Target.Dependency.product(name: "Atoms", package: "swiftui-atom-properties")
 
 let package = Package(
     name: "CrossPlatformExamples",
@@ -37,16 +19,17 @@ let package = Package(
         .package(path: "../../..")
     ],
     targets: [
-        target(
+        .target(
             name: "CrossPlatformApp",
             dependencies: [
+                atoms,
                 "ExampleCounter",
                 "ExampleTodo",
             ]
         ),
-        target(name: "ExampleCounter"),
-        testTarget(name: "ExampleCounterTests", dependencies: ["ExampleCounter"]),
-        target(name: "ExampleTodo"),
-        testTarget(name: "ExampleTodoTests", dependencies: ["ExampleTodo"]),
+        .target(name: "ExampleCounter", dependencies: [atoms]),
+        .testTarget(name: "ExampleCounterTests", dependencies: ["ExampleCounter"]),
+        .target(name: "ExampleTodo", dependencies: [atoms]),
+        .testTarget(name: "ExampleTodoTests", dependencies: ["ExampleTodo"]),
     ]
 )

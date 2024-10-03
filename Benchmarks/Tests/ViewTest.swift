@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ViewTest<Content: View>: _ViewTest {
+struct ViewTest<Content: View & Sendable>: _ViewTest {
     let rootView: @MainActor () -> Content
 
     func initRootView() -> some View {

@@ -50,6 +50,9 @@ public struct WatchState<Node: StateAtom>: DynamicProperty {
     /// with the `@WatchState` attribute.
     /// Accessing to the getter of this property starts watching the atom, but doesn't
     /// by setting a new value.
+    #if hasFeature(DisableOutwardActorInference)
+        @MainActor
+    #endif
     public var wrappedValue: Node.Produced {
         get { context.watch(atom) }
         nonmutating set { context.set(newValue, for: atom) }
@@ -61,6 +64,9 @@ public struct WatchState<Node: StateAtom>: DynamicProperty {
     /// To get the ``projectedValue``, prefix the property variable with `$`.
     /// Accessing this property itself does not start watching the atom, but does when
     /// the view accesses to the getter of the binding.
+    #if hasFeature(DisableOutwardActorInference)
+        @MainActor
+    #endif
     public var projectedValue: Binding<Node.Produced> {
         context.binding(atom)
     }

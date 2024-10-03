@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  DEVELOPER_DIR: /Applications/Xcode_15.4.app
+  DEVELOPER_DIR: /Applications/Xcode_16.app
 
 jobs:
   test:
@@ -18,26 +18,32 @@ jobs:
     runs-on: macos-14
     strategy:
       matrix:
+        xcode_version:
+          - 15.4
+          - 16
         platform:
           - ios
           - macos
           - tvos
           - watchos
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode_version }}.app
     steps:
       - uses: actions/checkout@v4
       - name: Test library
         run: scripts/test.sh library ${{ matrix.platform }}
-      - name: Test example cross platform
-        if: matrix.platform == 'macos' || matrix.platform == 'tvos'
-        run: scripts/test.sh example-cross-platform ${{ matrix.platform }}
 
   test_examples:
-    name: Test iOS examples
+    name: Test examples
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
       - name: Test example iOS
         run: scripts/test.sh example-ios ios
+      - name: Test example macOS
+        run: scripts/test.sh example-cross-platform macos
+      - name: Test example tvOS
+        run: scripts/test.sh example-cross-platform tvos
 
   benchmark:
     name: Benchmark

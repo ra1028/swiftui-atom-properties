@@ -46,6 +46,7 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     /// A wrapper of the underlying observable object that can create bindings to
     /// its properties using dynamic member lookup.
     @dynamicMemberLookup
+    @MainActor
     public struct Wrapper {
         private let object: Node.Produced
 
@@ -83,6 +84,9 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     /// access ``wrappedValue`` directly. Instead, you use the property variable created
     /// with the `@WatchStateObject` attribute.
     /// Accessing this property starts watching the atom.
+    #if hasFeature(DisableOutwardActorInference)
+        @MainActor
+    #endif
     public var wrappedValue: Node.Produced {
         context.watch(atom)
     }
@@ -91,6 +95,9 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     ///
     /// Use the projected value to pass a binding value down a view hierarchy.
     /// To get the projected value, prefix the property variable with `$`.
+    #if hasFeature(DisableOutwardActorInference)
+        @MainActor
+    #endif
     public var projectedValue: Wrapper {
         Wrapper(wrappedValue)
     }
