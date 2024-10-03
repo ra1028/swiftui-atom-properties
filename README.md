@@ -127,8 +127,8 @@ Open `Examples/Project.xcodeproj` and play around with it!
 
 |       |Minimum Version|
 |------:|--------------:|
-|Swift  |5.10           |
-|Xcode  |15.4           |
+|Swift  |5.10, 6.0      |
+|Xcode  |15.4, 16.0     |
 |iOS    |14.0           |
 |macOS  |11.0           |
 |tvOS   |14.0           |

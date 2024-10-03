@@ -1,26 +1,8 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 
 import PackageDescription
 
-let swiftSettings: [SwiftSetting] = [
-    .enableExperimentalFeature("StrictConcurrency")
-]
-
-func target(name: String, dependencies: [Target.Dependency] = []) -> Target {
-    .target(
-        name: name,
-        dependencies: [.product(name: "Atoms", package: "swiftui-atom-properties")] + dependencies,
-        swiftSettings: swiftSettings
-    )
-}
-
-func testTarget(name: String, dependencies: [Target.Dependency]) -> Target {
-    .testTarget(
-        name: name,
-        dependencies: dependencies,
-        swiftSettings: swiftSettings
-    )
-}
+let atoms = Target.Dependency.product(name: "Atoms", package: "swiftui-atom-properties")
 
 let package = Package(
     name: "iOSExamples",
@@ -35,9 +17,10 @@ let package = Package(
         .package(path: "../CrossPlatform"),
     ],
     targets: [
-        target(
+        .target(
             name: "iOSApp",
             dependencies: [
+                atoms,
                 .product(name: "CrossPlatformApp", package: "CrossPlatform"),
                 "ExampleMovieDB",
                 "ExampleMap",
@@ -45,13 +28,13 @@ let package = Package(
                 "ExampleTimeTravel",
             ]
         ),
-        target(name: "ExampleMovieDB"),
-        testTarget(name: "ExampleMovieDBTests", dependencies: ["ExampleMovieDB"]),
-        target(name: "ExampleMap"),
-        testTarget(name: "ExampleMapTests", dependencies: ["ExampleMap"]),
-        target(name: "ExampleVoiceMemo"),
-        testTarget(name: "ExampleVoiceMemoTests", dependencies: ["ExampleVoiceMemo"]),
-        target(name: "ExampleTimeTravel"),
-        testTarget(name: "ExampleTimeTravelTests", dependencies: ["ExampleTimeTravel"]),
+        .target(name: "ExampleMovieDB", dependencies: [atoms]),
+        .testTarget(name: "ExampleMovieDBTests", dependencies: ["ExampleMovieDB"]),
+        .target(name: "ExampleMap", dependencies: [atoms]),
+        .testTarget(name: "ExampleMapTests", dependencies: ["ExampleMap"]),
+        .target(name: "ExampleVoiceMemo", dependencies: [atoms]),
+        .testTarget(name: "ExampleVoiceMemoTests", dependencies: ["ExampleVoiceMemo"]),
+        .target(name: "ExampleTimeTravel", dependencies: [atoms]),
+        .testTarget(name: "ExampleTimeTravelTests", dependencies: ["ExampleTimeTravel"]),
     ]
 )
