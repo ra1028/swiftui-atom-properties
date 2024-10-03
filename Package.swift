@@ -1,7 +1,11 @@
-// swift-tools-version:5.9
+// swift-tools-version:5.10
 
 import Foundation
 import PackageDescription
+
+let swiftSettings: [SwiftSetting] = [
+    .enableExperimentalFeature("StrictConcurrency")
+]
 
 let package = Package(
     name: "swiftui-atom-properties",
@@ -15,20 +19,15 @@ let package = Package(
         .library(name: "Atoms", targets: ["Atoms"])
     ],
     targets: [
-        .target(name: "Atoms"),
+        .target(
+            name: "Atoms",
+            swiftSettings: swiftSettings
+        ),
         .testTarget(
             name: "AtomsTests",
-            dependencies: ["Atoms"]
+            dependencies: ["Atoms"],
+            swiftSettings: swiftSettings
         ),
     ],
     swiftLanguageVersions: [.v5]
 )
-
-if ProcessInfo.processInfo.environment["DEVELOPMENT"] != nil {
-    for target in package.targets {
-        target.swiftSettings = [
-            .unsafeFlags(["-Xfrontend", "-strict-concurrency=complete"]),
-            .unsafeFlags(["-Xfrontend", "-enable-actor-data-race-checks"]),
-        ]
-    }
-}

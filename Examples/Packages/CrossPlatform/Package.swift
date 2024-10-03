@@ -1,10 +1,9 @@
-// swift-tools-version:5.9
+// swift-tools-version:5.10
 
 import PackageDescription
 
 let swiftSettings: [SwiftSetting] = [
-    .unsafeFlags(["-Xfrontend", "-strict-concurrency=complete"]),
-    .unsafeFlags(["-Xfrontend", "-enable-actor-data-race-checks"]),
+    .enableExperimentalFeature("StrictConcurrency")
 ]
 
 func target(name: String, dependencies: [Target.Dependency] = []) -> Target {

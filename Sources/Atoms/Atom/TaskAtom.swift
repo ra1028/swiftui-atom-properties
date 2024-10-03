@@ -54,7 +54,7 @@ public protocol TaskAtom: AsyncAtom where Produced == Task<Success, Never> {
 public extension TaskAtom {
     var producer: AtomProducer<Produced> {
         AtomProducer { context in
-            Task { [value] in
+            Task {
                 await context.transaction(value)
             }
         } manageValue: { task, context in
@@ -64,7 +64,7 @@ public extension TaskAtom {
 
     var refreshProducer: AtomRefreshProducer<Produced> {
         AtomRefreshProducer { context in
-            Task { [value] in
+            Task {
                 await context.transaction(value)
             }
         } refreshValue: { task, context in

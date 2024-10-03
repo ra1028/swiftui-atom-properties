@@ -15,10 +15,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "2982F074D7B1E5616AC6E461"
+               BlueprintIdentifier = "6DA7AAFCA871E516913F5B46"
                BuildableName = "BenchmarkTests.xctest"
                BlueprintName = "BenchmarkTests"
-               ReferencedContainer = "container:Test.xcodeproj">
+               ReferencedContainer = "container:Project.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -32,10 +32,10 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "2982F074D7B1E5616AC6E461"
+            BlueprintIdentifier = "6DA7AAFCA871E516913F5B46"
             BuildableName = "BenchmarkTests.xctest"
             BlueprintName = "BenchmarkTests"
-            ReferencedContainer = "container:Test.xcodeproj">
+            ReferencedContainer = "container:Project.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -43,10 +43,10 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "2982F074D7B1E5616AC6E461"
+               BlueprintIdentifier = "6DA7AAFCA871E516913F5B46"
                BuildableName = "BenchmarkTests.xctest"
                BlueprintName = "BenchmarkTests"
-               ReferencedContainer = "container:Test.xcodeproj">
+               ReferencedContainer = "container:Project.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -66,10 +66,10 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "2982F074D7B1E5616AC6E461"
+            BlueprintIdentifier = "6DA7AAFCA871E516913F5B46"
             BuildableName = "BenchmarkTests.xctest"
             BlueprintName = "BenchmarkTests"
-            ReferencedContainer = "container:Test.xcodeproj">
+            ReferencedContainer = "container:Project.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </LaunchAction>
@@ -82,10 +82,10 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "2982F074D7B1E5616AC6E461"
+            BlueprintIdentifier = "6DA7AAFCA871E516913F5B46"
             BuildableName = "BenchmarkTests.xctest"
             BlueprintName = "BenchmarkTests"
-            ReferencedContainer = "container:Test.xcodeproj">
+            ReferencedContainer = "container:Project.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </ProfileAction>
