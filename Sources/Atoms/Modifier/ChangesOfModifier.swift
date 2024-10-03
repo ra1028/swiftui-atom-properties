@@ -22,19 +22,19 @@ public extension Atom {
     /// - Parameter keyPath: A key path for the property of the original atom value.
     ///
     /// - Returns: An atom that provides the partial property of the original atom value.
-#if hasFeature(InferSendableFromCaptures)
-    func changes<T: Equatable>(
-        of keyPath: KeyPath<Produced, T> & Sendable
-    ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
-        modifier(ChangesOfModifier(keyPath: keyPath))
-    }
-#else
-    func changes<T: Equatable>(
-        of keyPath: KeyPath<Produced, T>
-    ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
-        modifier(ChangesOfModifier(keyPath: keyPath))
-    }
-#endif
+    #if hasFeature(InferSendableFromCaptures)
+        func changes<T: Equatable>(
+            of keyPath: KeyPath<Produced, T> & Sendable
+        ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
+            modifier(ChangesOfModifier(keyPath: keyPath))
+        }
+    #else
+        func changes<T: Equatable>(
+            of keyPath: KeyPath<Produced, T>
+        ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
+            modifier(ChangesOfModifier(keyPath: keyPath))
+        }
+    #endif
 }
 
 /// A modifier that derives a partial property with the specified key path from the original atom
@@ -57,22 +57,22 @@ public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
         }
     }
 
-#if hasFeature(InferSendableFromCaptures)
-    private let keyPath: KeyPath<Base, Produced> & Sendable
+    #if hasFeature(InferSendableFromCaptures)
+        private let keyPath: KeyPath<Base, Produced> & Sendable
 
-    internal init(keyPath: KeyPath<Base, Produced> & Sendable) {
-        self.keyPath = keyPath
-    }
-#else
-    private let _keyPath: UnsafeUncheckedSendable<KeyPath<Base, Produced>>
-    private var keyPath: KeyPath<Base, Produced> {
-        _keyPath.value
-    }
+        internal init(keyPath: KeyPath<Base, Produced> & Sendable) {
+            self.keyPath = keyPath
+        }
+    #else
+        private let _keyPath: UnsafeUncheckedSendable<KeyPath<Base, Produced>>
+        private var keyPath: KeyPath<Base, Produced> {
+            _keyPath.value
+        }
 
-    internal init(keyPath: KeyPath<Base, Produced>) {
-        _keyPath = UnsafeUncheckedSendable(keyPath)
-    }
-#endif
+        internal init(keyPath: KeyPath<Base, Produced>) {
+            _keyPath = UnsafeUncheckedSendable(keyPath)
+        }
+    #endif
 
     /// A unique value used to identify the modifier internally.
     public var key: Key {
