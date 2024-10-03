@@ -82,7 +82,9 @@ public extension ObservableObjectAtom {
                     }
                 }
 
-            context.onTermination = cancellable.cancel
+            context.onTermination = {
+                cancellable.cancel()
+            }
         }
     }
 }

@@ -1529,10 +1529,6 @@ final class StoreContextTests: XCTestCase {
         let d = DAtom()
         let phase = PhaseAtom()
 
-        func watch() async -> Int {
-            await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
-        }
-
         do {
             // first
 
@@ -1541,7 +1537,7 @@ final class StoreContextTests: XCTestCase {
                 pipe.continuation.yield()
             }
 
-            let value = await watch()
+            let value = await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
 
             XCTAssertEqual(value, 0)
             XCTAssertNil(store.graph.children[AtomKey(d)])
@@ -1568,8 +1564,8 @@ final class StoreContextTests: XCTestCase {
             pipe.reset()
             atomStore.set(.second, for: phase)
 
-            let before = await watch()
-            let after = await watch()
+            let before = await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
+            let after = await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
 
             XCTAssertEqual(before, 0)
             XCTAssertEqual(after, 1)
@@ -1596,8 +1592,8 @@ final class StoreContextTests: XCTestCase {
 
             pipe.reset()
             atomStore.set(.third, for: phase)
-            let before = await watch()
-            let after = await watch()
+            let before = await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
+            let after = await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
 
             XCTAssertEqual(before, 1)
             XCTAssertEqual(after, 3)

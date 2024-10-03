@@ -8,13 +8,13 @@ public struct MergedEffect: AtomEffect {
 
     /// Creates an atom effect that merges multiple atom effects into one.
     public init<each Effect: AtomEffect>(_ effect: repeat each Effect) {
-        initialized = { context in
+        initialized = { @Sendable context in
             repeat (each effect).initialized(context: context)
         }
-        updated = { context in
+        updated = { @Sendable context in
             repeat (each effect).updated(context: context)
         }
-        released = { context in
+        released = { @Sendable context in
             repeat (each effect).released(context: context)
         }
     }

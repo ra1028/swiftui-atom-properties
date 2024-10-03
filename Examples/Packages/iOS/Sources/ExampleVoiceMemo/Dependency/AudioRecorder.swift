@@ -7,7 +7,7 @@ protocol AudioRecorderProtocol {
     func stop()
 }
 
-final class AudioRecorder: NSObject, AVAudioRecorderDelegate, AudioRecorderProtocol {
+final class AudioRecorder: NSObject, AVAudioRecorderDelegate, AudioRecorderProtocol, @unchecked Sendable {
     private var recorder: AVAudioRecorder?
     private let onFail: () -> Void
 

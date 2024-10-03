@@ -98,7 +98,7 @@ public extension PublisherAtom {
     }
 }
 
-private extension Publisher {
+private extension Publisher where Output: Sendable {
     var results: AsyncStream<Result<Output, Failure>> {
         AsyncStream { continuation in
             let cancellable = map(Result.success)
