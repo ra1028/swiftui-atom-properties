@@ -323,7 +323,6 @@ private extension StoreContext {
         // Perform side effects first.
         let state = getState(of: atom, for: key)
         let context = AtomCurrentContext(store: self)
-        atom.updated(newValue: newValue, oldValue: oldValue, context: context)
         state.effect.updated(context: context)
 
         // Calculate topological order for updating downstream efficiently.
@@ -346,7 +345,6 @@ private extension StoreContext {
 
             // Perform side effects before updating downstream.
             let state = getState(of: cache.atom, for: key)
-            cache.atom.updated(newValue: newValue, oldValue: cache.value, context: context)
             state.effect.updated(context: context)
         }
 

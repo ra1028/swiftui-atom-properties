@@ -36,10 +36,6 @@ public protocol Atom<Produced>: Sendable {
     @MainActor
     func effect(context: CurrentContext) -> Effect
 
-    /// Deprecated. use `Atom.effect(context:)` instead.
-    @MainActor
-    func updated(newValue: Produced, oldValue: Produced, context: CurrentContext)
-
     // --- Internal ---
 
     /// A producer that produces the value of this atom.
@@ -51,9 +47,6 @@ public extension Atom {
     func effect(context: CurrentContext) -> Effect where Effect == EmptyEffect {
         EmptyEffect()
     }
-
-    @MainActor
-    func updated(newValue: Produced, oldValue: Produced, context: CurrentContext) {}
 }
 
 public extension Atom where Self == Key {
