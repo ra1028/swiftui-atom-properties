@@ -11,12 +11,12 @@ internal struct Subscriber {
     }
 
     var subscribing: Set<AtomKey> {
-        get { state?.subscribing.value ?? [] }
-        nonmutating set { state?.subscribing.value = newValue }
+        get { state?.subscribing ?? [] }
+        nonmutating set { state?.subscribing = newValue }
     }
 
     var unsubscribe: ((Set<AtomKey>) -> Void)? {
-        get { state?.unsubscribe.value }
-        nonmutating set { state?.unsubscribe.value = newValue }
+        get { state?.unsubscribe }
+        nonmutating set { state?.unsubscribe = newValue }
     }
 }
