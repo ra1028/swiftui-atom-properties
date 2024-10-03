@@ -32,17 +32,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test library
         run: scripts/test.sh library ${{ matrix.platform }}
-      - name: Test example cross platform
-        if: matrix.platform == 'macos' || matrix.platform == 'tvos'
-        run: scripts/test.sh example-cross-platform ${{ matrix.platform }}
 
   test_examples:
-    name: Test iOS examples
+    name: Test examples
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
       - name: Test example iOS
         run: scripts/test.sh example-ios ios
+      - name: Test example macOS
+        run: scripts/test.sh example-cross-platform macos
+      - name: Test example tvOS
+        run: scripts/test.sh example-cross-platform tvos
 
   benchmark:
     name: Benchmark
