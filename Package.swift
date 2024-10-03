@@ -20,5 +20,5 @@ let package = Package(
             dependencies: ["Atoms"]
         ),
     ],
-    swiftLanguageModes: [.v6]
+    swiftLanguageModes: [.v5, .v6]
 )
