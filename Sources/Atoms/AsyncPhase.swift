@@ -29,7 +29,13 @@ public enum AsyncPhase<Success, Failure: Error> {
         /// returned value as a success, or thrown error as a failure.
         ///
         /// - Parameter body: A async throwing closure to evaluate.
-        public init(catching body: @Sendable () async throws(Failure) -> Success) async {
+        public init(
+            // Adopt SE-0420 Inheritance of actor isolation instead of adding @Sendable
+            // to the body closure once the compiler crash that happens with Swift 6.0
+            // when used in an initializer is solved.
+            // isolation: isolated (any Actor)? = #isolation,
+            catching body: @Sendable () async throws(Failure) -> Success
+        ) async {
             do {
                 let value = try await body()
                 self = .success(value)
