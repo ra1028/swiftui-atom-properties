@@ -22,7 +22,7 @@ public extension Atom {
     /// - Parameter keyPath: A key path for the property of the original atom value.
     ///
     /// - Returns: An atom that provides the partial property of the original atom value.
-    #if hasFeature(InferSendableFromCaptures)
+    #if compiler(>=6) || hasFeature(InferSendableFromCaptures)
         func changes<T: Equatable>(
             of keyPath: KeyPath<Produced, T> & Sendable
         ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
@@ -57,7 +57,7 @@ public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
         }
     }
 
-    #if hasFeature(InferSendableFromCaptures)
+    #if compiler(>=6) || hasFeature(InferSendableFromCaptures)
         private let keyPath: KeyPath<Base, Produced> & Sendable
 
         internal init(keyPath: KeyPath<Base, Produced> & Sendable) {
