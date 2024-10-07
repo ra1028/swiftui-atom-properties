@@ -2,10 +2,6 @@
 
 import PackageDescription
 
-let swiftSettings: [SwiftSetting] = [
-    .enableExperimentalFeature("StrictConcurrency")
-]
-
 let package = Package(
     name: "swiftui-atom-properties",
     platforms: [
@@ -19,13 +15,11 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "Atoms",
-            swiftSettings: swiftSettings
+            name: "Atoms"
         ),
         .testTarget(
             name: "AtomsTests",
-            dependencies: ["Atoms"],
-            swiftSettings: swiftSettings
+            dependencies: ["Atoms"]
         ),
     ],
     swiftLanguageVersions: [.v5]

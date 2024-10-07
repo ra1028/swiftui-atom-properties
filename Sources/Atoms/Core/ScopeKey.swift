@@ -1,6 +1,5 @@
 @usableFromInline
 internal struct ScopeKey: Hashable, CustomStringConvertible {
-    @MainActor
     final class Token {}
 
     private let identifier: ObjectIdentifier
