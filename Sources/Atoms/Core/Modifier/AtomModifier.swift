@@ -11,7 +11,7 @@ public extension Atom {
 /// A modifier that you apply to an atom, producing a new value modified from the original value.
 public protocol AtomModifier: Sendable {
     /// A type representing the stable identity of this modifier.
-    associatedtype Key: Hashable
+    associatedtype Key: Hashable & Sendable
 
     /// A type of base value to be modified.
     associatedtype Base

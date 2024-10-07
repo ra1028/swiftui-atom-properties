@@ -4,7 +4,7 @@ internal struct OverrideKey: Hashable, Sendable {
 
     @usableFromInline
     init<Node: Atom>(_ atom: Node) {
-        let key = AnyHashable(atom.key)
+        let key = UnsafeUncheckedSendable<AnyHashable>(atom.key)
         let type = ObjectIdentifier(Node.self)
         identifier = .node(key: key, type: type)
     }
@@ -17,8 +17,8 @@ internal struct OverrideKey: Hashable, Sendable {
 }
 
 private extension OverrideKey {
-    enum Identifier: Hashable, @unchecked Sendable {
-        case node(key: AnyHashable, type: ObjectIdentifier)
+    enum Identifier: Hashable, Sendable {
+        case node(key: UnsafeUncheckedSendable<AnyHashable>, type: ObjectIdentifier)
         case type(ObjectIdentifier)
     }
 }

@@ -7,7 +7,7 @@ import SwiftUI
 struct IsPlayingAtom: StateAtom {
     let voiceMemo: VoiceMemo
 
-    var key: some Hashable {
+    var key: URL {
         voiceMemo.url
     }
 
@@ -39,7 +39,7 @@ struct IsPlayingAtom: StateAtom {
 struct PlayingElapsedTimeAtom: PublisherAtom {
     let voiceMemo: VoiceMemo
 
-    var key: some Hashable {
+    var key: URL {
         voiceMemo.url
     }
 
@@ -58,7 +58,7 @@ struct PlayingElapsedTimeAtom: PublisherAtom {
 struct AudioPlayerAtom: ValueAtom {
     let voiceMemo: VoiceMemo
 
-    var key: some Hashable {
+    var key: URL {
         voiceMemo.url
     }
 

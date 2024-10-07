@@ -4,7 +4,7 @@
 /// and is immediately released when no longer watched.
 public protocol Atom<Produced>: Sendable {
     /// A type representing the stable identity of this atom.
-    associatedtype Key: Hashable
+    associatedtype Key: Hashable & Sendable
 
     /// The type of value that this atom produces.
     associatedtype Produced

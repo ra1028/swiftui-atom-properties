@@ -41,7 +41,7 @@ public struct AnimationModifier<Produced>: AtomModifier {
     public typealias Produced = Produced
 
     /// A type representing the stable identity of this atom associated with an instance.
-    public struct Key: Hashable {
+    public struct Key: Hashable, Sendable {
         private let animation: Animation?
 
         fileprivate init(animation: Animation?) {

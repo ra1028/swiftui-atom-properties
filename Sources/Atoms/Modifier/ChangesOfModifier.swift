@@ -48,22 +48,35 @@ public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
     /// A type of value the modified atom produces.
     public typealias Produced = Produced
 
-    /// A type representing the stable identity of this modifier.
-    public struct Key: Hashable {
-        private let keyPath: KeyPath<Base, Produced>
-
-        fileprivate init(keyPath: KeyPath<Base, Produced>) {
-            self.keyPath = keyPath
-        }
-    }
-
     #if compiler(>=6) || hasFeature(InferSendableFromCaptures)
+        /// A type representing the stable identity of this modifier.
+        public struct Key: Hashable, Sendable {
+            private let keyPath: KeyPath<Base, Produced> & Sendable
+
+            fileprivate init(keyPath: KeyPath<Base, Produced> & Sendable) {
+                self.keyPath = keyPath
+            }
+        }
+
         private let keyPath: KeyPath<Base, Produced> & Sendable
 
         internal init(keyPath: KeyPath<Base, Produced> & Sendable) {
             self.keyPath = keyPath
         }
+
+        /// A unique value used to identify the modifier internally.
+        public var key: Key {
+            Key(keyPath: keyPath)
+        }
     #else
+        public struct Key: Hashable, Sendable {
+            private let keyPath: UnsafeUncheckedSendable<KeyPath<Base, Produced>>
+
+            fileprivate init(keyPath: UnsafeUncheckedSendable<KeyPath<Base, Produced>>) {
+                self.keyPath = keyPath
+            }
+        }
+
         private let _keyPath: UnsafeUncheckedSendable<KeyPath<Base, Produced>>
         private var keyPath: KeyPath<Base, Produced> {
             _keyPath.value
@@ -72,12 +85,12 @@ public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
         internal init(keyPath: KeyPath<Base, Produced>) {
             _keyPath = UnsafeUncheckedSendable(keyPath)
         }
-    #endif
 
-    /// A unique value used to identify the modifier internally.
-    public var key: Key {
-        Key(keyPath: keyPath)
-    }
+        /// A unique value used to identify the modifier internally.
+        public var key: Key {
+            Key(keyPath: _keyPath)
+        }
+    #endif
 
     /// A producer that produces the value of this atom.
     public func producer(atom: some Atom<Base>) -> AtomProducer<Produced> {

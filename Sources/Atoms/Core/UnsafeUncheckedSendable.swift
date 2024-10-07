@@ -7,3 +7,6 @@ internal struct UnsafeUncheckedSendable<Value>: @unchecked Sendable {
         self.value = value
     }
 }
+
+extension UnsafeUncheckedSendable: Equatable where Value: Equatable {}
+extension UnsafeUncheckedSendable: Hashable where Value: Hashable {}
