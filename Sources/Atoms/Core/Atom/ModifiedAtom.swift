@@ -6,7 +6,7 @@ public struct ModifiedAtom<Node: Atom, Modifier: AtomModifier>: Atom where Node.
     public typealias Produced = Modifier.Produced
 
     /// A type representing the stable identity of this atom.
-    public struct Key: Hashable {
+    public struct Key: Hashable, Sendable {
         private let atomKey: Node.Key
         private let modifierKey: Modifier.Key
 

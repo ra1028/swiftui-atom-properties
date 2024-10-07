@@ -40,7 +40,7 @@ public struct ChangesModifier<Produced: Equatable>: AtomModifier {
     public typealias Produced = Produced
 
     /// A type representing the stable identity of this atom associated with an instance.
-    public struct Key: Hashable {}
+    public struct Key: Hashable, Sendable {}
 
     /// A unique value used to identify the modifier internally.
     public var key: Key {

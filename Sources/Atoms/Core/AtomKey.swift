@@ -1,5 +1,5 @@
-internal struct AtomKey: Hashable, CustomStringConvertible {
-    private let key: AnyHashable
+internal struct AtomKey: Hashable, Sendable, CustomStringConvertible {
+    private let key: UnsafeUncheckedSendable<AnyHashable>
     private let type: ObjectIdentifier
     private let scopeKey: ScopeKey?
     private let anyAtomType: Any.Type
@@ -20,7 +20,7 @@ internal struct AtomKey: Hashable, CustomStringConvertible {
     }
 
     init<Node: Atom>(_ atom: Node, scopeKey: ScopeKey?) {
-        self.key = AnyHashable(atom.key)
+        self.key = UnsafeUncheckedSendable(atom.key)
         self.type = ObjectIdentifier(Node.self)
         self.scopeKey = scopeKey
         self.anyAtomType = Node.self

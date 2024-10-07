@@ -440,7 +440,7 @@ private extension StoreContext {
         lazy var shouldKeepAlive = !key.isScoped && store.state.caches[key].map { $0.atom is any KeepAlive } ?? false
         lazy var isChildrenEmpty = store.graph.children[key]?.isEmpty ?? true
         lazy var isSubscriptionEmpty = store.state.subscriptions[key]?.isEmpty ?? true
-        lazy var shouldRelease = !shouldKeepAlive && isChildrenEmpty && isSubscriptionEmpty
+        let shouldRelease = !shouldKeepAlive && isChildrenEmpty && isSubscriptionEmpty
 
         guard shouldRelease else {
             return

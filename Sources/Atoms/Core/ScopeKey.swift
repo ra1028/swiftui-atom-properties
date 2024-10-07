@@ -1,5 +1,5 @@
 @usableFromInline
-internal struct ScopeKey: Hashable, CustomStringConvertible {
+internal struct ScopeKey: Hashable, Sendable, CustomStringConvertible {
     final class Token {}
 
     private let identifier: ObjectIdentifier
