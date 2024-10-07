@@ -87,19 +87,19 @@ public struct AtomScope<Content: View>: View {
     public var body: some View {
         switch inheritance {
         case .environment(let id):
-            InheritedEnvironment(
+            WithEnvironment(
                 id: id,
-                content: content,
                 overrides: overrides,
-                observers: observers
+                observers: observers,
+                content: content
             )
 
         case .context(let store):
-            InheritedContext(
-                content: content,
+            WithContext(
                 store: store,
                 overrides: overrides,
-                observers: observers
+                observers: observers,
+                content: content
             )
         }
     }
@@ -158,19 +158,14 @@ private extension AtomScope {
         case context(store: StoreContext)
     }
 
-    struct InheritedEnvironment: View {
-        @MainActor
-        final class State: ObservableObject {
-            let token = ScopeKey.Token()
-        }
-
+    struct WithEnvironment: View {
         let id: ScopeID
-        let content: Content
         let overrides: [OverrideKey: any OverrideProtocol]
         let observers: [Observer]
+        let content: Content
 
-        @StateObject
-        private var state = State()
+        @State
+        private var token = ScopeKey.Token()
         @Environment(\.store)
         private var environmentStore
 
@@ -178,7 +173,7 @@ private extension AtomScope {
             content.environment(
                 \.store,
                 environmentStore?.scoped(
-                    scopeKey: ScopeKey(token: state.token),
+                    scopeKey: ScopeKey(token: token),
                     scopeID: id,
                     observers: observers,
                     overrides: overrides
@@ -187,11 +182,11 @@ private extension AtomScope {
         }
     }
 
-    struct InheritedContext: View {
-        let content: Content
+    struct WithContext: View {
         let store: StoreContext
         let overrides: [OverrideKey: any OverrideProtocol]
         let observers: [Observer]
+        let content: Content
 
         var body: some View {
             content.environment(

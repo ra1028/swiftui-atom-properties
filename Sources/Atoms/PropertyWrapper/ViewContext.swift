@@ -32,9 +32,10 @@ import SwiftUI
 ///
 @propertyWrapper
 public struct ViewContext: DynamicProperty {
-    @StateObject
-    private var state = State()
-
+    @State
+    private var signal = false
+    @State
+    private var subscriberState = SubscriberState()
     @Environment(\.store)
     private var _store
 
@@ -52,29 +53,24 @@ public struct ViewContext: DynamicProperty {
     /// This property provides primary access to the view context. However you don't
     /// access ``wrappedValue`` directly.
     /// Instead, you use the property variable created with the `@ViewContext` attribute.
-    #if compiler(>=6) || hasFeature(DisableOutwardActorInference)
-        @MainActor
-    #endif
+    @MainActor
     public var wrappedValue: AtomViewContext {
-        AtomViewContext(
+        let signal = _signal
+
+        // Initializes State and starts observing for updates.
+        _ = signal.wrappedValue
+
+        return AtomViewContext(
             store: store,
-            subscriber: Subscriber(state.subscriberState),
-            subscription: Subscription(
-                location: location,
-                update: { [weak state] in
-                    state?.objectWillChange.send()
-                }
-            )
+            subscriber: Subscriber(subscriberState),
+            subscription: Subscription(location: location) {
+                signal.wrappedValue.toggle()
+            }
         )
     }
 }
 
 private extension ViewContext {
-    @MainActor
-    final class State: ObservableObject {
-        let subscriberState = SubscriberState()
-    }
-
     @MainActor
     var store: StoreContext {
         guard let _store else {
