@@ -4,7 +4,7 @@ import PackageDescription
 
 let atoms = Target.Dependency.product(name: "Atoms", package: "swiftui-atom-properties")
 let swiftSettings: [SwiftSetting] = [
-    .enableUpcomingFeature("ExistentialAny"),
+    .enableUpcomingFeature("ExistentialAny")
 ]
 
 let package = Package(
