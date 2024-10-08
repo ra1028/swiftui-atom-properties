@@ -62,7 +62,7 @@ public extension ThrowingTaskAtom {
     /// }
     /// ```
     ///
-    var phase: ModifiedAtom<Self, TaskPhaseModifier<Success, Error>> {
+    var phase: ModifiedAtom<Self, TaskPhaseModifier<Success, any Error>> {
         modifier(TaskPhaseModifier())
     }
 }

@@ -17,7 +17,7 @@ struct RecordingData: Equatable {
 
 @MainActor
 struct VoiceMemoActions {
-    let context: AtomContext
+    let context: any AtomContext
 
     func toggleRecording() {
         let isRecording = context.read(IsRecordingAtom())
@@ -68,13 +68,13 @@ struct VoiceMemoActionsAtom: ValueAtom, Hashable {
 }
 
 struct AudioSessionAtom: ValueAtom, Hashable {
-    func value(context: Context) -> AudioSessionProtocol {
+    func value(context: Context) -> any AudioSessionProtocol {
         AVAudioSession.sharedInstance()
     }
 }
 
 struct AudioRecorderAtom: ValueAtom, Hashable {
-    func value(context: Context) -> AudioRecorderProtocol {
+    func value(context: Context) -> any AudioRecorderProtocol {
         AudioRecorder {
             context[IsRecordingFailedAtom()] = true
             context[RecordingDataAtom()] = nil

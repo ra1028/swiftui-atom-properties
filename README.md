@@ -482,7 +482,7 @@ struct UserView: View {
 |           |Description|
 |:----------|:----------|
 |Summary    |Initiates a throwing `Task` from the given `async throws` function.|
-|Output     |`Task<T, Error>`|
+|Output     |`Task<T, any Error>`|
 |Use Case   |Throwing asynchronous operation e.g. API call|
 
 <details><summary><code>📖 Example</code></summary>
@@ -519,7 +519,7 @@ struct MoviesView: View {
 |           |Description|
 |:----------|:----------|
 |Summary    |Provides a `AsyncPhase` value that represents asynchronous, sequential elements of the given `AsyncSequence`.|
-|Output     |`AsyncPhase<T, Error>`|
+|Output     |`AsyncPhase<T, any Error>`|
 |Use Case   |Handle multiple asynchronous values e.g. web-sockets|
 
 <details><summary><code>📖 Example</code></summary>
@@ -744,7 +744,7 @@ struct FetchWeatherAtom: ThrowingTaskAtom, Hashable {
 
 struct WeatherReportView: View {
     @Watch(FetchWeatherAtom().phase)
-    var weatherPhase  // : AsyncPhase<Weather, Error>
+    var weatherPhase  // : AsyncPhase<Weather, any Error>
 
     var body: some View {
         switch weatherPhase {
@@ -833,11 +833,11 @@ private struct FetchMoviesTaskAtom: ThrowingTaskAtom, Hashable {
 }
 
 struct FetchMoviesPhaseAtom: ValueAtom, Refreshable, Hashable {
-    func value(context: Context) -> AsyncPhase<[Movies], Error> {
+    func value(context: Context) -> AsyncPhase<[Movies], any Error> {
         context.watch(FetchMoviesTaskAtom().phase)
     }
 
-    func refresh(context: CurrentContext) async -> AsyncPhase<[Movies], Error> {
+    func refresh(context: CurrentContext) async -> AsyncPhase<[Movies], any Error> {
         await context.refresh(FetchMoviesTaskAtom().phase)
     }
 
@@ -1093,7 +1093,7 @@ struct BooksView: View {
 
     var body: some View {
         // watch
-        let booksTask = context.watch(FetchBooksAtom())     // Task<[Book], Error>
+        let booksTask = context.watch(FetchBooksAtom())     // Task<[Book], any Error>
         // binding
         let searchQuery = context.binding(SearchQueryAtom())  // Binding<String>
 
@@ -1159,7 +1159,7 @@ struct LocationManagerDelegateAtom: ValueAtom, Hashable {
 }
 
 struct LocationManagerAtom: ValueAtom, Hashable {
-    func value(context: Context) -> LocationManagerProtocol {
+    func value(context: Context) -> any LocationManagerProtocol {
         let delegate = context.watch(LocationManagerDelegateAtom())
         let manager = CLLocationManager()
         manager.delegate = delegate
@@ -1194,7 +1194,7 @@ struct APIClient: APIClientProtocol { ... }
 struct MockAPIClient: APIClientProtocol { ... }
 
 struct APIClientAtom: ValueAtom, Hashable {
-    func value(context: Context) -> APIClientProtocol {
+    func value(context: Context) -> any APIClientProtocol {
         APIClient()
     }
 }
@@ -1252,7 +1252,7 @@ Optionally, you can pass `suspending` content to be displayed until the task com
 ```swift
 struct NewsView: View {
     @Watch(LatestNewsAtom())
-    var newsTask: Task<News, Error>
+    var newsTask: Task<News, any Error>
 
     var body: some View {
         Suspense(newsTask) { news in
@@ -1486,7 +1486,7 @@ class MockAPIClient: APIClientProtocol {
 }
 
 struct APIClientAtom: ValueAtom, Hashable {
-    func value(context: Context) -> APIClientProtocol {
+    func value(context: Context) -> any APIClientProtocol {
         APIClient()
     }
 }
@@ -1715,7 +1715,7 @@ class MessageLoader: ObservableObject {
     let context: AtomContext
 
     @Published
-    var phase = AsyncPhase<[Message], Error>.suspending
+    var phase = AsyncPhase<[Message], any Error>.suspending
 
     init(context: AtomContext) {
         self.context = context

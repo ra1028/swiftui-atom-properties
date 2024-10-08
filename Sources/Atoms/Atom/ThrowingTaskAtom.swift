@@ -8,7 +8,7 @@
 ///
 /// ## Output Value
 ///
-/// Task<Self.Value, Error>
+/// Task<Self.Value, any Error>
 ///
 /// ## Example
 ///
@@ -36,7 +36,7 @@
 /// }
 /// ```
 ///
-public protocol ThrowingTaskAtom: AsyncAtom where Produced == Task<Success, Error> {
+public protocol ThrowingTaskAtom: AsyncAtom where Produced == Task<Success, any Error> {
     /// The type of success value that this atom produces.
     associatedtype Success: Sendable
 

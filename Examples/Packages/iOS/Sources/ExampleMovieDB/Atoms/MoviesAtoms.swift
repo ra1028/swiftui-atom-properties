@@ -4,11 +4,11 @@ import Foundation
 @MainActor
 final class MovieLoader: ObservableObject {
     @Published
-    private(set) var pages = AsyncPhase<[PagedResponse<Movie>], Error>.suspending
-    private let api: APIClientProtocol
+    private(set) var pages = AsyncPhase<[PagedResponse<Movie>], any Error>.suspending
+    private let api: any APIClientProtocol
     let filter: Filter
 
-    init(api: APIClientProtocol, filter: Filter) {
+    init(api: any APIClientProtocol, filter: Filter) {
         self.api = api
         self.filter = filter
     }

@@ -2,13 +2,13 @@ import Atoms
 import CoreLocation
 
 final class LocationObserver: NSObject, ObservableObject, CLLocationManagerDelegate, @unchecked Sendable {
-    let manager: LocationManagerProtocol
+    let manager: any LocationManagerProtocol
 
     deinit {
         manager.stopUpdatingLocation()
     }
 
-    init(manager: LocationManagerProtocol) {
+    init(manager: any LocationManagerProtocol) {
         self.manager = manager
         super.init()
         manager.delegate = self
@@ -32,13 +32,13 @@ final class LocationObserver: NSObject, ObservableObject, CLLocationManagerDeleg
         }
     }
 
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {
         print(error.localizedDescription)
     }
 }
 
 struct LocationManagerAtom: ValueAtom, Hashable {
-    func value(context: Context) -> LocationManagerProtocol {
+    func value(context: Context) -> any LocationManagerProtocol {
         let manager = CLLocationManager()
         manager.desiredAccuracy = kCLLocationAccuracyBest
         return manager

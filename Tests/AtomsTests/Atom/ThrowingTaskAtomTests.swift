@@ -5,7 +5,7 @@ import XCTest
 final class ThrowingTaskAtomTests: XCTestCase {
     @MainActor
     func test() async throws {
-        var result = Result<Int, Error>.success(0)
+        var result = Result<Int, any Error>.success(0)
         let atom = TestThrowingTaskAtom { result }
         let context = AtomTestContext()
 
@@ -58,7 +58,7 @@ final class ThrowingTaskAtomTests: XCTestCase {
 
     @MainActor
     func testRefresh() async throws {
-        var result = Result<Int, Error>.success(0)
+        var result = Result<Int, any Error>.success(0)
         let atom = TestThrowingTaskAtom { result }
         let context = AtomTestContext()
 
