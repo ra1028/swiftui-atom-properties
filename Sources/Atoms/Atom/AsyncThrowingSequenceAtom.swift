@@ -44,6 +44,13 @@
 /// }
 /// ```
 ///
+#if compiler(>=6)
+    @available(macOS, deprecated: 15.0, message: "AsyncThrowingSequenceAtom has been replaced by AsyncSequenceAtom")  // swift-format-ignore
+    @available(iOS, deprecated: 18.0, message: "AsyncThrowingSequenceAtom has been replaced by AsyncSequenceAtom")  // swift-format-ignore
+    @available(watchOS, deprecated: 11.0, message: "AsyncThrowingSequenceAtom has been replaced by AsyncSequenceAtom")  // swift-format-ignore
+    @available(tvOS, deprecated: 18.0, message: "AsyncThrowingSequenceAtom has been replaced by AsyncSequenceAtom")  // swift-format-ignore
+    @available(visionOS, deprecated: 2.0, message: "AsyncThrowingSequenceAtom has been replaced by AsyncSequenceAtom")  // swift-format-ignore
+#endif
 public protocol AsyncThrowingSequenceAtom: AsyncAtom where Produced == AsyncPhase<Sequence.Element, Error> {
     /// The type of asynchronous sequence that this atom manages.
     associatedtype Sequence: AsyncSequence where Sequence.Element: Sendable
@@ -52,7 +59,7 @@ public protocol AsyncThrowingSequenceAtom: AsyncAtom where Produced == AsyncPhas
     ///
     /// The sequence that is produced by this method must be instantiated anew each time this method
     /// is called. Otherwise, it could throw a fatal error because Swift Concurrency  doesn't allow
-    /// single `AsyncSequence` instance to be shared between multiple locations.
+    /// single `AsyncSequence` instance to be shared between multiple subscriptions.
     ///
     /// - Parameter context: A context structure to read, watch, and otherwise
     ///                      interact with other atoms.

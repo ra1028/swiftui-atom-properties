@@ -129,6 +129,26 @@ struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom, @unchecke
     }
 }
 
+#if compiler(>=6)
+    @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+    struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom, @unchecked Sendable where Sequence.Element: Sendable {
+        var effect: TestEffect?
+        var makeSequence: () -> Sequence
+
+        var key: UniqueKey {
+            UniqueKey()
+        }
+
+        func sequence(context: Context) -> Sequence {
+            makeSequence()
+        }
+
+        func effect(context: CurrentContext) -> some AtomEffect {
+            effect ?? TestEffect()
+        }
+    }
+#endif
+
 struct TestAsyncThrowingSequenceAtom<Sequence: AsyncSequence>: AsyncThrowingSequenceAtom, @unchecked Sendable where Sequence.Element: Sendable {
     var effect: TestEffect?
     var makeSequence: () -> Sequence

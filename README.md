@@ -514,13 +514,52 @@ struct MoviesView: View {
 
 </details>
 
-#### [AsyncThrowingSequenceAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/AsyncThrowingSequenceAtom)
+#### [AsyncSequenceAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/asyncsequenceatom)
+
+|           |Description|
+|:----------|:----------|
+|Summary    |Provides a `AsyncPhase` value that represents asynchronous, sequential elements of the given `AsyncSequence`.|
+|Output     |`AsyncPhase<T, E: Error>`|
+|Use Case   |Handle multiple asynchronous values e.g. web-sockets|
+|Available  |macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0|
+
+<details><summary><code>📖 Example</code></summary>
+
+```swift
+struct NotificationAtom: AsyncSequenceAtom, Hashable {
+    let name: Notification.Name
+
+    func sequence(context: Context) -> NotificationCenter.Notifications {
+        NotificationCenter.default.notifications(named: name)
+    }
+}
+
+struct NotificationView: View {
+    @Watch(NotificationAtom(name: UIApplication.didBecomeActiveNotification))
+    var notificationPhase
+
+    var body: some View {
+        switch notificationPhase {
+        case .suspending, .failure:
+            Text("Unknown")
+
+        case .success:
+            Text("Active")
+        }
+    }
+}
+```
+
+</details>
+
+#### [AsyncThrowingSequenceAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/asyncthrowingsequenceatom)
 
 |           |Description|
 |:----------|:----------|
 |Summary    |Provides a `AsyncPhase` value that represents asynchronous, sequential elements of the given `AsyncSequence`.|
 |Output     |`AsyncPhase<T, Error>`|
 |Use Case   |Handle multiple asynchronous values e.g. web-sockets|
+|Deprecated |macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0|
 
 <details><summary><code>📖 Example</code></summary>
 

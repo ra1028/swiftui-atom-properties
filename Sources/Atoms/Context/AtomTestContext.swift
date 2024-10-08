@@ -220,7 +220,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// Refreshes and then returns the value associated with the given refreshable atom.
     ///
     /// This method accepts only asynchronous atoms such as types conforming to:
-    /// ``TaskAtom``, ``ThrowingTaskAtom``, ``AsyncThrowingSequenceAtom``, ``PublisherAtom``.
+    /// ``TaskAtom``, ``ThrowingTaskAtom``, ``AsyncSequenceAtom``, ``AsyncThrowingSequenceAtom``, or ``PublisherAtom``.
     /// It refreshes the value for the given atom and then returns, so the caller can await until
     /// the atom completes the update.
     /// Note that it can be used only in a context that supports concurrency.
