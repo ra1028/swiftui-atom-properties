@@ -1,12 +1,12 @@
 @propertyWrapper
-struct Failable<T: Decodable & Sendable>: Decodable & Sendable {
+struct Failable<T: Decodable & Sendable>: Decodable, Sendable {
     var wrappedValue: T?
 
     init(wrappedValue: T?) {
         self.wrappedValue = wrappedValue
     }
 
-    init(from decoder: Decoder) throws {
+    init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let wrappedValue = try? container.decode(T.self)
         self.init(wrappedValue: wrappedValue)
@@ -14,7 +14,7 @@ struct Failable<T: Decodable & Sendable>: Decodable & Sendable {
 }
 
 extension Failable: Encodable where T: Encodable {
-    func encode(to encoder: Encoder) throws {
+    func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(wrappedValue)
     }

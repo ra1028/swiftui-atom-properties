@@ -8,7 +8,7 @@
 ///
 /// ## Output Value
 ///
-/// ``AsyncPhase``<Self.Sequence.Element, Error>
+/// ``AsyncPhase``<Self.Sequence.Element, any Error>
 ///
 /// ## Example
 ///
@@ -44,7 +44,7 @@
 /// }
 /// ```
 ///
-public protocol AsyncSequenceAtom: AsyncAtom where Produced == AsyncPhase<Sequence.Element, Error> {
+public protocol AsyncSequenceAtom: AsyncAtom where Produced == AsyncPhase<Sequence.Element, any Error> {
     /// The type of asynchronous sequence that this atom manages.
     associatedtype Sequence: AsyncSequence where Sequence.Element: Sendable
 

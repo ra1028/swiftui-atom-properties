@@ -95,10 +95,10 @@ private extension APIClient {
 }
 
 final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
-    var imageResponse = Result<UIImage, Error>.failure(URLError(.unknown))
-    var filteredMovieResponse = Result<PagedResponse<Movie>, Error>.failure(URLError(.unknown))
-    var creditsResponse = Result<Credits, Error>.failure(URLError(.unknown))
-    var searchMoviesResponse = Result<PagedResponse<Movie>, Error>.failure(URLError(.unknown))
+    var imageResponse = Result<UIImage, any Error>.failure(URLError(.unknown))
+    var filteredMovieResponse = Result<PagedResponse<Movie>, any Error>.failure(URLError(.unknown))
+    var creditsResponse = Result<Credits, any Error>.failure(URLError(.unknown))
+    var searchMoviesResponse = Result<PagedResponse<Movie>, any Error>.failure(URLError(.unknown))
 
     func getImage(path: String, size: ImageSize) async throws -> UIImage {
         try imageResponse.get()

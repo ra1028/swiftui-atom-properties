@@ -63,7 +63,7 @@ struct TestTaskAtom<T: Sendable>: TaskAtom, @unchecked Sendable {
 
 struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom, @unchecked Sendable {
     var effect: TestEffect?
-    var getResult: () -> Result<Success, Error>
+    var getResult: () -> Result<Success, any Error>
 
     var key: UniqueKey {
         UniqueKey()

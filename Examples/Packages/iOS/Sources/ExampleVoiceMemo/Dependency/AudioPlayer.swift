@@ -36,14 +36,14 @@ final class AudioPlayer: NSObject, AVAudioPlayerDelegate, AudioPlayerProtocol {
         }
     }
 
-    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: (any Error)?) {
         onFail()
     }
 }
 
 final class MockAudioPlayer: AudioPlayerProtocol, @unchecked Sendable {
     private(set) var isPlaying = false
-    var playingError: Error?
+    var playingError: (any Error)?
 
     func play(url: URL) throws {
         if let playingError = playingError {

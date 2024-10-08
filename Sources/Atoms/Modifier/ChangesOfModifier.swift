@@ -24,7 +24,7 @@ public extension Atom {
     /// - Returns: An atom that provides the partial property of the original atom value.
     #if compiler(>=6) || hasFeature(InferSendableFromCaptures)
         func changes<T: Equatable>(
-            of keyPath: KeyPath<Produced, T> & Sendable
+            of keyPath: any KeyPath<Produced, T> & Sendable
         ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
             modifier(ChangesOfModifier(keyPath: keyPath))
         }
@@ -51,16 +51,16 @@ public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
     #if compiler(>=6) || hasFeature(InferSendableFromCaptures)
         /// A type representing the stable identity of this modifier.
         public struct Key: Hashable, Sendable {
-            private let keyPath: KeyPath<Base, Produced> & Sendable
+            private let keyPath: any KeyPath<Base, Produced> & Sendable
 
-            fileprivate init(keyPath: KeyPath<Base, Produced> & Sendable) {
+            fileprivate init(keyPath: any KeyPath<Base, Produced> & Sendable) {
                 self.keyPath = keyPath
             }
         }
 
-        private let keyPath: KeyPath<Base, Produced> & Sendable
+        private let keyPath: any KeyPath<Base, Produced> & Sendable
 
-        internal init(keyPath: KeyPath<Base, Produced> & Sendable) {
+        internal init(keyPath: any KeyPath<Base, Produced> & Sendable) {
             self.keyPath = keyPath
         }
 

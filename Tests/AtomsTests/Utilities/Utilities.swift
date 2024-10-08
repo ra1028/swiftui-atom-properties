@@ -34,8 +34,8 @@ final class TestObservableObject: ObservableObject, @unchecked Sendable {
 }
 
 final class AsyncThrowingStreamPipe<Element>: @unchecked Sendable {
-    private(set) var stream: AsyncThrowingStream<Element, Error>
-    private(set) var continuation: AsyncThrowingStream<Element, Error>.Continuation
+    private(set) var stream: AsyncThrowingStream<Element, any Error>
+    private(set) var continuation: AsyncThrowingStream<Element, any Error>.Continuation
 
     init() {
         (stream, continuation) = AsyncThrowingStream.makeStream()
@@ -61,7 +61,7 @@ final class ResettableSubject<Output, Failure: Error>: Publisher, Subject {
         internalSubject.send(completion: completion)
     }
 
-    func send(subscription: Combine.Subscription) {
+    func send(subscription: any Combine.Subscription) {
         internalSubject.send(subscription: subscription)
     }
 

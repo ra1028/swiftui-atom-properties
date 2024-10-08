@@ -13,7 +13,7 @@ import SwiftUI
 /// ## Example
 ///
 /// ```swift
-/// let fetchImageTask: Task<UIImage, Error> = ...
+/// let fetchImageTask: Task<UIImage, any Error> = ...
 ///
 /// Suspense(fetchImageTask) { uiImage in
 ///     // Displays content when the task successfully provides a value.
@@ -40,7 +40,7 @@ public struct Suspense<Value: Sendable, Failure: Error, Content: View, Suspendin
     /// accordingly.
     ///
     /// ```swift
-    /// let fetchImageTask: Task<UIImage, Error> = ...
+    /// let fetchImageTask: Task<UIImage, any Error> = ...
     ///
     /// Suspense(fetchImageTask) { uiImage in
     ///     Image(uiImage: uiImage)
@@ -72,7 +72,7 @@ public struct Suspense<Value: Sendable, Failure: Error, Content: View, Suspendin
     /// accordingly.
     ///
     /// ```swift
-    /// let fetchImageTask: Task<UIImage, Error> = ...
+    /// let fetchImageTask: Task<UIImage, any Error> = ...
     ///
     /// Suspense(fetchImageTask) { uiImage in
     ///     Image(uiImage: uiImage)
@@ -98,7 +98,7 @@ public struct Suspense<Value: Sendable, Failure: Error, Content: View, Suspendin
     /// accordingly.
     ///
     /// ```swift
-    /// let fetchImageTask: Task<UIImage, Error> = ...
+    /// let fetchImageTask: Task<UIImage, any Error> = ...
     ///
     /// Suspense(fetchImageTask) { uiImage in
     ///     Image(uiImage: uiImage)
@@ -128,7 +128,7 @@ public struct Suspense<Value: Sendable, Failure: Error, Content: View, Suspendin
     /// accordingly.
     ///
     /// ```swift
-    /// let fetchImageTask: Task<UIImage, Error> = ...
+    /// let fetchImageTask: Task<UIImage, any Error> = ...
     ///
     /// Suspense(fetchImageTask) { uiImage in
     ///     Image(uiImage: uiImage)

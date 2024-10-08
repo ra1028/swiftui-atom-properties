@@ -8,7 +8,7 @@ struct NetworkImage: View {
     @ViewContext
     var context
 
-    var image: Task<UIImage, Error> {
+    var image: Task<UIImage, any Error> {
         context.watch(ImageAtom(path: path, size: size))
     }
 

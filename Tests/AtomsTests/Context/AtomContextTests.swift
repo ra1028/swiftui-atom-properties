@@ -6,7 +6,7 @@ final class AtomContextTests: XCTestCase {
     @MainActor
     func testSubscript() {
         let atom = TestStateAtom(defaultValue: 0)
-        let context: AtomWatchableContext = AtomTestContext()
+        let context: any AtomWatchableContext = AtomTestContext()
 
         XCTAssertEqual(context.watch(atom), 0)
 

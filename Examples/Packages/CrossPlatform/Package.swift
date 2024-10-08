@@ -3,6 +3,9 @@
 import PackageDescription
 
 let atoms = Target.Dependency.product(name: "Atoms", package: "swiftui-atom-properties")
+let swiftSettings: [SwiftSetting] = [
+    .enableUpcomingFeature("ExistentialAny")
+]
 
 let package = Package(
     name: "CrossPlatformExamples",
@@ -25,11 +28,12 @@ let package = Package(
                 atoms,
                 "ExampleCounter",
                 "ExampleTodo",
-            ]
+            ],
+            swiftSettings: swiftSettings
         ),
-        .target(name: "ExampleCounter", dependencies: [atoms]),
-        .testTarget(name: "ExampleCounterTests", dependencies: ["ExampleCounter"]),
-        .target(name: "ExampleTodo", dependencies: [atoms]),
-        .testTarget(name: "ExampleTodoTests", dependencies: ["ExampleTodo"]),
+        .target(name: "ExampleCounter", dependencies: [atoms], swiftSettings: swiftSettings),
+        .testTarget(name: "ExampleCounterTests", dependencies: ["ExampleCounter"], swiftSettings: swiftSettings),
+        .target(name: "ExampleTodo", dependencies: [atoms], swiftSettings: swiftSettings),
+        .testTarget(name: "ExampleTodoTests", dependencies: ["ExampleTodo"], swiftSettings: swiftSettings),
     ]
 )

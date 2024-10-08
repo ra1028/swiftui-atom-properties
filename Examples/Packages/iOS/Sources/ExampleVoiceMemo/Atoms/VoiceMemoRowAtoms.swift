@@ -62,7 +62,7 @@ struct AudioPlayerAtom: ValueAtom {
         voiceMemo.url
     }
 
-    func value(context: Context) -> AudioPlayerProtocol {
+    func value(context: Context) -> any AudioPlayerProtocol {
         AudioPlayer(
             onFinish: {
                 context[IsPlayingAtom(voiceMemo: voiceMemo)] = false

@@ -45,14 +45,14 @@ final class AudioRecorder: NSObject, AVAudioRecorderDelegate, AudioRecorderProto
         }
     }
 
-    func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
+    func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: (any Error)?) {
         onFail()
     }
 }
 
 final class MockAudioRecorder: AudioRecorderProtocol, @unchecked Sendable {
     var isRecording = false
-    var recordingError: Error?
+    var recordingError: (any Error)?
     var currentTime: TimeInterval = 10
 
     func record(url: URL) throws {

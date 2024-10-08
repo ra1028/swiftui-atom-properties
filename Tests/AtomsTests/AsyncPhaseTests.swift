@@ -86,7 +86,7 @@ final class AsyncPhaseTests: XCTestCase {
     }
 
     func testMap() {
-        let phase = AsyncPhase<Int, Error>.success(0)
+        let phase = AsyncPhase<Int, any Error>.success(0)
             .map(String.init)
 
         XCTAssertEqual(phase.value, "0")

@@ -2,7 +2,7 @@ import Atoms
 import UIKit
 
 struct APIClientAtom: ValueAtom, Hashable {
-    func value(context: Context) -> APIClientProtocol {
+    func value(context: Context) -> any APIClientProtocol {
         APIClient()
     }
 }

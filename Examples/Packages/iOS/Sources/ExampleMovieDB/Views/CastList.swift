@@ -7,7 +7,7 @@ struct CastList: View {
     @ViewContext
     var context
 
-    var casts: AsyncPhase<[Credits.Person], Error> {
+    var casts: AsyncPhase<[Credits.Person], any Error> {
         context.watch(CastsAtom(movieID: movieID).phase)
     }
 
