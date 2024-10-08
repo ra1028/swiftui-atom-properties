@@ -13,7 +13,7 @@
 /// ## Example
 ///
 /// ```swift
-/// struct QuakeMonitorAtom: AsyncSequenceAtom, Hashable {
+/// struct QuakeMonitorAtom: AsyncThrowingSequenceAtom, Hashable {
 ///     func sequence(context: Context) -> AsyncStream<Quake> {
 ///         AsyncStream { continuation in
 ///             let monitor = QuakeMonitor()
@@ -44,7 +44,7 @@
 /// }
 /// ```
 ///
-public protocol AsyncSequenceAtom: AsyncAtom where Produced == AsyncPhase<Sequence.Element, Error> {
+public protocol AsyncThrowingSequenceAtom: AsyncAtom where Produced == AsyncPhase<Sequence.Element, Error> {
     /// The type of asynchronous sequence that this atom manages.
     associatedtype Sequence: AsyncSequence where Sequence.Element: Sendable
 
@@ -62,7 +62,7 @@ public protocol AsyncSequenceAtom: AsyncAtom where Produced == AsyncPhase<Sequen
     func sequence(context: Context) -> Sequence
 }
 
-public extension AsyncSequenceAtom {
+public extension AsyncThrowingSequenceAtom {
     var producer: AtomProducer<Produced> {
         AtomProducer { context in
             let sequence = context.transaction(sequence)

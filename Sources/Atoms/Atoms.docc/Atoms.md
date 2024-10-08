@@ -20,7 +20,7 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``StateAtom``
 - ``TaskAtom``
 - ``ThrowingTaskAtom``
-- ``AsyncSequenceAtom``
+- ``AsyncThrowingSequenceAtom``
 - ``PublisherAtom``
 - ``ObservableObjectAtom``
 - ``ModifiedAtom``

@@ -2,11 +2,11 @@ import XCTest
 
 @testable import Atoms
 
-final class AsyncSequenceAtomTests: XCTestCase {
+final class AsyncThrowingSequenceAtomTests: XCTestCase {
     @MainActor
     func testValue() async {
         let pipe = AsyncThrowingStreamPipe<Int>()
-        let atom = TestAsyncSequenceAtom { pipe.stream }
+        let atom = TestAsyncThrowingSequenceAtom { pipe.stream }
         let context = AtomTestContext()
 
         do {
@@ -70,7 +70,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
     @MainActor
     func testRefresh() async {
         let pipe = AsyncThrowingStreamPipe<Int>()
-        let atom = TestAsyncSequenceAtom { pipe.stream }
+        let atom = TestAsyncThrowingSequenceAtom { pipe.stream }
         let context = AtomTestContext()
 
         do {
@@ -136,7 +136,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
     func testEffect() async {
         let effect = TestEffect()
         let pipe = AsyncThrowingStreamPipe<Int>()
-        let atom = TestAsyncSequenceAtom(effect: effect) { pipe.stream }
+        let atom = TestAsyncThrowingSequenceAtom(effect: effect) { pipe.stream }
         let context = AtomTestContext()
 
         context.watch(atom)

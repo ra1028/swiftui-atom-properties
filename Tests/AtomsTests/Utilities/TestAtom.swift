@@ -129,7 +129,7 @@ struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom, @unchecke
     }
 }
 
-struct TestAsyncSequenceAtom<Sequence: AsyncSequence>: AsyncSequenceAtom, @unchecked Sendable where Sequence.Element: Sendable {
+struct TestAsyncThrowingSequenceAtom<Sequence: AsyncSequence>: AsyncThrowingSequenceAtom, @unchecked Sendable where Sequence.Element: Sendable {
     var effect: TestEffect?
     var makeSequence: () -> Sequence
 

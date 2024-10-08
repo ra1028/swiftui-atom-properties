@@ -514,7 +514,7 @@ struct MoviesView: View {
 
 </details>
 
-#### [AsyncSequenceAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/asyncsequenceatom)
+#### [AsyncThrowingSequenceAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/AsyncThrowingSequenceAtom)
 
 |           |Description|
 |:----------|:----------|
@@ -525,7 +525,7 @@ struct MoviesView: View {
 <details><summary><code>📖 Example</code></summary>
 
 ```swift
-struct NotificationAtom: AsyncSequenceAtom, Hashable {
+struct NotificationAtom: AsyncThrowingSequenceAtom, Hashable {
     let name: Notification.Name
 
     func sequence(context: Context) -> NotificationCenter.Notifications {
