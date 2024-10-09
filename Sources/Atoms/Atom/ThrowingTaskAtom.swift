@@ -50,7 +50,7 @@ public protocol ThrowingTaskAtom: AsyncAtom where Produced == Task<Success, any 
     ///
     /// - Throws: The error that occurred during the process of creating the resulting value.
     ///
-    /// - Returns: A throwing `Task` that produces asynchronous value.
+    /// - Returns: The process's result.
     @MainActor
     func value(context: Context) async throws -> Success
 }
