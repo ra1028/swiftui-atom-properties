@@ -7,7 +7,7 @@ struct SearchQueryAtom: StateAtom, Hashable {
     }
 }
 
-struct SearchMoviesAtom: ThrowingTaskAtom, Hashable {
+struct SearchMoviesAtom: AsyncPhaseAtom, Hashable {
     func value(context: Context) async throws -> [Movie] {
         let api = context.watch(APIClientAtom())
         let query = context.watch(SearchQueryAtom())

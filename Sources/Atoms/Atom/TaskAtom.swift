@@ -46,7 +46,7 @@ public protocol TaskAtom: AsyncAtom where Produced == Task<Success, Never> {
     /// - Parameter context: A context structure to read, watch, and otherwise
     ///                      interact with other atoms.
     ///
-    /// - Returns: A nonthrowing `Task` that produces asynchronous value.
+    /// - Returns: The process's result.
     @MainActor
     func value(context: Context) async -> Success
 }

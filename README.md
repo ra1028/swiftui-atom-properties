@@ -514,11 +514,63 @@ struct MoviesView: View {
 
 </details>
 
+#### [AsyncPhaseAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/asyncphaseatom)
+
+|           |Description|
+|:----------|:----------|
+|Summary    |Provides an `AsyncPhase` value that represents a result of the given asynchronous throwable function.|
+|Output     |`AsyncPhase<T, E: Error>` (`AsyncPhase<T, any Error>` in Swift 5)|
+|Use Case   |Throwing or non-throwing asynchronous operation e.g. API call|
+
+Note:  
+The [typed throws](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0413-typed-throws.md) feature introduced in Swift 6 allows the `Failure` type of the produced `AsyncPhase` to be specified as any type or even non-throwing, but in Swift 5 without it, the `Failure` type is always be `any Error`.  
+Here is a chart of the syntax in `typed throws` and the type of resulting `AsyncPhase`.  
+
+|Syntax             |Shorthand          |Produced                  |
+|:------------------|:------------------|:-------------------------|
+|`throws(E)`        |`throws(E)`        |`AsyncPhase<T, E>`        |
+|`throws(any Error)`|`throws`           |`AsyncPhase<T, any Error>`|
+|`throws(Never)`    |                   |`AsyncPhase<T, Never>`    |
+
+<details><summary><code>📖 Example</code></summary>
+
+```swift
+struct FetchTrendingSongsAtom: AsyncPhaseAtom, Hashable {
+    func value(context: Context) async throws(FetchSongsError) -> [Song] {
+        try await fetchTrendingSongs()
+    }
+}
+
+struct TrendingSongsView: View {
+    @Watch(FetchTrendingSongsAtom())
+    var phase
+
+    var body: some View {
+        List {
+            switch phase {
+            case .success(let songs):
+                ForEach(songs, id: \.id) { song in
+                    Text(song.title)
+                }
+
+            case .failure(.noData):
+                Text("There are no currently trending songs.")
+
+            case .failure(let error):
+                Text(error.localizedDescription)
+            }
+        }
+    }
+}
+```
+
+</details>
+
 #### [AsyncSequenceAtom](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/asyncsequenceatom)
 
 |           |Description|
 |:----------|:----------|
-|Summary    |Provides a `AsyncPhase` value that represents asynchronous, sequential elements of the given `AsyncSequence`.|
+|Summary    |Provides an `AsyncPhase` value that represents asynchronous, sequential elements of the given `AsyncSequence`.|
 |Output     |`AsyncPhase<T, any Error>`|
 |Use Case   |Handle multiple asynchronous values e.g. web-sockets|
 
@@ -555,7 +607,7 @@ struct NotificationView: View {
 
 |             |Description|
 |:------------|:----------|
-|Summary      |Provides a `AsyncPhase` value that represents sequence of values of the given `Publisher`.|
+|Summary      |Provides an `AsyncPhase` value that represents sequence of values of the given `Publisher`.|
 |Output       |`AsyncPhase<T, E: Error>`|
 |Use Case     |Handle single or multiple asynchronous value(s) e.g. API call|
 

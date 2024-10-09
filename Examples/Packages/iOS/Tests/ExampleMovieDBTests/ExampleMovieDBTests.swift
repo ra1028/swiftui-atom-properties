@@ -118,37 +118,33 @@ final class ExampleMovieDBTests: XCTestCase {
     }
 
     @MainActor
-    func testSearchMoviesAtom() async throws {
+    func testSearchMoviesAtom() async {
         let apiClient = MockAPIClient()
         let atom = SearchMoviesAtom()
         let context = AtomTestContext()
         let expected = PagedResponse.stub()
-        let errorError = URLError(.badURL)
+        let expectedError = URLError(.badURL)
 
         context.override(APIClientAtom()) { _ in apiClient }
         apiClient.searchMoviesResponse = .success(expected)
 
         context.watch(SearchQueryAtom())
 
-        let empty = try await context.refresh(atom).value
+        let empty = await context.refresh(atom)
 
-        XCTAssertEqual(empty, [])
+        XCTAssertEqual(empty.value, [])
 
         context[SearchQueryAtom()] = "query"
 
-        let success = try await context.refresh(atom).value
+        let success = await context.refresh(atom)
 
-        XCTAssertEqual(success, expected.results)
+        XCTAssertEqual(success.value, expected.results)
 
-        apiClient.searchMoviesResponse = .failure(errorError)
+        apiClient.searchMoviesResponse = .failure(expectedError)
 
-        do {
-            _ = try await context.refresh(atom).value
-            XCTFail("Should throw.")
-        }
-        catch {
-            XCTAssertEqual(error as? URLError, errorError)
-        }
+        let failure = await context.refresh(atom)
+
+        XCTAssertEqual(failure.error as? URLError, expectedError)
     }
 }
 
