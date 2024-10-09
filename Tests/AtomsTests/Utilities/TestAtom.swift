@@ -78,6 +78,23 @@ struct TestThrowingTaskAtom<Success: Sendable>: ThrowingTaskAtom, @unchecked Sen
     }
 }
 
+struct TestAsyncPhaseAtom<Success, Failure: Error>: AsyncPhaseAtom, @unchecked Sendable {
+    var effect: TestEffect?
+    var getResult: () -> Result<Success, Failure>
+
+    var key: UniqueKey {
+        UniqueKey()
+    }
+
+    func value(context: Context) async throws(Failure) -> Success {
+        try getResult().get()
+    }
+
+    func effect(context: CurrentContext) -> some AtomEffect {
+        effect ?? TestEffect()
+    }
+}
+
 struct TestCustomRefreshableAtom<T: Sendable>: ValueAtom, Refreshable, @unchecked Sendable {
     var getValue: (Context) -> T
     var refresh: (CurrentContext) async -> T
