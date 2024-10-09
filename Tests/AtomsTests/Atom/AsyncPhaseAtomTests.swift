@@ -30,7 +30,12 @@ final class AsyncPhaseAtomTests: XCTestCase {
             await context.wait(for: atom, until: \.isFailure)
 
             let phase = context.watch(atom)
-            XCTAssertEqual(phase.error, URLError(.badURL))
+
+            #if compiler(>=6)
+                XCTAssertEqual(phase.error, URLError(.badURL))
+            #else
+                XCTAssertEqual(phase.error as? URLError, URLError(.badURL))
+            #endif
         }
 
         do {
