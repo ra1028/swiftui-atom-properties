@@ -148,6 +148,8 @@ public extension AsyncPhaseAtom {
                 #endif
             }
 
+            context.onTermination = task.cancel
+
             return await withTaskCancellationHandler {
                 await task.value
                 return phase
