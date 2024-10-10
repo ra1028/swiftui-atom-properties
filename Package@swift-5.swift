@@ -2,6 +2,20 @@
 
 import PackageDescription
 
+let swiftSettings: [SwiftSetting]
+
+if Context.environment["ENABLE_UPCOMING_FEATURES"] != nil {
+    swiftSettings = [
+        .enableUpcomingFeature("ExistentialAny"),
+        .enableUpcomingFeature("DisableOutwardActorInference"),
+    ]
+}
+else {
+    swiftSettings = [
+        .enableUpcomingFeature("ExistentialAny"),
+    ]
+}
+
 let package = Package(
     name: "swiftui-atom-properties",
     platforms: [
@@ -15,11 +29,13 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "Atoms"
+            name: "Atoms",
+            swiftSettings: swiftSettings
         ),
         .testTarget(
             name: "AtomsTests",
-            dependencies: ["Atoms"]
+            dependencies: ["Atoms"],
+            swiftSettings: swiftSettings
         ),
     ],
     swiftLanguageVersions: [.v5]

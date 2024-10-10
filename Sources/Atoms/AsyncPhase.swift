@@ -49,7 +49,7 @@ public enum AsyncPhase<Success, Failure: Error> {
         /// returned value as a success, or thrown error as a failure.
         ///
         /// - Parameter body: A async throwing closure to evaluate.
-        public init(catching body: @Sendable () async throws -> Success) async where Failure == Error {
+        public init(catching body: @Sendable () async throws -> Success) async where Failure == any Error {
             do {
                 let value = try await body()
                 self = .success(value)
