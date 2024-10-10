@@ -34,6 +34,10 @@ internal final class SubscriberState {
             _modify { yield &_unsubscribe.value }
         }
 
+        #if hasFeature(DisableOutwardActorInference)
+            nonisolated init() {}
+        #endif
+
         deinit {
             if Thread.isMainThread {
                 _unsubscribe.value?(_subscribing.value)

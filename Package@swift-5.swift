@@ -7,7 +7,6 @@ let swiftSettings: [SwiftSetting]
 if Context.environment["ENABLE_UPCOMING_FEATURES"] != nil {
     swiftSettings = [
         .enableUpcomingFeature("ExistentialAny"),
-        .enableUpcomingFeature("InferSendableFromCaptures"),
         .enableUpcomingFeature("DisableOutwardActorInference"),
     ]
 }
