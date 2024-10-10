@@ -24,18 +24,18 @@ esac
 
 case $TARGET in
 library)
-    xcodebuild test -scheme swiftui-atom-properties -destination platform="$platform"
+    xcodebuild clean test -scheme swiftui-atom-properties -destination platform="$platform"
     ;;
 example-ios)
     cd Examples/Packages/iOS
-    xcodebuild test -scheme iOSExamples -destination platform="$platform"
+    xcodebuild clean test -scheme iOSExamples -destination platform="$platform"
     ;;
 example-cross-platform)
     cd Examples/Packages/CrossPlatform
-    xcodebuild test -scheme CrossPlatformExamples -destination platform="$platform"
+    xcodebuild clean test -scheme CrossPlatformExamples -destination platform="$platform"
     ;;
 benchmark)
     cd Benchmarks
-    xcodebuild test -scheme BenchmarkTests -destination platform="$platform"
+    xcodebuild clean test -scheme BenchmarkTests -destination platform="$platform"
     ;;
 esac

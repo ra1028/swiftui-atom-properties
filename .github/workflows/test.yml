@@ -45,6 +45,16 @@ jobs:
       - name: Test example tvOS
         run: scripts/test.sh example-cross-platform tvos
 
+  upcoming_feature:
+    name: Upcoming features
+    runs-on: macos-14
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_15.4.app
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test with upcoming features
+        run: ENABLE_UPCOMING_FEATURES=1 scripts/test.sh library ios
+
   benchmark:
     name: Benchmark
     runs-on: macos-14
