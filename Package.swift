@@ -6,10 +6,11 @@ let swiftSettings: [SwiftSetting]
 
 if Context.environment["ENABLE_UPCOMING_FEATURES"] == "1" {
     swiftSettings = [
-        .enableUpcomingFeature("ExistentialAny"),
         .enableUpcomingFeature("DisableOutwardActorInference"),
         .enableUpcomingFeature("InferSendableFromCaptures"),
+        .enableUpcomingFeature("IsolatedDefaultValues"),
         .enableUpcomingFeature("StrictConcurrency"),
+        .enableUpcomingFeature("ExistentialAny"),
     ]
 }
 else {
