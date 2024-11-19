@@ -31,7 +31,7 @@ final class AsyncPhaseAtomTests: XCTestCase {
 
             let phase = context.watch(atom)
 
-            #if swift(>=6)
+            #if compiler(>=6)
                 XCTAssertEqual(phase.error, URLError(.badURL))
             #else
                 XCTAssertEqual(phase.error as? URLError, URLError(.badURL))

@@ -4,9 +4,13 @@ import Foundation
 internal final class SubscriberState {
     let token = SubscriberKey.Token()
 
-    #if swift(>=6)
+    #if compiler(>=6)
         nonisolated(unsafe) var subscribing = Set<AtomKey>()
         nonisolated(unsafe) var unsubscribe: ((Set<AtomKey>) -> Void)?
+
+        #if !hasFeature(DisableOutwardActorInference)
+            nonisolated init() {}
+        #endif
 
         // TODO: Use isolated synchronous deinit once it's available.
         // 0371-isolated-synchronous-deinit
