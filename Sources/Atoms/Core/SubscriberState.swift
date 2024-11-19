@@ -4,7 +4,7 @@ import Foundation
 internal final class SubscriberState {
     let token = SubscriberKey.Token()
 
-    #if compiler(>=6)
+    #if swift(>=6)
         nonisolated(unsafe) var subscribing = Set<AtomKey>()
         nonisolated(unsafe) var unsubscribe: ((Set<AtomKey>) -> Void)?
 

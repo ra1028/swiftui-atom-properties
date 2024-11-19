@@ -14,7 +14,7 @@ if Context.environment["ENABLE_UPCOMING_FEATURES"] == "1" {
 }
 else {
     swiftSettings = [
-        .enableUpcomingFeature("ExistentialAny"),
+        .enableUpcomingFeature("ExistentialAny")
     ]
 }
 

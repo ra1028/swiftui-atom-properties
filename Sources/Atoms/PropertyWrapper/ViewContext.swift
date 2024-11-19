@@ -44,7 +44,7 @@ public struct ViewContext: DynamicProperty {
         self.location = SourceLocation(fileID: fileID, line: line)
     }
 
-    #if compiler(>=6) || hasFeature(DisableOutwardActorInference)
+    #if swift(>=6) || hasFeature(DisableOutwardActorInference)
         @State
         private var signal = false
         @State

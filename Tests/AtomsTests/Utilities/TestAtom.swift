@@ -86,7 +86,7 @@ struct TestAsyncPhaseAtom<Success, Failure: Error>: AsyncPhaseAtom, @unchecked S
         UniqueKey()
     }
 
-    #if compiler(>=6)
+    #if swift(>=6)
         func value(context: Context) async throws(Failure) -> Success {
             try getResult().get()
         }

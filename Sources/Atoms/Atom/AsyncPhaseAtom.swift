@@ -39,7 +39,7 @@ public protocol AsyncPhaseAtom: AsyncAtom where Produced == AsyncPhase<Success, 
     /// The type of success value that this atom produces.
     associatedtype Success
 
-    #if compiler(>=6)
+    #if swift(>=6)
         /// The type of errors that this atom produces.
         associatedtype Failure: Error
 
@@ -80,7 +80,7 @@ public extension AsyncPhaseAtom {
     var producer: AtomProducer<Produced> {
         AtomProducer { context in
             let task = Task {
-                #if compiler(>=6)
+                #if swift(>=6)
                     do throws(Failure) {
                         let value = try await context.transaction(value)
 
@@ -119,7 +119,7 @@ public extension AsyncPhaseAtom {
             var phase = Produced.suspending
 
             let task = Task {
-                #if compiler(>=6)
+                #if swift(>=6)
                     do throws(Failure) {
                         let value = try await context.transaction(value)
 

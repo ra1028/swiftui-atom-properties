@@ -24,7 +24,7 @@ public enum AsyncPhase<Success, Failure: Error> {
         }
     }
 
-    #if compiler(>=6)
+    #if swift(>=6)
         /// Creates a new phase by evaluating a async throwing closure, capturing the
         /// returned value as a success, or thrown error as a failure.
         ///
