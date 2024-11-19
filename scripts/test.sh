@@ -4,6 +4,7 @@ set -eu
 
 TARGET=$1
 PLATFORM=$2
+ARGS=${@:3}
 
 pushd "$(cd $(dirname $0)/.. && pwd)" &>/dev/null
 
@@ -22,20 +23,24 @@ watchos)
     ;;
 esac
 
+clean_test() {
+    xcodebuild clean test "$@" $ARGS
+}
+
 case $TARGET in
 library)
-    xcodebuild clean test -scheme swiftui-atom-properties -destination platform="$platform"
+    clean_test -scheme swiftui-atom-properties -destination platform="$platform"
     ;;
 example-ios)
     cd Examples/Packages/iOS
-    xcodebuild clean test -scheme iOSExamples -destination platform="$platform"
+    clean_test -scheme iOSExamples -destination platform="$platform"
     ;;
 example-cross-platform)
     cd Examples/Packages/CrossPlatform
-    xcodebuild clean test -scheme CrossPlatformExamples -destination platform="$platform"
+    clean_test -scheme CrossPlatformExamples -destination platform="$platform"
     ;;
 benchmark)
     cd Benchmarks
-    xcodebuild clean test -scheme BenchmarkTests -destination platform="$platform"
+    clean_test -scheme BenchmarkTests -destination platform="$platform"
     ;;
 esac

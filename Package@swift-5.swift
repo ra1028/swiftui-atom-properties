@@ -4,7 +4,7 @@ import PackageDescription
 
 let swiftSettings: [SwiftSetting]
 
-if Context.environment["ENABLE_UPCOMING_FEATURES"] != nil {
+if Context.environment["ENABLE_UPCOMING_FEATURES"] == "1" {
     swiftSettings = [
         .enableUpcomingFeature("ExistentialAny"),
         .enableUpcomingFeature("DisableOutwardActorInference"),

@@ -45,15 +45,28 @@ jobs:
       - name: Test example tvOS
         run: scripts/test.sh example-cross-platform tvos
 
-  upcoming_feature:
-    name: Upcoming features
+  test_upcoming_features:
+    name: Test upcoming features with Xcode 15
     runs-on: macos-14
     env:
       DEVELOPER_DIR: /Applications/Xcode_15.4.app
     steps:
       - uses: actions/checkout@v4
-      - name: Test with upcoming features
+      - name: Test upcoming features
         run: ENABLE_UPCOMING_FEATURES=1 scripts/test.sh library ios
+
+  test_language_mode:
+    name: Test Swift 5 language mode
+    runs-on: macos-14
+    strategy:
+      matrix:
+        enable_upcoming_features:
+          - 0
+          - 1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Swift 5 language mode
+        run: ENABLE_UPCOMING_FEATURES=${{ matrix.enable_upcoming_features }} scripts/test.sh library ios SWIFT_VERSION=5
 
   benchmark:
     name: Benchmark
