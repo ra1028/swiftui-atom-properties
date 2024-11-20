@@ -4,6 +4,10 @@ import Foundation
 internal final class SubscriberState {
     let token = SubscriberKey.Token()
 
+    #if !hasFeature(IsolatedDefaultValues)
+        nonisolated init() {}
+    #endif
+
     #if compiler(>=6)
         nonisolated(unsafe) var subscribing = Set<AtomKey>()
         nonisolated(unsafe) var unsubscribe: ((Set<AtomKey>) -> Void)?
@@ -33,10 +37,6 @@ internal final class SubscriberState {
             _read { yield _unsubscribe.value }
             _modify { yield &_unsubscribe.value }
         }
-
-        #if hasFeature(DisableOutwardActorInference)
-            nonisolated init() {}
-        #endif
 
         deinit {
             if Thread.isMainThread {
