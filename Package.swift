@@ -2,9 +2,22 @@
 
 import PackageDescription
 
-let swiftSettings: [SwiftSetting] = [
-    .enableUpcomingFeature("ExistentialAny")
-]
+let swiftSettings: [SwiftSetting]
+
+if Context.environment["ENABLE_UPCOMING_FEATURES"] == "1" {
+    swiftSettings = [
+        .enableUpcomingFeature("DisableOutwardActorInference"),
+        .enableUpcomingFeature("InferSendableFromCaptures"),
+        .enableUpcomingFeature("IsolatedDefaultValues"),
+        .enableUpcomingFeature("StrictConcurrency"),
+        .enableUpcomingFeature("ExistentialAny"),
+    ]
+}
+else {
+    swiftSettings = [
+        .enableUpcomingFeature("ExistentialAny")
+    ]
+}
 
 let package = Package(
     name: "swiftui-atom-properties",
