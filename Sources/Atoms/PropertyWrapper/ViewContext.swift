@@ -32,11 +32,14 @@ import SwiftUI
 ///
 @propertyWrapper
 public struct ViewContext: DynamicProperty {
+    private let file: StaticString
+    private let location: SourceLocation
+
     @Environment(\.store)
     private var _store
 
-    private let file: StaticString
-    private let location: SourceLocation
+    @StateObject
+    private var state = State()
 
     /// Creates a view context.
     public init(file: StaticString = #file, fileID: String = #fileID, line: UInt = #line) {
@@ -44,60 +47,31 @@ public struct ViewContext: DynamicProperty {
         self.location = SourceLocation(fileID: fileID, line: line)
     }
 
+    /// The underlying view context to interact with atoms.
+    ///
+    /// This property provides primary access to the view context. However you don't
+    /// access ``wrappedValue`` directly.
+    /// Instead, you use the property variable created with the `@ViewContext` attribute.
     #if compiler(>=6) || hasFeature(DisableOutwardActorInference)
-        @State
-        private var signal = false
-        @State
-        private var subscriberState = SubscriberState()
-
-        /// The underlying view context to interact with atoms.
-        ///
-        /// This property provides primary access to the view context. However you don't
-        /// access ``wrappedValue`` directly.
-        /// Instead, you use the property variable created with the `@ViewContext` attribute.
         @MainActor
-        public var wrappedValue: AtomViewContext {
-            let signal = _signal
-
-            // Initializes State and starts observing for updates.
-            _ = signal.wrappedValue
-
-            return AtomViewContext(
-                store: store,
-                subscriber: Subscriber(subscriberState),
-                subscription: Subscription(location: location) {
-                    signal.wrappedValue.toggle()
-                }
-            )
-        }
-
-    #else
-        @MainActor
-        private final class State: ObservableObject {
-            let subscriberState = SubscriberState()
-        }
-
-        @StateObject
-        private var state = State()
-
-        /// The underlying view context to interact with atoms.
-        ///
-        /// This property provides primary access to the view context. However you don't
-        /// access ``wrappedValue`` directly.
-        /// Instead, you use the property variable created with the `@ViewContext` attribute.
-        public var wrappedValue: AtomViewContext {
-            AtomViewContext(
-                store: store,
-                subscriber: Subscriber(state.subscriberState),
-                subscription: Subscription(location: location) { [weak state] in
-                    state?.objectWillChange.send()
-                }
-            )
-        }
     #endif
+    public var wrappedValue: AtomViewContext {
+        AtomViewContext(
+            store: store,
+            subscriber: Subscriber(state.subscriberState),
+            subscription: Subscription(location: location) { [weak state] in
+                state?.objectWillChange.send()
+            }
+        )
+    }
 }
 
 private extension ViewContext {
+    @MainActor
+    final class State: ObservableObject {
+        let subscriberState = SubscriberState()
+    }
+
     @MainActor
     var store: StoreContext {
         guard let _store else {
