@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  DEVELOPER_DIR: /Applications/Xcode_16.0.app
+  DEVELOPER_DIR: /Applications/Xcode_16.1.app
 
 jobs:
   publish-docs:
