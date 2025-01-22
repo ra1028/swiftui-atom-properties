@@ -70,19 +70,22 @@ public extension ObservableObjectAtom {
         AtomProducer { context in
             context.transaction(object)
         } manageValue: { object, context in
+            var task: Task<Void, Never>?
             let cancellable = object
                 .objectWillChange
                 .sink { [weak object] _ in
                     // Wait until the object's property is set, because `objectWillChange`
                     // emits an event before the property is updated.
-                    Task { @MainActor in
-                        if !context.isTerminated, let object {
+                    task?.cancel()
+                    task = Task { @MainActor in
+                        if let object, !Task.isCancelled, !context.isTerminated {
                             context.update(with: object)
                         }
                     }
                 }
 
             context.onTermination = {
+                task?.cancel()
                 cancellable.cancel()
             }
         }
