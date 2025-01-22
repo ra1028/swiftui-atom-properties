@@ -116,4 +116,44 @@ final class ObservableObjectAtomTests: XCTestCase {
         XCTAssertEqual(effect.updatedCount, 3)
         XCTAssertEqual(effect.releasedCount, 1)
     }
+
+    @MainActor
+    func testUpdateMultipletimes() async {
+        final class TestObject: ObservableObject {
+            @Published
+            var value0 = 0
+            @Published
+            var value1 = 0
+
+            func update() {
+                value0 += 1
+                value1 += 1
+            }
+        }
+
+        struct TestAtom: ObservableObjectAtom, Hashable {
+            func object(context: Context) -> TestObject {
+                TestObject()
+            }
+        }
+
+        let atom = TestAtom()
+        let context = AtomTestContext()
+        let object = context.watch(atom)
+        var updatedCount = 0
+
+        context.onUpdate = {
+            updatedCount += 1
+        }
+
+        object.update()
+
+        await context.wait(for: atom) {
+            $0.value0 == 1 && $0.value1 == 1
+        }
+
+        XCTAssertEqual(updatedCount, 1)
+        XCTAssertEqual(object.value0, 1)
+        XCTAssertEqual(object.value1, 1)
+    }
 }
