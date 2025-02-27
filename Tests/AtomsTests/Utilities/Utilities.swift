@@ -128,3 +128,14 @@ extension TransactionState {
         self.init(key: key, { {} })
     }
 }
+
+extension Task where Success == Never, Failure == Never {
+    static func yield(
+        isolation: isolated (any Actor)? = #isolation,
+        @_inheritActorContext until predicate: @Sendable () -> Bool
+    ) async {
+        while !predicate() {
+            await yield()
+        }
+    }
+}

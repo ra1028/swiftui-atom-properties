@@ -776,6 +776,89 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
+    func testScopedOverrideCrossScopeBoundary() async {
+        struct TestDependency1Atom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                1
+            }
+        }
+
+        struct TestDependency2Atom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                2
+            }
+        }
+
+        struct TestDependency3Atom: AsyncPhaseAtom, Hashable {
+            func value(context: Context) async -> Int {
+                3
+            }
+        }
+
+        struct TestAtom: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                let value1 = context.watch(TestDependency1Atom())
+                let value2 = context.watch(TestDependency2Atom())
+                let value3 = context.watch(TestDependency3Atom()).value ?? 0
+                return value1 + value2 + value3
+            }
+        }
+
+        let atom = TestAtom()
+        let dependency1Atom = TestDependency1Atom()
+        let dependency2Atom = TestDependency2Atom()
+        let dependency3Atom = TestDependency3Atom()
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+        let store = AtomStore()
+        let context = StoreContext(store: store)
+        let scopeToken = ScopeKey.Token()
+        let scopeKey = ScopeKey(token: scopeToken)
+        let scopedContext = context.scoped(
+            scopeKey: scopeKey,
+            scopeID: ScopeID(DefaultScopeID()),
+            observers: [],
+            overrides: [
+                OverrideKey(dependency1Atom): Override<TestDependency1Atom>(isScoped: true) { _ in
+                    10
+                }
+            ]
+        )
+
+        // Initialize the updatable dependency from the non-scoped context.
+        _ = context.watch(dependency3Atom, subscriber: subscriber, subscription: Subscription())
+
+        // Initialize the atom state in the scoped context.
+        XCTAssertEqual(
+            scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription()),
+            12
+        )
+
+        await Task.yield {
+            context.read(dependency3Atom).isSuccess
+        }
+
+        // The updated value should reflect the scoped overrides.
+        XCTAssertEqual(
+            scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription()),
+            15
+        )
+
+        // Update one of the dependency atoms from non-scoped context.
+        context.set(20, for: dependency2Atom)
+
+        await Task.yield {
+            scopedContext.watch(dependency3Atom, subscriber: subscriber, subscription: Subscription()).isSuccess
+        }
+
+        // The updated value should reflect the scoped overrides.
+        XCTAssertEqual(
+            scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription()),
+            33
+        )
+    }
+
+    @MainActor
     func testRelease() {
         let store = AtomStore()
         let context = StoreContext(store: store)
@@ -962,6 +1045,71 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
+    func testScopedObserversCrossScopeBoundary() async {
+        struct TestDependency1Atom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                1
+            }
+        }
+
+        struct TestDependency2Atom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                2
+            }
+        }
+
+        struct TestAtom: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                let value1 = context.watch(TestDependency1Atom())
+                let value2 = context.watch(TestDependency2Atom())
+                return value1 + value2
+            }
+        }
+
+        let atom = TestAtom()
+        let dependency1Atom = TestDependency1Atom()
+        let dependency2Atom = TestDependency2Atom()
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+        let store = AtomStore()
+        let context = StoreContext(store: store)
+        let scopeToken = ScopeKey.Token()
+        let scopeKey = ScopeKey(token: scopeToken)
+        var snapshots = [Snapshot]()
+        let scopedContext = context.scoped(
+            scopeKey: scopeKey,
+            scopeID: ScopeID(DefaultScopeID()),
+            observers: [
+                Observer { snapshot in
+                    snapshots.append(snapshot)
+                }
+            ],
+            overrides: [:]
+        )
+
+        let expectedGraph = Graph(
+            dependencies: [
+                AtomKey(atom): [AtomKey(dependency1Atom), AtomKey(dependency2Atom)]
+            ],
+            children: [
+                AtomKey(dependency1Atom): [AtomKey(atom)],
+                AtomKey(dependency2Atom): [AtomKey(atom)],
+            ]
+        )
+
+        // Initialize the atom state in the scoped context.
+        _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
+
+        // The scoped observer should recive the update event.
+        XCTAssertEqual(snapshots.map(\.graph), [expectedGraph])
+
+        context.set(20, for: dependency2Atom)
+
+        // The scoped observer should recive the update event.
+        XCTAssertEqual(snapshots.map(\.graph), [expectedGraph, expectedGraph])
+    }
+
+    @MainActor
     func testRestore() {
         let store = AtomStore()
         let context = StoreContext(store: store)
@@ -1040,7 +1188,6 @@ final class StoreContextTests: XCTestCase {
 
     @MainActor
     func testEffect() {
-
         let store = AtomStore()
         let context = StoreContext(store: store)
         let subscriberState = SubscriberState()
