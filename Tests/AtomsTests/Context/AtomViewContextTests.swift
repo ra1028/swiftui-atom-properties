@@ -10,7 +10,7 @@ final class AtomViewContextTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: StoreContext(store: store),
+            store: .root(store: store),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -24,7 +24,7 @@ final class AtomViewContextTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: StoreContext(store: store),
+            store: .root(store: store),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -42,7 +42,7 @@ final class AtomViewContextTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: StoreContext(store: store),
+            store: .root(store: store),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -65,7 +65,7 @@ final class AtomViewContextTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: StoreContext(store: store),
+            store: .root(store: store),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -83,7 +83,7 @@ final class AtomViewContextTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: StoreContext(store: store),
+            store: .root(store: store),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -104,7 +104,7 @@ final class AtomViewContextTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: StoreContext(store: store),
+            store: .root(store: store),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -139,7 +139,7 @@ final class AtomViewContextTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: StoreContext(store: store),
+            store: .root(store: store),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -157,7 +157,7 @@ final class AtomViewContextTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: StoreContext(store: store),
+            store: .root(store: store),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -177,7 +177,7 @@ final class AtomViewContextTests: XCTestCase {
         let store = AtomStore()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: StoreContext(store: store),
+            store: .root(store: store),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -217,7 +217,7 @@ final class AtomViewContextTests: XCTestCase {
         let store = AtomStore()
         var subscriberState: SubscriberState? = SubscriberState()
         let context = AtomViewContext(
-            store: StoreContext(store: store),
+            store: .root(store: store),
             subscriber: Subscriber(subscriberState!),
             subscription: Subscription()
         )

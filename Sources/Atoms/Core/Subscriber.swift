@@ -7,7 +7,7 @@ internal struct Subscriber {
 
     init(_ state: SubscriberState) {
         self.state = state
-        self.key = SubscriberKey(token: state.token)
+        self.key = state.token.key
     }
 
     var subscribing: Set<AtomKey> {
@@ -15,7 +15,7 @@ internal struct Subscriber {
         nonmutating set { state?.subscribing = newValue }
     }
 
-    var unsubscribe: ((Set<AtomKey>) -> Void)? {
+    var unsubscribe: (@MainActor (Set<AtomKey>) -> Void)? {
         get { state?.unsubscribe }
         nonmutating set { state?.unsubscribe = newValue }
     }

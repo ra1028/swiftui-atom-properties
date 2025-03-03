@@ -16,7 +16,17 @@ final class RefreshableTests: XCTestCase {
         let key = AtomKey(atom)
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
-        let context = StoreContext(store: store, observers: [observer])
+        let rootScopeToken = ScopeKey.Token()
+        let context = StoreContext.root(
+            store: store,
+            scopeKey: rootScopeToken.key
+        )
+
+        context.register(
+            scopeKey: rootScopeToken.key,
+            overrides: [:],
+            observers: [observer]
+        )
 
         do {
             // Should call custom refresh behavior
@@ -55,15 +65,19 @@ final class RefreshableTests: XCTestCase {
         do {
             // Custom refresh behavior should not be overridden
 
-            let scopeKey = ScopeKey(token: ScopeKey.Token())
+            let scopeKey = ScopeKey.Token().key
             let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
             let scopedContext = context.scoped(
                 scopeKey: scopeKey,
-                scopeID: ScopeID(DefaultScopeID()),
-                observers: [],
+                scopeID: ScopeID(DefaultScopeID())
+            )
+
+            scopedContext.register(
+                scopeKey: scopeKey,
                 overrides: [
-                    OverrideKey(atom): Override<TestCustomRefreshableAtom<Int>>(isScoped: true) { _ in 2 }
-                ]
+                    OverrideKey(atom): Override<TestCustomRefreshableAtom<Int>> { _ in 2 }
+                ],
+                observers: []
             )
 
             let value0 = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())

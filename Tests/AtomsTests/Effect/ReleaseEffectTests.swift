@@ -5,8 +5,7 @@ import XCTest
 final class ReleaseEffectTests: XCTestCase {
     @MainActor
     func testEvent() {
-        let store = StoreContext()
-        let context = AtomCurrentContext(store: store)
+        let context = AtomCurrentContext(store: .root(), transactionScopeKey: nil)
         var performedCount = 0
         let effect = ReleaseEffect {
             performedCount += 1

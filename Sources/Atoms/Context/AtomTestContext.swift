@@ -372,7 +372,8 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
     public func override<Node: Atom>(_ atom: Node, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) {
-        _state.overrides[OverrideKey(atom)] = Override(isScoped: false, getValue: value)
+        _state.overrides[OverrideKey(atom)] = Override(getValue: value)
+        registerOverrides()
     }
 
     /// Overrides the atom value with the given value.
@@ -387,7 +388,8 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) {
-        _state.overrides[OverrideKey(atomType)] = Override(isScoped: false, getValue: value)
+        _state.overrides[OverrideKey(atomType)] = Override(getValue: value)
+        registerOverrides()
     }
 }
 
@@ -437,15 +439,7 @@ internal extension AtomTestContext {
 
     @usableFromInline
     var _store: StoreContext {
-        StoreContext(
-            store: _state.store,
-            scopeKey: ScopeKey(token: _state.token),
-            inheritedScopeKeys: [:],
-            observers: [],
-            scopedObservers: [],
-            overrides: _state.overrides,
-            scopedOverrides: [:]
-        )
+        .root(store: _state.store, scopeKey: _state.token.key)
     }
 
     @usableFromInline
@@ -458,5 +452,14 @@ internal extension AtomTestContext {
         Subscription(location: location) { [weak _state] in
             _state?.update()
         }
+    }
+
+    @usableFromInline
+    func registerOverrides() {
+        _store.register(
+            scopeKey: _state.token.key,
+            overrides: _state.overrides,
+            observers: []
+        )
     }
 }

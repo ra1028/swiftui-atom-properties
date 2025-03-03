@@ -5,8 +5,7 @@ import XCTest
 final class UpdateEffectTests: XCTestCase {
     @MainActor
     func testEvent() {
-        let store = StoreContext()
-        let context = AtomCurrentContext(store: store)
+        let context = AtomCurrentContext(store: .root(), transactionScopeKey: nil)
         var performedCount = 0
         let effect = UpdateEffect {
             performedCount += 1

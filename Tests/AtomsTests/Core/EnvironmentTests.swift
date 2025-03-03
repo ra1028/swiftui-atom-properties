@@ -11,7 +11,7 @@ final class EnvironmentTests: XCTestCase {
         var environment = EnvironmentValues()
 
         store.state.caches = [AtomKey(atom): AtomCache(atom: atom, value: 100)]
-        environment.store = StoreContext(store: store)
+        environment.store = .root(store: store)
 
         XCTAssertEqual(environment.store?.read(atom), 100)
     }

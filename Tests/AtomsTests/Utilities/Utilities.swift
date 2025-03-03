@@ -71,33 +71,10 @@ final class ResettableSubject<Output, Failure: Error>: Publisher, Subject {
 }
 
 extension StoreContext {
-    init(
-        store: AtomStore = AtomStore(),
-        observers: [Observer] = [],
-        overrides: [OverrideKey: any OverrideProtocol] = [:]
-    ) {
-        self.init(
+    static func root(store: AtomStore = AtomStore()) -> StoreContext {
+        .root(
             store: store,
-            scopeKey: ScopeKey(token: ScopeKey.Token()),
-            observers: observers,
-            overrides: overrides
-        )
-    }
-
-    init(
-        store: AtomStore = AtomStore(),
-        scopeKey: ScopeKey,
-        observers: [Observer] = [],
-        overrides: [OverrideKey: any OverrideProtocol] = [:]
-    ) {
-        self.init(
-            store: store,
-            scopeKey: scopeKey,
-            inheritedScopeKeys: [:],
-            observers: observers,
-            scopedObservers: [],
-            overrides: overrides,
-            scopedOverrides: [:]
+            scopeKey: ScopeKey.Token().key
         )
     }
 }
@@ -125,7 +102,7 @@ extension AtomCache: Equatable where Node: Equatable, Node.Produced: Equatable {
 
 extension TransactionState {
     convenience init(key: AtomKey) {
-        self.init(key: key, { {} })
+        self.init(key: key, scopeKey: nil, { {} })
     }
 }
 
