@@ -8,7 +8,7 @@ final class TransactionTests: XCTestCase {
         let key = AtomKey(TestValueAtom(value: 0))
         var beginCount = 0
         var commitCount = 0
-        let transactionState = TransactionState(key: key, scopeKey: nil) {
+        let transactionState = TransactionState(key: key) {
             beginCount += 1
             return { commitCount += 1 }
         }
@@ -61,7 +61,7 @@ final class TransactionTests: XCTestCase {
         var didBegin = false
         var didCommit = false
         var didTerminate = false
-        let transactionState = TransactionState(key: key, scopeKey: nil) {
+        let transactionState = TransactionState(key: key) {
             didBegin = true
             return { didCommit = true }
         }

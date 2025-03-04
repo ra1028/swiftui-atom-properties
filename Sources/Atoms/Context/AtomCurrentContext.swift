@@ -3,12 +3,9 @@
 public struct AtomCurrentContext: AtomContext {
     @usableFromInline
     internal let _store: StoreContext
-    @usableFromInline
-    internal let _transactionScopeKey: ScopeKey?
 
-    internal init(store: StoreContext, transactionScopeKey: ScopeKey?) {
+    internal init(store: StoreContext) {
         self._store = store
-        self._transactionScopeKey = transactionScopeKey
     }
 
     /// Accesses the value associated with the given atom without watching it.
@@ -27,7 +24,7 @@ public struct AtomCurrentContext: AtomContext {
     /// - Returns: The value associated with the given atom.
     @inlinable
     public func read<Node: Atom>(_ atom: Node) -> Node.Produced {
-        _store.read(atom, transactionScopeKey: _transactionScopeKey)
+        _store.read(atom)
     }
 
     /// Sets the new value for the given writable atom.
@@ -49,7 +46,7 @@ public struct AtomCurrentContext: AtomContext {
     ///   - atom: A writable atom to update.
     @inlinable
     public func set<Node: StateAtom>(_ value: Node.Produced, for atom: Node) {
-        _store.set(value, for: atom, transactionScopeKey: _transactionScopeKey)
+        _store.set(value, for: atom)
     }
 
     /// Modifies the cached value of the given writable atom.
@@ -73,7 +70,7 @@ public struct AtomCurrentContext: AtomContext {
     ///   - body: A value modification body.
     @inlinable
     public func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Produced) -> Void) {
-        _store.modify(atom, transactionScopeKey: _transactionScopeKey, body: body)
+        _store.modify(atom, body: body)
     }
 
     /// Refreshes and then returns the value associated with the given refreshable atom.
@@ -97,7 +94,7 @@ public struct AtomCurrentContext: AtomContext {
     @_disfavoredOverload
     @discardableResult
     public func refresh<Node: AsyncAtom>(_ atom: Node) async -> Node.Produced {
-        await _store.refresh(atom, transactionScopeKey: _transactionScopeKey)
+        await _store.refresh(atom)
     }
 
     /// Refreshes and then returns the value associated with the given refreshable atom.
@@ -119,7 +116,7 @@ public struct AtomCurrentContext: AtomContext {
     @inlinable
     @discardableResult
     public func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Produced {
-        await _store.refresh(atom, transactionScopeKey: _transactionScopeKey)
+        await _store.refresh(atom)
     }
 
     /// Resets the value associated with the given atom, and then notifies.
@@ -140,7 +137,7 @@ public struct AtomCurrentContext: AtomContext {
     @inlinable
     @_disfavoredOverload
     public func reset<Node: Atom>(_ atom: Node) {
-        _store.reset(atom, transactionScopeKey: _transactionScopeKey)
+        _store.reset(atom)
     }
 
     /// Calls arbitrary reset function of the given atom.
@@ -160,6 +157,6 @@ public struct AtomCurrentContext: AtomContext {
     /// - Parameter atom: An atom to reset.
     @inlinable
     public func reset<Node: Resettable>(_ atom: Node) {
-        _store.reset(atom, transactionScopeKey: _transactionScopeKey)
+        _store.reset(atom)
     }
 }

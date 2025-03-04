@@ -1,9 +1,8 @@
 internal struct AtomKey: Hashable, Sendable, CustomStringConvertible {
     private let key: UnsafeUncheckedSendable<AnyHashable>
     private let type: ObjectIdentifier
+    private let scopeKey: ScopeKey?
     private let anyAtomType: Any.Type
-
-    let scopeKey: ScopeKey?
 
     var description: String {
         let atomLabel = String(describing: anyAtomType)
@@ -14,6 +13,10 @@ internal struct AtomKey: Hashable, Sendable, CustomStringConvertible {
         else {
             return atomLabel
         }
+    }
+
+    var isScoped: Bool {
+        scopeKey != nil
     }
 
     init<Node: Atom>(_ atom: Node, scopeKey: ScopeKey?) {

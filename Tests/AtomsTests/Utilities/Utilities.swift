@@ -71,20 +71,23 @@ final class ResettableSubject<Output, Failure: Error>: Publisher, Subject {
 }
 
 extension StoreContext {
+    static var dummy: StoreContext {
+        .registerRoot(
+            in: AtomStore(),
+            scopeKey: ScopeKey.Token().key
+        )
+    }
+
     static func registerRoot(
-        store: AtomStore,
-        scopeKey: ScopeKey = ScopeKey.Token().key
+        in store: AtomStore,
+        scopeKey: ScopeKey
     ) -> StoreContext {
         .registerRoot(
-            store: store,
+            in: store,
             scopeKey: scopeKey,
             overrides: [:],
             observers: []
         )
-    }
-
-    static func root() -> StoreContext {
-        .registerRoot(store: AtomStore())
     }
 
     func registerScope(
@@ -113,6 +116,12 @@ extension Atoms.Subscription {
     }
 }
 
+extension AtomCache {
+    init(atom: Node, value: Node.Produced) {
+        self.init(atom: atom, value: value, initScopeKey: nil)
+    }
+}
+
 extension AtomCache: Equatable where Node: Equatable, Node.Produced: Equatable {
     // NB: Synthesized Equatable conformance doesn't work well in Xcode 14.0.1.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
@@ -123,7 +132,7 @@ extension AtomCache: Equatable where Node: Equatable, Node.Produced: Equatable {
 
 extension TransactionState {
     convenience init(key: AtomKey) {
-        self.init(key: key, scopeKey: nil, { {} })
+        self.init(key: key, { {} })
     }
 }
 

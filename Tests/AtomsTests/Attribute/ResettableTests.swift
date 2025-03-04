@@ -31,7 +31,7 @@ final class ResettableTests: XCTestCase {
         }
         let rootScopeToken = ScopeKey.Token()
         let context = StoreContext.registerRoot(
-            store: store,
+            in: store,
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]

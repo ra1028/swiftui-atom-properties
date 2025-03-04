@@ -6,7 +6,7 @@ internal struct StoreContext {
     private let currentScopeKey: ScopeKey?
 
     static func registerRoot(
-        store: AtomStore,
+        in store: AtomStore,
         scopeKey: ScopeKey,
         overrides: [OverrideKey: any OverrideProtocol],
         observers: [Observer]
@@ -31,14 +31,13 @@ internal struct StoreContext {
         observers: [Observer]
     ) -> StoreContext {
         let parentScope = currentScopeKey.flatMap { store.state.scopes[$0] }
-        let parentInheritedScopeKeys = parentScope?.inheritedScopeKeys ?? [:]
+        var inheritedScopeKeys = parentScope?.inheritedScopeKeys ?? [:]
+        inheritedScopeKeys[scopeID] = scopeKey
 
         store.state.scopes[scopeKey] = Scope(
             overrides: overrides,
             observers: observers,
-            inheritedScopeKeys: mutating(parentInheritedScopeKeys) { scopeKeys in
-                scopeKeys[scopeID] = scopeKey
-            }
+            inheritedScopeKeys: inheritedScopeKeys
         )
 
         return StoreContext(
@@ -53,47 +52,47 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func read<Node: Atom>(_ atom: Node, transactionScopeKey: ScopeKey? = nil) -> Node.Produced {
-        let (key, override) = lookupAtomKeyAndOverrides(of: atom, transactionScopeKey: transactionScopeKey)
+    func read<Node: Atom>(_ atom: Node) -> Node.Produced {
+        let (key, override) = lookupAtomKeyAndOverrides(of: atom)
 
         if let cache = lookupCache(of: atom, for: key) {
             return cache.value
         }
         else {
-            let value = initialize(of: atom, for: key, transactionScopeKey: transactionScopeKey, override: override)
-            checkAndRelease(for: key, transactionScopeKey: transactionScopeKey)
+            let value = initialize(of: atom, for: key, override: override)
+            checkAndRelease(for: key)
             return value
         }
     }
 
     @usableFromInline
-    func set<Node: StateAtom>(_ value: Node.Produced, for atom: Node, transactionScopeKey: ScopeKey? = nil) {
-        let (key, _) = lookupAtomKeyAndOverrides(of: atom, transactionScopeKey: transactionScopeKey)
+    func set<Node: StateAtom>(_ value: Node.Produced, for atom: Node) {
+        let (key, _) = lookupAtomKeyAndOverrides(of: atom)
 
         if let cache = lookupCache(of: atom, for: key) {
-            update(atom: atom, for: key, transactionScopeKey: transactionScopeKey, oldValue: cache.value, newValue: value)
+            update(atom: atom, for: key, cache: cache, newValue: value)
         }
     }
 
     @usableFromInline
-    func modify<Node: StateAtom>(_ atom: Node, transactionScopeKey: ScopeKey? = nil, body: (inout Node.Produced) -> Void) {
-        let (key, _) = lookupAtomKeyAndOverrides(of: atom, transactionScopeKey: transactionScopeKey)
+    func modify<Node: StateAtom>(_ atom: Node, body: (inout Node.Produced) -> Void) {
+        let (key, _) = lookupAtomKeyAndOverrides(of: atom)
 
         if let cache = lookupCache(of: atom, for: key) {
             let newValue = mutating(cache.value, body)
-            update(atom: atom, for: key, transactionScopeKey: transactionScopeKey, oldValue: cache.value, newValue: newValue)
+            update(atom: atom, for: key, cache: cache, newValue: newValue)
         }
     }
 
     @usableFromInline
     func watch<Node: Atom>(_ atom: Node, in transactionState: TransactionState) -> Node.Produced {
         guard !transactionState.isTerminated else {
-            return read(atom, transactionScopeKey: transactionState.scopeKey)
+            return read(atom)
         }
 
-        let (key, override) = lookupAtomKeyAndOverrides(of: atom, transactionScopeKey: transactionState.scopeKey)
+        let (key, override) = lookupAtomKeyAndOverrides(of: atom)
         let cache = lookupCache(of: atom, for: key)
-        let value = cache?.value ?? initialize(of: atom, for: key, transactionScopeKey: transactionState.scopeKey, override: override)
+        let value = cache?.value ?? initialize(of: atom, for: key, override: override)
 
         // Add an `Edge` from the upstream to downstream.
         store.graph.dependencies[transactionState.key, default: []].insert(key)
@@ -108,9 +107,9 @@ internal struct StoreContext {
         subscriber: Subscriber,
         subscription: Subscription
     ) -> Node.Produced {
-        let (key, override) = lookupAtomKeyAndOverrides(of: atom, transactionScopeKey: nil)
+        let (key, override) = lookupAtomKeyAndOverrides(of: atom)
         let cache = lookupCache(of: atom, for: key)
-        let value = cache?.value ?? initialize(of: atom, for: key, transactionScopeKey: nil, override: override)
+        let value = cache?.value ?? initialize(of: atom, for: key, override: override)
         let isNewSubscription = subscriber.subscribing.insert(key).inserted
 
         if isNewSubscription {
@@ -118,7 +117,7 @@ internal struct StoreContext {
             subscriber.unsubscribe = { keys in
                 unsubscribe(keys, for: subscriber.key)
             }
-            notifyUpdateToObservers(transactionScopeKey: nil)
+            notifyUpdateToObservers()
         }
 
         return value
@@ -126,9 +125,9 @@ internal struct StoreContext {
 
     @usableFromInline
     @_disfavoredOverload
-    func refresh<Node: AsyncAtom>(_ atom: Node, transactionScopeKey: ScopeKey? = nil) async -> Node.Produced {
-        let (key, override) = lookupAtomKeyAndOverrides(of: atom, transactionScopeKey: transactionScopeKey)
-        let context = prepareForTransaction(of: atom, for: key, scopeKey: transactionScopeKey)
+    func refresh<Node: AsyncAtom>(_ atom: Node) async -> Node.Produced {
+        let (key, override) = lookupAtomKeyAndOverrides(of: atom)
+        let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Produced
 
         if let override {
@@ -141,40 +140,40 @@ internal struct StoreContext {
         await atom.refreshProducer.refreshValue(value, context)
 
         guard let cache = lookupCache(of: atom, for: key) else {
-            checkAndRelease(for: key, transactionScopeKey: transactionScopeKey)
+            checkAndRelease(for: key)
             return value
         }
 
         // Notify update unless it's cancelled or terminated by other operations.
         if !Task.isCancelled && !context.isTerminated {
-            update(atom: atom, for: key, transactionScopeKey: transactionScopeKey, oldValue: cache.value, newValue: value)
+            update(atom: atom, for: key, cache: cache, newValue: value)
         }
 
         return value
     }
 
     @usableFromInline
-    func refresh<Node: Refreshable>(_ atom: Node, transactionScopeKey: ScopeKey? = nil) async -> Node.Produced {
-        let (key, _) = lookupAtomKeyAndOverrides(of: atom, transactionScopeKey: transactionScopeKey)
-        let state = getState(of: atom, for: key, transactionScopeKey: transactionScopeKey)
-        let context = AtomCurrentContext(store: self, transactionScopeKey: transactionScopeKey)
+    func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Produced {
+        let (key, _) = lookupAtomKeyAndOverrides(of: atom)
+        let state = getState(of: atom, for: key)
+        let currentContext = AtomCurrentContext(store: self)
 
         // Detach the dependencies once to delay updating the downstream until
         // this atom's value refresh is complete.
         let dependencies = detachDependencies(for: key)
-        let value = await atom.refresh(context: context)
+        let value = await atom.refresh(context: currentContext)
 
         // Restore dependencies when the refresh is completed.
         attachDependencies(dependencies, for: key)
 
         guard let transactionState = state.transactionState, let cache = lookupCache(of: atom, for: key) else {
-            checkAndRelease(for: key, transactionScopeKey: transactionScopeKey)
+            checkAndRelease(for: key)
             return value
         }
 
         // Notify update unless it's cancelled or terminated by other operations.
         if !Task.isCancelled && !transactionState.isTerminated {
-            update(atom: atom, for: key, transactionScopeKey: transactionScopeKey, oldValue: cache.value, newValue: value)
+            update(atom: atom, for: key, cache: cache, newValue: value)
         }
 
         return value
@@ -182,24 +181,24 @@ internal struct StoreContext {
 
     @usableFromInline
     @_disfavoredOverload
-    func reset<Node: Atom>(_ atom: Node, transactionScopeKey: ScopeKey? = nil) {
-        let (key, override) = lookupAtomKeyAndOverrides(of: atom, transactionScopeKey: transactionScopeKey)
+    func reset<Node: Atom>(_ atom: Node) {
+        let (key, override) = lookupAtomKeyAndOverrides(of: atom)
 
         if let cache = lookupCache(of: atom, for: key) {
-            let newValue = getValue(of: atom, for: key, transactionScopeKey: transactionScopeKey, override: override)
-            update(atom: atom, for: key, transactionScopeKey: transactionScopeKey, oldValue: cache.value, newValue: newValue)
+            let newValue = getValue(of: atom, for: key, override: override)
+            update(atom: atom, for: key, cache: cache, newValue: newValue)
         }
     }
 
     @usableFromInline
-    func reset<Node: Resettable>(_ atom: Node, transactionScopeKey: ScopeKey? = nil) {
-        let context = AtomCurrentContext(store: self, transactionScopeKey: transactionScopeKey)
-        atom.reset(context: context)
+    func reset<Node: Resettable>(_ atom: Node) {
+        let currentContext = AtomCurrentContext(store: self)
+        atom.reset(context: currentContext)
     }
 
     @usableFromInline
-    func lookup<Node: Atom>(_ atom: Node, transactionScopeKey: ScopeKey? = nil) -> Node.Produced? {
-        let (key, _) = lookupAtomKeyAndOverrides(of: atom, transactionScopeKey: transactionScopeKey)
+    func lookup<Node: Atom>(_ atom: Node) -> Node.Produced? {
+        let (key, _) = lookupAtomKeyAndOverrides(of: atom)
         let cache = lookupCache(of: atom, for: key)
 
         return cache?.value
@@ -207,7 +206,7 @@ internal struct StoreContext {
 
     @usableFromInline
     func unwatch(_ atom: some Atom, subscriber: Subscriber) {
-        let (key, _) = lookupAtomKeyAndOverrides(of: atom, transactionScopeKey: nil)
+        let (key, _) = lookupAtomKeyAndOverrides(of: atom)
 
         subscriber.subscribing.remove(key)
         unsubscribe([key], for: subscriber.key)
@@ -240,13 +239,13 @@ internal struct StoreContext {
 
         for key in keys {
             // Release if the atom is no longer used.
-            checkAndRelease(for: key, transactionScopeKey: nil)
+            checkAndRelease(for: key)
 
             // Release dependencies that are no longer dependent.
             if let dependencies = disusedDependencies[key] {
                 for dependency in dependencies {
                     store.graph.children[dependency]?.remove(key)
-                    checkAndRelease(for: dependency, transactionScopeKey: nil)
+                    checkAndRelease(for: dependency)
                 }
             }
 
@@ -258,7 +257,7 @@ internal struct StoreContext {
             }
         }
 
-        notifyUpdateToObservers(transactionScopeKey: nil)
+        notifyUpdateToObservers()
     }
 }
 
@@ -266,16 +265,15 @@ private extension StoreContext {
     func initialize<Node: Atom>(
         of atom: Node,
         for key: AtomKey,
-        transactionScopeKey: ScopeKey?,
         override: Override<Node>?
     ) -> Node.Produced {
-        let value = getValue(of: atom, for: key, transactionScopeKey: transactionScopeKey, override: override)
-        let state = getState(of: atom, for: key, transactionScopeKey: transactionScopeKey)
+        let value = getValue(of: atom, for: key, override: override)
+        let state = getState(of: atom, for: key)
 
-        store.state.caches[key] = AtomCache(atom: atom, value: value)
+        store.state.caches[key] = AtomCache(atom: atom, value: value, initScopeKey: currentScopeKey)
 
-        let context = AtomCurrentContext(store: self, transactionScopeKey: transactionScopeKey)
-        state.effect.initialized(context: context)
+        let currentContext = AtomCurrentContext(store: self)
+        state.effect.initialized(context: currentContext)
 
         return value
     }
@@ -283,64 +281,51 @@ private extension StoreContext {
     func update<Node: Atom>(
         atom: Node,
         for key: AtomKey,
-        transactionScopeKey: ScopeKey?,
-        oldValue: Node.Produced,
+        cache: AtomCache<Node>,
         newValue: Node.Produced
     ) {
-        store.state.caches[key] = AtomCache(atom: atom, value: newValue)
+        store.state.caches[key] = cache.updated(value: newValue)
 
         // Check whether if the dependent atoms should be updated transitively.
-        guard atom.producer.shouldUpdate(oldValue, newValue) else {
+        guard atom.producer.shouldUpdate(cache.value, newValue) else {
             return
         }
 
         // Perform side effects first.
-        let state = getState(of: atom, for: key, transactionScopeKey: transactionScopeKey)
-        let context = AtomCurrentContext(store: self, transactionScopeKey: transactionScopeKey)
-        state.effect.updated(context: context)
+        let state = getState(of: atom, for: key)
+        let currentContext = AtomCurrentContext(store: self)
+        state.effect.updated(context: currentContext)
 
         // Calculate topological order for updating downstream efficiently.
         let (edges, redundantDependencies) = store.topologicalSorted(key: key)
         var skippedDependencies = Set<AtomKey>()
         var updatedScopeKeys = Set<ScopeKey>()
 
-        if let scopeKey = transactionScopeKey ?? currentScopeKey {
+        if let scopeKey = currentScopeKey {
             updatedScopeKeys.insert(scopeKey)
-        }
-
-        // Updates the given atom.
-        func update(for key: AtomKey, cache: some AtomCacheProtocol) {
-            guard let state = lookupState(of: cache.atom, for: key) else {
-                return
-            }
-
-            // Dependants are updated with the scope at which they were initialised.
-            let transactionScopeKey = state.initializedScopeKey
-            // Overridden atoms don't get updated.
-            let newValue = getValue(of: cache.atom, for: key, transactionScopeKey: transactionScopeKey, override: nil)
-
-            store.state.caches[key] = AtomCache(atom: cache.atom, value: newValue)
-
-            // Check whether if the dependent atoms should be updated transitively.
-            guard cache.atom.producer.shouldUpdate(cache.value, newValue) else {
-                // Record the atom to avoid downstream from being update.
-                skippedDependencies.insert(key)
-                return
-            }
-
-            if let transactionScopeKey {
-                updatedScopeKeys.insert(transactionScopeKey)
-            }
-
-            // Perform side effects before updating downstream.
-            let context = AtomCurrentContext(store: self, transactionScopeKey: transactionScopeKey)
-            state.effect.updated(context: context)
         }
 
         // Performs update of the given atom with the dependency's context.
         func performUpdate(for key: AtomKey, cache: some AtomCacheProtocol, dependency: some Atom) {
             dependency.producer.performUpdate {
-                update(for: key, cache: cache)
+                // Dependants must be updated with the scope at which they were initialised.
+                let localContext = StoreContext(
+                    store: store,
+                    rootScopeKey: rootScopeKey,
+                    currentScopeKey: cache.initScopeKey
+                )
+
+                let didUpdate = localContext.update(for: key, cache: cache)
+
+                guard didUpdate else {
+                    // Record the atom to avoid downstream from being update.
+                    skippedDependencies.insert(key)
+                    return
+                }
+
+                if let scopeKey = cache.initScopeKey {
+                    updatedScopeKeys.insert(scopeKey)
+                }
             }
         }
 
@@ -400,7 +385,25 @@ private extension StoreContext {
         notifyUpdateToObservers(scopeKeys: updatedScopeKeys)
     }
 
-    func release(for key: AtomKey, transactionScopeKey: ScopeKey?) {
+    func update(for key: AtomKey, cache: some AtomCacheProtocol) -> Bool {
+        // Overridden atoms don't get updated.
+        let newValue = getValue(of: cache.atom, for: key, override: nil)
+
+        store.state.caches[key] = cache.updated(value: newValue)
+
+        // Check whether if the dependent atoms should be updated transitively.
+        guard cache.atom.producer.shouldUpdate(cache.value, newValue) else {
+            return false
+        }
+
+        // Perform side effects before updating downstream.
+        let state = getState(of: cache.atom, for: key)
+        let currentContext = AtomCurrentContext(store: self)
+        state.effect.updated(context: currentContext)
+        return true
+    }
+
+    func release(for key: AtomKey) {
         let dependencies = store.graph.dependencies.removeValue(forKey: key)
         let state = store.state.states.removeValue(forKey: key)
 
@@ -411,22 +414,22 @@ private extension StoreContext {
         if let dependencies {
             for dependency in dependencies {
                 store.graph.children[dependency]?.remove(key)
-                checkAndRelease(for: dependency, transactionScopeKey: transactionScopeKey)
+                checkAndRelease(for: dependency)
             }
         }
 
         state?.transactionState?.terminate()
 
-        let context = AtomCurrentContext(store: self, transactionScopeKey: transactionScopeKey)
-        state?.effect.released(context: context)
+        let currentContext = AtomCurrentContext(store: self)
+        state?.effect.released(context: currentContext)
     }
 
-    func checkAndRelease(for key: AtomKey, transactionScopeKey: ScopeKey?) {
+    func checkAndRelease(for key: AtomKey) {
         // The condition under which an atom may be released are as follows:
         //     1. It's not marked as `KeepAlive`, is marked as `Scoped`, or is scoped by override.
         //     2. It has no downstream atoms.
         //     3. It has no subscriptions from views.
-        lazy var shouldKeepAlive = key.scopeKey == nil && store.state.caches[key].map { $0.atom is any KeepAlive } ?? false
+        lazy var shouldKeepAlive = !key.isScoped && store.state.caches[key].map { $0.atom is any KeepAlive } ?? false
         lazy var isChildrenEmpty = store.graph.children[key]?.isEmpty ?? true
         lazy var isSubscriptionEmpty = store.state.subscriptions[key]?.isEmpty ?? true
         let shouldRelease = !shouldKeepAlive && isChildrenEmpty && isSubscriptionEmpty
@@ -435,7 +438,7 @@ private extension StoreContext {
             return
         }
 
-        release(for: key, transactionScopeKey: transactionScopeKey)
+        release(for: key)
     }
 
     func detachDependencies(for key: AtomKey) -> Set<AtomKey> {
@@ -463,18 +466,17 @@ private extension StoreContext {
     func unsubscribe<Keys: Sequence<AtomKey>>(_ keys: Keys, for subscriberKey: SubscriberKey) {
         for key in keys {
             store.state.subscriptions[key]?.removeValue(forKey: subscriberKey)
-            checkAndRelease(for: key, transactionScopeKey: nil)
+            checkAndRelease(for: key)
         }
 
-        notifyUpdateToObservers(transactionScopeKey: nil)
+        notifyUpdateToObservers()
     }
 
     func prepareForTransaction<Node: Atom>(
         of atom: Node,
-        for key: AtomKey,
-        scopeKey: ScopeKey?
+        for key: AtomKey
     ) -> AtomProducerContext<Node.Produced> {
-        let transactionState = TransactionState(key: key, scopeKey: scopeKey) {
+        let transactionState = TransactionState(key: key) {
             let oldDependencies = detachDependencies(for: key)
 
             return {
@@ -483,39 +485,35 @@ private extension StoreContext {
 
                 // Release disused dependencies if no longer used.
                 for dependency in disusedDependencies {
-                    checkAndRelease(for: dependency, transactionScopeKey: scopeKey)
+                    checkAndRelease(for: dependency)
                 }
             }
         }
 
-        let state = getState(of: atom, for: key, transactionScopeKey: scopeKey)
+        let state = getState(of: atom, for: key)
         // Terminate the ongoing transaction first.
         state.transactionState?.terminate()
         // Register the transaction state so it can be terminated from anywhere.
         state.transactionState = transactionState
 
         return AtomProducerContext(store: self, transactionState: transactionState) { newValue in
-            guard let cache = lookupCache(of: atom, for: key) else {
-                return
+            if let cache = lookupCache(of: atom, for: key) {
+                update(
+                    atom: atom,
+                    for: key,
+                    cache: cache,
+                    newValue: newValue
+                )
             }
-
-            update(
-                atom: atom,
-                for: key,
-                transactionScopeKey: scopeKey,
-                oldValue: cache.value,
-                newValue: newValue
-            )
         }
     }
 
     func getValue<Node: Atom>(
         of atom: Node,
         for key: AtomKey,
-        transactionScopeKey: ScopeKey?,
         override: Override<Node>?
     ) -> Node.Produced {
-        let context = prepareForTransaction(of: atom, for: key, scopeKey: transactionScopeKey)
+        let context = prepareForTransaction(of: atom, for: key)
         let value: Node.Produced
 
         if let override {
@@ -529,14 +527,14 @@ private extension StoreContext {
         return value
     }
 
-    func getState<Node: Atom>(of atom: Node, for key: AtomKey, transactionScopeKey: ScopeKey?) -> AtomState<Node.Effect> {
+    func getState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Effect> {
         if let state = lookupState(of: atom, for: key) {
             return state
         }
 
-        let context = AtomCurrentContext(store: self, transactionScopeKey: transactionScopeKey)
-        let effect = atom.effect(context: context)
-        let state = AtomState(effect: effect, initializedScopeKey: transactionScopeKey ?? currentScopeKey)
+        let currentContext = AtomCurrentContext(store: self)
+        let effect = atom.effect(context: currentContext)
+        let state = AtomState(effect: effect)
         store.state.states[key] = state
         return state
     }
@@ -561,7 +559,7 @@ private extension StoreContext {
             )
 
             // Release the invalid registration as a fallback.
-            release(for: key, transactionScopeKey: nil)
+            release(for: key)
             return nil
         }
 
@@ -588,15 +586,14 @@ private extension StoreContext {
             )
 
             // Release the invalid registration as a fallback.
-            release(for: key, transactionScopeKey: nil)
+            release(for: key)
             return nil
         }
 
         return cache
     }
 
-    func lookupAtomKeyAndOverrides<Node: Atom>(of atom: Node, transactionScopeKey: ScopeKey?) -> (atomKey: AtomKey, override: Override<Node>?) {
-        let scopeKey = transactionScopeKey ?? currentScopeKey
+    func lookupAtomKeyAndOverrides<Node: Atom>(of atom: Node) -> (atomKey: AtomKey, override: Override<Node>?) {
         lazy var overrideKey = OverrideKey(atom)
         lazy var typeOverrideKey = OverrideKey(Node.self)
 
@@ -625,8 +622,8 @@ private extension StoreContext {
             return override
         }
 
-        if let scopeKey, let override = lookupOverride(for: scopeKey) {
-            let atomKey = AtomKey(atom, scopeKey: scopeKey)
+        if let currentScopeKey, let override = lookupOverride(for: currentScopeKey) {
+            let atomKey = AtomKey(atom, scopeKey: currentScopeKey)
             return (atomKey: atomKey, override: override)
         }
         else if let override = lookupOverride(for: rootScopeKey) {
@@ -636,7 +633,7 @@ private extension StoreContext {
         }
         else if let atom = atom as? any Scoped {
             let scopeID = ScopeID(atom.scopeID)
-            let scope = scopeKey.flatMap { store.state.scopes[$0] }
+            let scope = currentScopeKey.flatMap { store.state.scopes[$0] }
             let scopeKey = scope?.inheritedScopeKeys[scopeID]
             let atomKey = AtomKey(atom, scopeKey: scopeKey)
             return (atomKey: atomKey, override: nil)
@@ -647,9 +644,9 @@ private extension StoreContext {
         }
     }
 
-    func notifyUpdateToObservers(transactionScopeKey: ScopeKey?) {
-        let scopeKey = transactionScopeKey ?? currentScopeKey
-        notifyUpdateToObservers(scopeKeys: scopeKey.map { [$0] } ?? [])
+    func notifyUpdateToObservers() {
+        let scopeKeys = currentScopeKey.map { [$0] } ?? []
+        notifyUpdateToObservers(scopeKeys: scopeKeys)
     }
 
     func notifyUpdateToObservers<Keys: Sequence<ScopeKey>>(scopeKeys: Keys) {

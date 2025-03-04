@@ -18,7 +18,7 @@ final class RefreshableTests: XCTestCase {
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
         let context = StoreContext.registerRoot(
-            store: store,
+            in: store,
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]

@@ -5,20 +5,16 @@ internal final class TransactionState {
     private var cleanup: (@MainActor () -> Void)?
 
     let key: AtomKey
-    @usableFromInline
-    let scopeKey: ScopeKey?
 
     private var termination: (@MainActor () -> Void)?
     private(set) var isTerminated = false
 
     init(
         key: AtomKey,
-        scopeKey: ScopeKey?,
         _ body: @MainActor @escaping () -> @MainActor () -> Void
     ) {
         self.key = key
         self.body = body
-        self.scopeKey = scopeKey
     }
 
     var onTermination: (@MainActor () -> Void)? {

@@ -104,7 +104,7 @@ public struct AtomScope<Content: View>: View {
     /// Note that unlike ``AtomRoot/observe(_:)``, this observes only the state changes caused by atoms
     /// used in this scope.
     ///
-    /// - Note: If this scope inherits the parent context, the observers are ignored.
+    /// - Note: It ignores the observers if this scope inherits the parent scope.
     ///
     /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
     ///
@@ -120,7 +120,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// This only overrides atoms used in this scope and never be inherited to a nested scopes.
     ///
-    /// - Note: If this scope inherits the parent context, the overrides are ignored.
+    /// - Note: It ignores the overrides if this scope inherits the parent scope.
     ///
     /// - Parameters:
     ///   - atom: An atom to be overridden.
@@ -140,7 +140,7 @@ public struct AtomScope<Content: View>: View {
     ///
     /// This only overrides atoms used in this scope and never be inherited to a nested scopes.
     ///
-    /// - Note: If this scope inherits the parent context, the overrides are ignored.
+    /// - Note: It ignores the overrides if this scope inherits the parent scope.
     ///
     /// - Parameters:
     ///   - atomType: An atom type to be overridden.

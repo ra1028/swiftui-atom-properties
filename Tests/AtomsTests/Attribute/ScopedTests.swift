@@ -22,7 +22,8 @@ final class ScopedTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should be scoped") { _ in
             let store = AtomStore()
-            let context = StoreContext.registerRoot(store: store)
+            let rootScopeToken = ScopeKey.Token()
+            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
             let scoped1Context = context.registerScope(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scope1Token.key
@@ -63,7 +64,8 @@ final class ScopedTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should be scoped in particular scope") { _ in
             let store = AtomStore()
-            let context = StoreContext.registerRoot(store: store)
+            let rootScopeToken = ScopeKey.Token()
+            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
             let scopeID = "Scope 1"
             let scoped1Context = context.registerScope(
                 scopeID: ScopeID(scopeID),
@@ -93,7 +95,8 @@ final class ScopedTests: XCTestCase {
 
         XCTContext.runActivity(named: "Modified atoms should also be scoped") { _ in
             let store = AtomStore()
-            let context = StoreContext.registerRoot(store: store)
+            let rootScopeToken = ScopeKey.Token()
+            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
             let scopeID = "Scope 1"
             let scoped1Context = context.registerScope(
                 scopeID: ScopeID(scopeID),
