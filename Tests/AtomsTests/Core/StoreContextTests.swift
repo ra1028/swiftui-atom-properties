@@ -842,9 +842,15 @@ final class StoreContextTests: XCTestCase {
             }
         }
 
-        struct TestDependency3Atom: AsyncPhaseAtom, Hashable {
-            func value(context: Context) async -> Int {
+        struct TestDependency3Atom: StateAtom, Scoped, Hashable {
+            func defaultValue(context: Context) -> Int {
                 3
+            }
+        }
+
+        struct TestDependency4Atom: AsyncPhaseAtom, Hashable {
+            func value(context: Context) async -> Int {
+                4
             }
         }
 
@@ -852,15 +858,12 @@ final class StoreContextTests: XCTestCase {
             func value(context: Context) -> Int {
                 let value1 = context.watch(TestDependency1Atom())
                 let value2 = context.watch(TestDependency2Atom())
-                let value3 = context.watch(TestDependency3Atom()).value ?? 0
-                return value1 + value2 + value3
+                let value3 = context.watch(TestDependency3Atom())
+                let value4 = context.watch(TestDependency4Atom()).value ?? 0
+                return value1 + value2 + value3 + value4
             }
         }
 
-        let atom = TestAtom()
-        let dependency1Atom = TestDependency1Atom()
-        let dependency2Atom = TestDependency2Atom()
-        let dependency3Atom = TestDependency3Atom()
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
         let store = AtomStore()
@@ -874,43 +877,43 @@ final class StoreContextTests: XCTestCase {
         scopedContext.register(
             scopeKey: scopeToken.key,
             overrides: [
-                OverrideKey(dependency1Atom): Override<TestDependency1Atom> { _ in
-                    10
+                OverrideKey(TestDependency2Atom()): Override<TestDependency2Atom> { _ in
+                    20
                 }
             ],
             observers: []
         )
 
-        // Initialize the updatable dependency from the non-scoped context.
-        _ = context.watch(dependency3Atom, subscriber: subscriber, subscription: Subscription())
+        // Pre initialize some of dependencies.
+        _ = context.watch(TestDependency4Atom(), subscriber: subscriber, subscription: Subscription())
 
         // Initialize the atom state in the scoped context.
         XCTAssertEqual(
-            scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription()),
-            12
+            scopedContext.watch(TestAtom(), subscriber: subscriber, subscription: Subscription()),
+            24
         )
 
         await Task.yield {
-            context.read(dependency3Atom).isSuccess
+            context.read(TestDependency4Atom()).isSuccess
         }
 
         // The updated value should reflect the scoped overrides.
         XCTAssertEqual(
-            scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription()),
-            15
+            scopedContext.watch(TestAtom(), subscriber: subscriber, subscription: Subscription()),
+            28
         )
 
         // Update one of the dependency atoms from non-scoped context.
-        context.set(20, for: dependency2Atom)
+        context.set(10, for: TestDependency1Atom())
 
         await Task.yield {
-            scopedContext.watch(dependency3Atom, subscriber: subscriber, subscription: Subscription()).isSuccess
+            scopedContext.watch(TestDependency4Atom(), subscriber: subscriber, subscription: Subscription()).isSuccess
         }
 
         // The updated value should reflect the scoped overrides.
         XCTAssertEqual(
-            scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription()),
-            33
+            scopedContext.watch(TestAtom(), subscriber: subscriber, subscription: Subscription()),
+            37
         )
     }
 
@@ -1121,17 +1124,22 @@ final class StoreContextTests: XCTestCase {
             }
         }
 
+        struct TestDependency3Atom: StateAtom, Scoped, Hashable {
+            func defaultValue(context: Context) -> Int {
+                3
+            }
+        }
+
         struct TestAtom: ValueAtom, Hashable {
             func value(context: Context) -> Int {
                 let value1 = context.watch(TestDependency1Atom())
                 let value2 = context.watch(TestDependency2Atom())
-                return value1 + value2
+                let value3 = context.watch(TestDependency3Atom())
+                return value1 + value2 + value3
             }
         }
 
         let atom = TestAtom()
-        let dependency1Atom = TestDependency1Atom()
-        let dependency2Atom = TestDependency2Atom()
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
         let store = AtomStore()
@@ -1156,11 +1164,16 @@ final class StoreContextTests: XCTestCase {
 
         let expectedGraph = Graph(
             dependencies: [
-                AtomKey(atom): [AtomKey(dependency1Atom), AtomKey(dependency2Atom)]
+                AtomKey(TestAtom()): [
+                    AtomKey(TestDependency1Atom()),
+                    AtomKey(TestDependency2Atom()),
+                    AtomKey(TestDependency3Atom(), scopeKey: scopeToken.key),
+                ]
             ],
             children: [
-                AtomKey(dependency1Atom): [AtomKey(atom)],
-                AtomKey(dependency2Atom): [AtomKey(atom)],
+                AtomKey(TestDependency1Atom()): [AtomKey(TestAtom())],
+                AtomKey(TestDependency2Atom()): [AtomKey(TestAtom())],
+                AtomKey(TestDependency3Atom(), scopeKey: scopeToken.key): [AtomKey(TestAtom())],
             ]
         )
 
@@ -1170,7 +1183,7 @@ final class StoreContextTests: XCTestCase {
         // The scoped observer should recive the update event.
         XCTAssertEqual(snapshots.map(\.graph), [expectedGraph])
 
-        context.set(20, for: dependency2Atom)
+        context.set(20, for: TestDependency2Atom())
 
         // The scoped observer should recive the update event.
         XCTAssertEqual(snapshots.map(\.graph), [expectedGraph, expectedGraph])
