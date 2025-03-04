@@ -17,15 +17,12 @@ final class RefreshableTests: XCTestCase {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]
+
         )
 
         do {
@@ -67,12 +64,8 @@ final class RefreshableTests: XCTestCase {
 
             let scopeKey = ScopeKey.Token().key
             let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
-            let scopedContext = context.scoped(
-                scopeKey: scopeKey,
-                scopeID: ScopeID(DefaultScopeID())
-            )
-
-            scopedContext.register(
+            let scopedContext = context.registerScope(
+                scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scopeKey,
                 overrides: [
                     OverrideKey(atom): Override<TestCustomRefreshableAtom<Int>> { _ in 2 }

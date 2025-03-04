@@ -22,14 +22,14 @@ final class ScopedTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should be scoped") { _ in
             let store = AtomStore()
-            let context = StoreContext.root(store: store)
-            let scoped1Context = context.scoped(
-                scopeKey: scope1Token.key,
-                scopeID: ScopeID(DefaultScopeID())
+            let context = StoreContext.registerRoot(store: store)
+            let scoped1Context = context.registerScope(
+                scopeID: ScopeID(DefaultScopeID()),
+                scopeKey: scope1Token.key
             )
-            let scoped2Context = scoped1Context.scoped(
-                scopeKey: scope2Token.key,
-                scopeID: ScopeID(DefaultScopeID())
+            let scoped2Context = scoped1Context.registerScope(
+                scopeID: ScopeID(DefaultScopeID()),
+                scopeKey: scope2Token.key
             )
             let atom = ScopedAtom(scopeID: DefaultScopeID(), value: 0)
             let scoped1AtomKey = AtomKey(atom, scopeKey: scope1Token.key)
@@ -63,15 +63,15 @@ final class ScopedTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should be scoped in particular scope") { _ in
             let store = AtomStore()
-            let context = StoreContext.root(store: store)
+            let context = StoreContext.registerRoot(store: store)
             let scopeID = "Scope 1"
-            let scoped1Context = context.scoped(
-                scopeKey: scope1Token.key,
-                scopeID: ScopeID(scopeID)
+            let scoped1Context = context.registerScope(
+                scopeID: ScopeID(scopeID),
+                scopeKey: scope1Token.key
             )
-            let scoped2Context = scoped1Context.scoped(
-                scopeKey: scope2Token.key,
-                scopeID: ScopeID(DefaultScopeID())
+            let scoped2Context = scoped1Context.registerScope(
+                scopeID: ScopeID(DefaultScopeID()),
+                scopeKey: scope2Token.key
             )
             let atom = ScopedAtom(scopeID: scopeID, value: 0)
             let scoped1AtomKey = AtomKey(atom, scopeKey: scope1Token.key)
@@ -93,15 +93,15 @@ final class ScopedTests: XCTestCase {
 
         XCTContext.runActivity(named: "Modified atoms should also be scoped") { _ in
             let store = AtomStore()
-            let context = StoreContext.root(store: store)
+            let context = StoreContext.registerRoot(store: store)
             let scopeID = "Scope 1"
-            let scoped1Context = context.scoped(
-                scopeKey: scope1Token.key,
-                scopeID: ScopeID(scopeID)
+            let scoped1Context = context.registerScope(
+                scopeID: ScopeID(scopeID),
+                scopeKey: scope1Token.key
             )
-            let scoped2Context = scoped1Context.scoped(
-                scopeKey: scope2Token.key,
-                scopeID: ScopeID(DefaultScopeID())
+            let scoped2Context = scoped1Context.registerScope(
+                scopeID: ScopeID(DefaultScopeID()),
+                scopeKey: scope2Token.key
             )
             let baseAtom = ScopedAtom(scopeID: scopeID, value: 0)
             let atom = baseAtom.changes

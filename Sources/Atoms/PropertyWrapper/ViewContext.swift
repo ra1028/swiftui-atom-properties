@@ -129,9 +129,11 @@ private extension ViewContext {
             )
 
             // Returns an ephemeral instance just to not crash in `-O` builds.
-            return .root(
+            return .registerRoot(
                 store: AtomStore(),
-                scopeKey: ScopeKey.Token().key
+                scopeKey: ScopeKey.Token().key,
+                overrides: [:],
+                observers: []
             )
         }
 

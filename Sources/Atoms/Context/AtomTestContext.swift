@@ -373,7 +373,6 @@ public struct AtomTestContext: AtomWatchableContext {
     @inlinable
     public func override<Node: Atom>(_ atom: Node, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) {
         _state.overrides[OverrideKey(atom)] = Override(getValue: value)
-        registerOverrides()
     }
 
     /// Overrides the atom value with the given value.
@@ -389,7 +388,6 @@ public struct AtomTestContext: AtomWatchableContext {
     @inlinable
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) {
         _state.overrides[OverrideKey(atomType)] = Override(getValue: value)
-        registerOverrides()
     }
 }
 
@@ -439,7 +437,12 @@ internal extension AtomTestContext {
 
     @usableFromInline
     var _store: StoreContext {
-        .root(store: _state.store, scopeKey: _state.token.key)
+        .registerRoot(
+            store: _state.store,
+            scopeKey: _state.token.key,
+            overrides: _state.overrides,
+            observers: []
+        )
     }
 
     @usableFromInline
@@ -452,14 +455,5 @@ internal extension AtomTestContext {
         Subscription(location: location) { [weak _state] in
             _state?.update()
         }
-    }
-
-    @usableFromInline
-    func registerOverrides() {
-        _store.register(
-            scopeKey: _state.token.key,
-            overrides: _state.overrides,
-            observers: []
-        )
     }
 }

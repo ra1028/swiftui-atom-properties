@@ -171,12 +171,8 @@ private extension AtomScope {
 
         var body: some View {
             let scopeKey = state.token.key
-            let store = environmentStore?.scoped(
-                scopeKey: scopeKey,
-                scopeID: id
-            )
-
-            store?.register(
+            let store = environmentStore?.registerScope(
+                scopeID: id,
                 scopeKey: scopeKey,
                 overrides: overrides,
                 observers: observers

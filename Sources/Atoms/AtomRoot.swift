@@ -186,12 +186,8 @@ private extension AtomRoot {
 
         var body: some View {
             let scopeKey = state.token.key
-            let store = StoreContext.root(
+            let store = StoreContext.registerRoot(
                 store: store,
-                scopeKey: scopeKey
-            )
-
-            store.register(
                 scopeKey: scopeKey,
                 overrides: overrides,
                 observers: observers

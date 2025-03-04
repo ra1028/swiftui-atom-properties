@@ -4,46 +4,52 @@ internal struct StoreContext {
     private let store: AtomStore
     private let rootScopeKey: ScopeKey
     private let currentScopeKey: ScopeKey?
-    private let inheritedScopeKeys: [ScopeID: ScopeKey]
 
-    static func root(
+    static func registerRoot(
         store: AtomStore,
-        scopeKey: ScopeKey
-    ) -> StoreContext {
-        StoreContext(
-            store: store,
-            rootScopeKey: scopeKey,
-            currentScopeKey: nil,
-            inheritedScopeKeys: [:]
-        )
-    }
-
-    func scoped(
-        scopeKey: ScopeKey,
-        scopeID: ScopeID
-    ) -> StoreContext {
-        StoreContext(
-            store: store,
-            rootScopeKey: rootScopeKey,
-            currentScopeKey: scopeKey,
-            inheritedScopeKeys: mutating(inheritedScopeKeys) { scopeKeys in
-                scopeKeys[scopeID] = scopeKey
-            }
-        )
-    }
-
-    func register(
         scopeKey: ScopeKey,
         overrides: [OverrideKey: any OverrideProtocol],
         observers: [Observer]
-    ) {
-        store.state.overrides[scopeKey, default: [:]] = overrides
-        store.state.observers[scopeKey, default: []] = observers
+    ) -> StoreContext {
+        store.state.scopes[scopeKey] = Scope(
+            overrides: overrides,
+            observers: observers,
+            inheritedScopeKeys: [:]
+        )
+
+        return StoreContext(
+            store: store,
+            rootScopeKey: scopeKey,
+            currentScopeKey: nil
+        )
+    }
+
+    func registerScope(
+        scopeID: ScopeID,
+        scopeKey: ScopeKey,
+        overrides: [OverrideKey: any OverrideProtocol],
+        observers: [Observer]
+    ) -> StoreContext {
+        let parentScope = currentScopeKey.flatMap { store.state.scopes[$0] }
+        let parentInheritedScopeKeys = parentScope?.inheritedScopeKeys ?? [:]
+
+        store.state.scopes[scopeKey] = Scope(
+            overrides: overrides,
+            observers: observers,
+            inheritedScopeKeys: mutating(parentInheritedScopeKeys) { scopeKeys in
+                scopeKeys[scopeID] = scopeKey
+            }
+        )
+
+        return StoreContext(
+            store: store,
+            rootScopeKey: rootScopeKey,
+            currentScopeKey: scopeKey
+        )
     }
 
     func unregister(scopeKey: ScopeKey) {
-        store.state.overrides.removeValue(forKey: scopeKey)
-        store.state.observers.removeValue(forKey: scopeKey)
+        store.state.scopes.removeValue(forKey: scopeKey)
     }
 
     @usableFromInline
@@ -595,7 +601,7 @@ private extension StoreContext {
         lazy var typeOverrideKey = OverrideKey(Node.self)
 
         func lookupOverride(for scopeKey: ScopeKey) -> Override<Node>? {
-            let overrides = store.state.overrides[scopeKey]
+            let overrides = store.state.scopes[scopeKey]?.overrides
             let baseOverride = overrides?[overrideKey] ?? overrides?[typeOverrideKey]
 
             guard let baseOverride else {
@@ -630,7 +636,8 @@ private extension StoreContext {
         }
         else if let atom = atom as? any Scoped {
             let scopeID = ScopeID(atom.scopeID)
-            let scopeKey = inheritedScopeKeys[scopeID]
+            let scope = scopeKey.flatMap { store.state.scopes[$0] }
+            let scopeKey = scope?.inheritedScopeKeys[scopeID]
             let atomKey = AtomKey(atom, scopeKey: scopeKey)
             return (atomKey: atomKey, override: nil)
         }
@@ -646,8 +653,8 @@ private extension StoreContext {
     }
 
     func notifyUpdateToObservers<Keys: Sequence<ScopeKey>>(scopeKeys: Keys) {
-        let observers = store.state.observers[rootScopeKey] ?? []
-        let scopedObservers = scopeKeys.flatMap { store.state.observers[$0] ?? [] }
+        let observers = store.state.scopes[rootScopeKey]?.observers ?? []
+        let scopedObservers = scopeKeys.flatMap { store.state.scopes[$0]?.observers ?? [] }
 
         guard !observers.isEmpty || !scopedObservers.isEmpty else {
             return

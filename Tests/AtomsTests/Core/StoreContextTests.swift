@@ -11,12 +11,8 @@ final class StoreContextTests: XCTestCase {
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
         let scopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: scopeToken.key
-        )
-
-        context.register(
             scopeKey: scopeToken.key,
             overrides: [
                 OverrideKey(atom): Override<TestAtom<Int>> { _ in
@@ -45,24 +41,16 @@ final class StoreContextTests: XCTestCase {
         var snapshots0 = [Snapshot]()
         var snapshots1 = [Snapshot]()
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-        let scopedContext = context.scoped(
-            scopeKey: scopeToken.key,
-            scopeID: ScopeID(DefaultScopeID())
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [
                 Observer { snapshots0.append($0) }
             ]
         )
-
-        scopedContext.register(
+        let scopedContext = context.registerScope(
+            scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scopeToken.key,
             overrides: [
                 OverrideKey(atom): Override<TestAtom<Int>> { _ in
@@ -93,12 +81,8 @@ final class StoreContextTests: XCTestCase {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]
@@ -129,12 +113,8 @@ final class StoreContextTests: XCTestCase {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]
@@ -184,12 +164,8 @@ final class StoreContextTests: XCTestCase {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]
@@ -242,12 +218,8 @@ final class StoreContextTests: XCTestCase {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]
@@ -294,12 +266,8 @@ final class StoreContextTests: XCTestCase {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]
@@ -348,12 +316,8 @@ final class StoreContextTests: XCTestCase {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]
@@ -390,12 +354,8 @@ final class StoreContextTests: XCTestCase {
 
         let scopeToken = ScopeKey.Token()
         let overrideAtomKey = AtomKey(atom, scopeKey: scopeToken.key)
-        let scopedContext = context.scoped(
-            scopeKey: scopeToken.key,
-            scopeID: ScopeID(DefaultScopeID())
-        )
-
-        scopedContext.register(
+        let scopedContext = context.registerScope(
+            scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scopeToken.key,
             overrides: [
                 OverrideKey(atom): Override<TestPublisherAtom<Just<Int>>> { _ in .success(1) }
@@ -425,12 +385,8 @@ final class StoreContextTests: XCTestCase {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]
@@ -476,12 +432,8 @@ final class StoreContextTests: XCTestCase {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [observer]
@@ -500,7 +452,7 @@ final class StoreContextTests: XCTestCase {
     func testSnapshotAndRestore() {
         let store = AtomStore()
         let subscriberToken = SubscriberKey.Token()
-        let context = StoreContext.root(store: store)
+        let context = StoreContext.registerRoot(store: store)
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
         let key0 = AtomKey(atom0)
@@ -539,20 +491,8 @@ final class StoreContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let scope1Token = ScopeKey.Token()
         let scope2Token = ScopeKey.Token()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-        let scoped1Context = context.scoped(
-            scopeKey: scope1Token.key,
-            scopeID: ScopeID(DefaultScopeID())
-        )
-        let scoped2Context = scoped1Context.scoped(
-            scopeKey: scope2Token.key,
-            scopeID: ScopeID(DefaultScopeID())
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [
                 // Should override atoms used in any scopes.
@@ -562,8 +502,8 @@ final class StoreContextTests: XCTestCase {
             ],
             observers: []
         )
-
-        scoped1Context.register(
+        let scoped1Context = context.registerScope(
+            scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scope1Token.key,
             overrides: [
                 // Should scoped to this scope.
@@ -573,8 +513,8 @@ final class StoreContextTests: XCTestCase {
             ],
             observers: []
         )
-
-        scoped2Context.register(
+        let scoped2Context = scoped1Context.registerScope(
+            scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scope2Token.key,
             overrides: [
                 // Should override the atoms overridden in the ancestor scopes.
@@ -647,17 +587,9 @@ final class StoreContextTests: XCTestCase {
         let store = AtomStore()
         let scope1Token = ScopeKey.Token()
         let scope2Token = ScopeKey.Token()
-        let context = StoreContext.root(store: store)
-        let scoped1Context = context.scoped(
-            scopeKey: scope1Token.key,
-            scopeID: ScopeID(DefaultScopeID())
-        )
-        let scoped2Context = scoped1Context.scoped(
-            scopeKey: scope2Token.key,
-            scopeID: ScopeID(DefaultScopeID())
-        )
-
-        scoped1Context.register(
+        let context = StoreContext.registerRoot(store: store)
+        let scoped1Context = context.registerScope(
+            scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scope1Token.key,
             overrides: [
                 OverrideKey(dependency1Atom): Override<TestDependency1Atom> { _ in
@@ -666,8 +598,8 @@ final class StoreContextTests: XCTestCase {
             ],
             observers: []
         )
-
-        scoped2Context.register(
+        let scoped2Context = scoped1Context.registerScope(
+            scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scope2Token.key,
             overrides: [
                 OverrideKey(dependency2Atom): Override<TestDependency2Atom> { _ in
@@ -829,7 +761,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
-    func testScopedOverrideCrossScopeBoundary() async {
+    func testOverrideCrossScopeBoundary() async {
         struct TestDependency1Atom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
                 1
@@ -867,14 +799,10 @@ final class StoreContextTests: XCTestCase {
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
         let store = AtomStore()
-        let context = StoreContext.root(store: store)
+        let context = StoreContext.registerRoot(store: store)
         let scopeToken = ScopeKey.Token()
-        let scopedContext = context.scoped(
-            scopeKey: scopeToken.key,
-            scopeID: ScopeID(DefaultScopeID())
-        )
-
-        scopedContext.register(
+        let scopedContext = context.registerScope(
+            scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scopeToken.key,
             overrides: [
                 OverrideKey(TestDependency2Atom()): Override<TestDependency2Atom> { _ in
@@ -920,7 +848,7 @@ final class StoreContextTests: XCTestCase {
     @MainActor
     func testRelease() {
         let store = AtomStore()
-        let context = StoreContext.root(store: store)
+        let context = StoreContext.registerRoot(store: store)
 
         let atom = TestAtom(value: 0)
         let key = AtomKey(atom)
@@ -953,26 +881,18 @@ final class StoreContextTests: XCTestCase {
 
         var snapshots = [Snapshot]()
         var scopedSnapshots = [Snapshot]()
-        let context = StoreContext.root(
+        let context = StoreContext.registerRoot(
             store: store,
-            scopeKey: rootScopeToken.key
-        )
-        let scoped1Context = context.scoped(
-            scopeKey: scope1Token.key,
-            scopeID: ScopeID(DefaultScopeID())
-        )
-        let scoped2Context = scoped1Context.scoped(
-            scopeKey: scope2Token.key,
-            scopeID: ScopeID(DefaultScopeID())
-        )
-
-        context.register(
             scopeKey: rootScopeToken.key,
             overrides: [:],
             observers: [Observer { snapshots.append($0) }]
         )
-
-        scoped2Context.register(
+        let scoped1Context = context.registerScope(
+            scopeID: ScopeID(DefaultScopeID()),
+            scopeKey: scope1Token.key
+        )
+        let scoped2Context = scoped1Context.registerScope(
+            scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scope2Token.key,
             overrides: scopedOverride,
             observers: [Observer { scopedSnapshots.append($0) }]
@@ -1111,7 +1031,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
-    func testScopedObserversCrossScopeBoundary() async {
+    func testObserversCrossScopeBoundary() async {
         struct TestDependency1Atom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
                 1
@@ -1145,14 +1065,10 @@ final class StoreContextTests: XCTestCase {
         let store = AtomStore()
         let rootScopeToken = ScopeKey.Token()
         let scopeToken = ScopeKey.Token()
-        let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+        let context = StoreContext.registerRoot(store: store, scopeKey: rootScopeToken.key)
         var snapshots = [Snapshot]()
-        let scopedContext = context.scoped(
-            scopeKey: scopeToken.key,
-            scopeID: ScopeID(DefaultScopeID())
-        )
-
-        scopedContext.register(
+        let scopedContext = context.registerScope(
+            scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scopeToken.key,
             overrides: [:],
             observers: [
@@ -1192,7 +1108,7 @@ final class StoreContextTests: XCTestCase {
     @MainActor
     func testRestore() {
         let store = AtomStore()
-        let context = StoreContext.root(store: store)
+        let context = StoreContext.registerRoot(store: store)
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
         let atom2 = TestAtom(value: 2)
@@ -1268,7 +1184,7 @@ final class StoreContextTests: XCTestCase {
     @MainActor
     func testEffect() {
         let store = AtomStore()
-        let context = StoreContext.root(store: store)
+        let context = StoreContext.registerRoot(store: store)
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
         let effect = TestEffect()
@@ -1352,7 +1268,7 @@ final class StoreContextTests: XCTestCase {
         }
 
         let store = AtomStore()
-        let context = StoreContext.root(store: store)
+        let context = StoreContext.registerRoot(store: store)
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
 
@@ -1390,7 +1306,7 @@ final class StoreContextTests: XCTestCase {
         }
 
         let store = AtomStore()
-        let context = StoreContext.root(store: store)
+        let context = StoreContext.registerRoot(store: store)
         let subscriberState = SubscriberState()
         let subscriber = Subscriber(subscriberState)
 
@@ -1451,7 +1367,7 @@ final class StoreContextTests: XCTestCase {
         // Flaky.
         for _ in 0..<100 {
             let store = AtomStore()
-            let context = StoreContext.root(store: store)
+            let context = StoreContext.registerRoot(store: store)
             let subscriberState = SubscriberState()
             let subscriber = Subscriber(subscriberState)
 
@@ -1537,7 +1453,7 @@ final class StoreContextTests: XCTestCase {
         // Flaky.
         for _ in 0..<100 {
             let store = AtomStore()
-            let context = StoreContext.root(store: store)
+            let context = StoreContext.registerRoot(store: store)
             let subscriberState = SubscriberState()
             let subscriber = Subscriber(subscriberState)
 
@@ -1612,7 +1528,7 @@ final class StoreContextTests: XCTestCase {
         // Flaky.
         for _ in 0..<100 {
             let store = AtomStore()
-            let context = StoreContext.root(store: store)
+            let context = StoreContext.registerRoot(store: store)
             let host = SubscriberHost()
             host.subscriberState = SubscriberState()
 
@@ -1744,7 +1660,7 @@ final class StoreContextTests: XCTestCase {
         }
 
         let store = AtomStore()
-        let atomStore = StoreContext.root(store: store)
+        let atomStore = StoreContext.registerRoot(store: store)
         var subscriberState: SubscriberState? = SubscriberState()
         let subscriber = Subscriber(subscriberState!)
         let pipe = AsyncThrowingStreamPipe<Void>()

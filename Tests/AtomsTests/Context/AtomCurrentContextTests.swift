@@ -8,7 +8,7 @@ final class AtomCurrentContextTests: XCTestCase {
     func testRead() {
         let atom = TestValueAtom(value: 100)
         let store = AtomStore()
-        let context = AtomCurrentContext(store: .root(store: store), transactionScopeKey: nil)
+        let context = AtomCurrentContext(store: .registerRoot(store: store), transactionScopeKey: nil)
 
         XCTAssertEqual(context.read(atom), 100)
     }
@@ -19,7 +19,7 @@ final class AtomCurrentContextTests: XCTestCase {
         let dependency = TestStateAtom(defaultValue: 100)
         let store = AtomStore()
         let transactionState = TransactionState(key: AtomKey(atom))
-        let storeContext = StoreContext.root(store: store)
+        let storeContext = StoreContext.registerRoot(store: store)
         let context = AtomCurrentContext(store: storeContext, transactionScopeKey: nil)
 
         XCTAssertEqual(storeContext.watch(dependency, in: transactionState), 100)
@@ -33,7 +33,7 @@ final class AtomCurrentContextTests: XCTestCase {
     func testRefresh() async {
         let atom = TestPublisherAtom { Just(100) }
         let store = AtomStore()
-        let context = AtomCurrentContext(store: .root(store: store), transactionScopeKey: nil)
+        let context = AtomCurrentContext(store: .registerRoot(store: store), transactionScopeKey: nil)
         let value = await context.refresh(atom).value
 
         XCTAssertEqual(value, 100)
@@ -47,7 +47,7 @@ final class AtomCurrentContextTests: XCTestCase {
             200
         }
         let store = AtomStore()
-        let context = AtomCurrentContext(store: .root(store: store), transactionScopeKey: nil)
+        let context = AtomCurrentContext(store: .registerRoot(store: store), transactionScopeKey: nil)
 
         let value = await context.refresh(atom)
         XCTAssertEqual(value, 200)
@@ -59,8 +59,8 @@ final class AtomCurrentContextTests: XCTestCase {
         let dependency = TestStateAtom(defaultValue: 0)
         let store = AtomStore()
         let transactionState = TransactionState(key: AtomKey(atom))
-        let storeContext = StoreContext.root(store: store)
-        let context = AtomTransactionContext(store: .root(store: store), transactionState: transactionState)
+        let storeContext = StoreContext.registerRoot(store: store)
+        let context = AtomTransactionContext(store: storeContext, transactionState: transactionState)
 
         XCTAssertEqual(storeContext.watch(dependency, in: transactionState), 0)
 
@@ -70,14 +70,14 @@ final class AtomCurrentContextTests: XCTestCase {
 
         context.reset(dependency)
 
-        XCTAssertEqual(context.read(dependency), 0)
+        XCTAssertEqual(storeContext.read(dependency), 0)
     }
 
     @MainActor
     func testCustomReset() {
         let store = AtomStore()
-        let context = AtomCurrentContext(store: .root(store: store), transactionScopeKey: nil)
-        let storeContext = StoreContext.root(store: store)
+        let storeContext = StoreContext.registerRoot(store: store)
+        let context = AtomCurrentContext(store: storeContext, transactionScopeKey: nil)
         let transactionAtom = TestValueAtom(value: 0)
         let atom = TestStateAtom(defaultValue: 0)
         let transactionState = TransactionState(key: AtomKey(transactionAtom))
