@@ -7,7 +7,7 @@ internal final class ScopeState {
     #endif
 
     #if compiler(>=6)
-        var unregister: (@MainActor () -> Void)?
+        nonisolated(unsafe) var unregister: (@MainActor () -> Void)?
 
         // TODO: Use isolated synchronous deinit once it's available.
         // 0371-isolated-synchronous-deinit

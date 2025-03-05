@@ -7,8 +7,8 @@ internal final class SubscriberState {
     #endif
 
     #if compiler(>=6)
-        var subscribing = Set<AtomKey>()
-        var unsubscribe: (@MainActor (Set<AtomKey>) -> Void)?
+        nonisolated(unsafe) var subscribing = Set<AtomKey>()
+        nonisolated(unsafe) var unsubscribe: (@MainActor (Set<AtomKey>) -> Void)?
 
         // TODO: Use isolated synchronous deinit once it's available.
         // 0371-isolated-synchronous-deinit
