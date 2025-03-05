@@ -2,6 +2,10 @@
 internal final class ScopeState {
     let token = ScopeKey.Token()
 
+    #if !hasFeature(IsolatedDefaultValues)
+        nonisolated init() {}
+    #endif
+
     #if compiler(>=6)
         var unregister: (@MainActor () -> Void)?
 
@@ -15,7 +19,7 @@ internal final class ScopeState {
     #else
         private var _unregister = UnsafeUncheckedSendable<(@MainActor () -> Void)?>(nil)
 
-        var unsubscribe: (@MainActor () -> Void)? {
+        var unregister: (@MainActor () -> Void)? {
             _read { yield _unregister.value }
             _modify { yield &_unregister.value }
         }

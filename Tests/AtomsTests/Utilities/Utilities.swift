@@ -137,12 +137,23 @@ extension TransactionState {
 }
 
 extension Task where Success == Never, Failure == Never {
-    static func yield(
-        isolation: isolated (any Actor)? = #isolation,
-        @_inheritActorContext until predicate: @Sendable () -> Bool
-    ) async {
-        while !predicate() {
-            await yield()
+    #if compiler(>=6)
+        static func yield(
+            isolation: isolated (any Actor)? = #isolation,
+            @_inheritActorContext until predicate: @Sendable () -> Bool
+        ) async {
+            while !predicate() {
+                await yield()
+            }
         }
-    }
+    #else
+        @MainActor
+        static func yield(
+            @_inheritActorContext until predicate: @Sendable () -> Bool
+        ) async {
+            while !predicate() {
+                await yield()
+            }
+        }
+    #endif
 }
