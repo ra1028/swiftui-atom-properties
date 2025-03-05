@@ -88,6 +88,12 @@ final class StoreContextTests: XCTestCase {
                 ScopeID(2): scope2Token.key,
             ]
         )
+
+        context.unregister(scopeKey: rootScopeToken.key)
+        context.unregister(scopeKey: scope0Token.key)
+        context.unregister(scopeKey: scope1Token.key)
+        context.unregister(scopeKey: scope2Token.key)
+        XCTAssertTrue(store.state.scopes.isEmpty)
     }
 
     @MainActor
