@@ -11,27 +11,42 @@ on:
 
 env:
   DEVELOPER_DIR: /Applications/Xcode_16.1.app
+  IOS_SIMULATOR: '"platform=iOS Simulator,name=iPhone 16 Pro"'
+  IOS_SIMULATOR_XCODE_15: '"platform=iOS Simulator,name=iPhone 15 Pro"'
+  MACOS: '"platform=macOS"'
+  TVOS_SIMULATOR: '"platform=tvOS Simulator,name=Apple TV 4K (3rd generation)"'
+  WATCHOS_SIMULATOR: '"platform=watchOS Simulator,name=Apple Watch Ultra 2 (49mm)"'
 
 jobs:
   test:
     name: Test
     runs-on: macos-14
-    strategy:
-      matrix:
-        xcode_version:
-          - 15.4
-          - 16.1
-        platform:
-          - ios
-          - macos
-          - tvos
-          - watchos
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode_version }}.app
     steps:
       - uses: actions/checkout@v4
-      - name: Test library
-        run: scripts/test.sh library ${{ matrix.platform }}
+      - name: Test library iOS
+        run: scripts/test.sh library -destinations ${{ env.IOS_SIMULATOR }}
+      - name: Test library macOS
+        run: scripts/test.sh library -destinations ${{ env.MACOS }}
+      - name: Test library tvOS
+        run: scripts/test.sh library -destinations ${{ env.TVOS_SIMULATOR }}
+      - name: Test library watchOS
+        run: scripts/test.sh library -destinations ${{ env.WATCHOS_SIMULATOR }}
+
+  test_with_xcode_15:
+    name: Test with Xcode 15
+    runs-on: macos-14
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_15.4.app
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test library iOS
+        run: scripts/test.sh library -destinations ${{ env.IOS_SIMULATOR_XCODE_15 }}
+      - name: Test library macOS
+        run: scripts/test.sh library -destinations ${{ env.MACOS }}
+      - name: Test library tvOS
+        run: scripts/test.sh library -destinations ${{ env.TVOS_SIMULATOR }}
+      - name: Test library watchOS
+        run: scripts/test.sh library -destinations ${{ env.WATCHOS_SIMULATOR }}
 
   test_examples:
     name: Test examples
@@ -39,11 +54,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test example iOS
-        run: scripts/test.sh example-ios ios
-      - name: Test example macOS
-        run: scripts/test.sh example-cross-platform macos
-      - name: Test example tvOS
-        run: scripts/test.sh example-cross-platform tvos
+        run: scripts/test.sh example-ios -destinations ${{ env.IOS_SIMULATOR }}
+      - name: Test example cross platform
+        run: |
+          scripts/test.sh example-cross-platform -destinations \
+            ${{ env.MACOS }} \
+            ${{ env.TVOS_SIMULATOR }}
 
   test_upcoming_features:
     name: Test upcoming features with Xcode 15
@@ -53,7 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test upcoming features
-        run: ENABLE_UPCOMING_FEATURES=1 scripts/test.sh library ios
+        run: ENABLE_UPCOMING_FEATURES=1 scripts/test.sh library -destinations ${{ env.IOS_SIMULATOR_XCODE_15 }}
 
   test_language_mode:
     name: Test Swift 5 language mode
@@ -66,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test Swift 5 language mode
-        run: ENABLE_UPCOMING_FEATURES=${{ matrix.enable_upcoming_features }} scripts/test.sh library ios SWIFT_VERSION=5
+        run: ENABLE_UPCOMING_FEATURES=${{ matrix.enable_upcoming_features }} scripts/test.sh library SWIFT_VERSION=5 -destinations ${{ env.IOS_SIMULATOR }}
 
   benchmark:
     name: Benchmark
@@ -74,7 +90,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run benchmark test
-        run: scripts/test.sh benchmark ios
+        run: scripts/test.sh benchmark -destinations ${{ env.IOS_SIMULATOR }}
 
   validation:
     name: Validation
