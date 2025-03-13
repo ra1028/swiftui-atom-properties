@@ -82,7 +82,7 @@ extension StoreContext {
         in store: AtomStore,
         scopeKey: ScopeKey
     ) -> StoreContext {
-        .registerRoot(
+        registerRoot(
             in: store,
             scopeKey: scopeKey,
             overrides: [:],

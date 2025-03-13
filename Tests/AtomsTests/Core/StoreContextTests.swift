@@ -27,7 +27,7 @@ final class StoreContextTests: XCTestCase {
         let rootScope = try XCTUnwrap(store.state.scopes[rootScopeToken.key])
         XCTAssertEqual(rootScope.overrides.count, 1)
         XCTAssertEqual(rootScope.observers.count, 1)
-        XCTAssertTrue(rootScope.inheritedScopeKeys.isEmpty)
+        XCTAssertTrue(rootScope.ancestorScopeKeys.isEmpty)
 
         _ = context.registerScope(
             scopeID: ScopeID(0),
@@ -44,7 +44,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(scope0.overrides.count, 1)
         XCTAssertEqual(scope0.observers.count, 1)
         XCTAssertEqual(
-            scope0.inheritedScopeKeys,
+            scope0.ancestorScopeKeys,
             [ScopeID(0): scope0Token.key]
         )
 
@@ -63,7 +63,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(scope1.overrides.count, 1)
         XCTAssertEqual(scope1.observers.count, 1)
         XCTAssertEqual(
-            scope1.inheritedScopeKeys,
+            scope1.ancestorScopeKeys,
             [ScopeID(1): scope1Token.key]
         )
 
@@ -82,17 +82,23 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(scope2.overrides.count, 1)
         XCTAssertEqual(scope2.observers.count, 1)
         XCTAssertEqual(
-            scope2.inheritedScopeKeys,
+            scope2.ancestorScopeKeys,
             [
                 ScopeID(1): scope1Token.key,
                 ScopeID(2): scope2Token.key,
             ]
         )
 
-        context.unregister(scopeKey: rootScopeToken.key)
-        context.unregister(scopeKey: scope0Token.key)
-        context.unregister(scopeKey: scope1Token.key)
         context.unregister(scopeKey: scope2Token.key)
+        XCTAssertNil(store.state.scopes[scope2Token.key])
+
+        context.unregister(scopeKey: scope1Token.key)
+        XCTAssertNil(store.state.scopes[scope1Token.key])
+
+        context.unregister(scopeKey: scope0Token.key)
+        XCTAssertNil(store.state.scopes[scope0Token.key])
+
+        context.unregister(scopeKey: rootScopeToken.key)
         XCTAssertTrue(store.state.scopes.isEmpty)
     }
 
