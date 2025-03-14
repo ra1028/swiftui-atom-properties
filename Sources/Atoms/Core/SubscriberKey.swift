@@ -1,10 +1,12 @@
 internal struct SubscriberKey: Hashable {
     @MainActor
-    final class Token {}
+    final class Token {
+        private(set) lazy var key = SubscriberKey(token: self)
+    }
 
     private let identifier: ObjectIdentifier
 
-    init(token: Token) {
+    private init(token: Token) {
         identifier = ObjectIdentifier(token)
     }
 }

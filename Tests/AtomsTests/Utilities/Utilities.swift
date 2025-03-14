@@ -71,33 +71,34 @@ final class ResettableSubject<Output, Failure: Error>: Publisher, Subject {
 }
 
 extension StoreContext {
-    init(
-        store: AtomStore = AtomStore(),
-        observers: [Observer] = [],
-        overrides: [OverrideKey: any OverrideProtocol] = [:]
-    ) {
-        self.init(
-            store: store,
-            scopeKey: ScopeKey(token: ScopeKey.Token()),
-            observers: observers,
-            overrides: overrides
+    static var dummy: StoreContext {
+        .registerRoot(
+            in: AtomStore(),
+            scopeKey: ScopeKey.Token().key
         )
     }
 
-    init(
-        store: AtomStore = AtomStore(),
-        scopeKey: ScopeKey,
-        observers: [Observer] = [],
-        overrides: [OverrideKey: any OverrideProtocol] = [:]
-    ) {
-        self.init(
-            store: store,
+    static func registerRoot(
+        in store: AtomStore,
+        scopeKey: ScopeKey
+    ) -> StoreContext {
+        registerRoot(
+            in: store,
             scopeKey: scopeKey,
-            inheritedScopeKeys: [:],
-            observers: observers,
-            scopedObservers: [],
-            overrides: overrides,
-            scopedOverrides: [:]
+            overrides: [:],
+            observers: []
+        )
+    }
+
+    func registerScope(
+        scopeID: ScopeID,
+        scopeKey: ScopeKey
+    ) -> StoreContext {
+        registerScope(
+            scopeID: scopeID,
+            scopeKey: scopeKey,
+            overrides: [:],
+            observers: []
         )
     }
 }
@@ -115,6 +116,12 @@ extension Atoms.Subscription {
     }
 }
 
+extension AtomCache {
+    init(atom: Node, value: Node.Produced) {
+        self.init(atom: atom, value: value, initScopeKey: nil)
+    }
+}
+
 extension AtomCache: Equatable where Node: Equatable, Node.Produced: Equatable {
     // NB: Synthesized Equatable conformance doesn't work well in Xcode 14.0.1.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
@@ -127,4 +134,26 @@ extension TransactionState {
     convenience init(key: AtomKey) {
         self.init(key: key, { {} })
     }
+}
+
+extension Task where Success == Never, Failure == Never {
+    #if compiler(>=6)
+        static func yield(
+            isolation: isolated (any Actor)? = #isolation,
+            @_inheritActorContext until predicate: @Sendable () -> Bool
+        ) async {
+            while !predicate() {
+                await yield()
+            }
+        }
+    #else
+        @MainActor
+        static func yield(
+            @_inheritActorContext until predicate: @Sendable () -> Bool
+        ) async {
+            while !predicate() {
+                await yield()
+            }
+        }
+    #endif
 }

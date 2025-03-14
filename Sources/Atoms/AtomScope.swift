@@ -49,8 +49,8 @@ import SwiftUI
 ///
 public struct AtomScope<Content: View>: View {
     private let inheritance: Inheritance
-    private var overrides: [OverrideKey: any OverrideProtocol]
-    private var observers: [Observer]
+    private var overrides = [OverrideKey: any OverrideProtocol]()
+    private var observers = [Observer]()
     private let content: Content
 
     /// Creates a new scope with the specified content.
@@ -61,8 +61,6 @@ public struct AtomScope<Content: View>: View {
     public init<ID: Hashable>(id: ID = DefaultScopeID(), @ViewBuilder content: () -> Content) {
         let id = ScopeID(id)
         self.inheritance = .environment(id: id)
-        self.overrides = [:]
-        self.observers = []
         self.content = content()
     }
 
@@ -78,8 +76,6 @@ public struct AtomScope<Content: View>: View {
     ) {
         let store = context._store
         self.inheritance = .context(store: store)
-        self.overrides = store.scopedOverrides
-        self.observers = store.scopedObservers
         self.content = content()
     }
 
@@ -97,8 +93,6 @@ public struct AtomScope<Content: View>: View {
         case .context(let store):
             WithContext(
                 store: store,
-                overrides: overrides,
-                observers: observers,
                 content: content
             )
         }
@@ -109,6 +103,8 @@ public struct AtomScope<Content: View>: View {
     ///
     /// Note that unlike ``AtomRoot/observe(_:)``, this observes only the state changes caused by atoms
     /// used in this scope.
+    ///
+    /// - Note: It ignores the observers if this scope inherits the parent scope.
     ///
     /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
     ///
@@ -124,13 +120,15 @@ public struct AtomScope<Content: View>: View {
     ///
     /// This only overrides atoms used in this scope and never be inherited to a nested scopes.
     ///
+    /// - Note: It ignores the overrides if this scope inherits the parent scope.
+    ///
     /// - Parameters:
     ///   - atom: An atom to be overridden.
     ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
     public func scopedOverride<Node: Atom>(_ atom: Node, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atom)] = Override(isScoped: true, getValue: value) }
+        mutating(self) { $0.overrides[OverrideKey(atom)] = Override(getValue: value) }
     }
 
     /// Override the atoms used in this scope with the given value.
@@ -142,13 +140,15 @@ public struct AtomScope<Content: View>: View {
     ///
     /// This only overrides atoms used in this scope and never be inherited to a nested scopes.
     ///
+    /// - Note: It ignores the overrides if this scope inherits the parent scope.
+    ///
     /// - Parameters:
     ///   - atomType: An atom type to be overridden.
     ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
     public func scopedOverride<Node: Atom>(_ atomType: Node.Type, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atomType)] = Override(isScoped: true, getValue: value) }
+        mutating(self) { $0.overrides[OverrideKey(atomType)] = Override(getValue: value) }
     }
 }
 
@@ -165,37 +165,33 @@ private extension AtomScope {
         let content: Content
 
         @State
-        private var token = ScopeKey.Token()
+        private var state = ScopeState()
         @Environment(\.store)
         private var environmentStore
 
         var body: some View {
-            content.environment(
-                \.store,
-                environmentStore?.scoped(
-                    scopeKey: ScopeKey(token: token),
-                    scopeID: id,
-                    observers: observers,
-                    overrides: overrides
-                )
+            let scopeKey = state.token.key
+            let store = environmentStore?.registerScope(
+                scopeID: id,
+                scopeKey: scopeKey,
+                overrides: overrides,
+                observers: observers
             )
+
+            state.unregister = {
+                store?.unregister(scopeKey: scopeKey)
+            }
+
+            return content.environment(\.store, store)
         }
     }
 
     struct WithContext: View {
         let store: StoreContext
-        let overrides: [OverrideKey: any OverrideProtocol]
-        let observers: [Observer]
         let content: Content
 
         var body: some View {
-            content.environment(
-                \.store,
-                store.inherited(
-                    scopedObservers: observers,
-                    scopedOverrides: overrides
-                )
-            )
+            content.environment(\.store, store)
         }
     }
 }

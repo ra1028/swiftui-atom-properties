@@ -10,7 +10,7 @@ final class TopologicalSortTests: XCTestCase {
         let key1 = AtomKey(TestAtom(value: 1))
         let key2 = AtomKey(TestAtom(value: 2))
         let key3 = AtomKey(TestAtom(value: 3))
-        let subscriberKey = SubscriberKey(token: SubscriberKey.Token())
+        let token = SubscriberKey.Token()
 
         store.graph = Graph(
             dependencies: [
@@ -25,8 +25,8 @@ final class TopologicalSortTests: XCTestCase {
             ]
         )
         store.state.subscriptions = [
-            key2: [subscriberKey: Subscription()],
-            key3: [subscriberKey: Subscription()],
+            key2: [token.key: Subscription()],
+            key3: [token.key: Subscription()],
         ]
 
         let sorted = store.topologicalSorted(key: key0)
@@ -46,7 +46,7 @@ final class TopologicalSortTests: XCTestCase {
                 ),
                 Edge(
                     from: key3,
-                    to: .subscriber(key: subscriberKey)
+                    to: .subscriber(key: token.key)
                 ),
             ],
             [
@@ -64,7 +64,7 @@ final class TopologicalSortTests: XCTestCase {
                 ),
                 Edge(
                     from: key3,
-                    to: .subscriber(key: subscriberKey)
+                    to: .subscriber(key: token.key)
                 ),
             ],
         ]
@@ -72,12 +72,12 @@ final class TopologicalSortTests: XCTestCase {
             [
                 .atom(key: key2): [key0],
                 .atom(key: key3): [key2],
-                .subscriber(key: subscriberKey): [key2, key3, key2],
+                .subscriber(key: token.key): [key2, key3, key2],
             ],
             [
                 .atom(key: key2): [key1],
                 .atom(key: key3): [key2],
-                .subscriber(key: subscriberKey): [key2, key3, key2],
+                .subscriber(key: token.key): [key2, key3, key2],
             ],
         ]
 

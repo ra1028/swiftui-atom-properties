@@ -99,7 +99,7 @@ public struct AtomRoot<Content: View>: View {
             )
 
         case .unmanaged(let store):
-            Unmanaged(
+            Scope(
                 store: store,
                 overrides: overrides,
                 observers: observers,
@@ -129,7 +129,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atom: Node, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atom)] = Override(isScoped: false, getValue: value) }
+        mutating(self) { $0.overrides[OverrideKey(atom)] = Override(getValue: value) }
     }
 
     /// Overrides the atoms with the given value.
@@ -145,7 +145,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atomType)] = Override(isScoped: false, getValue: value) }
+        mutating(self) { $0.overrides[OverrideKey(atomType)] = Override(getValue: value) }
     }
 }
 
@@ -163,46 +163,41 @@ private extension AtomRoot {
         @State
         private var store = AtomStore()
         @State
-        private var token = ScopeKey.Token()
+        private var state = ScopeState()
 
         var body: some View {
-            content.environment(
-                \.store,
-                StoreContext(
-                    store: store,
-                    scopeKey: ScopeKey(token: token),
-                    inheritedScopeKeys: [:],
-                    observers: observers,
-                    scopedObservers: [],
-                    overrides: overrides,
-                    scopedOverrides: [:]
-                )
+            Scope(
+                store: store,
+                overrides: overrides,
+                observers: observers,
+                content: content
             )
         }
     }
 
-    struct Unmanaged: View {
+    struct Scope: View {
         let store: AtomStore
         let overrides: [OverrideKey: any OverrideProtocol]
         let observers: [Observer]
         let content: Content
 
         @State
-        private var token = ScopeKey.Token()
+        private var state = ScopeState()
 
         var body: some View {
-            content.environment(
-                \.store,
-                StoreContext(
-                    store: store,
-                    scopeKey: ScopeKey(token: token),
-                    inheritedScopeKeys: [:],
-                    observers: observers,
-                    scopedObservers: [],
-                    overrides: overrides,
-                    scopedOverrides: [:]
-                )
+            let scopeKey = state.token.key
+            let store = StoreContext.registerRoot(
+                in: store,
+                scopeKey: scopeKey,
+                overrides: overrides,
+                observers: observers
             )
+
+            state.unregister = {
+                store.unregister(scopeKey: scopeKey)
+            }
+
+            return content.environment(\.store, store)
         }
     }
 }

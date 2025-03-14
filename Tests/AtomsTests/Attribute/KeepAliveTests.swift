@@ -23,7 +23,8 @@ final class KeepAliveTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should not be released") { _ in
             let store = AtomStore()
-            let context = StoreContext(store: store)
+            let rootScopeToken = ScopeKey.Token()
+            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
             let atom = KeepAliveAtom(value: 0)
             let key = AtomKey(atom)
             let subscriberState = SubscriberState()
@@ -38,18 +39,18 @@ final class KeepAliveTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should be released when overridden") { _ in
             let store = AtomStore()
-            let context = StoreContext(store: store)
+            let rootScopeToken = ScopeKey.Token()
+            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
             let atom = KeepAliveAtom(value: 0)
             let scopeToken = ScopeKey.Token()
-            let scopeKey = ScopeKey(token: scopeToken)
-            let key = AtomKey(atom, scopeKey: scopeKey)
-            let scopedContext = context.scoped(
-                scopeKey: scopeKey,
+            let key = AtomKey(atom, scopeKey: scopeToken.key)
+            let scopedContext = context.registerScope(
                 scopeID: ScopeID(DefaultScopeID()),
-                observers: [],
+                scopeKey: scopeToken.key,
                 overrides: [
-                    OverrideKey(atom): Override<KeepAliveAtom<Int>>(isScoped: true) { _ in 10 }
-                ]
+                    OverrideKey(atom): Override<KeepAliveAtom<Int>> { _ in 10 }
+                ],
+                observers: []
             )
             let subscriberState = SubscriberState()
             let subscriber = Subscriber(subscriberState)
@@ -63,16 +64,14 @@ final class KeepAliveTests: XCTestCase {
 
         XCTContext.runActivity(named: "Should be released when scoped") { _ in
             let store = AtomStore()
-            let context = StoreContext(store: store)
+            let rootScopeToken = ScopeKey.Token()
+            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
             let atom = ScopedKeepAliveAtom(value: 0)
             let scopeToken = ScopeKey.Token()
-            let scopeKey = ScopeKey(token: scopeToken)
-            let key = AtomKey(atom, scopeKey: scopeKey)
-            let scopedContext = context.scoped(
-                scopeKey: scopeKey,
+            let key = AtomKey(atom, scopeKey: scopeToken.key)
+            let scopedContext = context.registerScope(
                 scopeID: ScopeID(DefaultScopeID()),
-                observers: [],
-                overrides: [:]
+                scopeKey: scopeToken.key
             )
             let subscriberState = SubscriberState()
             let subscriber = Subscriber(subscriberState)

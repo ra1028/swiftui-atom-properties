@@ -9,7 +9,7 @@ final class AtomProducerContextTests: XCTestCase {
         let transactionState = TransactionState(key: AtomKey(atom))
         var updatedValue: Int?
 
-        let context = AtomProducerContext<Int>(store: StoreContext(), transactionState: transactionState) { value in
+        let context = AtomProducerContext<Int>(store: .dummy, transactionState: transactionState) { value in
             updatedValue = value
         }
 
@@ -22,7 +22,7 @@ final class AtomProducerContextTests: XCTestCase {
     func testOnTermination() {
         let atom = TestValueAtom(value: 0)
         let transactionState = TransactionState(key: AtomKey(atom))
-        let context = AtomProducerContext<Int>(store: StoreContext(), transactionState: transactionState) { _ in }
+        let context = AtomProducerContext<Int>(store: .dummy, transactionState: transactionState) { _ in }
 
         context.onTermination = {}
         XCTAssertNotNil(context.onTermination)
@@ -43,7 +43,7 @@ final class AtomProducerContextTests: XCTestCase {
             didBegin = true
             return { didCommit = true }
         }
-        let context = AtomProducerContext<Int>(store: StoreContext(), transactionState: transactionState) { _ in }
+        let context = AtomProducerContext<Int>(store: .dummy, transactionState: transactionState) { _ in }
 
         context.transaction { _ in }
 
@@ -60,7 +60,7 @@ final class AtomProducerContextTests: XCTestCase {
             didBegin = true
             return { didCommit = true }
         }
-        let context = AtomProducerContext<Int>(store: StoreContext(), transactionState: transactionState) { _ in }
+        let context = AtomProducerContext<Int>(store: .dummy, transactionState: transactionState) { _ in }
 
         await context.transaction { _ in
             try? await Task.sleep(seconds: 0)
