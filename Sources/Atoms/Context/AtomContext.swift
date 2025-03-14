@@ -119,7 +119,7 @@ public protocol AtomContext {
     ///
     /// - Parameter atom: An atom to reset.
     @_disfavoredOverload
-    func reset<Node: Atom>(_ atom: Node)
+    func reset(_ atom: some Atom)
 
     /// Calls arbitrary reset function of the given atom.
     ///
@@ -136,7 +136,7 @@ public protocol AtomContext {
     /// ```
     ///
     /// - Parameter atom: An atom to reset.
-    func reset<Node: Resettable>(_ atom: Node)
+    func reset(_ atom: some Resettable)
 }
 
 public extension AtomContext {

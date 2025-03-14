@@ -182,7 +182,7 @@ internal struct StoreContext {
 
     @usableFromInline
     @_disfavoredOverload
-    func reset<Node: Atom>(_ atom: Node) {
+    func reset(_ atom: some Atom) {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
 
         if let cache = lookupCache(of: atom, for: key) {
@@ -192,7 +192,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func reset<Node: Resettable>(_ atom: Node) {
+    func reset(_ atom: some Resettable) {
         let currentContext = AtomCurrentContext(store: self)
         atom.reset(context: currentContext)
     }
@@ -464,7 +464,7 @@ private extension StoreContext {
         }
     }
 
-    func unsubscribe<Keys: Sequence<AtomKey>>(_ keys: Keys, for subscriberKey: SubscriberKey) {
+    func unsubscribe(_ keys: some Sequence<AtomKey>, for subscriberKey: SubscriberKey) {
         for key in keys {
             store.state.subscriptions[key]?.removeValue(forKey: subscriberKey)
             checkAndRelease(for: key)
@@ -645,7 +645,7 @@ private extension StoreContext {
         notifyUpdateToObservers(scopeKeys: scopeKeys)
     }
 
-    func notifyUpdateToObservers<Keys: Sequence<ScopeKey>>(scopeKeys: Keys) {
+    func notifyUpdateToObservers(scopeKeys: some Sequence<ScopeKey>) {
         let observers = store.state.scopes[rootScopeKey]?.observers ?? []
         let scopedObservers = scopeKeys.flatMap { store.state.scopes[$0]?.observers ?? [] }
 

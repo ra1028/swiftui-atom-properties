@@ -136,7 +136,7 @@ public struct AtomCurrentContext: AtomContext {
     /// - Parameter atom: An atom to reset.
     @inlinable
     @_disfavoredOverload
-    public func reset<Node: Atom>(_ atom: Node) {
+    public func reset(_ atom: some Atom) {
         _store.reset(atom)
     }
 
@@ -156,7 +156,7 @@ public struct AtomCurrentContext: AtomContext {
     ///
     /// - Parameter atom: An atom to reset.
     @inlinable
-    public func reset<Node: Resettable>(_ atom: Node) {
+    public func reset(_ atom: some Resettable) {
         _store.reset(atom)
     }
 }
