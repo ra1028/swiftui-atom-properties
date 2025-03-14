@@ -85,8 +85,8 @@ extension StoreContext {
         registerRoot(
             in: store,
             scopeKey: scopeKey,
-            overrides: [:],
-            observers: []
+            observers: [],
+            overrideContainer: OverrideContainer()
         )
     }
 
@@ -97,8 +97,8 @@ extension StoreContext {
         registerScope(
             scopeID: scopeID,
             scopeKey: scopeKey,
-            overrides: [:],
-            observers: []
+            observers: [],
+            overrideContainer: OverrideContainer()
         )
     }
 }
@@ -133,6 +133,16 @@ extension AtomCache: Equatable where Node: Equatable, Node.Produced: Equatable {
 extension TransactionState {
     convenience init(key: AtomKey) {
         self.init(key: key, { {} })
+    }
+}
+
+extension OverrideContainer {
+    func addingOverride<Node: Atom>(for atom: Node, with value: @MainActor @escaping (Node) -> Node.Produced) -> Self {
+        mutating(self) { $0.addOverride(for: atom, with: value) }
+    }
+
+    func addingOverride<Node: Atom>(for atomType: Node.Type, with value: @MainActor @escaping (Node) -> Node.Produced) -> Self {
+        mutating(self) { $0.addOverride(for: atomType, with: value) }
     }
 }
 

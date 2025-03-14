@@ -33,8 +33,8 @@ final class ResettableTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [observer]
+            observers: [observer],
+            overrideContainer: OverrideContainer()
         )
 
         XCTContext.runActivity(named: "Should call custom reset behavior") { _ in
@@ -72,12 +72,11 @@ final class ResettableTests: XCTestCase {
             let scopedContext = context.registerScope(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scopeKey,
-                overrides: [
-                    OverrideKey(atom): Override<TestCustomResettableAtom<Int>> { _ in
+                observers: [],
+                overrideContainer: OverrideContainer()
+                    .addingOverride(for: atom) { _ in
                         2
                     }
-                ],
-                observers: []
             )
 
             let value = scopedContext.watch(

@@ -62,8 +62,8 @@ import SwiftUI
 ///
 public struct AtomRoot<Content: View>: View {
     private var storage: Storage
-    private var overrides = [OverrideKey: any OverrideProtocol]()
     private var observers = [Observer]()
+    private var overrideContainer = OverrideContainer()
     private let content: Content
 
     /// Creates an atom root with the specified content that will be allowed to use atoms.
@@ -93,16 +93,16 @@ public struct AtomRoot<Content: View>: View {
         switch storage {
         case .managed:
             Managed(
-                overrides: overrides,
                 observers: observers,
+                overrideContainer: overrideContainer,
                 content: content
             )
 
         case .unmanaged(let store):
             Scope(
                 store: store,
-                overrides: overrides,
                 observers: observers,
+                overrideContainer: overrideContainer,
                 content: content
             )
         }
@@ -129,7 +129,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atom: Node, with value: @MainActor @escaping (Node) -> Node.Produced) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atom)] = Override(getValue: value) }
+        mutating(self) { $0.overrideContainer.addOverride(for: atom, with: value) }
     }
 
     /// Overrides the atoms with the given value.
@@ -145,7 +145,7 @@ public struct AtomRoot<Content: View>: View {
     ///
     /// - Returns: The self instance.
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @MainActor @escaping (Node) -> Node.Produced) -> Self {
-        mutating(self) { $0.overrides[OverrideKey(atomType)] = Override(getValue: value) }
+        mutating(self) { $0.overrideContainer.addOverride(for: atomType, with: value) }
     }
 }
 
@@ -156,8 +156,8 @@ private extension AtomRoot {
     }
 
     struct Managed: View {
-        let overrides: [OverrideKey: any OverrideProtocol]
         let observers: [Observer]
+        let overrideContainer: OverrideContainer
         let content: Content
 
         @State
@@ -168,8 +168,8 @@ private extension AtomRoot {
         var body: some View {
             Scope(
                 store: store,
-                overrides: overrides,
                 observers: observers,
+                overrideContainer: overrideContainer,
                 content: content
             )
         }
@@ -177,8 +177,8 @@ private extension AtomRoot {
 
     struct Scope: View {
         let store: AtomStore
-        let overrides: [OverrideKey: any OverrideProtocol]
         let observers: [Observer]
+        let overrideContainer: OverrideContainer
         let content: Content
 
         @State
@@ -189,8 +189,8 @@ private extension AtomRoot {
             let store = StoreContext.registerRoot(
                 in: store,
                 scopeKey: scopeKey,
-                overrides: overrides,
-                observers: observers
+                observers: observers,
+                overrideContainer: overrideContainer
             )
 
             state.unregister = {

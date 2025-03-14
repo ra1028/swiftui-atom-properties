@@ -132,8 +132,8 @@ private extension ViewContext {
             return .registerRoot(
                 in: AtomStore(),
                 scopeKey: ScopeKey.Token().key,
-                overrides: [:],
-                observers: []
+                observers: [],
+                overrideContainer: OverrideContainer()
             )
         }
 

@@ -372,7 +372,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
     public func override<Node: Atom>(_ atom: Node, with value: @MainActor @escaping (Node) -> Node.Produced) {
-        _state.overrides[OverrideKey(atom)] = Override(getValue: value)
+        _state.overrideContainer.addOverride(for: atom, with: value)
     }
 
     /// Overrides the atom value with the given value.
@@ -387,7 +387,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
     public func override<Node: Atom>(_ atomType: Node.Type, with value: @MainActor @escaping (Node) -> Node.Produced) {
-        _state.overrides[OverrideKey(atomType)] = Override(getValue: value)
+        _state.overrideContainer.addOverride(for: atomType, with: value)
     }
 }
 
@@ -401,7 +401,7 @@ internal extension AtomTestContext {
         let subscriberState = SubscriberState()
 
         @usableFromInline
-        var overrides = [OverrideKey: any OverrideProtocol]()
+        var overrideContainer = OverrideContainer()
 
         @usableFromInline
         var onUpdate: (() -> Void)?
@@ -440,8 +440,8 @@ internal extension AtomTestContext {
         .registerRoot(
             in: _state.store,
             scopeKey: _state.token.key,
-            overrides: _state.overrides,
-            observers: []
+            observers: [],
+            overrideContainer: _state.overrideContainer
         )
     }
 

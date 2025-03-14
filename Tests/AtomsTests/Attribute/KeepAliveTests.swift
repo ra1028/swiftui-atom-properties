@@ -44,16 +44,17 @@ final class KeepAliveTests: XCTestCase {
             let atom = KeepAliveAtom(value: 0)
             let scopeToken = ScopeKey.Token()
             let key = AtomKey(atom, scopeKey: scopeToken.key)
+            let subscriberState = SubscriberState()
+            let subscriber = Subscriber(subscriberState)
             let scopedContext = context.registerScope(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scopeToken.key,
-                overrides: [
-                    OverrideKey(atom): Override<KeepAliveAtom<Int>> { _ in 10 }
-                ],
-                observers: []
+                observers: [],
+                overrideContainer: OverrideContainer()
+                    .addingOverride(for: atom) { _ in
+                        10
+                    }
             )
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
 
             _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
             XCTAssertNotNil(store.state.caches[key])
