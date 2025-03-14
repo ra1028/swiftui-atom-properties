@@ -371,7 +371,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atom: An atom to be overridden.
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
-    public func override<Node: Atom>(_ atom: Node, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) {
+    public func override<Node: Atom>(_ atom: Node, with value: @MainActor @escaping (Node) -> Node.Produced) {
         _state.overrides[OverrideKey(atom)] = Override(getValue: value)
     }
 
@@ -386,7 +386,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atomType: An atom type to be overridden.
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
-    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) {
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @MainActor @escaping (Node) -> Node.Produced) {
         _state.overrides[OverrideKey(atomType)] = Override(getValue: value)
     }
 }

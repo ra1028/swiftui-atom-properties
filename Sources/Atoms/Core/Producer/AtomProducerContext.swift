@@ -7,7 +7,7 @@ internal struct AtomProducerContext<Value> {
     init(
         store: StoreContext,
         transactionState: TransactionState,
-        update: @escaping @MainActor (Value) -> Void
+        update: @MainActor @escaping (Value) -> Void
     ) {
         self.store = store
         self.transactionState = transactionState

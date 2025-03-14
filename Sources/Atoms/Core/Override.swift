@@ -2,16 +2,16 @@
 internal protocol OverrideProtocol: Sendable {
     associatedtype Node: Atom
 
-    var getValue: @MainActor @Sendable (Node) -> Node.Produced { get }
+    var getValue: @MainActor (Node) -> Node.Produced { get }
 }
 
 @usableFromInline
 internal struct Override<Node: Atom>: OverrideProtocol {
     @usableFromInline
-    let getValue: @MainActor @Sendable (Node) -> Node.Produced
+    let getValue: @MainActor (Node) -> Node.Produced
 
     @usableFromInline
-    init(getValue: @escaping @MainActor @Sendable (Node) -> Node.Produced) {
+    init(getValue: @MainActor @escaping (Node) -> Node.Produced) {
         self.getValue = getValue
     }
 }

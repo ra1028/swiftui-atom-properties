@@ -109,7 +109,7 @@ public struct AtomScope<Content: View>: View {
     /// - Parameter onUpdate: A closure to handle a snapshot of recent updates.
     ///
     /// - Returns: The self instance.
-    public func scopedObserve(_ onUpdate: @escaping @MainActor @Sendable (Snapshot) -> Void) -> Self {
+    public func scopedObserve(_ onUpdate: @MainActor @escaping (Snapshot) -> Void) -> Self {
         mutating(self) { $0.observers.append(Observer(onUpdate: onUpdate)) }
     }
 
@@ -127,7 +127,7 @@ public struct AtomScope<Content: View>: View {
     ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func scopedOverride<Node: Atom>(_ atom: Node, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) -> Self {
+    public func scopedOverride<Node: Atom>(_ atom: Node, with value: @MainActor @escaping (Node) -> Node.Produced) -> Self {
         mutating(self) { $0.overrides[OverrideKey(atom)] = Override(getValue: value) }
     }
 
@@ -147,7 +147,7 @@ public struct AtomScope<Content: View>: View {
     ///   - value: A value to be used instead of the atom's value.
     ///
     /// - Returns: The self instance.
-    public func scopedOverride<Node: Atom>(_ atomType: Node.Type, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) -> Self {
+    public func scopedOverride<Node: Atom>(_ atomType: Node.Type, with value: @MainActor @escaping (Node) -> Node.Produced) -> Self {
         mutating(self) { $0.overrides[OverrideKey(atomType)] = Override(getValue: value) }
     }
 }
