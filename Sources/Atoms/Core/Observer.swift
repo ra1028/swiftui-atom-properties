@@ -1,4 +1,4 @@
 @usableFromInline
 internal struct Observer: Sendable {
-    let onUpdate: @MainActor @Sendable (Snapshot) -> Void
+    let onUpdate: @MainActor (Snapshot) -> Void
 }

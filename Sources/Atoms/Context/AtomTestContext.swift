@@ -281,7 +281,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// - Parameter atom: An atom to reset.
     @inlinable
     @_disfavoredOverload
-    public func reset<Node: Atom>(_ atom: Node) {
+    public func reset(_ atom: some Atom) {
         _store.reset(atom)
     }
 
@@ -301,7 +301,7 @@ public struct AtomTestContext: AtomWatchableContext {
     ///
     /// - Parameter atom: An atom to reset.
     @inlinable
-    public func reset<Node: Resettable>(_ atom: Node) {
+    public func reset(_ atom: some Resettable) {
         _store.reset(atom)
     }
 
@@ -371,8 +371,8 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atom: An atom to be overridden.
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
-    public func override<Node: Atom>(_ atom: Node, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) {
-        _state.overrides[OverrideKey(atom)] = Override(getValue: value)
+    public func override<Node: Atom>(_ atom: Node, with value: @MainActor @escaping (Node) -> Node.Produced) {
+        _state.overrideContainer.addOverride(for: atom, with: value)
     }
 
     /// Overrides the atom value with the given value.
@@ -386,8 +386,8 @@ public struct AtomTestContext: AtomWatchableContext {
     ///   - atomType: An atom type to be overridden.
     ///   - value: A value to be used instead of the atom's value.
     @inlinable
-    public func override<Node: Atom>(_ atomType: Node.Type, with value: @escaping @MainActor @Sendable (Node) -> Node.Produced) {
-        _state.overrides[OverrideKey(atomType)] = Override(getValue: value)
+    public func override<Node: Atom>(_ atomType: Node.Type, with value: @MainActor @escaping (Node) -> Node.Produced) {
+        _state.overrideContainer.addOverride(for: atomType, with: value)
     }
 }
 
@@ -401,7 +401,7 @@ internal extension AtomTestContext {
         let subscriberState = SubscriberState()
 
         @usableFromInline
-        var overrides = [OverrideKey: any OverrideProtocol]()
+        var overrideContainer = OverrideContainer()
 
         @usableFromInline
         var onUpdate: (() -> Void)?
@@ -440,8 +440,8 @@ internal extension AtomTestContext {
         .registerRoot(
             in: _state.store,
             scopeKey: _state.token.key,
-            overrides: _state.overrides,
-            observers: []
+            observers: [],
+            overrideContainer: _state.overrideContainer
         )
     }
 

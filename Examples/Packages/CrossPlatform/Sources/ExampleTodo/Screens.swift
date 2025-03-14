@@ -43,10 +43,8 @@ struct TodoListScreen: View {
     }
 }
 
-struct TodoListScreen_Preview: PreviewProvider {
-    static var previews: some View {
-        AtomRoot {
-            TodoListScreen()
-        }
+#Preview {
+    AtomRoot {
+        TodoListScreen()
     }
 }

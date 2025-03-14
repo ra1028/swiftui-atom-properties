@@ -85,8 +85,8 @@ extension StoreContext {
         registerRoot(
             in: store,
             scopeKey: scopeKey,
-            overrides: [:],
-            observers: []
+            observers: [],
+            overrideContainer: OverrideContainer()
         )
     }
 
@@ -97,8 +97,8 @@ extension StoreContext {
         registerScope(
             scopeID: scopeID,
             scopeKey: scopeKey,
-            overrides: [:],
-            observers: []
+            observers: [],
+            overrideContainer: OverrideContainer()
         )
     }
 }
@@ -110,7 +110,7 @@ extension AtomKey {
 }
 
 extension Atoms.Subscription {
-    init(update: @MainActor @Sendable @escaping () -> Void = {}) {
+    init(update: @MainActor @escaping () -> Void = {}) {
         let location = SourceLocation()
         self.init(location: location, update: update)
     }
@@ -136,11 +136,21 @@ extension TransactionState {
     }
 }
 
+extension OverrideContainer {
+    func addingOverride<Node: Atom>(for atom: Node, with value: @MainActor @escaping (Node) -> Node.Produced) -> Self {
+        mutating(self) { $0.addOverride(for: atom, with: value) }
+    }
+
+    func addingOverride<Node: Atom>(for atomType: Node.Type, with value: @MainActor @escaping (Node) -> Node.Produced) -> Self {
+        mutating(self) { $0.addOverride(for: atomType, with: value) }
+    }
+}
+
 extension Task where Success == Never, Failure == Never {
     #if compiler(>=6)
         static func yield(
             isolation: isolated (any Actor)? = #isolation,
-            @_inheritActorContext until predicate: @Sendable () -> Bool
+            @_inheritActorContext until predicate: () -> Bool
         ) async {
             while !predicate() {
                 await yield()
@@ -149,7 +159,7 @@ extension Task where Success == Never, Failure == Never {
     #else
         @MainActor
         static func yield(
-            @_inheritActorContext until predicate: @Sendable () -> Bool
+            @_inheritActorContext until predicate: () -> Bool
         ) async {
             while !predicate() {
                 await yield()

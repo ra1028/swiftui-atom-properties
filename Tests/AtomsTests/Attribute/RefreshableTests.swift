@@ -20,8 +20,8 @@ final class RefreshableTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [observer]
+            observers: [observer],
+            overrideContainer: OverrideContainer()
 
         )
 
@@ -67,10 +67,11 @@ final class RefreshableTests: XCTestCase {
             let scopedContext = context.registerScope(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scopeKey,
-                overrides: [
-                    OverrideKey(atom): Override<TestCustomRefreshableAtom<Int>> { _ in 2 }
-                ],
-                observers: []
+                observers: [],
+                overrideContainer: OverrideContainer()
+                    .addingOverride(for: atom) { _ in
+                        2
+                    }
             )
 
             let value0 = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())

@@ -12,37 +12,37 @@ final class StoreContextTests: XCTestCase {
         let scope0Token = ScopeKey.Token()
         let scope1Token = ScopeKey.Token()
         let scope2Token = ScopeKey.Token()
+        let overrideContainer = OverrideContainer()
+            .addingOverride(for: atom) { _ in
+                0
+            }
 
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [
-                OverrideKey(atom): Override<TestAtom<Int>> { _ in 0 }
-            ],
             observers: [
                 Observer { _ in }
-            ]
+            ],
+            overrideContainer: overrideContainer
         )
 
         let rootScope = try XCTUnwrap(store.state.scopes[rootScopeToken.key])
-        XCTAssertEqual(rootScope.overrides.count, 1)
         XCTAssertEqual(rootScope.observers.count, 1)
+        XCTAssertNotNil(rootScope.overrideContainer.getOverride(for: atom))
         XCTAssertTrue(rootScope.ancestorScopeKeys.isEmpty)
 
         _ = context.registerScope(
             scopeID: ScopeID(0),
             scopeKey: scope0Token.key,
-            overrides: [
-                OverrideKey(atom): Override<TestAtom<Int>> { _ in 0 }
-            ],
             observers: [
                 Observer { _ in }
-            ]
+            ],
+            overrideContainer: overrideContainer
         )
 
         let scope0 = try XCTUnwrap(store.state.scopes[scope0Token.key])
-        XCTAssertEqual(scope0.overrides.count, 1)
         XCTAssertEqual(scope0.observers.count, 1)
+        XCTAssertNotNil(scope0.overrideContainer.getOverride(for: atom))
         XCTAssertEqual(
             scope0.ancestorScopeKeys,
             [ScopeID(0): scope0Token.key]
@@ -51,17 +51,15 @@ final class StoreContextTests: XCTestCase {
         let scoped1Context = context.registerScope(
             scopeID: ScopeID(1),
             scopeKey: scope1Token.key,
-            overrides: [
-                OverrideKey(atom): Override<TestAtom<Int>> { _ in 0 }
-            ],
             observers: [
                 Observer { _ in }
-            ]
+            ],
+            overrideContainer: overrideContainer
         )
 
         let scope1 = try XCTUnwrap(store.state.scopes[scope1Token.key])
-        XCTAssertEqual(scope1.overrides.count, 1)
         XCTAssertEqual(scope1.observers.count, 1)
+        XCTAssertNotNil(scope1.overrideContainer.getOverride(for: atom))
         XCTAssertEqual(
             scope1.ancestorScopeKeys,
             [ScopeID(1): scope1Token.key]
@@ -70,17 +68,15 @@ final class StoreContextTests: XCTestCase {
         _ = scoped1Context.registerScope(
             scopeID: ScopeID(2),
             scopeKey: scope2Token.key,
-            overrides: [
-                OverrideKey(atom): Override<TestAtom<Int>> { _ in 0 }
-            ],
             observers: [
                 Observer { _ in }
-            ]
+            ],
+            overrideContainer: overrideContainer
         )
 
         let scope2 = try XCTUnwrap(store.state.scopes[scope2Token.key])
-        XCTAssertEqual(scope2.overrides.count, 1)
         XCTAssertEqual(scope2.observers.count, 1)
+        XCTAssertNotNil(scope2.overrideContainer.getOverride(for: atom))
         XCTAssertEqual(
             scope2.ancestorScopeKeys,
             [
@@ -113,8 +109,8 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [observer]
+            observers: [observer],
+            overrideContainer: OverrideContainer()
         )
 
         XCTAssertEqual(context.read(atom), 0)
@@ -145,8 +141,8 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [observer]
+            observers: [observer],
+            overrideContainer: OverrideContainer()
         )
 
         context.set(1, for: atom)
@@ -196,8 +192,8 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [observer]
+            observers: [observer],
+            overrideContainer: OverrideContainer()
         )
 
         context.modify(atom) { $0 = 1 }
@@ -250,8 +246,8 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [observer]
+            observers: [observer],
+            overrideContainer: OverrideContainer()
         )
 
         XCTAssertEqual(context.watch(dependency0, in: transactionState), 0)
@@ -298,8 +294,8 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [observer]
+            observers: [observer],
+            overrideContainer: OverrideContainer()
         )
 
         var updateCount = 0
@@ -348,8 +344,8 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [observer]
+            observers: [observer],
+            overrideContainer: OverrideContainer()
         )
 
         let phase0 = await context.refresh(atom)
@@ -386,10 +382,11 @@ final class StoreContextTests: XCTestCase {
         let scopedContext = context.registerScope(
             scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scopeToken.key,
-            overrides: [
-                OverrideKey(atom): Override<TestPublisherAtom<Just<Int>>> { _ in .success(1) }
-            ],
-            observers: []
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: atom) { _ in
+                    .success(1)
+                }
         )
 
         let phase3 = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
@@ -417,8 +414,8 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [observer]
+            observers: [observer],
+            overrideContainer: OverrideContainer()
         )
 
         context.reset(atom)
@@ -464,8 +461,8 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [observer]
+            observers: [observer],
+            overrideContainer: OverrideContainer()
         )
 
         _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
@@ -524,35 +521,29 @@ final class StoreContextTests: XCTestCase {
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [
-                // Should override atoms used in any scopes.
-                OverrideKey(atom0): Override<TestAtom<Int>> { _ in
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: atom0) { _ in
                     10
                 }
-            ],
-            observers: []
         )
         let scoped1Context = context.registerScope(
             scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scope1Token.key,
-            overrides: [
-                // Should scoped to this scope.
-                OverrideKey(atom1): Override<TestAtom<Int>> { _ in
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: atom1) { _ in
                     20
                 }
-            ],
-            observers: []
         )
         let scoped2Context = scoped1Context.registerScope(
             scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scope2Token.key,
-            overrides: [
-                // Should override the atoms overridden in the ancestor scopes.
-                OverrideKey(TestAtom<Int>.self): Override<TestAtom<Int>> { _ in
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: TestAtom<Int>.self) { _ in
                     30
                 }
-            ],
-            observers: []
         )
 
         XCTAssertEqual(scoped1Context.watch(atom0, subscriber: subscriber, subscription: Subscription()), 10)
@@ -622,22 +613,20 @@ final class StoreContextTests: XCTestCase {
         let scoped1Context = context.registerScope(
             scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scope1Token.key,
-            overrides: [
-                OverrideKey(dependency1Atom): Override<TestDependency1Atom> { _ in
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: dependency1Atom) { _ in
                     10
                 }
-            ],
-            observers: []
         )
         let scoped2Context = scoped1Context.registerScope(
             scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scope2Token.key,
-            overrides: [
-                OverrideKey(dependency2Atom): Override<TestDependency2Atom> { _ in
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: dependency2Atom) { _ in
                     20
                 }
-            ],
-            observers: []
         )
 
         // Should return default values in the scope that atoms are not overridden.
@@ -836,12 +825,11 @@ final class StoreContextTests: XCTestCase {
         let scopedContext = context.registerScope(
             scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scopeToken.key,
-            overrides: [
-                OverrideKey(TestDependency2Atom()): Override<TestDependency2Atom> { _ in
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: TestDependency2Atom()) { _ in
                     20
                 }
-            ],
-            observers: []
         )
 
         // Pre initialize some of dependencies.
@@ -906,19 +894,13 @@ final class StoreContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let scope1Token = ScopeKey.Token()
         let scope2Token = ScopeKey.Token()
-
-        var scopedOverride = [OverrideKey: any OverrideProtocol]()
-        scopedOverride[OverrideKey(atom1)] = Override<TestAtom<Int>> { _ in
-            100
-        }
-
         var snapshots = [Snapshot]()
         var scopedSnapshots = [Snapshot]()
         let context = StoreContext.registerRoot(
             in: store,
             scopeKey: rootScopeToken.key,
-            overrides: [:],
-            observers: [Observer { snapshots.append($0) }]
+            observers: [Observer { snapshots.append($0) }],
+            overrideContainer: OverrideContainer()
         )
         let scoped1Context = context.registerScope(
             scopeID: ScopeID(DefaultScopeID()),
@@ -927,8 +909,11 @@ final class StoreContextTests: XCTestCase {
         let scoped2Context = scoped1Context.registerScope(
             scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scope2Token.key,
-            overrides: scopedOverride,
-            observers: [Observer { scopedSnapshots.append($0) }]
+            observers: [Observer { scopedSnapshots.append($0) }],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: atom1) { _ in
+                    100
+                }
         )
 
         // New value
@@ -1103,12 +1088,12 @@ final class StoreContextTests: XCTestCase {
         let scopedContext = context.registerScope(
             scopeID: ScopeID(DefaultScopeID()),
             scopeKey: scopeToken.key,
-            overrides: [:],
             observers: [
                 Observer { snapshot in
                     snapshots.append(snapshot)
                 }
-            ]
+            ],
+            overrideContainer: OverrideContainer()
         )
 
         let expectedGraph = Graph(

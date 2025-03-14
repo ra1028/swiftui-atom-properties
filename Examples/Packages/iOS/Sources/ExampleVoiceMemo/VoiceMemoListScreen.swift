@@ -123,19 +123,17 @@ private struct ElapsedTimeDisplay: View {
     }
 }
 
-struct VoiceMemoListScreen_Preview: PreviewProvider {
-    static var previews: some View {
-        AtomRoot {
-            VoiceMemoListScreen()
-        }
-        .override(AudioSessionAtom()) { _ in
-            MockAudioSession()
-        }
-        .override(AudioRecorderAtom()) { _ in
-            MockAudioRecorder()
-        }
-        .override(AudioPlayerAtom.self) { _ in
-            MockAudioPlayer()
-        }
+#Preview {
+    AtomRoot {
+        VoiceMemoListScreen()
+    }
+    .override(AudioSessionAtom()) { _ in
+        MockAudioSession()
+    }
+    .override(AudioRecorderAtom()) { _ in
+        MockAudioRecorder()
+    }
+    .override(AudioPlayerAtom.self) { _ in
+        MockAudioPlayer()
     }
 }

@@ -8,12 +8,12 @@ internal struct StoreContext {
     static func registerRoot(
         in store: AtomStore,
         scopeKey: ScopeKey,
-        overrides: [OverrideKey: any OverrideProtocol],
-        observers: [Observer]
+        observers: [Observer],
+        overrideContainer: OverrideContainer
     ) -> StoreContext {
         store.state.scopes[scopeKey] = Scope(
-            overrides: overrides,
             observers: observers,
+            overrideContainer: overrideContainer,
             ancestorScopeKeys: [:]
         )
 
@@ -27,8 +27,8 @@ internal struct StoreContext {
     func registerScope(
         scopeID: ScopeID,
         scopeKey: ScopeKey,
-        overrides: [OverrideKey: any OverrideProtocol],
-        observers: [Observer]
+        observers: [Observer],
+        overrideContainer: OverrideContainer
     ) -> StoreContext {
         let parentScope = currentScopeKey.flatMap { store.state.scopes[$0] }
         let ancestorScopeKeys = mutating(parentScope?.ancestorScopeKeys ?? [:]) { scopeKeys in
@@ -36,8 +36,8 @@ internal struct StoreContext {
         }
 
         store.state.scopes[scopeKey] = Scope(
-            overrides: overrides,
             observers: observers,
+            overrideContainer: overrideContainer,
             ancestorScopeKeys: ancestorScopeKeys
         )
 
@@ -182,7 +182,7 @@ internal struct StoreContext {
 
     @usableFromInline
     @_disfavoredOverload
-    func reset<Node: Atom>(_ atom: Node) {
+    func reset(_ atom: some Atom) {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
 
         if let cache = lookupCache(of: atom, for: key) {
@@ -192,7 +192,7 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    func reset<Node: Resettable>(_ atom: Node) {
+    func reset(_ atom: some Resettable) {
         let currentContext = AtomCurrentContext(store: self)
         atom.reset(context: currentContext)
     }
@@ -464,7 +464,7 @@ private extension StoreContext {
         }
     }
 
-    func unsubscribe<Keys: Sequence<AtomKey>>(_ keys: Keys, for subscriberKey: SubscriberKey) {
+    func unsubscribe(_ keys: some Sequence<AtomKey>, for subscriberKey: SubscriberKey) {
         for key in keys {
             store.state.subscriptions[key]?.removeValue(forKey: subscriberKey)
             checkAndRelease(for: key)
@@ -590,32 +590,8 @@ private extension StoreContext {
     }
 
     func lookupAtomKeyAndOverride<Node: Atom>(of atom: Node) -> (atomKey: AtomKey, override: Override<Node>?) {
-        lazy var overrideKey = OverrideKey(atom)
-        lazy var typeOverrideKey = OverrideKey(Node.self)
-
         func lookupOverride(for scopeKey: ScopeKey) -> Override<Node>? {
-            let overrides = store.state.scopes[scopeKey]?.overrides
-            let baseOverride = overrides?[overrideKey] ?? overrides?[typeOverrideKey]
-
-            guard let baseOverride else {
-                return nil
-            }
-
-            guard let override = baseOverride as? Override<Node> else {
-                assertionFailure(
-                    """
-                    [Atoms]
-                    Detected an illegal override.
-                    There might be duplicate keys or logic failure.
-                    Detected: \(type(of: baseOverride))
-                    Expected: Override<\(Node.self)>
-                    """
-                )
-
-                return nil
-            }
-
-            return override
+            store.state.scopes[scopeKey]?.overrideContainer.getOverride(for: atom)
         }
 
         if let currentScopeKey, let override = lookupOverride(for: currentScopeKey) {
@@ -645,7 +621,7 @@ private extension StoreContext {
         notifyUpdateToObservers(scopeKeys: scopeKeys)
     }
 
-    func notifyUpdateToObservers<Keys: Sequence<ScopeKey>>(scopeKeys: Keys) {
+    func notifyUpdateToObservers(scopeKeys: some Sequence<ScopeKey>) {
         let observers = store.state.scopes[rootScopeKey]?.observers ?? []
         let scopedObservers = scopeKeys.flatMap { store.state.scopes[$0]?.observers ?? [] }
 

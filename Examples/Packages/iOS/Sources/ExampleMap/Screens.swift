@@ -54,10 +54,8 @@ struct MapScreen: View {
     }
 }
 
-struct ExampleScreen_Preview: PreviewProvider {
-    static var previews: some View {
-        AtomRoot {
-            MapScreen()
-        }
+#Preview {
+    AtomRoot {
+        MapScreen()
     }
 }

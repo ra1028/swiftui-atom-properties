@@ -1,5 +1,5 @@
 internal struct Scope {
-    let overrides: [OverrideKey: any OverrideProtocol]
     let observers: [Observer]
+    let overrideContainer: OverrideContainer
     let ancestorScopeKeys: [ScopeID: ScopeKey]
 }

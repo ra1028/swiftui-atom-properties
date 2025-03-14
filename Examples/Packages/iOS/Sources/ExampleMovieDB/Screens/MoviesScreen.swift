@@ -95,12 +95,10 @@ struct MoviesScreen: View {
     }
 }
 
-struct MoviesScreen_Preview: PreviewProvider {
-    static var previews: some View {
-        AtomRoot {
-            NavigationStack {
-                MoviesScreen()
-            }
+#Preview {
+    AtomRoot {
+        NavigationStack {
+            MoviesScreen()
         }
     }
 }
