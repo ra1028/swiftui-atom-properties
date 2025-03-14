@@ -309,7 +309,7 @@ private extension StoreContext {
         // Performs update of the given atom with the dependency's context.
         func performUpdate(for key: AtomKey, cache: some AtomCacheProtocol, dependency: some Atom) {
             dependency.producer.performUpdate {
-                // Dependants must be updated with the scope at which they were initialised.
+                // Dependents must be updated with the scope at which they were initialised.
                 let localContext = StoreContext(
                     store: store,
                     rootScopeKey: rootScopeKey,
