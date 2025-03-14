@@ -133,12 +133,10 @@ public struct ExampleTimeTravel: View {
     }
 }
 
-struct TimeTravelScreen_Preview: PreviewProvider {
-    static var previews: some View {
-        AtomRoot {
-            TimeTravelDebug {
-                NumberInputScreen()
-            }
+#Preview {
+    AtomRoot {
+        TimeTravelDebug {
+            NumberInputScreen()
         }
     }
 }

@@ -105,8 +105,8 @@ struct DetailScreen: View {
     }
 }
 
-struct DetailScreen_Preview: PreviewProvider {
-    static let movie = Movie(
+#Preview {
+    let movie = Movie(
         id: 680,
         title: "Pulp Fiction",
         overview: """
@@ -118,9 +118,7 @@ struct DetailScreen_Preview: PreviewProvider {
         releaseDate: Date(timeIntervalSinceReferenceDate: -199184400.0)
     )
 
-    static var previews: some View {
-        AtomRoot {
-            DetailScreen(movie: movie)
-        }
+    AtomRoot {
+        DetailScreen(movie: movie)
     }
 }

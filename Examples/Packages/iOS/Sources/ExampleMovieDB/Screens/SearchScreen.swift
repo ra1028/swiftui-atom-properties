@@ -44,15 +44,13 @@ struct SearchScreen: View {
     }
 }
 
-struct SearchScreen_Preview: PreviewProvider {
-    static var previews: some View {
-        AtomRoot {
-            NavigationStack {
-                SearchScreen()
-            }
+#Preview {
+    AtomRoot {
+        NavigationStack {
+            SearchScreen()
         }
-        .override(SearchQueryAtom()) { _ in
-            "Léon"
-        }
+    }
+    .override(SearchQueryAtom()) { _ in
+        "Léon"
     }
 }

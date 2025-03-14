@@ -47,10 +47,8 @@ public struct ExampleCounter: View {
     }
 }
 
-struct CounterScreen_Preview: PreviewProvider {
-    static var previews: some View {
-        AtomRoot {
-            CounterScreen()
-        }
+#Preview {
+    AtomRoot {
+        CounterScreen()
     }
 }
