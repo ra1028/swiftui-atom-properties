@@ -8,7 +8,7 @@ internal struct AtomKey: Hashable, Sendable, CustomStringConvertible {
         let atomLabel = String(describing: anyAtomType)
 
         if let scopeKey {
-            return atomLabel + "-scoped:\(scopeKey)"
+            return atomLabel + " scope:\(scopeKey)"
         }
         else {
             return atomLabel

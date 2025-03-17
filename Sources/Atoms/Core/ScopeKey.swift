@@ -8,7 +8,7 @@ internal struct ScopeKey: Hashable, Sendable, CustomStringConvertible {
 
     @usableFromInline
     var description: String {
-        String(hashValue, radix: 36, uppercase: false)
+        "0x\(String(UInt(bitPattern: identifier), radix: 16))"
     }
 
     private init(token: Token) {
