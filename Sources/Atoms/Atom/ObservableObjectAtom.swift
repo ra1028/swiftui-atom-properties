@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 /// An atom type that instantiates an observable object.
@@ -70,24 +71,85 @@ public extension ObservableObjectAtom {
         AtomProducer { context in
             context.transaction(object)
         } manageValue: { object, context in
-            var task: Task<Void, Never>?
             let cancellable = object
                 .objectWillChange
-                .sink { [weak object] _ in
-                    // Wait until the object's property is set, because `objectWillChange`
-                    // emits an event before the property is updated.
-                    task?.cancel()
-                    task = Task { @MainActor in
-                        if let object, !Task.isCancelled, !context.isTerminated {
-                            context.update(with: object)
-                        }
+                .map { @Sendable _ in }
+                .sinkLatest { [weak object] _ in
+                    // A custom subscriber is used here, encompassing the following
+                    // three behaviours.
+                    //
+                    // 1. It ensures that updates are performed on the main actor because `ObservableObject`
+                    //    is not constrained to be isolated to the main actor.
+                    // 2. It always performs updates asynchronously to ensure the object to be updated as
+                    //    `objectWillChange` emits events before the update.
+                    // 3. It adopts the latest event and cancels the previous update when successive events
+                    //    arrive.
+                    if let object, !context.isTerminated {
+                        context.update(with: object)
                     }
                 }
 
             context.onTermination = {
-                task?.cancel()
                 cancellable.cancel()
             }
+        }
+    }
+}
+
+private extension Publisher where Output: Sendable, Failure == Never {
+    func sinkLatest(receiveValue: @MainActor @escaping (Output) -> Void) -> AnyCancellable {
+        let subscriber = Subscribers.SinkLatestOnMainActor(receiveValue: receiveValue)
+        receive(subscriber: subscriber)
+        return AnyCancellable(subscriber)
+    }
+}
+
+private extension Subscribers {
+    final class SinkLatestOnMainActor<Input: Sendable>: Combine.Subscriber, Cancellable {
+        private var receiveValue: (@MainActor (Input) -> Void)?
+        private var currentTask: Task<Void, Never>?
+        private var lock = os_unfair_lock_s()
+
+        init(receiveValue: @MainActor @escaping (Input) -> Void) {
+            self.receiveValue = receiveValue
+        }
+
+        func receive(subscription: any Combine.Subscription) {
+            subscription.request(.unlimited)
+        }
+
+        func receive(_ input: Input) -> Demand {
+            withLock {
+                guard let receiveValue else {
+                    return .none
+                }
+
+                currentTask?.cancel()
+                currentTask = Task { @MainActor in
+                    guard !Task.isCancelled else {
+                        return
+                    }
+                    receiveValue(input)
+                }
+
+                return .unlimited
+            }
+        }
+
+        func receive(completion: Completion<Never>) {}
+
+        func cancel() {
+            withLock {
+                currentTask?.cancel()
+                currentTask = nil
+                receiveValue = nil
+            }
+        }
+
+        func withLock<R>(_ body: () -> R) -> R {
+            os_unfair_lock_lock(&lock)
+            defer { os_unfair_lock_unlock(&lock) }
+            return body()
         }
     }
 }
