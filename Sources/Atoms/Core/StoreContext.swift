@@ -316,7 +316,7 @@ private extension StoreContext {
                     currentScopeKey: cache.initScopeKey
                 )
 
-                let didUpdate = localContext.transiteveUpdate(for: key, cache: cache)
+                let didUpdate = localContext.transitiveUpdate(for: key, cache: cache)
 
                 guard didUpdate else {
                     // Record the atom to avoid downstream from being update.
@@ -386,7 +386,7 @@ private extension StoreContext {
         notifyUpdateToObservers(scopeKeys: updatedScopeKeys)
     }
 
-    func transiteveUpdate(for key: AtomKey, cache: some AtomCacheProtocol) -> Bool {
+    func transitiveUpdate(for key: AtomKey, cache: some AtomCacheProtocol) -> Bool {
         // Overridden atoms don't get updated transitively.
         let newValue = getValue(of: cache.atom, for: key, override: nil)
 
