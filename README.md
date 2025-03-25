@@ -1296,6 +1296,23 @@ AtomScope {
 }
 ```
 
+#### [AtomDerivedScope](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomderivedscope)
+
+`AtomDerivedScope` is useful when, for some reason, the atom store is not derived to a particular view. It explicitly derives the atom store from the parent view via the given view context.  
+
+```swift
+struct MailView: View {
+    @ViewContext
+    var context
+
+    var body: some View {
+        AtomDerivedScope(context) {
+            WrappedMailView()
+        }
+    }
+}
+```
+
 #### [Suspense](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/suspense)
 
 `Suspense` awaits the resulting value of the given `Task` and displays the content depending on its phase.  
@@ -1473,20 +1490,6 @@ AtomScope {
 }
 .scopedOverride(CounterAtom()) { _ in
     456
-}
-```
-
-If you want to inherit the overridden atom from the parent scope, you can explicitly pass `@ViewContext` context that has gotten in the parent scope. Then, the new scope completely inherits the parent scope's context.  
-
-```swift
-@ViewContext
-var context
-
-var body: some {
-    // Inherites the parent scope's overrides.
-    AtomScope(inheriting: context) {
-        CountDisplay()
-    }
 }
 ```
 
@@ -1803,7 +1806,7 @@ class MessageLoader: ObservableObject {
 #### Modal presentation causes assertionFailure when dismissing it (Fixed in iOS15)
 
 Unfortunately, SwiftUI has a bug in iOS14 or lower where the `EnvironmentValue` is removed from a screen presented with `.sheet` just before dismissing it. Since this library is designed based on `EnvironmentValue`, this bug end up triggering the friendly `assertionFailure` that is added so that developers can easily aware of forgotten `AtomRoot` implementation.  
-As a workaround, `AtomScope` has the ability to explicitly inherit the store through `AtomViewContext` from the parent view.
+As a workaround, you can use `AtomDerivedScope` to explicitly inherit the atom store through `AtomViewContext` from the parent view.
 
 <details><summary><code>💡 Click to expand workaround</code></summary>
 
@@ -1820,7 +1823,7 @@ struct RootView: View {
             Text("Example View")
         }
         .sheet(isPresented: $isPresented) {
-            AtomScope(inheriting: context) {
+            AtomDerivedScope(context) {
                 MailView()
             }
         }
