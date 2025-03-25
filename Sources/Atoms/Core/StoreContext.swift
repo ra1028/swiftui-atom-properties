@@ -2,54 +2,54 @@
 @MainActor
 internal struct StoreContext {
     private let store: AtomStore
-    private let rootScopeKey: ScopeKey
-    private let currentScopeKey: ScopeKey?
+    private let rootScope: Scope
+    private let currentScope: Scope?
 
-    static func registerRoot(
-        in store: AtomStore,
+    private init(
+        store: AtomStore,
+        rootScope: Scope,
+        currentScope: Scope? = nil
+    ) {
+        self.store = store
+        self.rootScope = rootScope
+        self.currentScope = currentScope
+    }
+
+    static func root(
+        store: AtomStore,
         scopeKey: ScopeKey,
         observers: [Observer],
         overrideContainer: OverrideContainer
     ) -> StoreContext {
-        store.state.scopes[scopeKey] = Scope(
-            observers: observers,
-            overrideContainer: overrideContainer,
-            ancestorScopeKeys: [:]
-        )
-
-        return StoreContext(
+        StoreContext(
             store: store,
-            rootScopeKey: scopeKey,
-            currentScopeKey: nil
+            rootScope: Scope(
+                key: scopeKey,
+                observers: observers,
+                overrideContainer: overrideContainer,
+                ancestorScopeKeys: [:]
+            )
         )
     }
 
-    func registerScope(
+    func scoped(
         scopeID: ScopeID,
         scopeKey: ScopeKey,
         observers: [Observer],
         overrideContainer: OverrideContainer
     ) -> StoreContext {
-        let parentScope = currentScopeKey.flatMap { store.state.scopes[$0] }
-        let ancestorScopeKeys = mutating(parentScope?.ancestorScopeKeys ?? [:]) { scopeKeys in
-            scopeKeys[scopeID] = scopeKey
-        }
-
-        store.state.scopes[scopeKey] = Scope(
-            observers: observers,
-            overrideContainer: overrideContainer,
-            ancestorScopeKeys: ancestorScopeKeys
-        )
-
-        return StoreContext(
+        StoreContext(
             store: store,
-            rootScopeKey: rootScopeKey,
-            currentScopeKey: scopeKey
+            rootScope: rootScope,
+            currentScope: Scope(
+                key: scopeKey,
+                observers: observers,
+                overrideContainer: overrideContainer,
+                ancestorScopeKeys: mutating(currentScope?.ancestorScopeKeys ?? [:]) { scopeKeys in
+                    scopeKeys[scopeID] = scopeKey
+                }
+            )
         )
-    }
-
-    func unregister(scopeKey: ScopeKey) {
-        store.state.scopes.removeValue(forKey: scopeKey)
     }
 
     @usableFromInline
@@ -271,7 +271,7 @@ private extension StoreContext {
         let value = getValue(of: atom, for: key, override: override)
         let state = getState(of: atom, for: key)
 
-        store.state.caches[key] = AtomCache(atom: atom, value: value, initScopeKey: currentScopeKey)
+        store.state.caches[key] = AtomCache(atom: atom, value: value, initializedScope: currentScope)
 
         let currentContext = AtomCurrentContext(store: self)
         state.effect.initialized(context: currentContext)
@@ -300,10 +300,10 @@ private extension StoreContext {
         // Calculate topological order for updating downstream efficiently.
         let (edges, redundantDependencies) = store.topologicalSorted(key: key)
         var skippedDependencies = Set<AtomKey>()
-        var updatedScopeKeys = Set<ScopeKey>()
+        var updatedScopes = [ScopeKey: Scope]()
 
-        if let scopeKey = currentScopeKey {
-            updatedScopeKeys.insert(scopeKey)
+        if let currentScope {
+            updatedScopes[currentScope.key] = currentScope
         }
 
         // Performs update of the given atom with the dependency's context.
@@ -312,8 +312,8 @@ private extension StoreContext {
                 // Dependents must be updated with the scope at which they were initialised.
                 let localContext = StoreContext(
                     store: store,
-                    rootScopeKey: rootScopeKey,
-                    currentScopeKey: cache.initScopeKey
+                    rootScope: rootScope,
+                    currentScope: cache.initializedScope
                 )
 
                 let didUpdate = localContext.transitiveUpdate(for: key, cache: cache)
@@ -324,8 +324,8 @@ private extension StoreContext {
                     return
                 }
 
-                if let scopeKey = cache.initScopeKey {
-                    updatedScopeKeys.insert(scopeKey)
+                if let scope = cache.initializedScope {
+                    updatedScopes[scope.key] = scope
                 }
             }
         }
@@ -383,7 +383,7 @@ private extension StoreContext {
         }
 
         // Notify the observers after all updates are completed.
-        notifyUpdateToObservers(scopeKeys: updatedScopeKeys)
+        notifyUpdateToObservers(scopes: updatedScopes.values)
     }
 
     func transitiveUpdate(for key: AtomKey, cache: some AtomCacheProtocol) -> Bool {
@@ -590,23 +590,22 @@ private extension StoreContext {
     }
 
     func lookupAtomKeyAndOverride<Node: Atom>(of atom: Node) -> (atomKey: AtomKey, override: Override<Node>?) {
-        func lookupOverride(for scopeKey: ScopeKey) -> Override<Node>? {
-            store.state.scopes[scopeKey]?.overrideContainer.getOverride(for: atom)
+        func lookupOverride(for scope: Scope) -> Override<Node>? {
+            scope.overrideContainer.getOverride(for: atom)
         }
 
-        if let currentScopeKey, let override = lookupOverride(for: currentScopeKey) {
-            let atomKey = AtomKey(atom, scopeKey: currentScopeKey)
+        if let currentScope, let override = lookupOverride(for: currentScope) {
+            let atomKey = AtomKey(atom, scopeKey: currentScope.key)
             return (atomKey: atomKey, override: override)
         }
-        else if let override = lookupOverride(for: rootScopeKey) {
+        else if let override = lookupOverride(for: rootScope) {
             // The scopeKey should be nil if it's overridden from the root.
             let atomKey = AtomKey(atom, scopeKey: nil)
             return (atomKey: atomKey, override: override)
         }
         else if let atom = atom as? any Scoped {
             let scopeID = ScopeID(atom.scopeID)
-            let scope = currentScopeKey.flatMap { store.state.scopes[$0] }
-            let scopeKey = scope?.ancestorScopeKeys[scopeID]
+            let scopeKey = currentScope?.ancestorScopeKeys[scopeID]
             let atomKey = AtomKey(atom, scopeKey: scopeKey)
             return (atomKey: atomKey, override: nil)
         }
@@ -617,13 +616,13 @@ private extension StoreContext {
     }
 
     func notifyUpdateToObservers() {
-        let scopeKeys = currentScopeKey.map { [$0] } ?? []
-        notifyUpdateToObservers(scopeKeys: scopeKeys)
+        let scopes = currentScope.map { [$0] } ?? []
+        notifyUpdateToObservers(scopes: scopes)
     }
 
-    func notifyUpdateToObservers(scopeKeys: some Sequence<ScopeKey>) {
-        let observers = store.state.scopes[rootScopeKey]?.observers ?? []
-        let scopedObservers = scopeKeys.flatMap { store.state.scopes[$0]?.observers ?? [] }
+    func notifyUpdateToObservers(scopes: some Sequence<Scope>) {
+        let observers = rootScope.observers
+        let scopedObservers = scopes.flatMap(\.observers)
 
         guard !observers.isEmpty || !scopedObservers.isEmpty else {
             return

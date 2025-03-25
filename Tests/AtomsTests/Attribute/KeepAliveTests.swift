@@ -24,7 +24,7 @@ final class KeepAliveTests: XCTestCase {
         XCTContext.runActivity(named: "Should not be released") { _ in
             let store = AtomStore()
             let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
+            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
             let atom = KeepAliveAtom(value: 0)
             let key = AtomKey(atom)
             let subscriberState = SubscriberState()
@@ -40,13 +40,13 @@ final class KeepAliveTests: XCTestCase {
         XCTContext.runActivity(named: "Should be released when overridden") { _ in
             let store = AtomStore()
             let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
+            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
             let atom = KeepAliveAtom(value: 0)
             let scopeToken = ScopeKey.Token()
             let key = AtomKey(atom, scopeKey: scopeToken.key)
             let subscriberState = SubscriberState()
             let subscriber = Subscriber(subscriberState)
-            let scopedContext = context.registerScope(
+            let scopedContext = context.scoped(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scopeToken.key,
                 observers: [],
@@ -66,11 +66,11 @@ final class KeepAliveTests: XCTestCase {
         XCTContext.runActivity(named: "Should be released when scoped") { _ in
             let store = AtomStore()
             let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
+            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
             let atom = ScopedKeepAliveAtom(value: 0)
             let scopeToken = ScopeKey.Token()
             let key = AtomKey(atom, scopeKey: scopeToken.key)
-            let scopedContext = context.registerScope(
+            let scopedContext = context.scoped(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scopeToken.key
             )

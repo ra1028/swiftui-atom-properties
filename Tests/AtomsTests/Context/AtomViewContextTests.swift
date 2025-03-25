@@ -11,7 +11,7 @@ final class AtomViewContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -26,7 +26,7 @@ final class AtomViewContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -45,7 +45,7 @@ final class AtomViewContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -69,7 +69,7 @@ final class AtomViewContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -88,7 +88,7 @@ final class AtomViewContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -110,7 +110,7 @@ final class AtomViewContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -146,7 +146,7 @@ final class AtomViewContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -165,7 +165,7 @@ final class AtomViewContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -186,7 +186,7 @@ final class AtomViewContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let subscriberState = SubscriberState()
         let context = AtomViewContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             subscriber: Subscriber(subscriberState),
             subscription: Subscription()
         )
@@ -227,7 +227,7 @@ final class AtomViewContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         var subscriberState: SubscriberState? = SubscriberState()
         let context = AtomViewContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             subscriber: Subscriber(subscriberState!),
             subscription: Subscription()
         )

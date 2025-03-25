@@ -7,12 +7,18 @@ final class AtomCacheTests: XCTestCase {
     func testUpdated() {
         let atom = TestAtom(value: 0)
         let scopeToken = ScopeKey.Token()
-        let cache = AtomCache(atom: atom, value: 0, initScopeKey: scopeToken.key)
+        let scope = Scope(
+            key: scopeToken.key,
+            observers: [],
+            overrideContainer: OverrideContainer(),
+            ancestorScopeKeys: [:]
+        )
+        let cache = AtomCache(atom: atom, value: 0, initializedScope: scope)
         let updated = cache.updated(value: 1)
 
         XCTAssertEqual(updated.atom, atom)
         XCTAssertEqual(updated.value, 1)
-        XCTAssertEqual(updated.initScopeKey, scopeToken.key)
+        XCTAssertEqual(updated.initializedScope?.key, scopeToken.key)
     }
 
     @MainActor

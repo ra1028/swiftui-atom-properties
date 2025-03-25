@@ -3,7 +3,7 @@ internal protocol AtomCacheProtocol {
 
     var atom: Node { get }
     var value: Node.Produced { get }
-    var initScopeKey: ScopeKey? { get }
+    var initializedScope: Scope? { get }
 
     func updated(value: Node.Produced) -> Self
 }
@@ -11,13 +11,13 @@ internal protocol AtomCacheProtocol {
 internal struct AtomCache<Node: Atom>: AtomCacheProtocol, CustomStringConvertible {
     let atom: Node
     let value: Node.Produced
-    let initScopeKey: ScopeKey?
+    let initializedScope: Scope?
 
     var description: String {
         "\(value)"
     }
 
     func updated(value: Node.Produced) -> Self {
-        AtomCache(atom: atom, value: value, initScopeKey: initScopeKey)
+        AtomCache(atom: atom, value: value, initializedScope: initializedScope)
     }
 }
