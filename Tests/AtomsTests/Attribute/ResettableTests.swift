@@ -30,8 +30,8 @@ final class ResettableTests: XCTestCase {
             snapshots.append($0)
         }
         let rootScopeToken = ScopeKey.Token()
-        let context = StoreContext.registerRoot(
-            in: store,
+        let context = StoreContext.root(
+            store: store,
             scopeKey: rootScopeToken.key,
             observers: [observer],
             overrideContainer: OverrideContainer()
@@ -69,7 +69,7 @@ final class ResettableTests: XCTestCase {
         XCTContext.runActivity(named: "Custom reset behavior should not be overridden") { _ in
             let scopeKey = ScopeKey.Token().key
             let overrideAtomKey = AtomKey(atom, scopeKey: scopeKey)
-            let scopedContext = context.registerScope(
+            let scopedContext = context.scoped(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scopeKey,
                 observers: [],

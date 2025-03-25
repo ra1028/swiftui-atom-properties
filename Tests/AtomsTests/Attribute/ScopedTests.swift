@@ -23,12 +23,12 @@ final class ScopedTests: XCTestCase {
         XCTContext.runActivity(named: "Should be scoped") { _ in
             let store = AtomStore()
             let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
-            let scoped1Context = context.registerScope(
+            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+            let scoped1Context = context.scoped(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scope1Token.key
             )
-            let scoped2Context = scoped1Context.registerScope(
+            let scoped2Context = scoped1Context.scoped(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scope2Token.key
             )
@@ -65,13 +65,13 @@ final class ScopedTests: XCTestCase {
         XCTContext.runActivity(named: "Should be scoped in particular scope") { _ in
             let store = AtomStore()
             let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
+            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
             let scopeID = "Scope 1"
-            let scoped1Context = context.registerScope(
+            let scoped1Context = context.scoped(
                 scopeID: ScopeID(scopeID),
                 scopeKey: scope1Token.key
             )
-            let scoped2Context = scoped1Context.registerScope(
+            let scoped2Context = scoped1Context.scoped(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scope2Token.key
             )
@@ -96,13 +96,13 @@ final class ScopedTests: XCTestCase {
         XCTContext.runActivity(named: "Modified atoms should also be scoped") { _ in
             let store = AtomStore()
             let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.registerRoot(in: store, scopeKey: rootScopeToken.key)
+            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
             let scopeID = "Scope 1"
-            let scoped1Context = context.registerScope(
+            let scoped1Context = context.scoped(
                 scopeID: ScopeID(scopeID),
                 scopeKey: scope1Token.key
             )
-            let scoped2Context = scoped1Context.registerScope(
+            let scoped2Context = scoped1Context.scoped(
                 scopeID: ScopeID(DefaultScopeID()),
                 scopeKey: scope2Token.key
             )

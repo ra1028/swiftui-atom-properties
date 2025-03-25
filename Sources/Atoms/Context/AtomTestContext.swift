@@ -437,8 +437,8 @@ internal extension AtomTestContext {
 
     @usableFromInline
     var _store: StoreContext {
-        .registerRoot(
-            in: _state.store,
+        .root(
+            store: _state.store,
             scopeKey: _state.token.key,
             observers: [],
             overrideContainer: _state.overrideContainer

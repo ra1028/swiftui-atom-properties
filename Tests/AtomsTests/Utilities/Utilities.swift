@@ -72,29 +72,23 @@ final class ResettableSubject<Output, Failure: Error>: Publisher, Subject {
 
 extension StoreContext {
     static var dummy: StoreContext {
-        .registerRoot(
-            in: AtomStore(),
+        .root(
+            store: AtomStore(),
             scopeKey: ScopeKey.Token().key
         )
     }
 
-    static func registerRoot(
-        in store: AtomStore,
-        scopeKey: ScopeKey
-    ) -> StoreContext {
-        registerRoot(
-            in: store,
+    static func root(store: AtomStore, scopeKey: ScopeKey) -> StoreContext {
+        .root(
+            store: store,
             scopeKey: scopeKey,
             observers: [],
             overrideContainer: OverrideContainer()
         )
     }
 
-    func registerScope(
-        scopeID: ScopeID,
-        scopeKey: ScopeKey
-    ) -> StoreContext {
-        registerScope(
+    func scoped(scopeID: ScopeID, scopeKey: ScopeKey) -> StoreContext {
+        scoped(
             scopeID: scopeID,
             scopeKey: scopeKey,
             observers: [],
@@ -118,7 +112,7 @@ extension Atoms.Subscription {
 
 extension AtomCache {
     init(atom: Node, value: Node.Produced) {
-        self.init(atom: atom, value: value, initScopeKey: nil)
+        self.init(atom: atom, value: value, initializedScope: nil)
     }
 }
 

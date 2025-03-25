@@ -11,7 +11,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let transactionState = TransactionState(key: AtomKey(atom))
         let context = AtomTransactionContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             transactionState: transactionState
         )
 
@@ -26,7 +26,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let transactionState = TransactionState(key: AtomKey(atom))
         let context = AtomTransactionContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             transactionState: transactionState
         )
 
@@ -45,7 +45,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let transactionState = TransactionState(key: AtomKey(atom0))
         let context = AtomTransactionContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             transactionState: transactionState
         )
 
@@ -69,7 +69,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let transactionState = TransactionState(key: AtomKey(atom0))
         let context = AtomTransactionContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             transactionState: transactionState
         )
 
@@ -88,7 +88,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let transactionState = TransactionState(key: AtomKey(atom))
         let context = AtomTransactionContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             transactionState: transactionState
         )
 
@@ -120,7 +120,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let transactionState = TransactionState(key: AtomKey(transactionAtom))
         let context = AtomTransactionContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             transactionState: transactionState
         )
 
@@ -146,7 +146,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let rootScopeToken = ScopeKey.Token()
         let transactionState = TransactionState(key: AtomKey(atom0))
         let context = AtomTransactionContext(
-            store: .registerRoot(in: store, scopeKey: rootScopeToken.key),
+            store: .root(store: store, scopeKey: rootScopeToken.key),
             transactionState: transactionState
         )
 

@@ -92,14 +92,14 @@ public struct AtomRoot<Content: View>: View {
     public var body: some View {
         switch storage {
         case .managed:
-            Managed(
+            WithManagedStore(
                 observers: observers,
                 overrideContainer: overrideContainer,
                 content: content
             )
 
         case .unmanaged(let store):
-            Scope(
+            WithStore(
                 store: store,
                 observers: observers,
                 overrideContainer: overrideContainer,
@@ -155,18 +155,16 @@ private extension AtomRoot {
         case unmanaged(store: AtomStore)
     }
 
-    struct Managed: View {
+    struct WithManagedStore: View {
         let observers: [Observer]
         let overrideContainer: OverrideContainer
         let content: Content
 
         @State
         private var store = AtomStore()
-        @State
-        private var state = ScopeState()
 
         var body: some View {
-            Scope(
+            WithStore(
                 store: store,
                 observers: observers,
                 overrideContainer: overrideContainer,
@@ -175,29 +173,25 @@ private extension AtomRoot {
         }
     }
 
-    struct Scope: View {
+    struct WithStore: View {
         let store: AtomStore
         let observers: [Observer]
         let overrideContainer: OverrideContainer
         let content: Content
 
         @State
-        private var state = ScopeState()
+        private var scopeToken = ScopeKey.Token()
 
         var body: some View {
-            let scopeKey = state.token.key
-            let store = StoreContext.registerRoot(
-                in: store,
-                scopeKey: scopeKey,
-                observers: observers,
-                overrideContainer: overrideContainer
+            content.environment(
+                \.store,
+                .root(
+                    store: store,
+                    scopeKey: scopeToken.key,
+                    observers: observers,
+                    overrideContainer: overrideContainer
+                )
             )
-
-            state.unregister = {
-                store.unregister(scopeKey: scopeKey)
-            }
-
-            return content.environment(\.store, store)
         }
     }
 }
