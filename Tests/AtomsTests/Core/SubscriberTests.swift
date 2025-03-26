@@ -24,41 +24,22 @@ final class SubscriberTests: XCTestCase {
     }
 
     @MainActor
-    func testSubscribing() {
-        var state: SubscriberState? = SubscriberState()
-        let subscriber = Subscriber(state!)
-        let expected: Set = [
-            AtomKey(TestAtom(value: 0)),
-            AtomKey(TestAtom(value: 1)),
-            AtomKey(TestAtom(value: 2)),
-        ]
-
-        subscriber.subscribing = expected
-
-        XCTAssertEqual(state?.subscribing, expected)
-
-        state = nil
-
-        XCTAssertTrue(subscriber.subscribing.isEmpty)
-    }
-
-    @MainActor
     func testUnsubscribe() {
         var state: SubscriberState? = SubscriberState()
         let subscriber = Subscriber(state!)
         var isUnsubscribed = false
 
-        subscriber.unsubscribe = { _ in
+        subscriber.unsubscribe = {
             isUnsubscribed = true
         }
 
-        state?.unsubscribe?([])
+        state?.unsubscribe?()
 
         XCTAssertTrue(isUnsubscribed)
 
         state = nil
         isUnsubscribed = false
-        subscriber.unsubscribe?([])
+        subscriber.unsubscribe?()
 
         XCTAssertFalse(isUnsubscribed)
     }

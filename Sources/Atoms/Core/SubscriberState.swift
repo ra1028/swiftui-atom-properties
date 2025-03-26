@@ -7,33 +7,26 @@ internal final class SubscriberState {
     #endif
 
     #if compiler(>=6)
-        nonisolated(unsafe) var subscribing = Set<AtomKey>()
-        nonisolated(unsafe) var unsubscribe: (@MainActor (Set<AtomKey>) -> Void)?
+        nonisolated(unsafe) var unsubscribe: (@MainActor () -> Void)?
 
         // TODO: Use isolated synchronous deinit once it's available.
         // 0371-isolated-synchronous-deinit
         deinit {
-            MainActor.performIsolated { [unsubscribe, subscribing] in
-                unsubscribe?(subscribing)
+            MainActor.performIsolated { [unsubscribe] in
+                unsubscribe?()
             }
         }
     #else
-        private var _subscribing = UnsafeUncheckedSendable(Set<AtomKey>())
-        private var _unsubscribe = UnsafeUncheckedSendable<(@MainActor (Set<AtomKey>) -> Void)?>(nil)
+        private var _unsubscribe = UnsafeUncheckedSendable<(@MainActor () -> Void)?>(nil)
 
-        var subscribing: Set<AtomKey> {
-            _read { yield _subscribing.value }
-            _modify { yield &_subscribing.value }
-        }
-
-        var unsubscribe: (@MainActor (Set<AtomKey>) -> Void)? {
+        var unsubscribe: (@MainActor () -> Void)? {
             _read { yield _unsubscribe.value }
             _modify { yield &_unsubscribe.value }
         }
 
         deinit {
-            MainActor.performIsolated { [_unsubscribe, _subscribing] in
-                _unsubscribe.value?(_subscribing.value)
+            MainActor.performIsolated { [_unsubscribe] in
+                _unsubscribe.value?()
             }
         }
     #endif

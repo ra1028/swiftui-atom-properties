@@ -5,5 +5,5 @@ public final class AtomStore {
     internal var state = StoreState()
 
     /// Creates a new store.
-    nonisolated public init() {}
+    public nonisolated init() {}
 }
