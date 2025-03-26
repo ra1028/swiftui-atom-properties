@@ -17,7 +17,7 @@ internal final class SubscriberState {
             }
         }
     #else
-        private var _unsubscribe = UnsafeUncheckedSendable<(@MainActor (Set<AtomKey>) -> Void)?>(nil)
+        private var _unsubscribe = UnsafeUncheckedSendable<(@MainActor () -> Void)?>(nil)
 
         var unsubscribe: (@MainActor () -> Void)? {
             _read { yield _unsubscribe.value }
