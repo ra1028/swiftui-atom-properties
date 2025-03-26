@@ -1298,7 +1298,7 @@ AtomScope {
 
 #### [AtomDerivedScope](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomderivedscope)
 
-`AtomDerivedScope` is useful when, for some reason, the atom store is not derived to a particular view. It explicitly derives the atom store from the parent view via the given view context.  
+`AtomDerivedScope` is useful when, for some reason, the atom store is not propagated through a view hierarchy. It explicitly propagate the atom store from the parent view via the given view context.  
 
 ```swift
 struct MailView: View {
@@ -1806,7 +1806,7 @@ class MessageLoader: ObservableObject {
 #### Modal presentation causes assertionFailure when dismissing it (Fixed in iOS15)
 
 Unfortunately, SwiftUI has a bug in iOS14 or lower where the `EnvironmentValue` is removed from a screen presented with `.sheet` just before dismissing it. Since this library is designed based on `EnvironmentValue`, this bug end up triggering the friendly `assertionFailure` that is added so that developers can easily aware of forgotten `AtomRoot` implementation.  
-As a workaround, you can use `AtomDerivedScope` to explicitly inherit the atom store through `AtomViewContext` from the parent view.
+As a workaround, you can use `AtomDerivedScope` to explicitly propagate the atom store via `AtomViewContext` from the parent view.
 
 <details><summary><code>💡 Click to expand workaround</code></summary>
 

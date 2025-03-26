@@ -50,7 +50,7 @@ public struct AtomScope<Content: View>: View {
     /// - Parameters:
     ///   - context: The parent view context that for inheriting store explicitly.
     ///   - content: The descendant view content that provides scoped context for atoms.
-    @available(*, deprecated, message: "Use AtomDerivedScope instead")
+    @available(*, deprecated, message: "Use `AtomDerivedScope` instead")
     public init(
         inheriting context: AtomViewContext,
         @ViewBuilder content: () -> Content
