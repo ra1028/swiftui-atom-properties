@@ -66,16 +66,13 @@ final class TaskAtomTests: XCTestCase {
 
         do {
             // Cancellation
-            let refreshTask0 = Task {
+            let refreshTask = Task {
                 await context.refresh(atom)
             }
 
-            Task {
-                refreshTask0.cancel()
-            }
+            refreshTask.cancel()
 
-            let task = await refreshTask0.value
-
+            let task = await refreshTask.value
             XCTAssertTrue(task.isCancelled)
         }
 
@@ -89,19 +86,15 @@ final class TaskAtomTests: XCTestCase {
 
         do {
             // Override cancellation
-
             context.override(atom) { _ in Task { 400 } }
 
             let refreshTask = Task {
                 await context.refresh(atom)
             }
 
-            Task {
-                refreshTask.cancel()
-            }
+            refreshTask.cancel()
 
             let task = await refreshTask.value
-
             XCTAssertTrue(task.isCancelled)
         }
     }
