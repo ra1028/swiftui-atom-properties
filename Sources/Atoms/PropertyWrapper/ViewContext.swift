@@ -93,8 +93,8 @@ private extension ViewContext {
                 }
                 ```
 
-                If for some reason the view tree is formed that does not inherit from `EnvironmentValues`,
-                consider using `AtomScope` to pass it.
+                If for some reason the view tree does not propagate `EnvironmentValues`,
+                consider using `AtomDerivedScope` to propagate it explicitly.
                 That happens when using SwiftUI view wrapped with `UIHostingController`.
 
                 ```
@@ -104,7 +104,7 @@ private extension ViewContext {
 
                     var body: some View {
                         UIViewWrappingView {
-                            AtomScope(inheriting: context) {
+                            AtomDerivedScope(context) {
                                 WrappedView()
                             }
                         }
@@ -112,13 +112,13 @@ private extension ViewContext {
                 }
                 ```
 
-                The modal screen presented by the `.sheet` modifier or etc, inherits from the environment values,
+                The modal screen presented by the `.sheet` modifier or etc, propagates the environment values,
                 but only in iOS14, there is a bug where the environment values will be dismantled during it is
-                dismissing. This also can be avoided by using `AtomScope` to explicitly inherit from it.
+                dismissing. This also can be avoided by using `AtomDerivedScope` to explicitly propagate it.
 
                 ```
                 .sheet(isPresented: ...) {
-                    AtomScope(inheriting: context) {
+                    AtomDerivedScope(context) {
                         ExampleView()
                     }
                 }

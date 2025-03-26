@@ -27,26 +27,6 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// It inherits from the atom store provided by ``AtomRoot`` through environment values by default,
-/// but sometimes SwiftUI can fail to pass environment values in the view-tree for some reason.
-/// The typical example is that, in case you use SwiftUI view inside UIKit view, it could fail as
-/// SwiftUI can't pass environment values to UIKit across boundaries.
-/// In that case, you can wrap the view with ``AtomScope`` and pass a view context to it so that
-/// the descendant views can explicitly inherit the store.
-///
-/// ```swift
-/// @ViewContext
-/// var context
-///
-/// var body: some View {
-///     MyUIViewWrappingView {
-///         AtomScope(inheriting: context) {
-///             MySwiftUIView()
-///         }
-///     }
-/// }
-/// ```
-///
 public struct AtomScope<Content: View>: View {
     private let inheritance: Inheritance
     private var observers = [Observer]()
@@ -70,12 +50,12 @@ public struct AtomScope<Content: View>: View {
     /// - Parameters:
     ///   - context: The parent view context that for inheriting store explicitly.
     ///   - content: The descendant view content that provides scoped context for atoms.
+    @available(*, deprecated, message: "Use `AtomDerivedScope` instead")
     public init(
         inheriting context: AtomViewContext,
         @ViewBuilder content: () -> Content
     ) {
-        let store = context._store
-        self.inheritance = .context(store: store)
+        self.inheritance = .context(context)
         self.content = content()
     }
 
@@ -90,11 +70,10 @@ public struct AtomScope<Content: View>: View {
                 content: content
             )
 
-        case .context(let store):
-            WithContext(
-                store: store,
-                content: content
-            )
+        case .context(let context):
+            AtomDerivedScope(context) {
+                content
+            }
         }
     }
 
@@ -173,7 +152,7 @@ public struct AtomScope<Content: View>: View {
 private extension AtomScope {
     enum Inheritance {
         case environment(scopeID: ScopeID)
-        case context(store: StoreContext)
+        case context(AtomViewContext)
     }
 
     struct WithEnvironment: View {
@@ -197,15 +176,6 @@ private extension AtomScope {
                     overrideContainer: overrideContainer
                 )
             )
-        }
-    }
-
-    struct WithContext: View {
-        let store: StoreContext
-        let content: Content
-
-        var body: some View {
-            content.environment(\.store, store)
         }
     }
 }
