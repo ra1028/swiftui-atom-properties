@@ -70,9 +70,7 @@ final class AsyncPhaseAtomTests: XCTestCase {
                 await context.refresh(atom)
             }
 
-            Task {
-                refreshTask.cancel()
-            }
+            refreshTask.cancel()
 
             let phase = await refreshTask.value
             XCTAssertTrue(phase.isSuspending)
