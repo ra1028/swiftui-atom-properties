@@ -111,12 +111,12 @@ internal struct StoreContext {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
         let cache = lookupCache(of: atom, for: key)
         let value = cache?.value ?? initialize(of: atom, for: key, override: override)
-        let isNewSubscription = subscriber.subscribing.insert(key).inserted
+        let isNewSubscription = store.graph.subscribed[subscriber.key, default: []].insert(key).inserted
 
         if isNewSubscription {
             store.state.subscriptions[key, default: [:]][subscriber.key] = subscription
-            subscriber.unsubscribe = { keys in
-                unsubscribe(keys, for: subscriber.key)
+            subscriber.unsubscribe = {
+                unsubscribeAll(for: subscriber.key)
             }
             notifyUpdateToObservers()
         }
@@ -209,7 +209,7 @@ internal struct StoreContext {
     func unwatch(_ atom: some Atom, subscriber: Subscriber) {
         let (key, _) = lookupAtomKeyAndOverride(of: atom)
 
-        subscriber.subscribing.remove(key)
+        store.graph.subscribed[subscriber.key]?.remove(key)
         unsubscribe([key], for: subscriber.key)
     }
 
@@ -459,6 +459,14 @@ private extension StoreContext {
         // Attach the atom to its children.
         for dependency in dependencies {
             store.graph.children[dependency]?.insert(key)
+        }
+    }
+
+    func unsubscribeAll(for subscriberKey: SubscriberKey) {
+        let keys = store.graph.subscribed.removeValue(forKey: subscriberKey)
+
+        if let keys {
+            unsubscribe(keys, for: subscriberKey)
         }
     }
 
