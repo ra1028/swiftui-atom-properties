@@ -24,7 +24,7 @@ import SwiftUI
 /// ```
 ///
 public struct AtomDerivedScope<Content: View>: View {
-    private let context: AtomViewContext
+    private let store: StoreContext
     private let content: Content
 
     /// Creates a derived scope with the specified content that will be allowed to use atoms by
@@ -37,12 +37,12 @@ public struct AtomDerivedScope<Content: View>: View {
         _ context: AtomViewContext,
         @ViewBuilder content: () -> Content
     ) {
-        self.context = context
+        self.store = context._store
         self.content = content()
     }
 
     /// The content and behavior of the view.
     public var body: some View {
-        content.environment(\.store, context._store)
+        content.environment(\.store, store)
     }
 }
