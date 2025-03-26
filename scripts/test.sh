@@ -44,4 +44,4 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-eval xcodebuild clean test "${options[@]-}" "${args[@]-}"
+eval xcodebuild clean test -configuration Release ENABLE_TESTABILITY=YES "${options[@]-}" "${args[@]-}"

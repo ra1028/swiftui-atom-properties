@@ -306,33 +306,29 @@ private extension StoreContext {
             updatedScopes[currentScope.key] = currentScope
         }
 
-        // Performs update of the given atom with the dependency's context.
-        func performUpdate(for key: AtomKey, cache: some AtomCacheProtocol, dependency: some Atom) {
-            dependency.producer.performUpdate {
-                // Dependents must be updated with the scope at which they were initialised.
-                let localContext = StoreContext(
-                    store: store,
-                    rootScope: rootScope,
-                    currentScope: cache.initializedScope
-                )
+        func transitiveUpdate(for key: AtomKey, cache: some AtomCacheProtocol) {
+            // Dependents must be updated with the scope at which they were initialised.
+            let localContext = StoreContext(
+                store: store,
+                rootScope: rootScope,
+                currentScope: cache.initializedScope
+            )
 
-                let didUpdate = localContext.transitiveUpdate(for: key, cache: cache)
+            let didUpdate = localContext.transitiveUpdate(for: key, cache: cache)
 
-                guard didUpdate else {
-                    // Record the atom to avoid downstream from being update.
-                    skippedDependencies.insert(key)
-                    return
-                }
+            guard didUpdate else {
+                // Record the atom to avoid downstream from being update.
+                skippedDependencies.insert(key)
+                return
+            }
 
-                if let scope = cache.initializedScope {
-                    updatedScopes[scope.key] = scope
-                }
+            if let scope = cache.initializedScope {
+                updatedScopes[scope.key] = scope
             }
         }
 
-        // Performs update of the given subscription with the dependency's context.
-        func performUpdate(subscription: Subscription, dependency: some Atom) {
-            dependency.producer.performUpdate(subscription.update)
+        func performUpdate(dependency: some Atom, body: @MainActor () -> Void) {
+            dependency.producer.performUpdate(body)
         }
 
         func validEdge(_ edge: Edge) -> Edge? {
@@ -365,7 +361,9 @@ private extension StoreContext {
                 let dependencyCache = store.state.caches[edge.from]
 
                 if let cache, let dependencyCache {
-                    performUpdate(for: key, cache: cache, dependency: dependencyCache.atom)
+                    performUpdate(dependency: dependencyCache.atom) {
+                        transitiveUpdate(for: key, cache: cache)
+                    }
                 }
 
             case .subscriber(let key):
@@ -377,7 +375,7 @@ private extension StoreContext {
                 let dependencyCache = store.state.caches[edge.from]
 
                 if let subscription, let dependencyCache {
-                    performUpdate(subscription: subscription, dependency: dependencyCache.atom)
+                    performUpdate(dependency: dependencyCache.atom, body: subscription.update)
                 }
             }
         }
