@@ -1229,9 +1229,21 @@ final class StoreContextTests: XCTestCase {
             var value1: Int?
             var value2: Int?
 
-            func updated(context: Context) {
+            func updateValues(context: Context) {
                 value1 = context.read(Test1Atom())
                 value2 = initContext?.read(Test1Atom())
+            }
+
+            func initialized(context: Context) {
+                updateValues(context: context)
+            }
+
+            func updated(context: Context) {
+                updateValues(context: context)
+            }
+
+            func released(context: Context) {
+                updateValues(context: context)
             }
         }
 
@@ -1255,8 +1267,8 @@ final class StoreContextTests: XCTestCase {
 
         _ = context.watch(testAtom, subscriber: subscriber, subscription: Subscription())
 
-        XCTAssertNil(testEffect.value1)
-        XCTAssertNil(testEffect.value2)
+        XCTAssertEqual(testEffect.value1, 1)
+        XCTAssertEqual(testEffect.value2, 1)
 
         context.modify(testAtom) { $0.toggle() }
 
@@ -1264,6 +1276,11 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(testEffect.value2, 1)
 
         scopedContext.modify(testAtom) { $0.toggle() }
+
+        XCTAssertEqual(testEffect.value1, 1)
+        XCTAssertEqual(testEffect.value2, 1)
+
+        scopedContext.unwatch(testAtom, subscriber: subscriber)
 
         XCTAssertEqual(testEffect.value1, 1)
         XCTAssertEqual(testEffect.value2, 1)

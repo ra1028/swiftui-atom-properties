@@ -80,8 +80,8 @@ public struct AtomScope<Content: View>: View {
     /// Observes the state changes with a snapshot that captures the whole atom states and
     /// their dependency graph at the point in time for debugging purposes.
     ///
-    /// Note that unlike ``AtomRoot/observe(_:)``, this observes only the state changes caused by atoms
-    /// used in this scope.
+    /// Note that unlike ``AtomRoot/observe(_:)``, this observes only the state changes of atoms
+    /// initialized in this scope.
     ///
     /// - Note: It ignores the observers if this scope inherits the parent scope.
     ///
