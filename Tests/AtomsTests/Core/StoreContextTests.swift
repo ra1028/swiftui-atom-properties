@@ -1200,6 +1200,76 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
+    func testEffectCrossScopeBoundary() async {
+        struct Test1Atom: StateAtom, Hashable {
+            func defaultValue(context: Context) -> Int {
+                1
+            }
+        }
+
+        struct Test2Atom: StateAtom {
+            let testEffect: TestEffect
+
+            var key: UniqueKey {
+                UniqueKey()
+            }
+
+            func defaultValue(context: Context) -> Bool {
+                false
+            }
+
+            func effect(context: CurrentContext) -> some AtomEffect {
+                testEffect.initContext = context
+                return testEffect
+            }
+        }
+
+        final class TestEffect: AtomEffect {
+            var initContext: AtomCurrentContext?
+            var value1: Int?
+            var value2: Int?
+
+            func updated(context: Context) {
+                value1 = context.read(Test1Atom())
+                value2 = initContext?.read(Test1Atom())
+            }
+        }
+
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+        let store = AtomStore()
+        let rootScopeToken = ScopeKey.Token()
+        let scopeToken = ScopeKey.Token()
+        let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+        let scopedContext = context.scoped(
+            scopeID: ScopeID(DefaultScopeID()),
+            scopeKey: scopeToken.key,
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: Test1Atom()) { _ in
+                    2
+                }
+        )
+        let testEffect = TestEffect()
+        let testAtom = Test2Atom(testEffect: testEffect)
+
+        _ = context.watch(testAtom, subscriber: subscriber, subscription: Subscription())
+
+        XCTAssertNil(testEffect.value1)
+        XCTAssertNil(testEffect.value2)
+
+        context.modify(testAtom) { $0.toggle() }
+
+        XCTAssertEqual(testEffect.value1, 1)
+        XCTAssertEqual(testEffect.value2, 1)
+
+        scopedContext.modify(testAtom) { $0.toggle() }
+
+        XCTAssertEqual(testEffect.value1, 1)
+        XCTAssertEqual(testEffect.value2, 1)
+    }
+
+    @MainActor
     func testUpdateInTopologicalOrder() {
         struct TestAtom1: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
