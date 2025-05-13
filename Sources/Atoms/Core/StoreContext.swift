@@ -71,7 +71,8 @@ internal struct StoreContext {
         let (key, _) = lookupAtomKeyAndOverride(of: atom)
 
         if let cache = lookupCache(of: atom, for: key) {
-            update(atom: atom, for: key, cache: cache, newValue: value)
+            switchContext(scope: cache.initializedScope)
+                .update(atom: atom, for: key, cache: cache, newValue: value)
         }
     }
 
@@ -81,7 +82,8 @@ internal struct StoreContext {
 
         if let cache = lookupCache(of: atom, for: key) {
             let newValue = mutating(cache.value, body)
-            update(atom: atom, for: key, cache: cache, newValue: newValue)
+            switchContext(scope: cache.initializedScope)
+                .update(atom: atom, for: key, cache: cache, newValue: newValue)
         }
     }
 
@@ -129,8 +131,8 @@ internal struct StoreContext {
     func refresh<Node: AsyncAtom>(_ atom: Node) async -> Node.Produced {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
         let cache = lookupCache(of: atom, for: key)
-        let context = switchContext(scope: cache?.initializedScope)
-            .prepareForTransaction(of: atom, for: key)
+        let localContext = switchContext(scope: cache?.initializedScope)
+        let context = localContext.prepareForTransaction(of: atom, for: key)
 
         let value: Node.Produced
 
@@ -150,7 +152,7 @@ internal struct StoreContext {
 
         // Notify update unless it's cancelled or terminated by other operations.
         if !Task.isCancelled && !context.isTerminated {
-            update(atom: atom, for: key, cache: cache, newValue: value)
+            localContext.update(atom: atom, for: key, cache: cache, newValue: value)
         }
 
         return value
@@ -179,7 +181,7 @@ internal struct StoreContext {
 
         // Notify update unless it's cancelled or terminated by other operations.
         if !Task.isCancelled && !transactionState.isTerminated {
-            update(atom: atom, for: key, cache: cache, newValue: value)
+            localContext.update(atom: atom, for: key, cache: cache, newValue: value)
         }
 
         return value
@@ -193,7 +195,7 @@ internal struct StoreContext {
         if let cache = lookupCache(of: atom, for: key) {
             let localContext = switchContext(scope: cache.initializedScope)
             let newValue = localContext.getValue(of: atom, for: key, override: override)
-            update(atom: atom, for: key, cache: cache, newValue: newValue)
+            localContext.update(atom: atom, for: key, cache: cache, newValue: newValue)
         }
     }
 
@@ -301,12 +303,9 @@ private extension StoreContext {
             return
         }
 
-        // It must be updated with the scope at which they were initialised.
-        let localContext = switchContext(scope: cache.initializedScope)
-
         // Perform side effects first.
-        let state = localContext.getState(of: atom, for: key)
-        let currentContext = AtomCurrentContext(store: localContext)
+        let state = getState(of: atom, for: key)
+        let currentContext = AtomCurrentContext(store: self)
         state.effect.updated(context: currentContext)
 
         // Calculate topological order for updating downstream efficiently.
@@ -398,7 +397,7 @@ private extension StoreContext {
         }
 
         // Notify the observers after all updates are completed.
-        localContext.notifyUpdateToObservers(scopes: updatedScopes.values)
+        notifyUpdateToObservers(scopes: updatedScopes.values)
     }
 
     func release(for key: AtomKey) {
@@ -508,7 +507,8 @@ private extension StoreContext {
 
         return AtomProducerContext(store: self, transactionState: transactionState) { newValue in
             if let cache = lookupCache(of: atom, for: key) {
-                update(atom: atom, for: key, cache: cache, newValue: newValue)
+                switchContext(scope: cache.initializedScope)
+                    .update(atom: atom, for: key, cache: cache, newValue: newValue)
             }
         }
     }
