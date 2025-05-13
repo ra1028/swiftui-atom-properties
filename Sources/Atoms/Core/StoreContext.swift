@@ -128,7 +128,10 @@ internal struct StoreContext {
     @_disfavoredOverload
     func refresh<Node: AsyncAtom>(_ atom: Node) async -> Node.Produced {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
-        let context = prepareForTransaction(of: atom, for: key)
+        let cache = lookupCache(of: atom, for: key)
+        let context = switchContext(scope: cache?.initializedScope)
+            .prepareForTransaction(of: atom, for: key)
+
         let value: Node.Produced
 
         if let override {
@@ -140,7 +143,7 @@ internal struct StoreContext {
 
         await atom.refreshProducer.refreshValue(value, context)
 
-        guard let cache = lookupCache(of: atom, for: key) else {
+        guard let cache else {
             checkAndRelease(for: key)
             return value
         }
@@ -156,8 +159,10 @@ internal struct StoreContext {
     @usableFromInline
     func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Produced {
         let (key, _) = lookupAtomKeyAndOverride(of: atom)
-        let state = getState(of: atom, for: key)
-        let currentContext = AtomCurrentContext(store: self)
+        let cache = lookupCache(of: atom, for: key)
+        let localContext = switchContext(scope: cache?.initializedScope)
+        let state = localContext.getState(of: atom, for: key)
+        let currentContext = AtomCurrentContext(store: localContext)
 
         // Detach the dependencies once to delay updating the downstream until
         // this atom's value refresh is complete.
@@ -167,7 +172,7 @@ internal struct StoreContext {
         // Restore dependencies when the refresh is completed.
         attachDependencies(dependencies, for: key)
 
-        guard let transactionState = state.transactionState, let cache = lookupCache(of: atom, for: key) else {
+        guard let transactionState = state.transactionState, let cache else {
             checkAndRelease(for: key)
             return value
         }
@@ -186,14 +191,18 @@ internal struct StoreContext {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
 
         if let cache = lookupCache(of: atom, for: key) {
-            let newValue = getValue(of: atom, for: key, override: override)
+            let localContext = switchContext(scope: cache.initializedScope)
+            let newValue = localContext.getValue(of: atom, for: key, override: override)
             update(atom: atom, for: key, cache: cache, newValue: newValue)
         }
     }
 
     @usableFromInline
     func reset(_ atom: some Resettable) {
-        let currentContext = AtomCurrentContext(store: self)
+        let (key, _) = lookupAtomKeyAndOverride(of: atom)
+        let cache = lookupCache(of: atom, for: key)
+        let localContext = switchContext(scope: cache?.initializedScope)
+        let currentContext = AtomCurrentContext(store: localContext)
         atom.reset(context: currentContext)
     }
 
@@ -293,18 +302,11 @@ private extension StoreContext {
         }
 
         // It must be updated with the scope at which they were initialised.
-        let localContext = StoreContext(
-            store: store,
-            rootScope: rootScope,
-            currentScope: cache.initializedScope
-        )
-        localContext.performUpdate(atom: atom, for: key)
-    }
+        let localContext = switchContext(scope: cache.initializedScope)
 
-    func performUpdate<Node: Atom>(atom: Node, for key: AtomKey) {
         // Perform side effects first.
-        let state = getState(of: atom, for: key)
-        let currentContext = AtomCurrentContext(store: self)
+        let state = localContext.getState(of: atom, for: key)
+        let currentContext = AtomCurrentContext(store: localContext)
         state.effect.updated(context: currentContext)
 
         // Calculate topological order for updating downstream efficiently.
@@ -318,19 +320,24 @@ private extension StoreContext {
 
         func updatePropagation(for key: AtomKey, cache: some AtomCacheProtocol) {
             // Dependents must be updated with the scope at which they were initialised.
-            let localContext = StoreContext(
-                store: store,
-                rootScope: rootScope,
-                currentScope: cache.initializedScope
-            )
+            let localContext = switchContext(scope: cache.initializedScope)
 
-            let didUpdate = localContext.performUpdatePropagation(for: key, cache: cache)
+            // Overridden atoms don't get updated transitively.
+            let newValue = localContext.getValue(of: cache.atom, for: key, override: nil)
 
-            guard didUpdate else {
+            store.state.caches[key] = cache.updated(value: newValue)
+
+            // Check whether if the dependent atoms should be updated transitively.
+            guard cache.atom.producer.shouldUpdate(cache.value, newValue) else {
                 // Record the atom to avoid downstream from being update.
                 skippedDependencies.insert(key)
                 return
             }
+
+            // Perform side effects before updating downstream.
+            let state = localContext.getState(of: cache.atom, for: key)
+            let currentContext = AtomCurrentContext(store: localContext)
+            state.effect.updated(context: currentContext)
 
             if let scope = cache.initializedScope {
                 updatedScopes[scope.key] = scope
@@ -391,25 +398,7 @@ private extension StoreContext {
         }
 
         // Notify the observers after all updates are completed.
-        notifyUpdateToObservers(scopes: updatedScopes.values)
-    }
-
-    func performUpdatePropagation(for key: AtomKey, cache: some AtomCacheProtocol) -> Bool {
-        // Overridden atoms don't get updated transitively.
-        let newValue = getValue(of: cache.atom, for: key, override: nil)
-
-        store.state.caches[key] = cache.updated(value: newValue)
-
-        // Check whether if the dependent atoms should be updated transitively.
-        guard cache.atom.producer.shouldUpdate(cache.value, newValue) else {
-            return false
-        }
-
-        // Perform side effects before updating downstream.
-        let state = getState(of: cache.atom, for: key)
-        let currentContext = AtomCurrentContext(store: self)
-        state.effect.updated(context: currentContext)
-        return true
+        localContext.notifyUpdateToObservers(scopes: updatedScopes.values)
     }
 
     func release(for key: AtomKey) {
@@ -431,12 +420,7 @@ private extension StoreContext {
 
         if let state, let cache {
             // It must call release effect with the scope at which they were initialised.
-            let localContext = StoreContext(
-                store: store,
-                rootScope: rootScope,
-                currentScope: cache.initializedScope
-            )
-
+            let localContext = switchContext(scope: cache.initializedScope)
             let currentContext = AtomCurrentContext(store: localContext)
             state.effect.released(context: currentContext)
         }
@@ -658,5 +642,13 @@ private extension StoreContext {
         for observer in observers + scopedObservers {
             observer.onUpdate(snapshot)
         }
+    }
+
+    func switchContext(scope: Scope?) -> StoreContext {
+        StoreContext(
+            store: store,
+            rootScope: rootScope,
+            currentScope: scope
+        )
     }
 }
