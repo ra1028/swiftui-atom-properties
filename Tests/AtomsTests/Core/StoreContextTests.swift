@@ -1199,6 +1199,145 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(effect.releasedCount, 1)
     }
 
+    #if compiler(>=6)
+        @MainActor
+        func testEffectCrossScopeBoundary() async {
+            struct TestDependencyAtom: ValueAtom, Hashable {
+                func value(context: Context) -> Int {
+                    1
+                }
+            }
+
+            struct TestAtom: StateAtom, Refreshable, Resettable {
+                let testEffect: TestEffect
+
+                var key: UniqueKey {
+                    UniqueKey()
+                }
+
+                func defaultValue(context: Context) -> Int {
+                    context.read(TestDependencyAtom())
+                }
+
+                func refresh(context: CurrentContext) async -> Int {
+                    context.read(TestDependencyAtom())
+                }
+
+                func reset(context: CurrentContext) {
+                    context.reset(TestDependencyAtom())
+                }
+
+                func effect(context: CurrentContext) -> some AtomEffect {
+                    testEffect.initContext = context
+                    return testEffect
+                }
+            }
+
+            struct TestAsyncAtom: AsyncPhaseAtom {
+                let testEffect: TestEffect
+
+                var key: UniqueKey {
+                    UniqueKey()
+                }
+
+                func value(context: Context) async -> Int {
+                    context.read(TestDependencyAtom())
+                }
+
+                func effect(context: CurrentContext) -> some AtomEffect {
+                    testEffect.initContext = context
+                    return testEffect
+                }
+            }
+
+            final class TestEffect: AtomEffect {
+                var initContext: AtomCurrentContext?
+                var value1: Int?
+                var value2: Int?
+
+                func updateValues(context: Context) {
+                    value1 = context.read(TestDependencyAtom())
+                    value2 = initContext?.read(TestDependencyAtom())
+                }
+
+                func initialized(context: Context) {
+                    updateValues(context: context)
+                }
+
+                func updated(context: Context) {
+                    updateValues(context: context)
+                }
+
+                func released(context: Context) {
+                    updateValues(context: context)
+                }
+            }
+
+            let subscriberState = SubscriberState()
+            let subscriber = Subscriber(subscriberState)
+            let store = AtomStore()
+            let rootScopeToken = ScopeKey.Token()
+            let scopeToken = ScopeKey.Token()
+            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+            let scopedContext = context.scoped(
+                scopeID: ScopeID(DefaultScopeID()),
+                scopeKey: scopeToken.key,
+                observers: [],
+                overrideContainer: OverrideContainer()
+                    .addingOverride(for: TestDependencyAtom()) { _ in
+                        2
+                    }
+            )
+            let testEffect = TestEffect()
+            let testAtom = TestAtom(testEffect: testEffect)
+            let testAsyncAtom = TestAsyncAtom(testEffect: testEffect)
+
+            func assert<Node: Atom>(
+                _ atom: Node,
+                _ expected: Node.Produced,
+                file: StaticString = #filePath,
+                line: UInt = #line
+            ) where Node.Produced: Equatable {
+                XCTAssertEqual(testEffect.value1, 1, file: file, line: line)
+                XCTAssertEqual(testEffect.value2, 1, file: file, line: line)
+                XCTAssertEqual(context.read(atom), expected, file: file, line: line)
+            }
+
+            _ = context.read(testAtom)
+            assert(testAtom, 1)
+
+            _ = context.watch(testAtom, subscriber: subscriber, subscription: Subscription())
+            assert(testAtom, 1)
+
+            _ = context.watch(testAsyncAtom, subscriber: subscriber, subscription: Subscription())
+            assert(testAsyncAtom, .suspending)
+
+            context.modify(testAtom) { $0 = 1 }
+            assert(testAtom, 1)
+
+            scopedContext.set(context.read(testAtom), for: testAtom)
+            assert(testAtom, 1)
+
+            scopedContext.modify(testAtom) { $0 = 1 }
+            assert(testAtom, 1)
+
+            _ = await scopedContext.refresh(testAtom)
+            assert(testAtom, 1)
+
+            _ = await scopedContext.refresh(testAsyncAtom)
+            assert(testAsyncAtom, .success(1))
+
+            scopedContext.reset(testAtom)
+            assert(testAtom, 1)
+
+            scopedContext.reset(testAsyncAtom)
+            assert(testAsyncAtom, .suspending)
+
+            scopedContext.unwatch(testAtom, subscriber: subscriber)
+            assert(testAtom, 1)
+        }
+    #endif
+
     @MainActor
     func testUpdateInTopologicalOrder() {
         struct TestAtom1: StateAtom, Hashable {
@@ -1254,7 +1393,7 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
-    func testTransitiveUpdate() {
+    func testUpdatePropagation() {
         struct TestAtom1: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
                 0
