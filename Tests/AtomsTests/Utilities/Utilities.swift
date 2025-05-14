@@ -141,23 +141,12 @@ extension OverrideContainer {
 }
 
 extension Task where Success == Never, Failure == Never {
-    #if compiler(>=6)
-        static func yield(
-            isolation: isolated (any Actor)? = #isolation,
-            @_inheritActorContext until predicate: () -> Bool
-        ) async {
-            while !predicate() {
-                await yield()
-            }
+    static func yield(
+        isolation: isolated (any Actor)? = #isolation,
+        @_inheritActorContext until predicate: () -> Bool
+    ) async {
+        while !predicate() {
+            await yield()
         }
-    #else
-        @MainActor
-        static func yield(
-            @_inheritActorContext until predicate: () -> Bool
-        ) async {
-            while !predicate() {
-                await yield()
-            }
-        }
-    #endif
+    }
 }

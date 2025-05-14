@@ -206,10 +206,6 @@ private extension Suspense {
             }
         }
 
-        #if !compiler(>=6) && hasFeature(DisableOutwardActorInference)
-            nonisolated init() {}
-        #endif
-
         deinit {
             suspensionTask?.cancel()
         }

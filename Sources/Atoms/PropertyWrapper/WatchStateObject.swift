@@ -84,7 +84,7 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     /// access ``wrappedValue`` directly. Instead, you use the property variable created
     /// with the `@WatchStateObject` attribute.
     /// Accessing this property starts watching the atom.
-    #if compiler(>=6) || hasFeature(DisableOutwardActorInference)
+    #if hasFeature(DisableOutwardActorInference)
         @MainActor
     #endif
     public var wrappedValue: Node.Produced {
@@ -95,7 +95,7 @@ public struct WatchStateObject<Node: ObservableObjectAtom>: DynamicProperty {
     ///
     /// Use the projected value to pass a binding value down a view hierarchy.
     /// To get the projected value, prefix the property variable with `$`.
-    #if compiler(>=6) || hasFeature(DisableOutwardActorInference)
+    #if hasFeature(DisableOutwardActorInference)
         @MainActor
     #endif
     public var projectedValue: Wrapper {

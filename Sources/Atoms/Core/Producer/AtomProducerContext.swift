@@ -34,19 +34,10 @@ internal struct AtomProducerContext<Value> {
         return body(context)
     }
 
-    #if compiler(>=6)
-        func transaction<T, E: Error>(_ body: @MainActor (AtomTransactionContext) async throws(E) -> T) async throws(E) -> T {
-            transactionState.begin()
-            let context = AtomTransactionContext(store: store, transactionState: transactionState)
-            defer { transactionState.commit() }
-            return try await body(context)
-        }
-    #else
-        func transaction<T>(_ body: @MainActor (AtomTransactionContext) async throws -> T) async rethrows -> T {
-            transactionState.begin()
-            let context = AtomTransactionContext(store: store, transactionState: transactionState)
-            defer { transactionState.commit() }
-            return try await body(context)
-        }
-    #endif
+    func transaction<T, E: Error>(_ body: @MainActor (AtomTransactionContext) async throws(E) -> T) async throws(E) -> T {
+        transactionState.begin()
+        let context = AtomTransactionContext(store: store, transactionState: transactionState)
+        defer { transactionState.commit() }
+        return try await body(context)
+    }
 }

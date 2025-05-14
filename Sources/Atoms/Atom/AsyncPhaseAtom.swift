@@ -39,74 +39,40 @@ public protocol AsyncPhaseAtom: AsyncAtom where Produced == AsyncPhase<Success, 
     /// The type of success value that this atom produces.
     associatedtype Success
 
-    #if compiler(>=6)
-        /// The type of errors that this atom produces.
-        associatedtype Failure: Error
+    /// The type of errors that this atom produces.
+    associatedtype Failure: Error
 
-        /// Asynchronously produces a value to be provided via this atom.
-        ///
-        /// Values provided or errors thrown by this method are converted to the unified enum
-        /// representation ``AsyncPhase``.
-        ///
-        /// - Parameter context: A context structure to read, watch, and otherwise
-        ///                      interact with other atoms.
-        ///
-        /// - Throws: The error that occurred during the process of creating the resulting value.
-        ///
-        /// - Returns: The process's result.
-        @MainActor
-        func value(context: Context) async throws(Failure) -> Success
-    #else
-        /// The type of errors that this atom produces.
-        typealias Failure = any Error
-
-        /// Asynchronously produces a value to be provided via this atom.
-        ///
-        /// Values provided or errors thrown by this method are converted to the unified enum
-        /// representation ``AsyncPhase``.
-        ///
-        /// - Parameter context: A context structure to read, watch, and otherwise
-        ///                      interact with other atoms.
-        ///
-        /// - Throws: The error that occurred during the process of creating the resulting value.
-        ///
-        /// - Returns: The process's result.
-        @MainActor
-        func value(context: Context) async throws -> Success
-    #endif
+    /// Asynchronously produces a value to be provided via this atom.
+    ///
+    /// Values provided or errors thrown by this method are converted to the unified enum
+    /// representation ``AsyncPhase``.
+    ///
+    /// - Parameter context: A context structure to read, watch, and otherwise
+    ///                      interact with other atoms.
+    ///
+    /// - Throws: The error that occurred during the process of creating the resulting value.
+    ///
+    /// - Returns: The process's result.
+    @MainActor
+    func value(context: Context) async throws(Failure) -> Success
 }
 
 public extension AsyncPhaseAtom {
     var producer: AtomProducer<Produced> {
         AtomProducer { context in
             let task = Task {
-                #if compiler(>=6)
-                    do throws(Failure) {
-                        let value = try await context.transaction(value)
+                do throws(Failure) {
+                    let value = try await context.transaction(value)
 
-                        if !Task.isCancelled {
-                            context.update(with: .success(value))
-                        }
+                    if !Task.isCancelled {
+                        context.update(with: .success(value))
                     }
-                    catch {
-                        if !Task.isCancelled {
-                            context.update(with: .failure(error))
-                        }
+                }
+                catch {
+                    if !Task.isCancelled {
+                        context.update(with: .failure(error))
                     }
-                #else
-                    do {
-                        let value = try await context.transaction(value)
-
-                        if !Task.isCancelled {
-                            context.update(with: .success(value))
-                        }
-                    }
-                    catch {
-                        if !Task.isCancelled {
-                            context.update(with: .failure(error))
-                        }
-                    }
-                #endif
+                }
             }
 
             context.onTermination = task.cancel
@@ -119,33 +85,18 @@ public extension AsyncPhaseAtom {
             var phase = Produced.suspending
 
             let task = Task {
-                #if compiler(>=6)
-                    do throws(Failure) {
-                        let value = try await context.transaction(value)
+                do throws(Failure) {
+                    let value = try await context.transaction(value)
 
-                        if !Task.isCancelled {
-                            phase = .success(value)
-                        }
+                    if !Task.isCancelled {
+                        phase = .success(value)
                     }
-                    catch {
-                        if !Task.isCancelled {
-                            phase = .failure(error)
-                        }
+                }
+                catch {
+                    if !Task.isCancelled {
+                        phase = .failure(error)
                     }
-                #else
-                    do {
-                        let value = try await context.transaction(value)
-
-                        if !Task.isCancelled {
-                            phase = .success(value)
-                        }
-                    }
-                    catch {
-                        if !Task.isCancelled {
-                            phase = .failure(error)
-                        }
-                    }
-                #endif
+                }
             }
 
             context.onTermination = task.cancel
