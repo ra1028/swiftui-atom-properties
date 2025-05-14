@@ -12,7 +12,6 @@ on:
 env:
   DEVELOPER_DIR: /Applications/Xcode_16.1.app
   IOS_SIMULATOR: '"platform=iOS Simulator,name=iPhone 16 Pro"'
-  IOS_SIMULATOR_XCODE_15: '"platform=iOS Simulator,name=iPhone 15 Pro"'
   MACOS: '"platform=macOS"'
   TVOS_SIMULATOR: '"platform=tvOS Simulator,name=Apple TV 4K (3rd generation)"'
   WATCHOS_SIMULATOR: '"platform=watchOS Simulator,name=Apple Watch Ultra 2 (49mm)"'
@@ -32,22 +31,6 @@ jobs:
       - name: Test library watchOS
         run: scripts/test.sh library -destinations ${{ env.WATCHOS_SIMULATOR }}
 
-  test_with_xcode_15:
-    name: Test with Xcode 15
-    runs-on: macos-14
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_15.4.app
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test library iOS
-        run: scripts/test.sh library -destinations ${{ env.IOS_SIMULATOR_XCODE_15 }}
-      - name: Test library macOS
-        run: scripts/test.sh library -destinations ${{ env.MACOS }}
-      - name: Test library tvOS
-        run: scripts/test.sh library -destinations ${{ env.TVOS_SIMULATOR }}
-      - name: Test library watchOS
-        run: scripts/test.sh library -destinations ${{ env.WATCHOS_SIMULATOR }}
-
   test_examples:
     name: Test examples
     runs-on: macos-14
@@ -60,16 +43,6 @@ jobs:
           scripts/test.sh example-cross-platform -destinations \
             ${{ env.MACOS }} \
             ${{ env.TVOS_SIMULATOR }}
-
-  test_upcoming_features:
-    name: Test upcoming features with Xcode 15
-    runs-on: macos-14
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_15.4.app
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test upcoming features
-        run: ENABLE_UPCOMING_FEATURES=1 scripts/test.sh library -destinations ${{ env.IOS_SIMULATOR_XCODE_15 }}
 
   test_language_mode:
     name: Test Swift 5 language mode

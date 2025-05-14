@@ -125,14 +125,14 @@ Open `Examples/Project.xcodeproj` and play around with it!
 
 ### Requirements
 
-|       |Minimum Version|
-|------:|--------------:|
-|Swift  |5.10, 6.0      |
-|Xcode  |15.4, 16.1     |
-|iOS    |14.0           |
-|macOS  |11.0           |
-|tvOS   |14.0           |
-|watchOS|7.0            |
+|             |Minimum Version|
+|------------:|--------------:|
+|Language mode|5, 6           |
+|Xcode        |16.1           |
+|iOS          |14.0           |
+|macOS        |11.0           |
+|tvOS         |14.0           |
+|watchOS      |7.0            |
 
 ### Installation
 
@@ -519,11 +519,9 @@ struct MoviesView: View {
 |           |Description|
 |:----------|:----------|
 |Summary    |Provides an `AsyncPhase` value that represents a result of the given asynchronous throwable function.|
-|Output     |`AsyncPhase<T, E: Error>` (`AsyncPhase<T, any Error>` in Swift 5)|
+|Output     |`AsyncPhase<T, E: Error>`|
 |Use Case   |Throwing or non-throwing asynchronous operation e.g. API call|
 
-Note:  
-The [typed throws](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0413-typed-throws.md) feature introduced in Swift 6 allows the `Failure` type of the produced `AsyncPhase` to be specified as any type or even non-throwing, but in Swift 5 without it, the `Failure` type is always be `any Error`.  
 Here is a chart of the syntax in `typed throws` and the type of resulting `AsyncPhase`.  
 
 |Syntax             |Shorthand          |Produced                  |

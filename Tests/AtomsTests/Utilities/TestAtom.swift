@@ -86,15 +86,9 @@ struct TestAsyncPhaseAtom<Success, Failure: Error>: AsyncPhaseAtom, @unchecked S
         UniqueKey()
     }
 
-    #if compiler(>=6)
-        func value(context: Context) async throws(Failure) -> Success {
-            try getResult().get()
-        }
-    #else
-        func value(context: Context) async throws -> Success {
-            try getResult().get()
-        }
-    #endif
+    func value(context: Context) async throws(Failure) -> Success {
+        try getResult().get()
+    }
 
     func effect(context: CurrentContext) -> some AtomEffect {
         effect ?? TestEffect()
