@@ -11,6 +11,9 @@ final class UpdateEffectTests: XCTestCase {
             performedCount += 1
         }
 
+        effect.initializing(context: context)
+        XCTAssertEqual(performedCount, 0)
+
         effect.initialized(context: context)
         XCTAssertEqual(performedCount, 0)
 

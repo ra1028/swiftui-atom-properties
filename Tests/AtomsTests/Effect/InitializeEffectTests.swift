@@ -2,7 +2,7 @@ import XCTest
 
 @testable import Atoms
 
-final class InitializeTests: XCTestCase {
+final class InitializeEffectTests: XCTestCase {
     @MainActor
     func testEvent() {
         let context = AtomCurrentContext(store: .dummy)
@@ -10,6 +10,9 @@ final class InitializeTests: XCTestCase {
         let effect = InitializeEffect {
             performedCount += 1
         }
+
+        effect.initializing(context: context)
+        XCTAssertEqual(performedCount, 0)
 
         effect.initialized(context: context)
         XCTAssertEqual(performedCount, 1)

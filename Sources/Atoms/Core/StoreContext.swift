@@ -279,14 +279,15 @@ private extension StoreContext {
         for key: AtomKey,
         override: Override<Node>?
     ) -> Node.Produced {
-        let value = getValue(of: atom, for: key, override: override)
         let state = getState(of: atom, for: key)
+        let currentContext = AtomCurrentContext(store: self)
 
+        state.effect.initializing(context: currentContext)
+
+        let value = getValue(of: atom, for: key, override: override)
         store.state.caches[key] = AtomCache(atom: atom, value: value, initializedScope: currentScope)
 
-        let currentContext = AtomCurrentContext(store: self)
         state.effect.initialized(context: currentContext)
-
         return value
     }
 

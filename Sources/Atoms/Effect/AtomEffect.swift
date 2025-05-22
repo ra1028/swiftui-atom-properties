@@ -4,6 +4,7 @@
 /// initialized the first time the atom is used, and the instance will be retained
 /// until the atom is released, thus it allows to declare stateful side effects.
 ///
+/// SeeAlso: ``InitializingEffect``
 /// SeeAlso: ``InitializeEffect``
 /// SeeAlso: ``UpdateEffect``
 /// SeeAlso: ``ReleaseEffect``
@@ -14,8 +15,12 @@ public protocol AtomEffect {
     /// with other atoms.
     typealias Context = AtomCurrentContext
 
-    /// A lifecycle event that is triggered when the atom is first used and initialized,
-    /// or once it is released and re-initialized again.
+    /// A lifecycle event that is triggered before the atom is first used and initialized,
+    /// or once it is released and re-initialized.
+    func initializing(context: Context)
+
+    /// A lifecycle event that is triggered after the atom is first used and initialized,
+    /// or once it is released and re-initialized.
     func initialized(context: Context)
 
     /// A lifecycle event that is triggered when the atom is updated.
@@ -26,6 +31,7 @@ public protocol AtomEffect {
 }
 
 public extension AtomEffect {
+    func initializing(context: Context) {}
     func initialized(context: Context) {}
     func updated(context: Context) {}
     func released(context: Context) {}
