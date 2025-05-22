@@ -7,9 +7,14 @@ final class Object {}
 struct UniqueKey: Hashable {}
 
 final class TestEffect: AtomEffect {
+    var initializingCount = 0
     var initializedCount = 0
     var updatedCount = 0
     var releasedCount = 0
+
+    func initializing(context: Context) {
+        initializingCount += 1
+    }
 
     func initialized(context: Context) {
         initializedCount += 1

@@ -1157,6 +1157,7 @@ final class StoreContextTests: XCTestCase {
         _ = context.watch(upstreamAtom, in: TransactionState(key: key))
 
         XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 0)
         XCTAssertEqual(effect.releasedCount, 0)
@@ -1164,6 +1165,7 @@ final class StoreContextTests: XCTestCase {
         context.set(1, for: atom)
 
         XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 1)
         XCTAssertEqual(effect.releasedCount, 0)
@@ -1173,6 +1175,7 @@ final class StoreContextTests: XCTestCase {
         context.set(4, for: atom)
 
         XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 4)
         XCTAssertEqual(effect.releasedCount, 0)
@@ -1180,6 +1183,7 @@ final class StoreContextTests: XCTestCase {
         context.set("Updated", for: upstreamAtom)
 
         XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 5)
         XCTAssertEqual(effect.releasedCount, 0)
@@ -1187,6 +1191,7 @@ final class StoreContextTests: XCTestCase {
         context.unwatch(atom, subscriber: subscriber)
 
         XCTAssertNil(store.state.states[key])
+        XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 5)
         XCTAssertEqual(effect.releasedCount, 1)
@@ -1194,6 +1199,7 @@ final class StoreContextTests: XCTestCase {
         context.set(5, for: atom)
 
         XCTAssertNil(store.state.states[key])
+        XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 5)
         XCTAssertEqual(effect.releasedCount, 1)

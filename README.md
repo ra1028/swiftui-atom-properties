@@ -1403,7 +1403,8 @@ You can create custom effects that conform to the [`AtomEffect`](https://ra1028.
 
 |API|Use|
 |:--|:--|
-|[InitializeEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/initializeeffect)|Performs an arbitrary action when the atom is initialized.|
+|[InitializingEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/initializingeffect)|Performs an arbitrary action before the atom is initialized.|
+|[InitializeEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/initializeeffect)|Performs an arbitrary action after the atom is initialized.|
 |[UpdateEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/updateeffect)|Performs an arbitrary action when the atom is updated.|
 |[ReleaseEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/releaseeffect)|Performs an arbitrary action when the atom is released.|
 |[MergedEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/mergedeffect)|Merges multiple atom effects into one.|
