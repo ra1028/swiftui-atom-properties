@@ -2,10 +2,6 @@
 @MainActor
 @resultBuilder
 public enum AtomEffectBuilder {
-    public static func buildExpression<Effect: AtomEffect>(_ effect: Effect) -> Effect {
-        effect
-    }
-
     public static func buildBlock<Effect: AtomEffect>(_ effect: Effect) -> Effect {
         effect
     }
