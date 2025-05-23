@@ -90,6 +90,7 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``ChangesOfModifier``
 - ``TaskPhaseModifier``
 - ``AnimationModifier``
+- ``AtomEffectBuilder``
 - ``EmptyEffect``
 - ``AtomProducer``
 - ``AtomRefreshProducer``
