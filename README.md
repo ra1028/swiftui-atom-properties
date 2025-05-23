@@ -28,7 +28,6 @@
   - [View](#view)
   - [Techniques](#techniques)
   - [Advanced Usage](#advanced-usage)
-  - [Dealing with Known SwiftUI Bugs](#dealing-with-known-swiftui-bugs)
 - [Contributing](#contributing)
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
@@ -129,10 +128,10 @@ Open `Examples/Project.xcodeproj` and play around with it!
 |------------:|--------------:|
 |Language mode|5, 6           |
 |Xcode        |16.1           |
-|iOS          |14.0           |
-|macOS        |11.0           |
-|tvOS         |14.0           |
-|watchOS      |7.0            |
+|iOS          |16.0           |
+|macOS        |13.0           |
+|tvOS         |16.0           |
+|watchOS      |9.0            |
 
 ### Installation
 
@@ -1792,74 +1791,6 @@ class MessageLoader: ObservableObject {
         }
         phase = nextPhase.map { messages + $0 }
     }
-}
-```
-
-</details>
-
----
-
-### Dealing with Known SwiftUI Bugs
-
-#### Modal presentation causes assertionFailure when dismissing it (Fixed in iOS15)
-
-Unfortunately, SwiftUI has a bug in iOS14 or lower where the `EnvironmentValue` is removed from a screen presented with `.sheet` just before dismissing it. Since this library is designed based on `EnvironmentValue`, this bug end up triggering the friendly `assertionFailure` that is added so that developers can easily aware of forgotten `AtomRoot` implementation.  
-As a workaround, you can use `AtomDerivedScope` to explicitly propagate the atom store via `AtomViewContext` from the parent view.
-
-<details><summary><code>💡 Click to expand workaround</code></summary>
-
-```swift
-struct RootView: View {
-    @State
-    var isPresented = false
-
-    @ViewContext
-    var context
-
-    var body: some View {
-        VStack {
-            Text("Example View")
-        }
-        .sheet(isPresented: $isPresented) {
-            AtomDerivedScope(context) {
-                MailView()
-            }
-        }
-    }
-}
-```
-
-</details>
-
-#### Some SwiftUI modifiers cause memory leak (Fixed in iOS16)
-
-In iOS 15 or lower, some modifiers in SwiftUI seem to cause an internal memory leak if it captures `self` implicitly or explicitly. To avoid that bug, make sure that `self` is not captured when using those modifiers.  
-Below are the list of modifiers I found that cause memory leaks:
-
-- [`refreshable(action:)`](https://developer.apple.com/documentation/SwiftUI/View/refreshable(action:))
-- [`onSubmit(of:_:)`](https://developer.apple.com/documentation/swiftui/view/onsubmit(of:_:))
-
-<details><summary><code>💡 Click to expand workaround</code></summary>
-
-```swift
-@ViewContext
-var context
-
-...
-
-.refreshable { [context] in
-    await context.refresh(FetchDataAtom())
-}
-```
-
-```swift
-@State
-var isShowingSearchScreen = false
-
-...
-
-.onSubmit { [$isShowingSearchScreen] in
-    $isShowingSearchScreen.wrappedValue = true
 }
 ```
 
