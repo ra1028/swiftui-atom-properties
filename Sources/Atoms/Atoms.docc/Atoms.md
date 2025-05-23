@@ -91,6 +91,9 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``TaskPhaseModifier``
 - ``AnimationModifier``
 - ``AtomEffectBuilder``
-- ``EmptyEffect``
 - ``AtomProducer``
 - ``AtomRefreshProducer``
+
+### Deprecated
+
+- ``EmptyEffect``
