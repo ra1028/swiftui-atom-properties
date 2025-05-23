@@ -1,4 +1,19 @@
-// swift-format-ignore: AllPublicDeclarationsHaveDocumentation
+/// A result builder for composing multiple atom effects into a single effect.
+///
+/// ## Example
+/// ```swift
+/// func effect(context: CurrentContext) -> some AtomEffect {
+///     UpdateEffect {
+///         print("Updated")
+///     }
+///
+///     ReleaseEffect {
+///         print("Released")
+///     }
+///
+///     CustomEffect()
+/// }
+/// ```
 @MainActor
 @resultBuilder
 public enum AtomEffectBuilder {

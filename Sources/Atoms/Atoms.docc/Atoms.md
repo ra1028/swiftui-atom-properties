@@ -37,6 +37,7 @@ Building state by compositing atoms automatically optimizes rendering based on i
 ### Effects
 
 - ``AtomEffect``
+- ``AtomEffectBuilder``
 - ``InitializingEffect``
 - ``InitializeEffect``
 - ``UpdateEffect``
@@ -89,7 +90,6 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``ChangesOfModifier``
 - ``TaskPhaseModifier``
 - ``AnimationModifier``
-- ``AtomEffectBuilder``
 - ``AtomProducer``
 - ``AtomRefreshProducer``
 
