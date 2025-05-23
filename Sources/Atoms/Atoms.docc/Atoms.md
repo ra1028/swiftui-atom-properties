@@ -41,7 +41,6 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``InitializeEffect``
 - ``UpdateEffect``
 - ``ReleaseEffect``
-- ``MergedEffect``
 
 ### Attributes
 
@@ -97,3 +96,4 @@ Building state by compositing atoms automatically optimizes rendering based on i
 ### Deprecated
 
 - ``EmptyEffect``
+- ``MergedEffect``

@@ -1399,7 +1399,7 @@ Note that other atoms that depend on scoped atoms will be in a shared state and 
 
 Atom effects are an API for managing side effects that are synchronized with the atom's lifecycle. They are widely applicable for variety of usage such as state synchronization, state persistence, logging, and etc, by observing and reacting to state changes.  
 
-You can create custom effects that conform to the [`AtomEffect`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomeffect) protocol, but there are several predefined effects.  
+You can create custom effects that conform to the [`AtomEffect`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomeffect) protocol, but there are several predefined effects. Multiple atom effects can be specified with the result builder syntax.  
 
 |API|Use|
 |:--|:--|
@@ -1407,7 +1407,6 @@ You can create custom effects that conform to the [`AtomEffect`](https://ra1028.
 |[InitializeEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/initializeeffect)|Performs an arbitrary action after the atom is initialized.|
 |[UpdateEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/updateeffect)|Performs an arbitrary action when the atom is updated.|
 |[ReleaseEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/releaseeffect)|Performs an arbitrary action when the atom is released.|
-|[MergedEffect](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/mergedeffect)|Merges multiple atom effects into one.|
 
 Atom effects are attached to atoms via the [`Atom.effect(context:)`](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/effect(context:)-4wm5m) function.  
 
