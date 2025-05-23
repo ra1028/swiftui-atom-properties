@@ -10,7 +10,7 @@ public protocol Atom<Produced>: Sendable {
     associatedtype Produced
 
     /// The type of effect for managing side effects.
-    associatedtype Effect: AtomEffect = EmptyEffect
+    associatedtype Effect: AtomEffect
 
     /// A type of the context structure to read, watch, and otherwise interact
     /// with other atoms.
@@ -34,6 +34,7 @@ public protocol Atom<Produced>: Sendable {
     ///
     /// - Returns: An effect for managing side effects.
     @MainActor
+    @AtomEffectBuilder
     func effect(context: CurrentContext) -> Effect
 
     // --- Internal ---
@@ -44,9 +45,8 @@ public protocol Atom<Produced>: Sendable {
 
 public extension Atom {
     @MainActor
-    func effect(context: CurrentContext) -> Effect where Effect == EmptyEffect {
-        EmptyEffect()
-    }
+    @AtomEffectBuilder
+    func effect(context: CurrentContext) -> some AtomEffect {}
 }
 
 public extension Atom where Self == Key {
