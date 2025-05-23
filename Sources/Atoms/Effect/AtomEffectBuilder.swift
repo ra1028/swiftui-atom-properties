@@ -1,7 +1,9 @@
+// swift-format-ignore: AllPublicDeclarationsHaveDocumentation
 /// A result builder for composing multiple atom effects into a single effect.
 ///
 /// ## Example
 /// ```swift
+/// @AtomEffectBuilder
 /// func effect(context: CurrentContext) -> some AtomEffect {
 ///     UpdateEffect {
 ///         print("Updated")
