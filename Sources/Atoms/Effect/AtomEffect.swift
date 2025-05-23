@@ -8,7 +8,6 @@
 /// SeeAlso: ``InitializeEffect``
 /// SeeAlso: ``UpdateEffect``
 /// SeeAlso: ``ReleaseEffect``
-/// SeeAlso: ``MergedEffect``
 @MainActor
 public protocol AtomEffect {
     /// A type of the context structure to read, set, and otherwise interact

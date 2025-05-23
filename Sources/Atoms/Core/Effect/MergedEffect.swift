@@ -1,6 +1,5 @@
-// Use type pack once it is available in iOS 17 or newer.
-// MergedEffect<each Effect: AtomEffect>
 /// An atom effect that merges multiple atom effects into one.
+@available(*, deprecated, message: "`Atom/effect(context:)` now supports result builder syntax.")
 public struct MergedEffect: AtomEffect {
     private let initializing: @MainActor (Context) -> Void
     private let initialized: @MainActor (Context) -> Void
