@@ -2,6 +2,7 @@ import XCTest
 
 @testable import Atoms
 
+@available(*, deprecated)
 final class RefreshableTests: XCTestCase {
     @MainActor
     func testCustomRefresh() async {

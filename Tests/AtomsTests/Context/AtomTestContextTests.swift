@@ -209,6 +209,7 @@ final class AtomTestContextTests: XCTestCase {
         XCTAssertEqual(updateCount, 1)
     }
 
+    @available(*, deprecated)
     @MainActor
     func testCustomRefresh() async {
         let atom = TestCustomRefreshableAtom { _ in
@@ -248,6 +249,7 @@ final class AtomTestContextTests: XCTestCase {
         XCTAssertEqual(context.read(atom), 0)
     }
 
+    @available(*, deprecated)
     @MainActor
     func testCustomReset() {
         let atom = TestStateAtom(defaultValue: 0)

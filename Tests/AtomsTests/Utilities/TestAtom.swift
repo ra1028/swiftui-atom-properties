@@ -95,6 +95,7 @@ struct TestAsyncPhaseAtom<Success, Failure: Error>: AsyncPhaseAtom, @unchecked S
     }
 }
 
+@available(*, deprecated)
 struct TestCustomRefreshableAtom<T: Sendable>: ValueAtom, Refreshable, @unchecked Sendable {
     var getValue: (Context) -> T
     var refresh: (CurrentContext) async -> T
@@ -112,6 +113,7 @@ struct TestCustomRefreshableAtom<T: Sendable>: ValueAtom, Refreshable, @unchecke
     }
 }
 
+@available(*, deprecated)
 struct TestCustomResettableAtom<T>: StateAtom, Resettable, @unchecked Sendable {
     var defaultValue: (Context) -> T
     var reset: (CurrentContext) -> Void

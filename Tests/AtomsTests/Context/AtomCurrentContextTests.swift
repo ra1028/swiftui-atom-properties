@@ -46,6 +46,7 @@ final class AtomCurrentContextTests: XCTestCase {
         XCTAssertEqual(value, 100)
     }
 
+    @available(*, deprecated)
     @MainActor
     func testCustomRefresh() async {
         let atom = TestCustomRefreshableAtom { _ in
@@ -84,6 +85,7 @@ final class AtomCurrentContextTests: XCTestCase {
         XCTAssertEqual(storeContext.read(dependency), 0)
     }
 
+    @available(*, deprecated)
     @MainActor
     func testCustomReset() {
         let store = AtomStore()

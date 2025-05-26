@@ -58,6 +58,7 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom).value, 100)
     }
 
+    @available(*, deprecated)
     @MainActor
     func testCustomRefresh() async {
         let atom = TestCustomRefreshableAtom { _ in
@@ -104,6 +105,7 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.read(atom), 0)
     }
 
+    @available(*, deprecated)
     @MainActor
     func testCustomReset() {
         let store = AtomStore()

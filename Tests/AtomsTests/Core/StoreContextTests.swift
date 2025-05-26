@@ -1213,7 +1213,7 @@ final class StoreContextTests: XCTestCase {
             }
         }
 
-        struct TestAtom: StateAtom, Refreshable, Resettable {
+        struct TestAtom: StateAtom {
             let testEffect: TestEffect
 
             var key: UniqueKey {
@@ -1222,14 +1222,6 @@ final class StoreContextTests: XCTestCase {
 
             func defaultValue(context: Context) -> Int {
                 context.read(TestDependencyAtom())
-            }
-
-            func refresh(context: CurrentContext) async -> Int {
-                context.read(TestDependencyAtom())
-            }
-
-            func reset(context: CurrentContext) {
-                context.reset(TestDependencyAtom())
             }
 
             func effect(context: CurrentContext) -> some AtomEffect {
@@ -1297,49 +1289,132 @@ final class StoreContextTests: XCTestCase {
         let testAtom = TestAtom(testEffect: testEffect)
         let testAsyncAtom = TestAsyncAtom(testEffect: testEffect)
 
-        func assert<Node: Atom>(
-            _ atom: Node,
-            _ expected: Node.Produced,
-            file: StaticString = #filePath,
-            line: UInt = #line
-        ) where Node.Produced: Equatable {
+        func assert(file: StaticString = #filePath, line: UInt = #line) {
             XCTAssertEqual(testEffect.value1, 1, file: file, line: line)
             XCTAssertEqual(testEffect.value2, 1, file: file, line: line)
-            XCTAssertEqual(context.read(atom), expected, file: file, line: line)
         }
 
-        _ = context.read(testAtom)
-        assert(testAtom, 1)
+        let value0 = context.read(testAtom)
+        assert()
+        XCTAssertEqual(value0, 1)
 
-        _ = context.watch(testAtom, subscriber: subscriber, subscription: Subscription())
-        assert(testAtom, 1)
+        let value1 = context.watch(testAtom, subscriber: subscriber, subscription: Subscription())
+        assert()
+        XCTAssertEqual(value1, 1)
 
-        _ = context.watch(testAsyncAtom, subscriber: subscriber, subscription: Subscription())
-        assert(testAsyncAtom, .suspending)
+        let value2 = context.watch(testAsyncAtom, subscriber: subscriber, subscription: Subscription())
+        assert()
+        XCTAssertEqual(value2, .suspending)
 
-        context.modify(testAtom) { $0 = 1 }
-        assert(testAtom, 1)
-
-        scopedContext.set(context.read(testAtom), for: testAtom)
-        assert(testAtom, 1)
+        scopedContext.set(1, for: testAtom)
+        assert()
 
         scopedContext.modify(testAtom) { $0 = 1 }
-        assert(testAtom, 1)
+        assert()
 
-        _ = await scopedContext.refresh(testAtom)
-        assert(testAtom, 1)
-
-        _ = await scopedContext.refresh(testAsyncAtom)
-        assert(testAsyncAtom, .success(1))
-
-        scopedContext.reset(testAtom)
-        assert(testAtom, 1)
+        let value3 = await scopedContext.refresh(testAsyncAtom)
+        assert()
+        XCTAssertEqual(value3, .success(1))
 
         scopedContext.reset(testAsyncAtom)
-        assert(testAsyncAtom, .suspending)
+        assert()
 
         scopedContext.unwatch(testAtom, subscriber: subscriber)
-        assert(testAtom, 1)
+        assert()
+    }
+
+    @available(*, deprecated)
+    @MainActor
+    func testEffectCrossScopeBoundaryDeprecated() async {
+        struct TestDependencyAtom: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                1
+            }
+        }
+
+        struct TestAtom: StateAtom, Refreshable, Resettable {
+            let testEffect: TestEffect
+
+            var key: UniqueKey {
+                UniqueKey()
+            }
+
+            func defaultValue(context: Context) -> Int {
+                context.watch(TestDependencyAtom())
+            }
+
+            func refresh(context: CurrentContext) async -> Int {
+                context.read(TestDependencyAtom())
+            }
+
+            func reset(context: CurrentContext) {
+                context.reset(TestDependencyAtom())
+            }
+
+            func effect(context: CurrentContext) -> some AtomEffect {
+                testEffect.initContext = context
+                return testEffect
+            }
+        }
+
+        final class TestEffect: AtomEffect {
+            var initContext: AtomCurrentContext?
+            var value1: Int?
+            var value2: Int?
+
+            func updateValues(context: Context) {
+                value1 = context.read(TestDependencyAtom())
+                value2 = initContext?.read(TestDependencyAtom())
+            }
+
+            func initialized(context: Context) {
+                updateValues(context: context)
+            }
+
+            func updated(context: Context) {
+                updateValues(context: context)
+            }
+
+            func released(context: Context) {
+                updateValues(context: context)
+            }
+        }
+
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+        let store = AtomStore()
+        let rootScopeToken = ScopeKey.Token()
+        let scopeToken = ScopeKey.Token()
+        let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+        let scopedContext = context.scoped(
+            scopeID: ScopeID(DefaultScopeID()),
+            scopeKey: scopeToken.key,
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: TestDependencyAtom()) { _ in
+                    2
+                }
+        )
+        let testEffect = TestEffect()
+        let testAtom = TestAtom(testEffect: testEffect)
+
+        func assert(file: StaticString = #filePath, line: UInt = #line) {
+            XCTAssertEqual(testEffect.value1, 1, file: file, line: line)
+            XCTAssertEqual(testEffect.value2, 1, file: file, line: line)
+        }
+
+        let value0 = context.watch(testAtom, subscriber: subscriber, subscription: Subscription())
+        assert()
+        XCTAssertEqual(value0, 1)
+
+        let value1 = await scopedContext.refresh(testAtom)
+        assert()
+        XCTAssertEqual(value1, 1)
+
+        context.set(3, for: testAtom)
+        scopedContext.reset(testAtom)
+        assert()
+        XCTAssertEqual(context.read(testAtom), 1)
     }
 
     @MainActor
