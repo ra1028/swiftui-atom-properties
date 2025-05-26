@@ -2,6 +2,7 @@ import XCTest
 
 @testable import Atoms
 
+@available(*, deprecated)
 final class ResettableTests: XCTestCase {
     @MainActor
     func testCustomReset() {

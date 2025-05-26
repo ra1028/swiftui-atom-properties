@@ -129,6 +129,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// - Parameter atom: An atom to refresh.
     ///
     /// - Returns: The value after the refreshing associated with the given atom is completed.
+    @available(*, deprecated, message: "`Refreshable` is deprecated. Use a custom refresh function or other alternatives instead.")
     @inlinable
     @discardableResult
     public func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Produced {
@@ -172,6 +173,7 @@ public struct AtomViewContext: AtomWatchableContext {
     /// ```
     ///
     /// - Parameter atom: An atom to reset.
+    @available(*, deprecated, message: "`Resettable` is deprecated. Use a custom reset function or other alternatives instead.")
     @inlinable
     public func reset(_ atom: some Resettable) {
         _store.reset(atom)

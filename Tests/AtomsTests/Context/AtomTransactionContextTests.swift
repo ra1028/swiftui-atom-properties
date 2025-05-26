@@ -57,6 +57,7 @@ final class AtomTransactionContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom1).value, 100)
     }
 
+    @available(*, deprecated)
     @MainActor
     func testCustomRefresh() async {
         let atom0 = TestValueAtom(value: 0)
@@ -103,6 +104,7 @@ final class AtomTransactionContextTests: XCTestCase {
         XCTAssertEqual(context.read(dependency), 0)
     }
 
+    @available(*, deprecated)
     @MainActor
     func testCustomReset() {
         let transactionAtom = TestValueAtom(value: 0)

@@ -21,6 +21,7 @@
 /// }
 /// ```
 ///
+@available(*, deprecated, message: "`Refreshable` is deprecated. Use a custom refresh function or other alternatives instead.")
 public protocol Refreshable where Self: Atom {
     /// Refreshes and then return a result value.
     ///

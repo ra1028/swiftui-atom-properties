@@ -21,6 +21,7 @@
 /// }
 /// ```
 ///
+@available(*, deprecated, message: "`Resettable` is deprecated. Use a custom reset function or other alternatives instead.")
 public protocol Resettable where Self: Atom {
     /// Arbitrary reset method to be executed on atom reset.
     ///

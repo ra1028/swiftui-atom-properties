@@ -158,6 +158,7 @@ internal struct StoreContext {
         return value
     }
 
+    @available(*, deprecated)
     @usableFromInline
     func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Produced {
         let (key, _) = lookupAtomKeyAndOverride(of: atom)
@@ -199,6 +200,7 @@ internal struct StoreContext {
         }
     }
 
+    @available(*, deprecated)
     @usableFromInline
     func reset(_ atom: some Resettable) {
         let (key, _) = lookupAtomKeyAndOverride(of: atom)
