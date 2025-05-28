@@ -97,6 +97,34 @@ final class RefreshableTests: XCTestCase {
     }
 
     @MainActor
+    func testCustomRefreshNotCached() async {
+        let store = AtomStore()
+        let dependencyAtom = TestValueAtom(value: 1)
+        let atom = TestCustomRefreshableAtom { _ in
+            0
+        } refresh: { context in
+            context.read(dependencyAtom)
+        }
+        let rootScopeToken = ScopeKey.Token()
+        let scopeToken = ScopeKey.Token()
+        let scopedContext =
+            StoreContext
+            .root(store: store, scopeKey: rootScopeToken.key)
+            .scoped(
+                scopeID: ScopeID(DefaultScopeID()),
+                scopeKey: scopeToken.key,
+                observers: [],
+                overrideContainer: OverrideContainer()
+                    .addingOverride(for: dependencyAtom) { _ in
+                        2
+                    }
+            )
+
+        let value = await scopedContext.refresh(atom)
+        XCTAssertEqual(value, 2)
+    }
+
+    @MainActor
     func testTransitiveRefresh() async {
         let parentAtom = TestTaskAtom { 0 }
         let atom = TestCustomRefreshableAtom { context in
