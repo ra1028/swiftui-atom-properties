@@ -341,7 +341,7 @@ final class StoreContextTests: XCTestCase {
             )
 
         let phase = await scopedContext.refresh(atom)
-        XCTAssertEqual(phase, .success(1))
+        XCTAssertEqual(phase.value, 1)
     }
 
     @MainActor
