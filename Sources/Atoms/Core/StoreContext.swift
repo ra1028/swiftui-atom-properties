@@ -71,7 +71,7 @@ internal struct StoreContext {
         let (key, _) = lookupAtomKeyAndOverride(of: atom)
 
         if let cache = lookupCache(of: atom, for: key) {
-            switchContext(scope: cache.initializedScope)
+            switchContext(with: cache)
                 .update(atom: atom, for: key, cache: cache, newValue: value)
         }
     }
@@ -82,7 +82,7 @@ internal struct StoreContext {
 
         if let cache = lookupCache(of: atom, for: key) {
             let newValue = mutating(cache.value, body)
-            switchContext(scope: cache.initializedScope)
+            switchContext(with: cache)
                 .update(atom: atom, for: key, cache: cache, newValue: newValue)
         }
     }
@@ -131,7 +131,7 @@ internal struct StoreContext {
     func refresh<Node: AsyncAtom>(_ atom: Node) async -> Node.Produced {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
         let cache = lookupCache(of: atom, for: key)
-        let localContext = switchContext(scope: cache?.initializedScope)
+        let localContext = cache.map(switchContext) ?? self
         let context = localContext.prepareForTransaction(of: atom, for: key)
 
         let value: Node.Produced
@@ -163,7 +163,7 @@ internal struct StoreContext {
     func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Produced {
         let (key, _) = lookupAtomKeyAndOverride(of: atom)
         let cache = lookupCache(of: atom, for: key)
-        let localContext = switchContext(scope: cache?.initializedScope)
+        let localContext = cache.map(switchContext) ?? self
         let state = localContext.getState(of: atom, for: key)
         let currentContext = AtomCurrentContext(store: localContext)
 
@@ -194,7 +194,7 @@ internal struct StoreContext {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
 
         if let cache = lookupCache(of: atom, for: key) {
-            let localContext = switchContext(scope: cache.initializedScope)
+            let localContext = switchContext(with: cache)
             let newValue = localContext.getValue(of: atom, for: key, override: override)
             localContext.update(atom: atom, for: key, cache: cache, newValue: newValue)
         }
@@ -204,10 +204,12 @@ internal struct StoreContext {
     @usableFromInline
     func reset(_ atom: some Resettable) {
         let (key, _) = lookupAtomKeyAndOverride(of: atom)
-        let cache = lookupCache(of: atom, for: key)
-        let localContext = switchContext(scope: cache?.initializedScope)
-        let currentContext = AtomCurrentContext(store: localContext)
-        atom.reset(context: currentContext)
+
+        if let cache = lookupCache(of: atom, for: key) {
+            let localContext = switchContext(with: cache)
+            let currentContext = AtomCurrentContext(store: localContext)
+            atom.reset(context: currentContext)
+        }
     }
 
     @usableFromInline
@@ -322,7 +324,7 @@ private extension StoreContext {
 
         func updatePropagation(for key: AtomKey, cache: some AtomCacheProtocol) {
             // Dependents must be updated with the scope at which they were initialised.
-            let localContext = switchContext(scope: cache.initializedScope)
+            let localContext = switchContext(with: cache)
 
             // Overridden atoms don't get updated transitively.
             let newValue = localContext.getValue(of: cache.atom, for: key, override: nil)
@@ -422,7 +424,7 @@ private extension StoreContext {
 
         if let state, let cache {
             // It must call release effect with the scope at which they were initialised.
-            let localContext = switchContext(scope: cache.initializedScope)
+            let localContext = switchContext(with: cache)
             let currentContext = AtomCurrentContext(store: localContext)
             state.effect.released(context: currentContext)
         }
@@ -510,7 +512,7 @@ private extension StoreContext {
 
         return AtomProducerContext(store: self, transactionState: transactionState) { newValue in
             if let cache = lookupCache(of: atom, for: key) {
-                switchContext(scope: cache.initializedScope)
+                switchContext(with: cache)
                     .update(atom: atom, for: key, cache: cache, newValue: newValue)
             }
         }
@@ -647,11 +649,11 @@ private extension StoreContext {
         }
     }
 
-    func switchContext(scope: Scope?) -> StoreContext {
+    func switchContext(with cache: some AtomCacheProtocol) -> StoreContext {
         StoreContext(
             store: store,
             rootScope: rootScope,
-            currentScope: scope
+            currentScope: cache.initializedScope
         )
     }
 }
