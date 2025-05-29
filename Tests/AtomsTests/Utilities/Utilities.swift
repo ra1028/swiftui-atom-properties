@@ -117,7 +117,7 @@ extension Atoms.Subscription {
 
 extension AtomCache {
     init(atom: Node, value: Node.Produced) {
-        self.init(atom: atom, value: value, initializedScope: nil)
+        self.init(atom: atom, value: value, scopeValues: nil)
     }
 }
 
