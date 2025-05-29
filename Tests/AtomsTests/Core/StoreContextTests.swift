@@ -322,6 +322,29 @@ final class StoreContextTests: XCTestCase {
     }
 
     @MainActor
+    func testRefreshNotCached() async {
+        let store = AtomStore()
+        let atom = TestAsyncPhaseAtom<Int, Never> { .success(0) }
+        let rootScopeToken = ScopeKey.Token()
+        let scopeToken = ScopeKey.Token()
+        let scopedContext =
+            StoreContext
+            .root(store: store, scopeKey: rootScopeToken.key)
+            .scoped(
+                scopeID: ScopeID(DefaultScopeID()),
+                scopeKey: scopeToken.key,
+                observers: [],
+                overrideContainer: OverrideContainer()
+                    .addingOverride(for: atom) { _ in
+                        .success(1)
+                    }
+            )
+
+        let phase = await scopedContext.refresh(atom)
+        XCTAssertEqual(phase.value, 1)
+    }
+
+    @MainActor
     func testReset() {
         let store = AtomStore()
         let subscriberState = SubscriberState()
