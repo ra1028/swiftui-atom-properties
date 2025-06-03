@@ -427,7 +427,7 @@ private extension StoreContext {
         }
 
         // Notify the observers after all updates are completed.
-        notifyUpdateToObservers(scopeValues: updatedScopes.values)
+        notifyUpdateToObservers(in: updatedScopes.values)
     }
 
     func release(for key: AtomKey) {
@@ -643,15 +643,15 @@ private extension StoreContext {
     }
 
     func lookupAtomKeyAndOverride<Node: Atom>(of atom: Node) -> (atomKey: AtomKey, override: Override<Node>?) {
-        func lookupOverride(for scopeValues: ScopeValues) -> Override<Node>? {
+        func lookupOverride(in scopeValues: ScopeValues) -> Override<Node>? {
             scopeValues.overrideContainer.getOverride(for: atom)
         }
 
-        if let currentScopeValues, let override = lookupOverride(for: currentScopeValues) {
+        if let currentScopeValues, let override = lookupOverride(in: currentScopeValues) {
             let atomKey = AtomKey(atom, scopeKey: currentScopeValues.key)
             return (atomKey: atomKey, override: override)
         }
-        else if let override = lookupOverride(for: rootScopeValues) {
+        else if let override = lookupOverride(in: rootScopeValues) {
             // The scopeKey should be nil if it's overridden from the root.
             let atomKey = AtomKey(atom, scopeKey: nil)
             return (atomKey: atomKey, override: override)
@@ -670,10 +670,10 @@ private extension StoreContext {
 
     func notifyUpdateToObservers() {
         let scopeValues = currentScopeValues.map { [$0] } ?? []
-        notifyUpdateToObservers(scopeValues: scopeValues)
+        notifyUpdateToObservers(in: scopeValues)
     }
 
-    func notifyUpdateToObservers(scopeValues: some Sequence<ScopeValues>) {
+    func notifyUpdateToObservers(in scopeValues: some Sequence<ScopeValues>) {
         let observers = rootScopeValues.observers
         let scopedObservers = scopeValues.flatMap(\.observers)
 
