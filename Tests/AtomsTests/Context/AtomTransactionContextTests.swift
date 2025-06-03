@@ -155,7 +155,7 @@ final class AtomTransactionContextTests: XCTestCase {
         let value = context.watch(atom1)
 
         XCTAssertEqual(value, 200)
-        XCTAssertEqual(store.graph.children, [AtomKey(atom1): [AtomKey(atom0)]])
-        XCTAssertEqual(store.graph.dependencies, [AtomKey(atom0): [AtomKey(atom1)]])
+        XCTAssertEqual(store.children, [AtomKey(atom1): [AtomKey(atom0)]])
+        XCTAssertEqual(store.dependencies, [AtomKey(atom0): [AtomKey(atom1)]])
     }
 }

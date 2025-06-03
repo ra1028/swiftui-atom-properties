@@ -41,25 +41,25 @@ final class ScopedTests: XCTestCase {
                 0
             )
             XCTAssertEqual(
-                store.state.caches[scoped1AtomKey] as? AtomCache<ScopedAtom<DefaultScopeID, Int>>,
+                store.caches[scoped1AtomKey] as? AtomCache<ScopedAtom<DefaultScopeID, Int>>,
                 AtomCache(atom: atom, value: 0)
             )
-            XCTAssertNil(store.state.caches[scoped2AtomKey])
+            XCTAssertNil(store.caches[scoped2AtomKey])
 
             scoped1Context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNil(store.state.caches[scoped1AtomKey])
+            XCTAssertNil(store.caches[scoped1AtomKey])
 
             XCTAssertEqual(
                 scoped2Context.watch(atom, subscriber: subscriber, subscription: Subscription()),
                 0
             )
             XCTAssertEqual(
-                store.state.caches[scoped2AtomKey] as? AtomCache<ScopedAtom<DefaultScopeID, Int>>,
+                store.caches[scoped2AtomKey] as? AtomCache<ScopedAtom<DefaultScopeID, Int>>,
                 AtomCache(atom: atom, value: 0)
             )
 
             scoped2Context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNil(store.state.caches[scoped2AtomKey])
+            XCTAssertNil(store.caches[scoped2AtomKey])
         }
 
         XCTContext.runActivity(named: "Should be scoped in particular scope") { _ in
@@ -84,13 +84,13 @@ final class ScopedTests: XCTestCase {
                 0
             )
             XCTAssertEqual(
-                store.state.caches[scoped1AtomKey] as? AtomCache<ScopedAtom<String, Int>>,
+                store.caches[scoped1AtomKey] as? AtomCache<ScopedAtom<String, Int>>,
                 AtomCache(atom: atom, value: 0)
             )
-            XCTAssertNil(store.state.caches[scoped2AtomKey])
+            XCTAssertNil(store.caches[scoped2AtomKey])
 
             scoped2Context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNil(store.state.caches[scoped1AtomKey])
+            XCTAssertNil(store.caches[scoped1AtomKey])
         }
 
         XCTContext.runActivity(named: "Modified atoms should also be scoped") { _ in
@@ -120,21 +120,21 @@ final class ScopedTests: XCTestCase {
                 0
             )
             XCTAssertEqual(
-                (store.state.caches[scoped1BaseAtomKey] as? AtomCache<ScopedAtom<String, Int>>)?.value,
+                (store.caches[scoped1BaseAtomKey] as? AtomCache<ScopedAtom<String, Int>>)?.value,
                 0
             )
             XCTAssertEqual(
-                (store.state.caches[scoped1AtomKey] as? AtomCache<ModifiedAtom<ScopedAtom<String, Int>, ChangesModifier<Int>>>)?.value,
+                (store.caches[scoped1AtomKey] as? AtomCache<ModifiedAtom<ScopedAtom<String, Int>, ChangesModifier<Int>>>)?.value,
                 0
             )
-            XCTAssertNil(store.state.caches[scoped2BaseAtomKey])
-            XCTAssertNil(store.state.caches[scoped2AtomKey])
-            XCTAssertNil(store.state.caches[baseAtomKey])
-            XCTAssertNil(store.state.caches[atomKey])
+            XCTAssertNil(store.caches[scoped2BaseAtomKey])
+            XCTAssertNil(store.caches[scoped2AtomKey])
+            XCTAssertNil(store.caches[baseAtomKey])
+            XCTAssertNil(store.caches[atomKey])
 
             scoped2Context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNil(store.state.caches[scoped1BaseAtomKey])
-            XCTAssertNil(store.state.caches[scoped1AtomKey])
+            XCTAssertNil(store.caches[scoped1BaseAtomKey])
+            XCTAssertNil(store.caches[scoped1AtomKey])
         }
     }
 }

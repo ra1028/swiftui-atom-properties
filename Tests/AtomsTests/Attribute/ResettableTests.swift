@@ -95,15 +95,15 @@ final class ResettableTests: XCTestCase {
 
             XCTAssertEqual(scopedContext.read(atom), 2)
             XCTAssertEqual(counter, Counter(value: 0, update: 0, reset: 1))
-            XCTAssertNotNil(store.state.states[overrideAtomKey])
-            XCTAssertEqual((store.state.caches[overrideAtomKey] as? AtomCache<TestCustomResettableAtom<Int>>)?.value, 2)
+            XCTAssertNotNil(store.states[overrideAtomKey])
+            XCTAssertEqual((store.caches[overrideAtomKey] as? AtomCache<TestCustomResettableAtom<Int>>)?.value, 2)
         }
 
         XCTContext.runActivity(named: "Should not make new state and cache") { _ in
             context.reset(atom)
 
-            XCTAssertNil(store.state.states[key])
-            XCTAssertNil(store.state.caches[key])
+            XCTAssertNil(store.states[key])
+            XCTAssertNil(store.caches[key])
         }
     }
 

@@ -12,19 +12,17 @@ final class TopologicalSortTests: XCTestCase {
         let key3 = AtomKey(TestAtom(value: 3))
         let token = SubscriberKey.Token()
 
-        store.graph = Graph(
-            dependencies: [
-                key1: [key0],
-                key2: [key0, key1],
-                key3: [key2],
-            ],
-            children: [
-                key0: [key1, key2],
-                key1: [key2],
-                key2: [key3],
-            ]
-        )
-        store.state.subscriptions = [
+        store.dependencies = [
+            key1: [key0],
+            key2: [key0, key1],
+            key3: [key2],
+        ]
+        store.children = [
+            key0: [key1, key2],
+            key1: [key2],
+            key2: [key3],
+        ]
+        store.subscriptions = [
             key2: [token.key: Subscription()],
             key3: [token.key: Subscription()],
         ]

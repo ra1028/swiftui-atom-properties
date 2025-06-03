@@ -20,16 +20,16 @@ final class StoreContextTests: XCTestCase {
         )
 
         XCTAssertEqual(context.read(atom), 0)
-        XCTAssertNil(store.state.caches[key])
+        XCTAssertNil(store.caches[key])
         XCTAssertTrue(snapshots.isEmpty)
 
         snapshots.removeAll()
-        store.graph.children[key] = [AtomKey(TestAtom(value: 1))]
+        store.children[key] = [AtomKey(TestAtom(value: 1))]
         XCTAssertEqual(context.read(atom), 0)
         XCTAssertTrue(snapshots.isEmpty)
 
         snapshots.removeAll()
-        store.state.caches[key] = AtomCache(atom: atom, value: 1)
+        store.caches[key] = AtomCache(atom: atom, value: 1)
         XCTAssertEqual(context.read(atom), 1)
         XCTAssertTrue(snapshots.isEmpty)
     }
@@ -53,14 +53,14 @@ final class StoreContextTests: XCTestCase {
 
         context.set(1, for: atom)
         XCTAssertEqual(updateCount, 0)
-        XCTAssertNil(store.state.states[key])
-        XCTAssertNil(store.state.caches[key])
+        XCTAssertNil(store.states[key])
+        XCTAssertNil(store.caches[key])
         XCTAssertTrue(snapshots.isEmpty)
 
         snapshots.removeAll()
-        store.state.caches[key] = AtomCache(atom: atom, value: 0)
-        store.state.states[key] = AtomState(effect: TestEffect())
-        store.state.subscriptions[key, default: [:]][subscriberToken.key] = Subscription(
+        store.caches[key] = AtomCache(atom: atom, value: 0)
+        store.states[key] = AtomState(effect: TestEffect())
+        store.subscriptions[key, default: [:]][subscriberToken.key] = Subscription(
             location: SourceLocation(),
             update: { updateCount += 1 }
         )
@@ -70,15 +70,15 @@ final class StoreContextTests: XCTestCase {
             [[key: 2]]
         )
         XCTAssertEqual(updateCount, 1)
-        XCTAssertNil(store.state.states[key]?.transactionState)
-        XCTAssertEqual((store.state.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 2)
+        XCTAssertNil(store.states[key]?.transactionState)
+        XCTAssertEqual((store.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 2)
 
         snapshots.removeAll()
         context.set(3, for: atom)
         XCTAssertEqual(updateCount, 2)
-        XCTAssertNotNil(store.state.states[key])
-        XCTAssertNil(store.state.states[key]?.transactionState)
-        XCTAssertEqual((store.state.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 3)
+        XCTAssertNotNil(store.states[key])
+        XCTAssertNil(store.states[key]?.transactionState)
+        XCTAssertEqual((store.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 3)
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0.value as? Int } },
             [[key: 3]]
@@ -104,21 +104,21 @@ final class StoreContextTests: XCTestCase {
 
         context.modify(atom) { $0 = 1 }
         XCTAssertEqual(updateCount, 0)
-        XCTAssertNil(store.state.states[key])
-        XCTAssertNil(store.state.caches[key])
+        XCTAssertNil(store.states[key])
+        XCTAssertNil(store.caches[key])
         XCTAssertTrue(snapshots.isEmpty)
 
         snapshots.removeAll()
-        store.state.caches[key] = AtomCache(atom: atom, value: 0)
-        store.state.states[key] = AtomState(effect: TestEffect())
-        store.state.subscriptions[key, default: [:]][subscriberToken.key] = Subscription(
+        store.caches[key] = AtomCache(atom: atom, value: 0)
+        store.states[key] = AtomState(effect: TestEffect())
+        store.subscriptions[key, default: [:]][subscriberToken.key] = Subscription(
             location: SourceLocation(),
             update: { updateCount += 1 }
         )
         context.modify(atom) { $0 = 2 }
         XCTAssertEqual(updateCount, 1)
-        XCTAssertNil(store.state.states[key]?.transactionState)
-        XCTAssertEqual((store.state.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 2)
+        XCTAssertNil(store.states[key]?.transactionState)
+        XCTAssertEqual((store.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 2)
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0.value as? Int } },
             [[key: 2]]
@@ -127,9 +127,9 @@ final class StoreContextTests: XCTestCase {
         snapshots.removeAll()
         context.modify(atom) { $0 = 3 }
         XCTAssertEqual(updateCount, 2)
-        XCTAssertNotNil(store.state.states[key])
-        XCTAssertNil(store.state.states[key]?.transactionState)
-        XCTAssertEqual((store.state.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 3)
+        XCTAssertNotNil(store.states[key])
+        XCTAssertNil(store.states[key]?.transactionState)
+        XCTAssertEqual((store.caches[key] as? AtomCache<TestStateAtom<Int>>)?.value, 3)
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0.value as? Int } },
             [[key: 3]]
@@ -157,29 +157,19 @@ final class StoreContextTests: XCTestCase {
         )
 
         XCTAssertEqual(context.watch(dependency0, in: transactionState), 0)
-        XCTAssertEqual(
-            store.graph,
-            Graph(
-                dependencies: [key: [dependency0Key]],
-                children: [dependency0Key: [key]]
-            )
-        )
-        XCTAssertEqual((store.state.caches[dependency0Key] as? AtomCache<TestStateAtom<Int>>)?.value, 0)
-        XCTAssertNotNil(store.state.states[dependency0Key])
+        XCTAssertEqual(store.dependencies, [key: [dependency0Key]])
+        XCTAssertEqual(store.children, [dependency0Key: [key]])
+        XCTAssertEqual((store.caches[dependency0Key] as? AtomCache<TestStateAtom<Int>>)?.value, 0)
+        XCTAssertNotNil(store.states[dependency0Key])
         XCTAssertTrue(snapshots.flatMap(\.caches).isEmpty)
 
         transactionState.terminate()
 
         XCTAssertEqual(context.watch(dependency1, in: transactionState), 1)
-        XCTAssertEqual(
-            store.graph,
-            Graph(
-                dependencies: [key: [dependency0Key]],
-                children: [dependency0Key: [key]]
-            )
-        )
-        XCTAssertNil(store.state.caches[dependency1Key])
-        XCTAssertNil(store.state.states[dependency1Key])
+        XCTAssertEqual(store.dependencies, [key: [dependency0Key]])
+        XCTAssertEqual(store.children, [dependency0Key: [key]])
+        XCTAssertNil(store.caches[dependency1Key])
+        XCTAssertNil(store.states[dependency1Key])
         XCTAssertTrue(snapshots.isEmpty)
     }
 
@@ -224,27 +214,27 @@ final class StoreContextTests: XCTestCase {
         )
 
         XCTAssertEqual(initialValue, 0)
-        XCTAssertTrue(store.state.subscribed[subscriber.key]?.contains(key) ?? false)
-        XCTAssertNotNil(store.state.subscriptions[key]?[subscriber.key])
-        XCTAssertEqual((store.state.caches[key] as? AtomCache<TestAtom>)?.value, 0)
-        XCTAssertEqual((store.state.caches[dependencyKey] as? AtomCache<DependencyAtom>)?.value, 0)
+        XCTAssertTrue(store.subscribed[subscriber.key]?.contains(key) ?? false)
+        XCTAssertNotNil(store.subscriptions[key]?[subscriber.key])
+        XCTAssertEqual((store.caches[key] as? AtomCache<TestAtom>)?.value, 0)
+        XCTAssertEqual((store.caches[dependencyKey] as? AtomCache<DependencyAtom>)?.value, 0)
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0.value as? Int } },
             [[key: 0, dependencyKey: 0]]
         )
 
         snapshots.removeAll()
-        store.state.subscriptions[key]?[subscriber.key]?.update()
+        store.subscriptions[key]?[subscriber.key]?.update()
         subscriberState = nil
 
         XCTAssertEqual(updateCount, 1)
-        XCTAssertNil(store.state.subscribed[subscriber.key])
-        XCTAssertNil(store.state.caches[key])
-        XCTAssertNil(store.state.states[key])
-        XCTAssertNil(store.state.subscriptions[key])
-        XCTAssertNil(store.state.caches[dependencyKey])
-        XCTAssertNil(store.state.states[dependencyKey])
-        XCTAssertNil(store.state.subscriptions[dependencyKey])
+        XCTAssertNil(store.subscribed[subscriber.key])
+        XCTAssertNil(store.caches[key])
+        XCTAssertNil(store.states[key])
+        XCTAssertNil(store.subscriptions[key])
+        XCTAssertNil(store.caches[dependencyKey])
+        XCTAssertNil(store.states[dependencyKey])
+        XCTAssertNil(store.subscriptions[dependencyKey])
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0.value as? Int } },
             [[:]]
@@ -270,8 +260,8 @@ final class StoreContextTests: XCTestCase {
 
         let phase0 = await context.refresh(atom)
         XCTAssertEqual(phase0.value, 0)
-        XCTAssertNil(store.state.caches[key])
-        XCTAssertNil(store.state.states[key])
+        XCTAssertNil(store.caches[key])
+        XCTAssertNil(store.states[key])
         XCTAssertTrue(snapshots.isEmpty)
 
         var updateCount = 0
@@ -289,8 +279,8 @@ final class StoreContextTests: XCTestCase {
 
         let phase2 = await context.refresh(atom)
         XCTAssertEqual(phase2.value, 0)
-        XCTAssertNotNil(store.state.states[key])
-        XCTAssertEqual((store.state.caches[key] as? AtomCache<TestPublisherAtom<Just<Int>>>)?.value, .success(0))
+        XCTAssertNotNil(store.states[key])
+        XCTAssertEqual((store.caches[key] as? AtomCache<TestPublisherAtom<Just<Int>>>)?.value, .success(0))
         XCTAssertEqual(updateCount, 1)
         XCTAssertEqual(
             snapshots.map { $0.caches.mapValues { $0.value as? AsyncPhase<Int, Never> } },
@@ -314,9 +304,9 @@ final class StoreContextTests: XCTestCase {
 
         let phase4 = await scopedContext.refresh(atom)
         XCTAssertEqual(phase4.value, 1)
-        XCTAssertNotNil(store.state.states[overrideAtomKey])
+        XCTAssertNotNil(store.states[overrideAtomKey])
         XCTAssertEqual(
-            (store.state.caches[overrideAtomKey] as? AtomCache<TestPublisherAtom<Just<Int>>>)?.value,
+            (store.caches[overrideAtomKey] as? AtomCache<TestPublisherAtom<Just<Int>>>)?.value,
             .success(1)
         )
     }
@@ -362,8 +352,8 @@ final class StoreContextTests: XCTestCase {
         )
 
         context.reset(atom)
-        XCTAssertNil(store.state.caches[key])
-        XCTAssertNil(store.state.states[key])
+        XCTAssertNil(store.caches[key])
+        XCTAssertNil(store.states[key])
         XCTAssertTrue(snapshots.isEmpty)
 
         var updateCount = 0
@@ -404,24 +394,24 @@ final class StoreContextTests: XCTestCase {
         _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
 
         XCTAssertEqual(
-            store.state.caches.mapValues { $0.value as? Int },
+            store.caches.mapValues { $0.value as? Int },
             [AtomKey(atom): 0]
         )
 
         XCTAssertEqual(
-            store.state.subscribed,
+            store.subscribed,
             [subscriber.key: [AtomKey(atom)]]
         )
 
         context.unwatch(atom, subscriber: subscriber)
 
         XCTAssertEqual(
-            store.state.caches.mapValues { $0.value as? Int },
+            store.caches.mapValues { $0.value as? Int },
             [:]
         )
 
         XCTAssertEqual(
-            store.state.subscribed,
+            store.subscribed,
             [subscriber.key: []]
         )
     }
@@ -436,24 +426,24 @@ final class StoreContextTests: XCTestCase {
         let atom1 = TestAtom(value: 1)
         let key0 = AtomKey(atom0)
         let key1 = AtomKey(atom1)
-        let graph = Graph(
-            dependencies: [key0: [key1]],
-            children: [key1: [key0]]
-        )
+        let dependencies: [AtomKey: Set<AtomKey>] = [key0: [key1]]
+        let children: [AtomKey: Set<AtomKey>] = [key1: [key0]]
         let caches = [
             key0: AtomCache(atom: atom0, value: 0),
             key1: AtomCache(atom: atom1, value: 1),
         ]
         let subscription = Subscription()
 
-        store.graph = graph
-        store.state.caches = caches
-        store.state.subscriptions[key0, default: [:]][subscriberToken.key] = subscription
-        store.state.subscriptions[key1, default: [:]][subscriberToken.key] = subscription
+        store.dependencies = dependencies
+        store.children = children
+        store.caches = caches
+        store.subscriptions[key0, default: [:]][subscriberToken.key] = subscription
+        store.subscriptions[key1, default: [:]][subscriberToken.key] = subscription
 
         let snapshot = context.snapshot()
 
-        XCTAssertEqual(snapshot.graph, graph)
+        XCTAssertEqual(snapshot.dependencies, dependencies)
+        XCTAssertEqual(snapshot.children, children)
         XCTAssertEqual(
             snapshot.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
             caches
@@ -503,7 +493,7 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(scoped2Context.watch(atom0, subscriber: subscriber, subscription: Subscription()), 30)
         XCTAssertEqual(scoped2Context.watch(atom1, subscriber: subscriber, subscription: Subscription()), 30)
         XCTAssertEqual(
-            store.state.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> },
+            store.caches.compactMapValues { $0 as? AtomCache<TestAtom<Int>> },
             [
                 AtomKey(atom0): AtomCache(atom: atom0, value: 10),
                 AtomKey(atom1, scopeKey: scope1Token.key): AtomCache(atom: atom1, value: 20),
@@ -663,39 +653,39 @@ final class StoreContextTests: XCTestCase {
         XCTAssertEqual(scoped2Context.watch(atom, in: transactionState), 21)
 
         XCTAssertEqual(
-            store.graph,
-            Graph(
-                dependencies: [
-                    AtomKey(transactionAtom): [
-                        AtomKey(atom)
-                    ],
-                    AtomKey(atom): [
-                        AtomKey(dependency1Atom),
-                        AtomKey(dependency2Atom, scopeKey: scope2Token.key),
-                    ],
-                    AtomKey(publisherAtom): [
-                        AtomKey(dependency1Atom),
-                        AtomKey(dependency2Atom, scopeKey: scope2Token.key),
-                    ],
+            store.dependencies,
+            [
+                AtomKey(transactionAtom): [
+                    AtomKey(atom)
                 ],
-                children: [
-                    AtomKey(atom): [
-                        AtomKey(transactionAtom)
-                    ],
-                    AtomKey(dependency1Atom): [
-                        AtomKey(atom),
-                        AtomKey(publisherAtom),
-                    ],
-                    AtomKey(dependency2Atom, scopeKey: scope2Token.key): [
-                        AtomKey(atom),
-                        AtomKey(publisherAtom),
-                    ],
-                ]
-            )
+                AtomKey(atom): [
+                    AtomKey(dependency1Atom),
+                    AtomKey(dependency2Atom, scopeKey: scope2Token.key),
+                ],
+                AtomKey(publisherAtom): [
+                    AtomKey(dependency1Atom),
+                    AtomKey(dependency2Atom, scopeKey: scope2Token.key),
+                ],
+            ]
         )
-
         XCTAssertEqual(
-            store.state.caches.mapValues { $0 as? AtomCache<TestAtom> },
+            store.children,
+            [
+                AtomKey(atom): [
+                    AtomKey(transactionAtom)
+                ],
+                AtomKey(dependency1Atom): [
+                    AtomKey(atom),
+                    AtomKey(publisherAtom),
+                ],
+                AtomKey(dependency2Atom, scopeKey: scope2Token.key): [
+                    AtomKey(atom),
+                    AtomKey(publisherAtom),
+                ],
+            ]
+        )
+        XCTAssertEqual(
+            store.caches.mapValues { $0 as? AtomCache<TestAtom> },
             [
                 AtomKey(publisherAtom): nil,
                 AtomKey(atom): AtomCache(atom: atom, value: 21),
@@ -704,7 +694,7 @@ final class StoreContextTests: XCTestCase {
             ]
         )
         XCTAssertEqual(
-            store.state.caches.mapValues { $0 as? AtomCache<TestPublisherAtom> },
+            store.caches.mapValues { $0 as? AtomCache<TestPublisherAtom> },
             [
                 AtomKey(publisherAtom): AtomCache(atom: publisherAtom, value: .success(21)),
                 AtomKey(atom): nil,
@@ -713,7 +703,7 @@ final class StoreContextTests: XCTestCase {
             ]
         )
         XCTAssertEqual(
-            store.state.caches.mapValues { $0 as? AtomCache<TestDependency1Atom> },
+            store.caches.mapValues { $0 as? AtomCache<TestDependency1Atom> },
             [
                 AtomKey(publisherAtom): nil,
                 AtomKey(atom): nil,
@@ -722,7 +712,7 @@ final class StoreContextTests: XCTestCase {
             ]
         )
         XCTAssertEqual(
-            store.state.caches.mapValues { $0 as? AtomCache<TestDependency2Atom> },
+            store.caches.mapValues { $0 as? AtomCache<TestDependency2Atom> },
             [
                 AtomKey(publisherAtom): nil,
                 AtomKey(atom): nil,
@@ -732,11 +722,11 @@ final class StoreContextTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            store.state.subscribed,
+            store.subscribed,
             [
                 subscriber.key: [
-                    AtomKey((atom)),
-                    AtomKey((publisherAtom)),
+                    AtomKey(atom),
+                    AtomKey(publisherAtom),
                 ]
             ]
         )
@@ -839,10 +829,10 @@ final class StoreContextTests: XCTestCase {
         let subscriber = Subscriber(subscriberState)
 
         _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
-        XCTAssertNotNil(store.state.caches[key])
+        XCTAssertNotNil(store.caches[key])
 
         context.unwatch(atom, subscriber: subscriber)
-        XCTAssertNil(store.state.caches[key])
+        XCTAssertNil(store.caches[key])
     }
 
     @MainActor
@@ -1058,31 +1048,31 @@ final class StoreContextTests: XCTestCase {
             overrideContainer: OverrideContainer()
         )
 
-        let expectedGraph = Graph(
-            dependencies: [
-                AtomKey(TestAtom()): [
-                    AtomKey(TestDependency1Atom()),
-                    AtomKey(TestDependency2Atom()),
-                    AtomKey(TestDependency3Atom(), scopeKey: scopeToken.key),
-                ]
-            ],
-            children: [
-                AtomKey(TestDependency1Atom()): [AtomKey(TestAtom())],
-                AtomKey(TestDependency2Atom()): [AtomKey(TestAtom())],
-                AtomKey(TestDependency3Atom(), scopeKey: scopeToken.key): [AtomKey(TestAtom())],
+        let expectedDependencies: [AtomKey: Set<AtomKey>] = [
+            AtomKey(TestAtom()): [
+                AtomKey(TestDependency1Atom()),
+                AtomKey(TestDependency2Atom()),
+                AtomKey(TestDependency3Atom(), scopeKey: scopeToken.key),
             ]
-        )
+        ]
+        let expectedChildren: [AtomKey: Set<AtomKey>] = [
+            AtomKey(TestDependency1Atom()): [AtomKey(TestAtom())],
+            AtomKey(TestDependency2Atom()): [AtomKey(TestAtom())],
+            AtomKey(TestDependency3Atom(), scopeKey: scopeToken.key): [AtomKey(TestAtom())],
+        ]
 
         // Initialize the atom state in the scoped context.
         _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
 
         // The scoped observer should recive the update event.
-        XCTAssertEqual(snapshots.map(\.graph), [expectedGraph])
+        XCTAssertEqual(snapshots.map(\.dependencies), [expectedDependencies])
+        XCTAssertEqual(snapshots.map(\.children), [expectedChildren])
 
         context.set(20, for: TestDependency2Atom())
 
         // The scoped observer should recive the update event.
-        XCTAssertEqual(snapshots.map(\.graph), [expectedGraph, expectedGraph])
+        XCTAssertEqual(snapshots.map(\.dependencies), [expectedDependencies, expectedDependencies])
+        XCTAssertEqual(snapshots.map(\.children), [expectedChildren, expectedChildren])
     }
 
     @MainActor
@@ -1096,20 +1086,18 @@ final class StoreContextTests: XCTestCase {
         let location = SourceLocation()
         let subscriberToken = SubscriberKey.Token()
 
-        store.graph = Graph(
-            dependencies: [AtomKey(atom0): [AtomKey(atom1)]],
-            children: [AtomKey(atom1): [AtomKey(atom0)]]
-        )
-        store.state.caches = [
+        store.dependencies = [AtomKey(atom0): [AtomKey(atom1)]]
+        store.children = [AtomKey(atom1): [AtomKey(atom0)]]
+        store.caches = [
             AtomKey(atom0): AtomCache(atom: atom0, value: 0),
             AtomKey(atom1): AtomCache(atom: atom1, value: 1),
         ]
 
         let snapshot = context.snapshot()
 
-        store.graph = Graph()
-        store.state = StoreState()
-        store.state.caches = [
+        store.dependencies = [:]
+        store.children = [:]
+        store.caches = [
             AtomKey(atom2): AtomCache(atom: atom2, value: 2)
         ]
 
@@ -1118,7 +1106,7 @@ final class StoreContextTests: XCTestCase {
         let subscription1 = Subscription(location: location) { updated.insert(AtomKey(atom1)) }
         let subscription2 = Subscription(location: location) { updated.insert(AtomKey(atom2)) }
 
-        store.state.subscriptions = [
+        store.subscriptions = [
             AtomKey(atom0): [subscriberToken.key: subscription0],
             AtomKey(atom1): [subscriberToken.key: subscription1],
             AtomKey(atom2): [subscriberToken.key: subscription2],
@@ -1128,16 +1116,12 @@ final class StoreContextTests: XCTestCase {
 
         // Notifies updated only for the subscriptions of the atoms that are restored.
         XCTAssertEqual(updated, [AtomKey(atom0), AtomKey(atom1)])
-        XCTAssertEqual(
-            store.graph,
-            Graph(
-                dependencies: [AtomKey(atom0): [AtomKey(atom1)]],
-                children: [AtomKey(atom1): [AtomKey(atom0)]]
-            )
-        )
+        XCTAssertEqual(store.dependencies, [AtomKey(atom0): [AtomKey(atom1)]])
+        XCTAssertEqual(store.children, [AtomKey(atom1): [AtomKey(atom0)]])
+
         // Do not delete caches added after the snapshot was taken.
         XCTAssertEqual(
-            store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
+            store.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
             [
                 AtomKey(atom0): AtomCache(atom: atom0, value: 0),
                 AtomKey(atom1): AtomCache(atom: atom1, value: 1),
@@ -1146,16 +1130,17 @@ final class StoreContextTests: XCTestCase {
         )
 
         // Restore with no subscriptions.
-        store.state.subscriptions.removeAll()
+        store.subscriptions.removeAll()
         context.restore(snapshot)
 
-        XCTAssertEqual(store.graph, Graph())
+        XCTAssertEqual(store.dependencies, [:])
+        XCTAssertEqual(store.children, [:])
 
         // Caches added after the snapshot was taken are not forcibly released by restore,
         // but this is not a problem since the cache should originally be released
         // when the subscription is released.
         XCTAssertEqual(
-            store.state.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
+            store.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
             [
                 AtomKey(atom2): AtomCache(atom: atom2, value: 2)
             ]
@@ -1177,7 +1162,7 @@ final class StoreContextTests: XCTestCase {
         _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
         _ = context.watch(upstreamAtom, in: TransactionState(key: key))
 
-        XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertTrue((store.states[key]?.effect as? TestEffect) === effect)
         XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 0)
@@ -1185,7 +1170,7 @@ final class StoreContextTests: XCTestCase {
 
         context.set(1, for: atom)
 
-        XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertTrue((store.states[key]?.effect as? TestEffect) === effect)
         XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 1)
@@ -1195,7 +1180,7 @@ final class StoreContextTests: XCTestCase {
         context.set(3, for: atom)
         context.set(4, for: atom)
 
-        XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertTrue((store.states[key]?.effect as? TestEffect) === effect)
         XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 4)
@@ -1203,7 +1188,7 @@ final class StoreContextTests: XCTestCase {
 
         context.set("Updated", for: upstreamAtom)
 
-        XCTAssertTrue((store.state.states[key]?.effect as? TestEffect) === effect)
+        XCTAssertTrue((store.states[key]?.effect as? TestEffect) === effect)
         XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 5)
@@ -1211,7 +1196,7 @@ final class StoreContextTests: XCTestCase {
 
         context.unwatch(atom, subscriber: subscriber)
 
-        XCTAssertNil(store.state.states[key])
+        XCTAssertNil(store.states[key])
         XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 5)
@@ -1219,7 +1204,7 @@ final class StoreContextTests: XCTestCase {
 
         context.set(5, for: atom)
 
-        XCTAssertNil(store.state.states[key])
+        XCTAssertNil(store.states[key])
         XCTAssertEqual(effect.initializingCount, 1)
         XCTAssertEqual(effect.initializedCount, 1)
         XCTAssertEqual(effect.updatedCount, 5)
@@ -1775,7 +1760,7 @@ final class StoreContextTests: XCTestCase {
             wait(for: [expectation], timeout: 0.5)
             XCTAssertNil(context.lookup(TestAtom1()))
             XCTAssertNil(context.lookup(TestAtom2()))
-            XCTAssertTrue(store.state.subscriptions.isEmpty)
+            XCTAssertTrue(store.subscriptions.isEmpty)
         }
     }
 
@@ -1888,13 +1873,13 @@ final class StoreContextTests: XCTestCase {
             let value = await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
 
             XCTAssertEqual(value, 0)
-            XCTAssertNil(store.graph.children[AtomKey(d)])
+            XCTAssertNil(store.children[AtomKey(d)])
             XCTAssertEqual(
-                store.graph.dependencies[AtomKey(atom)],
+                store.dependencies[AtomKey(atom)],
                 [AtomKey(phase), AtomKey(a), AtomKey(b), AtomKey(c)]
             )
 
-            let state = store.state.states[AtomKey(atom)]
+            let state = store.states[AtomKey(atom)]
 
             // TestAtom's Task cancellation
             XCTAssertNotNil(state?.transactionState?.onTermination)
@@ -1917,13 +1902,13 @@ final class StoreContextTests: XCTestCase {
 
             XCTAssertEqual(before, 0)
             XCTAssertEqual(after, 1)
-            XCTAssertNil(store.graph.children[AtomKey(c)])
+            XCTAssertNil(store.children[AtomKey(c)])
             XCTAssertEqual(
-                store.graph.dependencies[AtomKey(atom)],
+                store.dependencies[AtomKey(atom)],
                 [AtomKey(phase), AtomKey(a), AtomKey(d), AtomKey(b)]
             )
 
-            let state = store.state.states[AtomKey(atom)]
+            let state = store.states[AtomKey(atom)]
 
             // TestAtom's Task cancellation
             XCTAssertNotNil(state?.transactionState?.onTermination)
@@ -1945,13 +1930,13 @@ final class StoreContextTests: XCTestCase {
 
             XCTAssertEqual(before, 1)
             XCTAssertEqual(after, 3)
-            XCTAssertNil(store.graph.children[AtomKey(a)])
+            XCTAssertNil(store.children[AtomKey(a)])
             XCTAssertEqual(
-                store.graph.dependencies[AtomKey(atom)],
+                store.dependencies[AtomKey(atom)],
                 [AtomKey(phase), AtomKey(b), AtomKey(c), AtomKey(d)]
             )
 
-            let state = store.state.states[AtomKey(atom)]
+            let state = store.states[AtomKey(atom)]
 
             // TestAtom's Task cancellation
             XCTAssertNotNil(state?.transactionState?.onTermination)
@@ -1961,8 +1946,8 @@ final class StoreContextTests: XCTestCase {
             subscriberState = nil
             let key = AtomKey(atom)
 
-            XCTAssertNil(store.state.caches[key])
-            XCTAssertNil(store.state.states[key])
+            XCTAssertNil(store.caches[key])
+            XCTAssertNil(store.states[key])
         }
     }
 }
