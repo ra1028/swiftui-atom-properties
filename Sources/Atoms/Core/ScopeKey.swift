@@ -1,5 +1,6 @@
 @usableFromInline
 internal struct ScopeKey: Hashable, Sendable, CustomStringConvertible {
+    @MainActor
     final class Token {
         private(set) lazy var key = ScopeKey(token: self)
     }

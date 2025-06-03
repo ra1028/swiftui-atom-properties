@@ -849,6 +849,7 @@ VStack {
 #### [KeepAlive](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/keepalive)
 
 `KeepAlive` allows the atom to preserve its data even if it's no longer watched from anywhere.  
+When used with the [Scoped](#scoped) attribute, the atom's data is preserved until the scope ([AtomScope](#atomscope)) it belongs to is dismantled from the view tree. This is useful when you want to prevent the atom from being released prematurely within a specific scope.  
 
 <details><summary><code>📖 Example</code></summary>
 

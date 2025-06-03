@@ -150,6 +150,11 @@ public struct AtomScope<Content: View>: View {
 }
 
 private extension AtomScope {
+    @MainActor
+    final class State: ObservableObject {
+        let scopeState = ScopeState()
+    }
+
     enum Inheritance {
         case environment(scopeID: ScopeID)
         case context(AtomViewContext)
@@ -161,21 +166,23 @@ private extension AtomScope {
         let overrideContainer: OverrideContainer
         let content: Content
 
-        @State
-        private var scopeToken = ScopeKey.Token()
         @Environment(\.store)
-        private var environmentStore
+        private var store
+
+        @StateObject
+        private var state = State()
 
         var body: some View {
-            content.environment(
-                \.store,
-                environmentStore?.scoped(
-                    scopeID: scopeID,
-                    scopeKey: scopeToken.key,
-                    observers: observers,
-                    overrideContainer: overrideContainer
-                )
+            let scopedStore = store?.scoped(
+                scopeID: scopeID,
+                scopeKey: state.scopeState.token.key,
+                observers: observers,
+                overrideContainer: overrideContainer
             )
+
+            scopedStore?.registerScope(state: state.scopeState)
+
+            return content.environment(\.store, scopedStore)
         }
     }
 }
