@@ -47,8 +47,6 @@ Building state by compositing atoms automatically optimizes rendering based on i
 
 - ``Scoped``
 - ``KeepAlive``
-- ``Refreshable``
-- ``Resettable``
 
 ### Property Wrappers
 
@@ -95,5 +93,7 @@ Building state by compositing atoms automatically optimizes rendering based on i
 
 ### Deprecated
 
+- ``Refreshable``
+- ``Resettable``
 - ``EmptyEffect``
 - ``MergedEffect``
