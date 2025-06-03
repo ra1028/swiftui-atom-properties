@@ -461,7 +461,7 @@ private extension StoreContext {
 
     func checkAndRelease(for key: AtomKey) {
         // The condition under which an atom may be released are as follows:
-        //     1. It's not marked as `KeepAlive`, or its scope is not alive.
+        //     1. It's not marked as `KeepAlive`, or its scope is already released.
         //     2. It has no downstream atoms.
         //     3. It has no subscriptions from views.
         lazy var shouldKeepAlive = {
