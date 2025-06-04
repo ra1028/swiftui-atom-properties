@@ -214,7 +214,7 @@ final class StoreContextTests: XCTestCase {
         )
 
         XCTAssertEqual(initialValue, 0)
-        XCTAssertTrue(store.subscribed[subscriber.key]?.contains(key) ?? false)
+        XCTAssertTrue(store.subscribes[subscriber.key]?.contains(key) ?? false)
         XCTAssertNotNil(store.subscriptions[key]?[subscriber.key])
         XCTAssertEqual((store.caches[key] as? AtomCache<TestAtom>)?.value, 0)
         XCTAssertEqual((store.caches[dependencyKey] as? AtomCache<DependencyAtom>)?.value, 0)
@@ -228,7 +228,7 @@ final class StoreContextTests: XCTestCase {
         subscriberState = nil
 
         XCTAssertEqual(updateCount, 1)
-        XCTAssertNil(store.subscribed[subscriber.key])
+        XCTAssertNil(store.subscribes[subscriber.key])
         XCTAssertNil(store.caches[key])
         XCTAssertNil(store.states[key])
         XCTAssertNil(store.subscriptions[key])
@@ -399,7 +399,7 @@ final class StoreContextTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            store.subscribed,
+            store.subscribes,
             [subscriber.key: [AtomKey(atom)]]
         )
 
@@ -411,7 +411,7 @@ final class StoreContextTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            store.subscribed,
+            store.subscribes,
             [subscriber.key: []]
         )
     }
@@ -722,7 +722,7 @@ final class StoreContextTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            store.subscribed,
+            store.subscribes,
             [
                 subscriber.key: [
                     AtomKey(atom),

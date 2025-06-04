@@ -113,7 +113,7 @@ internal struct StoreContext {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
         let cache = lookupCache(of: atom, for: key)
         let value = cache?.value ?? initialize(of: atom, for: key, override: override)
-        let isNewSubscription = store.subscribed[subscriber.key, default: []].insert(key).inserted
+        let isNewSubscription = store.subscribes[subscriber.key, default: []].insert(key).inserted
 
         if isNewSubscription {
             store.subscriptions[key, default: [:]][subscriber.key] = subscription
@@ -224,7 +224,7 @@ internal struct StoreContext {
     func unwatch(_ atom: some Atom, subscriber: Subscriber) {
         let (key, _) = lookupAtomKeyAndOverride(of: atom)
 
-        store.subscribed[subscriber.key]?.remove(key)
+        store.subscribes[subscriber.key]?.remove(key)
         unsubscribe([key], for: subscriber.key)
     }
 
@@ -510,7 +510,7 @@ private extension StoreContext {
     }
 
     func unsubscribeAll(for subscriberKey: SubscriberKey) {
-        let keys = store.subscribed.removeValue(forKey: subscriberKey)
+        let keys = store.subscribes.removeValue(forKey: subscriberKey)
 
         if let keys {
             unsubscribe(keys, for: subscriberKey)

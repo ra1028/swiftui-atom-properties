@@ -6,7 +6,7 @@ public final class AtomStore {
     internal var caches = [AtomKey: any AtomCacheProtocol]()
     internal var states = [AtomKey: any AtomStateProtocol]()
     internal var subscriptions = [AtomKey: [SubscriberKey: Subscription]]()
-    internal var subscribed = [SubscriberKey: Set<AtomKey>]()
+    internal var subscribes = [SubscriberKey: Set<AtomKey>]()
     internal var scopes = [ScopeKey: Scope]()
 
     /// Creates a new store.
