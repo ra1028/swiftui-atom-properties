@@ -199,22 +199,22 @@ final class AtomViewContextTests: XCTestCase {
         let key1 = AtomKey(atom1)
         let key2 = AtomKey(atom2)
 
-        let graph = Graph(
-            dependencies: [key0: [key1, key2]],
-            children: [key1: [key0], key2: [key0]]
-        )
+        let dependencies: [AtomKey: Set<AtomKey>] = [key0: [key1, key2]]
+        let children: [AtomKey: Set<AtomKey>] = [key1: [key0], key2: [key0]]
         let caches = [
             key0: AtomCache(atom: atom0, value: 0),
             key1: AtomCache(atom: atom1, value: 1),
             key2: AtomCache(atom: atom2, value: 2),
         ]
 
-        store.graph = graph
-        store.state.caches = caches
+        store.dependencies = dependencies
+        store.children = children
+        store.caches = caches
 
         let snapshot = context.snapshot()
 
-        XCTAssertEqual(snapshot.graph, graph)
+        XCTAssertEqual(snapshot.dependencies, dependencies)
+        XCTAssertEqual(snapshot.children, children)
         XCTAssertEqual(
             snapshot.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
             caches
@@ -235,9 +235,9 @@ final class AtomViewContextTests: XCTestCase {
         )
 
         context.watch(atom)
-        XCTAssertNotNil(store.state.caches[key])
+        XCTAssertNotNil(store.caches[key])
 
         subscriberState = nil
-        XCTAssertNil(store.state.caches[key])
+        XCTAssertNil(store.caches[key])
     }
 }

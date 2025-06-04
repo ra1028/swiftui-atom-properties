@@ -31,10 +31,10 @@ final class KeepAliveTests: XCTestCase {
             let subscriber = Subscriber(subscriberState)
 
             _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertNotNil(store.state.caches[key])
+            XCTAssertNotNil(store.caches[key])
 
             context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNotNil(store.state.caches[key])
+            XCTAssertNotNil(store.caches[key])
         }
 
         XCTContext.runActivity(named: "Should not be released when not scoped") { _ in
@@ -47,10 +47,10 @@ final class KeepAliveTests: XCTestCase {
             let subscriber = Subscriber(subscriberState)
 
             _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertNotNil(store.state.caches[key])
+            XCTAssertNotNil(store.caches[key])
 
             context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNotNil(store.state.caches[key])
+            XCTAssertNotNil(store.caches[key])
         }
 
         XCTContext.runActivity(named: "Should not be released until scope is released when overridden in scope") { _ in
@@ -75,13 +75,13 @@ final class KeepAliveTests: XCTestCase {
             scopedContext.registerScope(state: scopeState)
 
             _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertNotNil(store.state.caches[key])
+            XCTAssertNotNil(store.caches[key])
 
             scopedContext.unwatch(atom, subscriber: subscriber)
-            XCTAssertNotNil(store.state.caches[key])
+            XCTAssertNotNil(store.caches[key])
 
             scopeState = nil
-            XCTAssertNil(store.state.caches[key])
+            XCTAssertNil(store.caches[key])
         }
 
         XCTContext.runActivity(named: "Should not be released until scope is released when scoped") { _ in
@@ -101,13 +101,13 @@ final class KeepAliveTests: XCTestCase {
             scopedContext.registerScope(state: scopeState)
 
             _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertNotNil(store.state.caches[key])
+            XCTAssertNotNil(store.caches[key])
 
             scopedContext.unwatch(atom, subscriber: subscriber)
-            XCTAssertNotNil(store.state.caches[key])
+            XCTAssertNotNil(store.caches[key])
 
             scopeState = nil
-            XCTAssertNil(store.state.caches[key])
+            XCTAssertNil(store.caches[key])
         }
 
         XCTContext.runActivity(named: "Should be released when scope is already released when scoped") { _ in
@@ -128,10 +128,10 @@ final class KeepAliveTests: XCTestCase {
             scopeState = nil
 
             _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertNotNil(store.state.caches[key])
+            XCTAssertNotNil(store.caches[key])
 
             scopedContext.unwatch(atom, subscriber: subscriber)
-            XCTAssertNil(store.state.caches[key])
+            XCTAssertNil(store.caches[key])
         }
     }
 }

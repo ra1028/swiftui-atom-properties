@@ -1,15 +1,18 @@
 /// A snapshot structure that captures specific set of values of atoms and their dependency graph.
 public struct Snapshot: CustomStringConvertible {
-    internal let graph: Graph
+    internal let dependencies: [AtomKey: Set<AtomKey>]
+    internal let children: [AtomKey: Set<AtomKey>]
     internal let caches: [AtomKey: any AtomCacheProtocol]
     internal let subscriptions: [AtomKey: [SubscriberKey: Subscription]]
 
     internal init(
-        graph: Graph,
+        dependencies: [AtomKey: Set<AtomKey>],
+        children: [AtomKey: Set<AtomKey>],
         caches: [AtomKey: any AtomCacheProtocol],
         subscriptions: [AtomKey: [SubscriberKey: Subscription]]
     ) {
-        self.graph = graph
+        self.dependencies = dependencies
+        self.children = children
         self.caches = caches
         self.subscriptions = subscriptions
     }
@@ -18,7 +21,8 @@ public struct Snapshot: CustomStringConvertible {
     public var description: String {
         """
         Snapshot
-        - graph: \(graph)
+        - dependencies: \(dependencies)
+        - children: \(children)
         - caches: \(caches)
         """
     }
@@ -71,7 +75,7 @@ public struct Snapshot: CustomStringConvertible {
         for key in caches.keys {
             statements.insert(key.description.quoted)
 
-            if let children = graph.children[key] {
+            if let children = children[key] {
                 for child in children {
                     statements.insert("\(key.description.quoted) -> \(child.description.quoted)")
                 }

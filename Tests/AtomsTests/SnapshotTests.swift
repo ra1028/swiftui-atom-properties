@@ -11,7 +11,8 @@ final class SnapshotTests: XCTestCase {
             AtomKey(atom0): AtomCache(atom: atom0, value: 0)
         ]
         let snapshot = Snapshot(
-            graph: Graph(),
+            dependencies: [:],
+            children: [:],
             caches: atomCache,
             subscriptions: [:]
         )
@@ -22,7 +23,8 @@ final class SnapshotTests: XCTestCase {
 
     func testEmptyGraphDescription() {
         let snapshot = Snapshot(
-            graph: Graph(),
+            dependencies: [:],
+            children: [:],
             caches: [:],
             subscriptions: [:]
         )
@@ -56,18 +58,16 @@ final class SnapshotTests: XCTestCase {
             update: {}
         )
         let snapshot = Snapshot(
-            graph: Graph(
-                dependencies: [
-                    key1: [key0],
-                    key2: [key1],
-                    key3: [key2],
-                ],
-                children: [
-                    key0: [key1],
-                    key1: [key2],
-                    key2: [key3],
-                ]
-            ),
+            dependencies: [
+                key1: [key0],
+                key2: [key1],
+                key3: [key2],
+            ],
+            children: [
+                key0: [key1],
+                key1: [key2],
+                key2: [key3],
+            ],
             caches: [
                 key0: AtomCache(atom: atom0, value: Value0()),
                 key1: AtomCache(atom: atom1, value: Value1()),

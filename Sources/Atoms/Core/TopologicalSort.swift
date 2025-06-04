@@ -19,13 +19,13 @@ internal extension AtomStore {
         var redundantDependencies = [Vertex: ContiguousArray<AtomKey>]()
 
         func traverse(key: AtomKey, isRedundant: Bool) {
-            if let children = graph.children[key] {
+            if let children = children[key] {
                 for child in children {
                     traverse(key: child, from: key, isRedundant: isRedundant)
                 }
             }
 
-            if let subscriptions = state.subscriptions[key] {
+            if let subscriptions = subscriptions[key] {
                 for subscriberKey in subscriptions.keys {
                     traverse(key: subscriberKey, from: key, isRedundant: isRedundant)
                 }

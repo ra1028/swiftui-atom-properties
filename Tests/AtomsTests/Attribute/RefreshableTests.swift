@@ -30,8 +30,8 @@ final class RefreshableTests: XCTestCase {
 
             let value0 = await context.refresh(atom)
             XCTAssertEqual(value0, 1)
-            XCTAssertNil(store.state.caches[key])
-            XCTAssertNil(store.state.states[key])
+            XCTAssertNil(store.caches[key])
+            XCTAssertNil(store.states[key])
             XCTAssertTrue(snapshots.isEmpty)
 
             var updateCount = 0
@@ -48,8 +48,8 @@ final class RefreshableTests: XCTestCase {
             snapshots.removeAll()
             let value2 = await context.refresh(atom)
             XCTAssertEqual(value2, 1)
-            XCTAssertNotNil(store.state.states[key])
-            XCTAssertEqual((store.state.caches[key] as? AtomCache<TestCustomRefreshableAtom<Int>>)?.value, 1)
+            XCTAssertNotNil(store.states[key])
+            XCTAssertEqual((store.caches[key] as? AtomCache<TestCustomRefreshableAtom<Int>>)?.value, 1)
             XCTAssertEqual(updateCount, 1)
             XCTAssertEqual(
                 snapshots.map { $0.caches.mapValues { $0.value as? Int } },
@@ -79,9 +79,9 @@ final class RefreshableTests: XCTestCase {
 
             let value1 = await scopedContext.refresh(atom)
             XCTAssertEqual(value1, 1)
-            XCTAssertNotNil(store.state.states[overrideAtomKey])
+            XCTAssertNotNil(store.states[overrideAtomKey])
             XCTAssertEqual(
-                (store.state.caches[overrideAtomKey] as? AtomCache<TestCustomRefreshableAtom<Int>>)?.value,
+                (store.caches[overrideAtomKey] as? AtomCache<TestCustomRefreshableAtom<Int>>)?.value,
                 1
             )
         }
@@ -92,8 +92,8 @@ final class RefreshableTests: XCTestCase {
             let value = await context.refresh(atom)
 
             XCTAssertEqual(value, 1)
-            XCTAssertNil(store.state.states[key])
-            XCTAssertNil(store.state.caches[key])
+            XCTAssertNil(store.states[key])
+            XCTAssertNil(store.caches[key])
         }
     }
 

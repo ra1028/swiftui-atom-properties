@@ -98,8 +98,8 @@ internal struct StoreContext {
         let value = cache?.value ?? initialize(of: atom, for: key, override: override)
 
         // Add an `Edge` from the upstream to downstream.
-        store.graph.dependencies[transactionState.key, default: []].insert(key)
-        store.graph.children[key, default: []].insert(transactionState.key)
+        store.dependencies[transactionState.key, default: []].insert(key)
+        store.children[key, default: []].insert(transactionState.key)
 
         return value
     }
@@ -113,10 +113,10 @@ internal struct StoreContext {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
         let cache = lookupCache(of: atom, for: key)
         let value = cache?.value ?? initialize(of: atom, for: key, override: override)
-        let isNewSubscription = store.state.subscribed[subscriber.key, default: []].insert(key).inserted
+        let isNewSubscription = store.subscribes[subscriber.key, default: []].insert(key).inserted
 
         if isNewSubscription {
-            store.state.subscriptions[key, default: [:]][subscriber.key] = subscription
+            store.subscriptions[key, default: [:]][subscriber.key] = subscription
             subscriber.unsubscribe = {
                 unsubscribeAll(for: subscriber.key)
             }
@@ -224,7 +224,7 @@ internal struct StoreContext {
     func unwatch(_ atom: some Atom, subscriber: Subscriber) {
         let (key, _) = lookupAtomKeyAndOverride(of: atom)
 
-        store.state.subscribed[subscriber.key]?.remove(key)
+        store.subscribes[subscriber.key]?.remove(key)
         unsubscribe([key], for: subscriber.key)
     }
 
@@ -232,14 +232,14 @@ internal struct StoreContext {
     func registerScope(state: ScopeState) {
         let key = state.token.key
 
-        withUnsafeMutablePointer(to: &store.state.scopes[key]) { scope in
+        withUnsafeMutablePointer(to: &store.scopes[key]) { scope in
             if scope.pointee == nil {
                 scope.pointee = Scope()
             }
         }
 
         state.unregister = {
-            let scope = store.state.scopes.removeValue(forKey: key)
+            let scope = store.scopes.removeValue(forKey: key)
 
             if let scope {
                 for key in scope.atoms {
@@ -252,9 +252,10 @@ internal struct StoreContext {
     @usableFromInline
     func snapshot() -> Snapshot {
         Snapshot(
-            graph: store.graph,
-            caches: store.state.caches,
-            subscriptions: store.state.subscriptions
+            dependencies: store.dependencies,
+            children: store.children,
+            caches: store.caches,
+            subscriptions: store.subscriptions
         )
     }
 
@@ -264,13 +265,13 @@ internal struct StoreContext {
         var disusedDependencies = [AtomKey: Set<AtomKey>]()
 
         for key in keys {
-            let oldDependencies = store.graph.dependencies[key]
-            let newDependencies = snapshot.graph.dependencies[key]
+            let oldDependencies = store.dependencies[key]
+            let newDependencies = snapshot.dependencies[key]
 
             // Update atom values and the graph.
-            store.state.caches[key] = snapshot.caches[key]
-            store.graph.dependencies[key] = newDependencies
-            store.graph.children[key] = snapshot.graph.children[key]
+            store.caches[key] = snapshot.caches[key]
+            store.dependencies[key] = newDependencies
+            store.children[key] = snapshot.children[key]
             disusedDependencies[key] = oldDependencies?.subtracting(newDependencies ?? [])
         }
 
@@ -281,13 +282,13 @@ internal struct StoreContext {
             // Release dependencies that are no longer dependent.
             if let dependencies = disusedDependencies[key] {
                 for dependency in dependencies {
-                    store.graph.children[dependency]?.remove(key)
+                    store.children[dependency]?.remove(key)
                     checkAndRelease(for: dependency)
                 }
             }
 
             // Notify updates only for the subscriptions of restored atoms.
-            if let subscriptions = store.state.subscriptions[key] {
+            if let subscriptions = store.subscriptions[key] {
                 for subscription in subscriptions.values {
                     subscription.update()
                 }
@@ -310,10 +311,10 @@ private extension StoreContext {
         state.effect.initializing(context: currentContext)
 
         let value = getValue(of: atom, for: key, override: override)
-        store.state.caches[key] = AtomCache(atom: atom, value: value, scopeValues: currentScopeValues)
+        store.caches[key] = AtomCache(atom: atom, value: value, scopeValues: currentScopeValues)
 
         if let scopeKey = key.scopeKey {
-            store.state.scopes[scopeKey]?.atoms.insert(key)
+            store.scopes[scopeKey]?.atoms.insert(key)
         }
 
         state.effect.initialized(context: currentContext)
@@ -326,7 +327,7 @@ private extension StoreContext {
         cache: AtomCache<Node>,
         newValue: Node.Produced
     ) {
-        store.state.caches[key] = cache.updated(value: newValue)
+        store.caches[key] = cache.updated(value: newValue)
 
         // Check whether if the dependent atoms should be updated transitively.
         guard atom.producer.shouldUpdate(cache.value, newValue) else {
@@ -354,7 +355,7 @@ private extension StoreContext {
             // Overridden atoms don't get updated transitively.
             let newValue = localContext.getValue(of: cache.atom, for: key, override: nil)
 
-            store.state.caches[key] = cache.updated(value: newValue)
+            store.caches[key] = cache.updated(value: newValue)
 
             // Check whether if the dependent atoms should be updated transitively.
             guard cache.atom.producer.shouldUpdate(cache.value, newValue) else {
@@ -403,8 +404,8 @@ private extension StoreContext {
                     continue
                 }
 
-                let cache = store.state.caches[key]
-                let dependencyCache = store.state.caches[edge.from]
+                let cache = store.caches[key]
+                let dependencyCache = store.caches[edge.from]
 
                 if let cache, let dependencyCache {
                     performUpdate(dependency: dependencyCache.atom) {
@@ -417,8 +418,8 @@ private extension StoreContext {
                     continue
                 }
 
-                let subscription = store.state.subscriptions[edge.from]?[key]
-                let dependencyCache = store.state.caches[edge.from]
+                let subscription = store.subscriptions[edge.from]?[key]
+                let dependencyCache = store.caches[edge.from]
 
                 if let subscription, let dependencyCache {
                     performUpdate(dependency: dependencyCache.atom, body: subscription.update)
@@ -431,20 +432,20 @@ private extension StoreContext {
     }
 
     func release(for key: AtomKey) {
-        let dependencies = store.graph.dependencies.removeValue(forKey: key)
-        let state = store.state.states.removeValue(forKey: key)
-        let cache = store.state.caches.removeValue(forKey: key)
+        let dependencies = store.dependencies.removeValue(forKey: key)
+        let state = store.states.removeValue(forKey: key)
+        let cache = store.caches.removeValue(forKey: key)
 
-        store.graph.children.removeValue(forKey: key)
-        store.state.subscriptions.removeValue(forKey: key)
+        store.children.removeValue(forKey: key)
+        store.subscriptions.removeValue(forKey: key)
 
         if let scopeKey = key.scopeKey {
-            store.state.scopes[scopeKey]?.atoms.remove(key)
+            store.scopes[scopeKey]?.atoms.remove(key)
         }
 
         if let dependencies {
             for dependency in dependencies {
-                store.graph.children[dependency]?.remove(key)
+                store.children[dependency]?.remove(key)
                 checkAndRelease(for: dependency)
             }
         }
@@ -465,7 +466,7 @@ private extension StoreContext {
         //     2. It has no downstream atoms.
         //     3. It has no subscriptions from views.
         lazy var shouldKeepAlive = {
-            guard let cache = store.state.caches[key], cache.shouldKeepAlive else {
+            guard let cache = store.caches[key], cache.shouldKeepAlive else {
                 return false
             }
 
@@ -474,10 +475,10 @@ private extension StoreContext {
             }
 
             // It should keep alive untile the scope is unregistered.
-            return store.state.scopes[scopeKey]?.atoms.contains(key) ?? false
+            return store.scopes[scopeKey]?.atoms.contains(key) ?? false
         }()
-        lazy var isChildrenEmpty = store.graph.children[key]?.isEmpty ?? true
-        lazy var isSubscriptionEmpty = store.state.subscriptions[key]?.isEmpty ?? true
+        lazy var isChildrenEmpty = store.children[key]?.isEmpty ?? true
+        lazy var isSubscriptionEmpty = store.subscriptions[key]?.isEmpty ?? true
 
         guard !shouldKeepAlive && isChildrenEmpty && isSubscriptionEmpty else {
             return
@@ -488,11 +489,11 @@ private extension StoreContext {
 
     func detachDependencies(for key: AtomKey) -> Set<AtomKey> {
         // Remove current dependencies.
-        let dependencies = store.graph.dependencies.removeValue(forKey: key) ?? []
+        let dependencies = store.dependencies.removeValue(forKey: key) ?? []
 
         // Detatch the atom from its children.
         for dependency in dependencies {
-            store.graph.children[dependency]?.remove(key)
+            store.children[dependency]?.remove(key)
         }
 
         return dependencies
@@ -500,16 +501,16 @@ private extension StoreContext {
 
     func attachDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey) {
         // Set dependencies.
-        store.graph.dependencies[key] = dependencies
+        store.dependencies[key] = dependencies
 
         // Attach the atom to its children.
         for dependency in dependencies {
-            store.graph.children[dependency]?.insert(key)
+            store.children[dependency]?.insert(key)
         }
     }
 
     func unsubscribeAll(for subscriberKey: SubscriberKey) {
-        let keys = store.state.subscribed.removeValue(forKey: subscriberKey)
+        let keys = store.subscribes.removeValue(forKey: subscriberKey)
 
         if let keys {
             unsubscribe(keys, for: subscriberKey)
@@ -518,7 +519,7 @@ private extension StoreContext {
 
     func unsubscribe(_ keys: some Sequence<AtomKey>, for subscriberKey: SubscriberKey) {
         for key in keys {
-            store.state.subscriptions[key]?.removeValue(forKey: subscriberKey)
+            store.subscriptions[key]?.removeValue(forKey: subscriberKey)
             checkAndRelease(for: key)
         }
 
@@ -533,7 +534,7 @@ private extension StoreContext {
             let oldDependencies = detachDependencies(for: key)
 
             return {
-                let dependencies = store.graph.dependencies[key] ?? []
+                let dependencies = store.dependencies[key] ?? []
                 let disusedDependencies = oldDependencies.subtracting(dependencies)
 
                 // Release disused dependencies if no longer used.
@@ -584,12 +585,12 @@ private extension StoreContext {
         let currentContext = AtomCurrentContext(store: self)
         let effect = atom.effect(context: currentContext)
         let state = AtomState(effect: effect)
-        store.state.states[key] = state
+        store.states[key] = state
         return state
     }
 
     func lookupState<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomState<Node.Effect>? {
-        guard let baseState = store.state.states[key] else {
+        guard let baseState = store.states[key] else {
             return nil
         }
 
@@ -616,7 +617,7 @@ private extension StoreContext {
     }
 
     func lookupCache<Node: Atom>(of atom: Node, for key: AtomKey) -> AtomCache<Node>? {
-        guard let baseCache = store.state.caches[key] else {
+        guard let baseCache = store.caches[key] else {
             return nil
         }
 
