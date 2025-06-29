@@ -14,7 +14,7 @@ internal final class TransactionState {
         _ body: @MainActor @escaping () -> @MainActor () -> Void
     ) {
         self.key = key
-        self.body = body
+        self.body = { return body() } /// wrap `body` closure to allow for type inference in Xcode 26 toolchain
     }
 
     var onTermination: (@MainActor () -> Void)? {
