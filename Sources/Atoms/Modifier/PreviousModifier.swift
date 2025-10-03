@@ -1,6 +1,8 @@
 public extension Atom {
     /// Provides the previous value of the atom instead of the current value.
     ///
+    /// ## Example
+    ///
     /// ```swift
     /// struct CounterAtom: StateAtom, Hashable {
     ///     func defaultValue(context: Context) -> Int {

@@ -1,34 +1,61 @@
 public extension Atom {
-    /// Derives a partial property with the specified key path from the original atom and prevent it
-    /// from updating its downstream when its new value is equivalent to old value.
-    ///
-    /// ```swift
-    /// struct IntAtom: ValueAtom, Hashable {
-    ///     func value(context: Context) -> Int {
-    ///         12345
-    ///     }
-    /// }
-    ///
-    /// struct ExampleView: View {
-    ///     @Watch(IntAtom().changes(of: \.description))
-    ///     var description
-    ///
-    ///     var body: some View {
-    ///         Text(description)
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// - Parameter keyPath: A key path for the property of the original atom value.
-    ///
-    /// - Returns: An atom that provides the partial property of the original atom value.
     #if hasFeature(InferSendableFromCaptures)
+        /// Derives a partial property with the specified key path from the original atom and prevent it
+        /// from updating its downstream when its new value is equivalent to old value.
+        ///
+        /// ## Example
+        ///
+        /// ```swift
+        /// struct IntAtom: ValueAtom, Hashable {
+        ///     func value(context: Context) -> Int {
+        ///         12345
+        ///     }
+        /// }
+        ///
+        /// struct ExampleView: View {
+        ///     @Watch(IntAtom().changes(of: \.description))
+        ///     var description
+        ///
+        ///     var body: some View {
+        ///         Text(description)
+        ///     }
+        /// }
+        /// ```
+        ///
+        /// - Parameter keyPath: A key path for the property of the original atom value.
+        ///
+        /// - Returns: An atom that provides the partial property of the original atom value.
         func changes<T: Equatable>(
             of keyPath: any KeyPath<Produced, T> & Sendable
         ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
             modifier(ChangesOfModifier(keyPath: keyPath))
         }
     #else
+        /// Derives a partial property with the specified key path from the original atom and prevent it
+        /// from updating its downstream when its new value is equivalent to old value.
+        ///
+        /// ## Example
+        ///
+        /// ```swift
+        /// struct IntAtom: ValueAtom, Hashable {
+        ///     func value(context: Context) -> Int {
+        ///         12345
+        ///     }
+        /// }
+        ///
+        /// struct ExampleView: View {
+        ///     @Watch(IntAtom().changes(of: \.description))
+        ///     var description
+        ///
+        ///     var body: some View {
+        ///         Text(description)
+        ///     }
+        /// }
+        /// ```
+        ///
+        /// - Parameter keyPath: A key path for the property of the original atom value.
+        ///
+        /// - Returns: An atom that provides the partial property of the original atom value.
         func changes<T: Equatable>(
             of keyPath: KeyPath<Produced, T>
         ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {

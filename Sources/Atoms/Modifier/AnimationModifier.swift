@@ -5,6 +5,8 @@ public extension Atom {
     ///
     /// Note that this modifier does nothing when being watched by other atoms.
     ///
+    /// ## Example
+    ///
     /// ```swift
     /// struct TextAtom: ValueAtom, Hashable {
     ///     func value(context: Context) -> String {
