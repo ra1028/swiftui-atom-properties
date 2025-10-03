@@ -1,5 +1,5 @@
 public extension Atom {
-    /// Provides the latest value where the specified key path returns `true` instead of the current value.
+    /// Provides the latest value that matches the specified condition instead of the current value.
     ///
     /// ```swift
     /// struct Item {
@@ -40,7 +40,7 @@ public extension Atom {
     #endif
 }
 
-/// A modifier that provides the latest value where the specified key path returns `true` instead of the current value.
+/// A modifier that provides the latest value that matches the specified condition instead of the current value.
 ///
 /// Use ``Atom/latest(_:)`` instead of using this modifier directly.
 public struct LatestModifier<Base>: AtomModifier {

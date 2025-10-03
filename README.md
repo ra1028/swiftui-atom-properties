@@ -722,6 +722,47 @@ struct CounterView: View {
 
 </details>
 
+#### [latest(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/latest(_:))
+
+|               |Description|
+|:--------------|:----------|
+|Summary        |Provides the latest value that matches the specified condition instead of the current value.|
+|Output         |`T?`|
+|Compatible     |All atom types.|
+|Use Case       |Keep last valid value, Retain matching state|
+
+<details><summary><code>📖 Example</code></summary>
+
+```swift
+struct Item {
+    let id: Int
+    let isValid: Bool
+}
+
+struct ItemAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> Item {
+        Item(id: 0, isValid: false)
+    }
+}
+
+struct ExampleView: View {
+    @Watch(ItemAtom())
+    var currentItem
+
+    @Watch(ItemAtom().latest(\.isValid))
+    var latestValidItem
+
+    var body: some View {
+        VStack {
+            Text("Current ID: \(currentItem.id)")
+            Text("Latest Valid ID: \(latestValidItem?.id ?? 0)")
+        }
+    }
+}
+```
+
+</details>
+
 #### [changes(of:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/changes(of:))
 
 |               |Description|
