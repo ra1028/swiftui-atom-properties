@@ -52,7 +52,7 @@ public struct AtomTestContext: AtomWatchableContext {
         await withTaskGroup(of: Bool.self) { group in
             let updates = _state.makeUpdateStream()
 
-            group.addTask { @MainActor @Sendable in
+            group.addTask(priority: .high) { @MainActor @Sendable in
                 for await _ in updates {
                     return true
                 }
@@ -60,7 +60,7 @@ public struct AtomTestContext: AtomWatchableContext {
             }
 
             if let duration {
-                group.addTask {
+                group.addTask(priority: .high) {
                     try? await Task.sleep(seconds: duration)
                     return false
                 }
@@ -121,7 +121,7 @@ public struct AtomTestContext: AtomWatchableContext {
 
             let updates = _state.makeUpdateStream()
 
-            group.addTask { @MainActor @Sendable in
+            group.addTask(priority: .high) { @MainActor @Sendable in
                 guard !check() else {
                     return false
                 }
@@ -136,7 +136,7 @@ public struct AtomTestContext: AtomWatchableContext {
             }
 
             if let duration {
-                group.addTask {
+                group.addTask(priority: .high) {
                     try? await Task.sleep(seconds: duration)
                     return false
                 }
