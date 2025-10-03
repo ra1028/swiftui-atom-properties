@@ -683,6 +683,45 @@ struct ContactView: View {
 
 Modifiers can be applied to an atom to produce a different versions of the original atom to make it more coding friendly or to reduce view re-computation for performance optimization.
 
+#### [previous](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/previous)
+
+|               |Description|
+|:--------------|:----------|
+|Summary        |Provides the previous value of the atom instead of the current value.|
+|Output         |`T?`|
+|Compatible     |All atom types.|
+|Use Case       |Track value changes, Compare previous and current values|
+
+<details><summary><code>📖 Example</code></summary>
+
+```swift
+struct CounterAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> Int {
+        0
+    }
+}
+
+struct CounterView: View {
+    @WatchState(CounterAtom())
+    var currentValue
+
+    @Watch(CounterAtom().previous)
+    var previousValue
+
+    var body: some View {
+        VStack {
+            Text("Current: \(currentValue)")
+            Text("Previous: \(previousValue ?? 0)")
+            Button("Increment") {
+                currentValue += 1
+            }
+        }
+    }
+}
+```
+
+</details>
+
 #### [changes(of:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/changes(of:))
 
 |               |Description|
