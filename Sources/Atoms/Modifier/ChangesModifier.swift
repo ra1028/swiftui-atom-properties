@@ -1,6 +1,8 @@
 public extension Atom where Produced: Equatable {
     /// Prevents the atom from updating its downstream when its new value is equivalent to old value.
     ///
+    /// ## Example
+    ///
     /// ```swift
     /// struct FlagAtom: StateAtom, Hashable {
     ///     func defaultValue(context: Context) -> Bool {

@@ -2,6 +2,8 @@ public extension TaskAtom {
     /// Converts the `Task` that the original atom provides into ``AsyncPhase`` that
     /// changes overtime.
     ///
+    /// ## Example
+    ///
     /// ```swift
     /// struct AsyncIntAtom: TaskAtom, Hashable {
     ///     func value(context: Context) async -> Int {
@@ -34,6 +36,8 @@ public extension TaskAtom {
 public extension ThrowingTaskAtom {
     /// Converts the `Task` that the original atom provides into ``AsyncPhase`` that
     /// changes overtime.
+    ///
+    /// ## Example
     ///
     /// ```swift
     /// struct AsyncIntAtom: ThrowingTaskAtom, Hashable {

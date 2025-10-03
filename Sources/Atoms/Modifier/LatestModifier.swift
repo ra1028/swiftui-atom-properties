@@ -1,39 +1,79 @@
 public extension Atom {
-    /// Provides the latest value that matches the specified condition instead of the current value.
-    ///
-    /// ```swift
-    /// struct Item {
-    ///     let id: Int
-    ///     let isValid: Bool
-    /// }
-    ///
-    /// struct ItemAtom: StateAtom, Hashable {
-    ///     func defaultValue(context: Context) -> Item {
-    ///         Item(id: 0, isValid: false)
-    ///     }
-    /// }
-    ///
-    /// struct ExampleView: View {
-    ///     @Watch(ItemAtom())
-    ///     var currentItem
-    ///
-    ///     @Watch(ItemAtom().latest(\.isValid))
-    ///     var latestValidItem
-    ///
-    ///     var body: some View {
-    ///         VStack {
-    ///             Text("Current ID: \(currentItem.id)")
-    ///             Text("Latest Valid ID: \(latestValidItem?.id ?? 0)")
-    ///         }
-    ///     }
-    /// }
-    /// ```
-    ///
     #if hasFeature(InferSendableFromCaptures)
+        /// Provides the latest value that matches the specified condition instead of the current value.
+        ///
+        /// ## Example
+        ///
+        /// ```swift
+        /// struct Item {
+        ///     let id: Int
+        ///     let isValid: Bool
+        /// }
+        ///
+        /// struct ItemAtom: StateAtom, Hashable {
+        ///     func defaultValue(context: Context) -> Item {
+        ///         Item(id: 0, isValid: false)
+        ///     }
+        /// }
+        ///
+        /// struct ExampleView: View {
+        ///     @Watch(ItemAtom())
+        ///     var currentItem
+        ///
+        ///     @Watch(ItemAtom().latest(\.isValid))
+        ///     var latestValidItem
+        ///
+        ///     var body: some View {
+        ///         VStack {
+        ///             Text("Current ID: \(currentItem.id)")
+        ///             Text("Latest Valid ID: \(latestValidItem?.id ?? 0)")
+        ///         }
+        ///     }
+        /// }
+        /// ```
+        ///
+        /// - Parameter keyPath: A key path to a `Bool` property of the atom value that determines whether the value should be retained as the latest.
+        ///
+        /// - Returns: An atom that provides the latest value that matches the specified condition, or `nil` if no value has matched yet.
         func latest(_ keyPath: any KeyPath<Produced, Bool> & Sendable) -> ModifiedAtom<Self, LatestModifier<Produced>> {
             modifier(LatestModifier(keyPath: keyPath))
         }
     #else
+        /// Provides the latest value that matches the specified condition instead of the current value.
+        ///
+        /// ## Example
+        ///
+        /// ```swift
+        /// struct Item {
+        ///     let id: Int
+        ///     let isValid: Bool
+        /// }
+        ///
+        /// struct ItemAtom: StateAtom, Hashable {
+        ///     func defaultValue(context: Context) -> Item {
+        ///         Item(id: 0, isValid: false)
+        ///     }
+        /// }
+        ///
+        /// struct ExampleView: View {
+        ///     @Watch(ItemAtom())
+        ///     var currentItem
+        ///
+        ///     @Watch(ItemAtom().latest(\.isValid))
+        ///     var latestValidItem
+        ///
+        ///     var body: some View {
+        ///         VStack {
+        ///             Text("Current ID: \(currentItem.id)")
+        ///             Text("Latest Valid ID: \(latestValidItem?.id ?? 0)")
+        ///         }
+        ///     }
+        /// }
+        /// ```
+        ///
+        /// - Parameter keyPath: A key path to a `Bool` property of the atom value that determines whether the value should be retained as the latest.
+        ///
+        /// - Returns: An atom that provides the latest value that matches the specified condition, or `nil` if no value has matched yet.
         func latest(_ keyPath: KeyPath<Produced, Bool>) -> ModifiedAtom<Self, LatestModifier<Produced>> {
             modifier(LatestModifier(keyPath: keyPath))
         }
