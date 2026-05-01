@@ -185,3 +185,9 @@ private extension LatestModifier {
         }
     }
 }
+
+extension LatestModifier.StorageAtom: Scoped where Node: Scoped {
+    var scopeID: Node.ScopeID {
+        base.scopeID
+    }
+}

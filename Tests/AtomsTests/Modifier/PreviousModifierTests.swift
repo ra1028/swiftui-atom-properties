@@ -86,6 +86,36 @@ final class PreviousModifierTests: XCTestCase {
     }
 
     @MainActor
+    func testPreviousIsolatedPerScope() {
+        struct ScopedIntAtom: StateAtom, Scoped, Hashable, @unchecked Sendable {
+            let key = UniqueKey()
+            let scopeID = DefaultScopeID()
+
+            func defaultValue(context: Context) -> Int { 0 }
+        }
+
+        let store = AtomStore()
+        let rootScopeToken = ScopeKey.Token()
+        let scope1Token = ScopeKey.Token()
+        let scope2Token = ScopeKey.Token()
+        let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+        let scope1 = context.scoped(scopeID: ScopeID(DefaultScopeID()), scopeKey: scope1Token.key)
+        let scope2 = context.scoped(scopeID: ScopeID(DefaultScopeID()), scopeKey: scope2Token.key)
+        let subscriber1 = Subscriber(SubscriberState())
+        let subscriber2 = Subscriber(SubscriberState())
+        let atom = ScopedIntAtom()
+
+        // Drive `previous` in scope1 so its StorageAtom holds the latest value.
+        XCTAssertNil(scope1.watch(atom.previous, subscriber: subscriber1, subscription: Subscription()))
+        scope1.set(1, for: atom)
+        XCTAssertEqual(scope1.watch(atom.previous, subscriber: subscriber1, subscription: Subscription()), 0)
+
+        // First read of `previous` in scope2. With un-scoped storage this would
+        // leak scope1's value; with per-scope storage it must be nil.
+        XCTAssertNil(scope2.watch(atom.previous, subscriber: subscriber2, subscription: Subscription()))
+    }
+
+    @MainActor
     func testPreviousIsolatedPerBaseAtomInstance() {
         struct ItemAtom: StateAtom, Hashable {
             let id: Int

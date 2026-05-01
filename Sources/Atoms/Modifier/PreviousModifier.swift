@@ -97,3 +97,9 @@ private extension PreviousModifier {
         }
     }
 }
+
+extension PreviousModifier.StorageAtom: Scoped where Node: Scoped {
+    var scopeID: Node.ScopeID {
+        base.scopeID
+    }
+}
