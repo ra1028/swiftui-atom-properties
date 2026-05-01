@@ -4,8 +4,9 @@ import XCTest
 
 final class LatestModifierTests: XCTestCase {
     struct Item {
-        let id: Int
-        let isValid: Bool
+        var id: Int
+        var isValid: Bool
+        var isUnique = false
     }
 
     @MainActor
@@ -121,6 +122,81 @@ final class LatestModifierTests: XCTestCase {
 
         // Should return the new true value
         XCTAssertEqual(context.watch(atom.latest(\.self)), true)
+    }
+
+    @MainActor
+    func testLatestIsolatedPerScope() {
+        struct ScopedItemAtom: StateAtom, Scoped, Hashable, @unchecked Sendable {
+            let key = UniqueKey()
+            let scopeID = DefaultScopeID()
+
+            func defaultValue(context: Context) -> Item {
+                Item(id: 0, isValid: false)
+            }
+        }
+
+        let store = AtomStore()
+        let rootScopeToken = ScopeKey.Token()
+        let scope1Token = ScopeKey.Token()
+        let scope2Token = ScopeKey.Token()
+        let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+        let scope1 = context.scoped(scopeID: ScopeID(DefaultScopeID()), scopeKey: scope1Token.key)
+        let scope2 = context.scoped(scopeID: ScopeID(DefaultScopeID()), scopeKey: scope2Token.key)
+        let subscriber1 = Subscriber(SubscriberState())
+        let subscriber2 = Subscriber(SubscriberState())
+        let atom = ScopedItemAtom()
+
+        // Drive `latest` in scope1 so its StorageAtom retains a valid item.
+        XCTAssertNil(scope1.watch(atom.latest(\.isValid), subscriber: subscriber1, subscription: Subscription()))
+        scope1.set(Item(id: 10, isValid: true), for: atom)
+        XCTAssertEqual(
+            scope1.watch(atom.latest(\.isValid), subscriber: subscriber1, subscription: Subscription())?.id,
+            10
+        )
+
+        // First read of `latest` in scope2. With un-scoped storage this would
+        // leak scope1's id=10; with per-scope storage it must be nil.
+        XCTAssertNil(scope2.watch(atom.latest(\.isValid), subscriber: subscriber2, subscription: Subscription()))
+    }
+
+    @MainActor
+    func testLatestIsolatedPerKeyPath() {
+        let atom = TestStateAtom(defaultValue: Item(id: 0, isValid: false, isUnique: false))
+        let context = AtomTestContext()
+
+        // Drive A through a valid emission so any shared storage now retains id=10.
+        XCTAssertNil(context.watch(atom.latest(\.isValid)))
+        context[atom] = Item(id: 10, isValid: true, isUnique: false)
+        XCTAssertEqual(context.watch(atom.latest(\.isValid))?.id, 10)
+
+        // First read of B — has never seen a B-valid value. With shared storage
+        // it would leak A's id=10; with per-(base, keyPath) storage it must be nil.
+        XCTAssertNil(context.watch(atom.latest(\.isUnique)))
+    }
+
+    @MainActor
+    func testLatestIsolatedPerBaseAtomInstance() {
+        struct ItemAtom: StateAtom, Hashable {
+            let id: Int
+
+            func defaultValue(context: Context) -> Item {
+                Item(id: id, isValid: false)
+            }
+        }
+
+        let context = AtomTestContext()
+        let a = ItemAtom(id: 1)
+        let b = ItemAtom(id: 2)
+
+        // Drive `a.latest` so that — under the shared-storage bug —
+        // the StorageAtom now retains `Item(id: 10, isValid: true)`.
+        XCTAssertNil(context.watch(a.latest(\.isValid)))
+        context[a] = Item(id: 10, isValid: true)
+        XCTAssertEqual(context.watch(a.latest(\.isValid))?.id, 10)
+
+        // First read of `b.latest`. With shared storage this would leak
+        // `a`'s last valid item; with per-base storage it must be nil.
+        XCTAssertNil(context.watch(b.latest(\.isValid)))
     }
 
     @MainActor

@@ -139,7 +139,7 @@ public struct LatestModifier<Base>: AtomModifier {
         AtomProducer { context in
             context.transaction { context in
                 let value = context.watch(atom)
-                let storage = context.watch(StorageAtom())
+                let storage = context.watch(StorageAtom(base: atom, modifier: self))
 
                 if value[keyPath: keyPath] {
                     storage.latest = value
@@ -157,9 +157,37 @@ private extension LatestModifier {
         var latest: Base?
     }
 
-    struct StorageAtom: ValueAtom, Hashable {
+    struct StorageAtom<Node: Atom>: ValueAtom {
+        struct Key: Hashable, Sendable {
+            private let baseKey: Node.Key
+            private let modifierKey: LatestModifier.Key
+
+            init(baseKey: Node.Key, modifierKey: LatestModifier.Key) {
+                self.baseKey = baseKey
+                self.modifierKey = modifierKey
+            }
+        }
+
+        private let base: Node
+        private let modifier: LatestModifier
+
+        var key: Key {
+            Key(baseKey: base.key, modifierKey: modifier.key)
+        }
+
+        init(base: Node, modifier: LatestModifier) {
+            self.base = base
+            self.modifier = modifier
+        }
+
         func value(context: Context) -> Storage {
             Storage()
         }
+    }
+}
+
+extension LatestModifier.StorageAtom: Scoped where Node: Scoped {
+    var scopeID: Node.ScopeID {
+        base.scopeID
     }
 }
