@@ -4,8 +4,9 @@ import XCTest
 
 final class LatestModifierTests: XCTestCase {
     struct Item {
-        let id: Int
-        let isValid: Bool
+        var id: Int
+        var isValid: Bool
+        var isUnique = false
     }
 
     @MainActor
@@ -121,6 +122,46 @@ final class LatestModifierTests: XCTestCase {
 
         // Should return the new true value
         XCTAssertEqual(context.watch(atom.latest(\.self)), true)
+    }
+
+    @MainActor
+    func testLatestIsolatedPerKeyPath() {
+        let atom = TestStateAtom(defaultValue: Item(id: 0, isValid: false, isUnique: false))
+        let context = AtomTestContext()
+
+        // Drive A through a valid emission so any shared storage now retains id=10.
+        XCTAssertNil(context.watch(atom.latest(\.isValid)))
+        context[atom] = Item(id: 10, isValid: true, isUnique: false)
+        XCTAssertEqual(context.watch(atom.latest(\.isValid))?.id, 10)
+
+        // First read of B — has never seen a B-valid value. With shared storage
+        // it would leak A's id=10; with per-(base, keyPath) storage it must be nil.
+        XCTAssertNil(context.watch(atom.latest(\.isUnique)))
+    }
+
+    @MainActor
+    func testLatestIsolatedPerBaseAtomInstance() {
+        struct ItemAtom: StateAtom, Hashable {
+            let id: Int
+
+            func defaultValue(context: Context) -> Item {
+                Item(id: id, isValid: false)
+            }
+        }
+
+        let context = AtomTestContext()
+        let a = ItemAtom(id: 1)
+        let b = ItemAtom(id: 2)
+
+        // Drive `a.latest` so that — under the shared-storage bug —
+        // the StorageAtom now retains `Item(id: 10, isValid: true)`.
+        XCTAssertNil(context.watch(a.latest(\.isValid)))
+        context[a] = Item(id: 10, isValid: true)
+        XCTAssertEqual(context.watch(a.latest(\.isValid))?.id, 10)
+
+        // First read of `b.latest`. With shared storage this would leak
+        // `a`'s last valid item; with per-base storage it must be nil.
+        XCTAssertNil(context.watch(b.latest(\.isValid)))
     }
 
     @MainActor

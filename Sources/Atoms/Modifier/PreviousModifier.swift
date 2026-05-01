@@ -54,7 +54,7 @@ public struct PreviousModifier<Base>: AtomModifier {
         AtomProducer { context in
             context.transaction { context in
                 let value = context.watch(atom)
-                let storage = context.watch(StorageAtom())
+                let storage = context.watch(StorageAtom(base: atom, modifier: self))
                 let previous = storage.previous
                 storage.previous = value
                 return previous
@@ -69,7 +69,29 @@ private extension PreviousModifier {
         var previous: Base?
     }
 
-    struct StorageAtom: ValueAtom, Hashable {
+    struct StorageAtom<Node: Atom>: ValueAtom {
+        struct Key: Hashable, Sendable {
+            private let baseKey: Node.Key
+            private let modifierKey: PreviousModifier.Key
+
+            init(baseKey: Node.Key, modifierKey: PreviousModifier.Key) {
+                self.baseKey = baseKey
+                self.modifierKey = modifierKey
+            }
+        }
+
+        private let base: Node
+        private let modifier: PreviousModifier
+
+        var key: Key {
+            Key(baseKey: base.key, modifierKey: modifier.key)
+        }
+
+        init(base: Node, modifier: PreviousModifier) {
+            self.base = base
+            self.modifier = modifier
+        }
+
         func value(context: Context) -> Storage {
             Storage()
         }
