@@ -2,10 +2,6 @@
 internal final class SubscriberState {
     let token = SubscriberKey.Token()
 
-    #if !hasFeature(IsolatedDefaultValues)
-        nonisolated init() {}
-    #endif
-
     nonisolated(unsafe) var unsubscribe: (@MainActor () -> Void)?
 
     // TODO: Use isolated synchronous deinit once it's available.

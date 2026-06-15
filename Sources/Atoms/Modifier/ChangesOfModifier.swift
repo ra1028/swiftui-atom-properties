@@ -1,67 +1,34 @@
 public extension Atom {
-    #if hasFeature(InferSendableFromCaptures)
-        /// Derives a partial property with the specified key path from the original atom and prevent it
-        /// from updating its downstream when its new value is equivalent to old value.
-        ///
-        /// ## Example
-        ///
-        /// ```swift
-        /// struct IntAtom: ValueAtom, Hashable {
-        ///     func value(context: Context) -> Int {
-        ///         12345
-        ///     }
-        /// }
-        ///
-        /// struct ExampleView: View {
-        ///     @Watch(IntAtom().changes(of: \.description))
-        ///     var description
-        ///
-        ///     var body: some View {
-        ///         Text(description)
-        ///     }
-        /// }
-        /// ```
-        ///
-        /// - Parameter keyPath: A key path for the property of the original atom value.
-        ///
-        /// - Returns: An atom that provides the partial property of the original atom value.
-        func changes<T: Equatable>(
-            of keyPath: any KeyPath<Produced, T> & Sendable
-        ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
-            modifier(ChangesOfModifier(keyPath: keyPath))
-        }
-    #else
-        /// Derives a partial property with the specified key path from the original atom and prevent it
-        /// from updating its downstream when its new value is equivalent to old value.
-        ///
-        /// ## Example
-        ///
-        /// ```swift
-        /// struct IntAtom: ValueAtom, Hashable {
-        ///     func value(context: Context) -> Int {
-        ///         12345
-        ///     }
-        /// }
-        ///
-        /// struct ExampleView: View {
-        ///     @Watch(IntAtom().changes(of: \.description))
-        ///     var description
-        ///
-        ///     var body: some View {
-        ///         Text(description)
-        ///     }
-        /// }
-        /// ```
-        ///
-        /// - Parameter keyPath: A key path for the property of the original atom value.
-        ///
-        /// - Returns: An atom that provides the partial property of the original atom value.
-        func changes<T: Equatable>(
-            of keyPath: KeyPath<Produced, T>
-        ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
-            modifier(ChangesOfModifier(keyPath: keyPath))
-        }
-    #endif
+    /// Derives a partial property with the specified key path from the original atom and prevent it
+    /// from updating its downstream when its new value is equivalent to old value.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// struct IntAtom: ValueAtom, Hashable {
+    ///     func value(context: Context) -> Int {
+    ///         12345
+    ///     }
+    /// }
+    ///
+    /// struct ExampleView: View {
+    ///     @Watch(IntAtom().changes(of: \.description))
+    ///     var description
+    ///
+    ///     var body: some View {
+    ///         Text(description)
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Parameter keyPath: A key path for the property of the original atom value.
+    ///
+    /// - Returns: An atom that provides the partial property of the original atom value.
+    func changes<T: Equatable>(
+        of keyPath: any KeyPath<Produced, T> & Sendable
+    ) -> ModifiedAtom<Self, ChangesOfModifier<Produced, T>> {
+        modifier(ChangesOfModifier(keyPath: keyPath))
+    }
 }
 
 /// A modifier that derives a partial property with the specified key path from the original atom
@@ -75,49 +42,25 @@ public struct ChangesOfModifier<Base, Produced: Equatable>: AtomModifier {
     /// A type of value the modified atom produces.
     public typealias Produced = Produced
 
-    #if hasFeature(InferSendableFromCaptures)
-        /// A type representing the stable identity of this modifier.
-        public struct Key: Hashable, Sendable {
-            private let keyPath: any KeyPath<Base, Produced> & Sendable
-
-            fileprivate init(keyPath: any KeyPath<Base, Produced> & Sendable) {
-                self.keyPath = keyPath
-            }
-        }
-
+    /// A type representing the stable identity of this modifier.
+    public struct Key: Hashable, Sendable {
         private let keyPath: any KeyPath<Base, Produced> & Sendable
 
-        internal init(keyPath: any KeyPath<Base, Produced> & Sendable) {
+        fileprivate init(keyPath: any KeyPath<Base, Produced> & Sendable) {
             self.keyPath = keyPath
         }
+    }
 
-        /// A unique value used to identify the modifier internally.
-        public var key: Key {
-            Key(keyPath: keyPath)
-        }
-    #else
-        public struct Key: Hashable, Sendable {
-            private let keyPath: UnsafeUncheckedSendable<KeyPath<Base, Produced>>
+    private let keyPath: any KeyPath<Base, Produced> & Sendable
 
-            fileprivate init(keyPath: UnsafeUncheckedSendable<KeyPath<Base, Produced>>) {
-                self.keyPath = keyPath
-            }
-        }
+    internal init(keyPath: any KeyPath<Base, Produced> & Sendable) {
+        self.keyPath = keyPath
+    }
 
-        private let _keyPath: UnsafeUncheckedSendable<KeyPath<Base, Produced>>
-        private var keyPath: KeyPath<Base, Produced> {
-            _keyPath.value
-        }
-
-        internal init(keyPath: KeyPath<Base, Produced>) {
-            _keyPath = UnsafeUncheckedSendable(keyPath)
-        }
-
-        /// A unique value used to identify the modifier internally.
-        public var key: Key {
-            Key(keyPath: _keyPath)
-        }
-    #endif
+    /// A unique value used to identify the modifier internally.
+    public var key: Key {
+        Key(keyPath: keyPath)
+    }
 
     /// A producer that produces the value of this atom.
     public func producer(atom: some Atom<Base>) -> AtomProducer<Produced> {

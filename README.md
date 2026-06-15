@@ -124,14 +124,14 @@ Open `Examples/Project.xcodeproj` and play around with it!
 
 ### Requirements
 
-|             |Minimum Version|
-|------------:|--------------:|
-|Language mode|5, 6           |
-|Xcode        |16.1           |
-|iOS          |16.0           |
-|macOS        |13.0           |
-|tvOS         |16.0           |
-|watchOS      |9.0            |
+|        |Minimum Version|
+|-------:|--------------:|
+|Language|6              |
+|Xcode   |16.1           |
+|iOS     |16.0           |
+|macOS   |13.0           |
+|tvOS    |16.0           |
+|watchOS |9.0            |
 
 ### Installation
 
