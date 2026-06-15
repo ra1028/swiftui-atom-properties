@@ -27,10 +27,7 @@ public enum AtomEffectBuilder {
         effect
     }
 
-    // NB: The combination of variadic type and opaque return type in iOS 16 fails to demangle
-    // the witness for the return type, which causes a runtime crash.
-    // Once iOS 16 support is dropped, this function will be changed to return an opaque type.
-    public static func buildBlock<each Effect: AtomEffect>(_ effect: repeat each Effect) -> BlockEffect {
+    public static func buildBlock<each Effect: AtomEffect>(_ effect: repeat each Effect) -> some AtomEffect {
         BlockEffect(repeat each effect)
     }
 
@@ -56,46 +53,6 @@ public enum AtomEffectBuilder {
 }
 
 public extension AtomEffectBuilder {
-    // Use type pack once it is available in iOS 17 or newer.
-    // struct BlockEffect<each Effect: AtomEffect>: AtomEffect
-    struct BlockEffect: AtomEffect {
-        private let _initializing: @MainActor (Context) -> Void
-        private let _initialized: @MainActor (Context) -> Void
-        private let _updated: @MainActor (Context) -> Void
-        private let _released: @MainActor (Context) -> Void
-
-        internal init<each Effect: AtomEffect>(_ effect: repeat each Effect) {
-            _initializing = { context in
-                repeat (each effect).initializing(context: context)
-            }
-            _initialized = { context in
-                repeat (each effect).initialized(context: context)
-            }
-            _updated = { context in
-                repeat (each effect).updated(context: context)
-            }
-            _released = { context in
-                repeat (each effect).released(context: context)
-            }
-        }
-
-        public func initializing(context: Context) {
-            _initializing(context)
-        }
-
-        public func initialized(context: Context) {
-            _initialized(context)
-        }
-
-        public func updated(context: Context) {
-            _updated(context)
-        }
-
-        public func released(context: Context) {
-            _released(context)
-        }
-    }
-
     struct ConditionalEffect<TrueEffect: AtomEffect, FalseEffect: AtomEffect>: AtomEffect {
         internal enum Storage {
             case trueEffect(TrueEffect)
@@ -151,6 +108,30 @@ public extension AtomEffectBuilder {
 
 private extension AtomEffectBuilder {
     struct EmptyEffect: AtomEffect {}
+
+    struct BlockEffect<each Effect: AtomEffect>: AtomEffect {
+        private let effect: (repeat each Effect)
+
+        init(_ effect: repeat each Effect) {
+            self.effect = (repeat each effect)
+        }
+
+        func initializing(context: Context) {
+            repeat (each effect).initializing(context: context)
+        }
+
+        func initialized(context: Context) {
+            repeat (each effect).initialized(context: context)
+        }
+
+        func updated(context: Context) {
+            repeat (each effect).updated(context: context)
+        }
+
+        func released(context: Context) {
+            repeat (each effect).released(context: context)
+        }
+    }
 
     struct IfEffect<Effect: AtomEffect>: AtomEffect {
         private let effect: Effect?

@@ -128,10 +128,10 @@ Open `Examples/Project.xcodeproj` and play around with it!
 |-------:|--------------:|
 |Language|6              |
 |Xcode   |16.1           |
-|iOS     |16.0           |
-|macOS   |13.0           |
-|tvOS    |16.0           |
-|watchOS |9.0            |
+|iOS     |17.0           |
+|macOS   |14.0           |
+|tvOS    |17.0           |
+|watchOS |10.0           |
 
 ### Installation
 

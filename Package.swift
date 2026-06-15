@@ -9,10 +9,10 @@ let swiftSettings: [SwiftSetting] = [
 let package = Package(
     name: "swiftui-atom-properties",
     platforms: [
-        .iOS(.v16),
-        .macOS(.v13),
-        .tvOS(.v16),
-        .watchOS(.v9),
+        .iOS(.v17),
+        .macOS(.v14),
+        .tvOS(.v17),
+        .watchOS(.v10),
     ],
     products: [
         .library(name: "Atoms", targets: ["Atoms"])

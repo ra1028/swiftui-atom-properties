@@ -1,6 +1,8 @@
 name: Project
 
 options:
+  deploymentTarget:
+    iOS: 17.0
   bundleIdPrefix: com.ryo.swiftui-atom-properties.examples
   createIntermediateGroups: true
 

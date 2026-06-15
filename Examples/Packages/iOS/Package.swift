@@ -10,7 +10,7 @@ let swiftSettings: [SwiftSetting] = [
 let package = Package(
     name: "iOSExamples",
     platforms: [
-        .iOS(.v16)
+        .iOS(.v17)
     ],
     products: [
         .library(name: "iOSApp", targets: ["iOSApp"])
