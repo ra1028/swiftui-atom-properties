@@ -2,9 +2,9 @@ name: Project
 
 options:
   deploymentTarget:
-    iOS: 16.0
-    macOS: 13.0
-    tvOS: 16.0
+    iOS: 17.0
+    macOS: 14.0
+    tvOS: 17.0
   bundleIdPrefix: com.ryo.swiftui-atom-properties.examples
   createIntermediateGroups: true
 
