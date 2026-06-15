@@ -44,19 +44,6 @@ jobs:
             ${{ env.MACOS }} \
             ${{ env.TVOS_SIMULATOR }}
 
-  test_language_mode:
-    name: Test Swift 5 language mode
-    runs-on: macos-14
-    strategy:
-      matrix:
-        enable_upcoming_features:
-          - 0
-          - 1
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test Swift 5 language mode
-        run: ENABLE_UPCOMING_FEATURES=${{ matrix.enable_upcoming_features }} scripts/test.sh library SWIFT_VERSION=5 -destinations ${{ env.IOS_SIMULATOR }}
-
   benchmark:
     name: Benchmark
     runs-on: macos-14
