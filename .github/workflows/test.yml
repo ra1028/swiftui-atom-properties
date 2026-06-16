@@ -10,16 +10,16 @@ on:
   workflow_dispatch:
 
 env:
-  DEVELOPER_DIR: /Applications/Xcode_16.1.app
-  IOS_SIMULATOR: '"platform=iOS Simulator,name=iPhone 16 Pro"'
+  DEVELOPER_DIR: /Applications/Xcode_26.5.app
+  IOS_SIMULATOR: '"platform=iOS Simulator,name=iPhone 17 Pro"'
   MACOS: '"platform=macOS"'
   TVOS_SIMULATOR: '"platform=tvOS Simulator,name=Apple TV 4K (3rd generation)"'
-  WATCHOS_SIMULATOR: '"platform=watchOS Simulator,name=Apple Watch Ultra 2 (49mm)"'
+  WATCHOS_SIMULATOR: '"platform=watchOS Simulator,name=Apple Watch Ultra 3 (49mm)"'
 
 jobs:
   test:
     name: Test
-    runs-on: macos-14
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - name: Test library iOS
@@ -33,20 +33,19 @@ jobs:
 
   test_examples:
     name: Test examples
-    runs-on: macos-14
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - name: Test example iOS
         run: scripts/test.sh example-ios -destinations ${{ env.IOS_SIMULATOR }}
-      - name: Test example cross platform
-        run: |
-          scripts/test.sh example-cross-platform -destinations \
-            ${{ env.MACOS }} \
-            ${{ env.TVOS_SIMULATOR }}
+      - name: Test example cross platform macOS
+        run: scripts/test.sh example-cross-platform -destinations ${{ env.MACOS }}
+      - name: Test example cross platform tvOS
+        run: scripts/test.sh example-cross-platform -destinations ${{ env.TVOS_SIMULATOR }}
 
   benchmark:
     name: Benchmark
-    runs-on: macos-14
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - name: Run benchmark test
@@ -54,7 +53,7 @@ jobs:
 
   validation:
     name: Validation
-    runs-on: macos-14
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - name: Show environments

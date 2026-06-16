@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -171,7 +171,6 @@
 				};
 			};
 			buildConfigurationList = D91E14E36EC0B415578456F2 /* Build configuration list for PBXProject "Project" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -179,10 +178,13 @@
 				en,
 			);
 			mainGroup = 293D0FF827366B513839236A;
+			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				E33DA6C4A12A51D5FE9E2326 /* XCLocalSwiftPackageReference "Packages/CrossPlatform" */,
 				0D7591B851157DD4AFC572BB /* XCLocalSwiftPackageReference "Packages/iOS" */,
 			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AC523591AC7BE9275003D2DB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (

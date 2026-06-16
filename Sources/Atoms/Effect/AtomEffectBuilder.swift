@@ -53,6 +53,7 @@ public enum AtomEffectBuilder {
 }
 
 public extension AtomEffectBuilder {
+    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     struct ConditionalEffect<TrueEffect: AtomEffect, FalseEffect: AtomEffect>: AtomEffect {
         internal enum Storage {
             case trueEffect(TrueEffect)
