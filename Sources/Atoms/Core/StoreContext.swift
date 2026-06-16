@@ -127,7 +127,6 @@ internal struct StoreContext {
     }
 
     @usableFromInline
-    @_disfavoredOverload
     func refresh<Node: AsyncAtom>(_ atom: Node) async -> Node.Produced {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
         let cache = lookupCache(of: atom, for: key)
@@ -158,38 +157,7 @@ internal struct StoreContext {
         return value
     }
 
-    @available(*, deprecated)
     @usableFromInline
-    func refresh<Node: Refreshable>(_ atom: Node) async -> Node.Produced {
-        let (key, _) = lookupAtomKeyAndOverride(of: atom)
-        let cache = lookupCache(of: atom, for: key)
-        let localContext = cache.map(switchContext) ?? self
-        let state = localContext.getState(of: atom, for: key)
-        let currentContext = AtomCurrentContext(store: localContext)
-
-        // Detach the dependencies once to delay updating the downstream until
-        // this atom's value refresh is complete.
-        let dependencies = detachDependencies(for: key)
-        let value = await atom.refresh(context: currentContext)
-
-        // Restore dependencies when the refresh is completed.
-        attachDependencies(dependencies, for: key)
-
-        guard let transactionState = state.transactionState, let cache else {
-            checkAndRelease(for: key)
-            return value
-        }
-
-        // Notify update unless it's cancelled or terminated by other operations.
-        if !Task.isCancelled && !transactionState.isTerminated {
-            localContext.update(atom: atom, for: key, cache: cache, newValue: value)
-        }
-
-        return value
-    }
-
-    @usableFromInline
-    @_disfavoredOverload
     func reset(_ atom: some Atom) {
         let (key, override) = lookupAtomKeyAndOverride(of: atom)
 
@@ -197,18 +165,6 @@ internal struct StoreContext {
             let localContext = switchContext(with: cache)
             let newValue = localContext.getValue(of: atom, for: key, override: override)
             localContext.update(atom: atom, for: key, cache: cache, newValue: newValue)
-        }
-    }
-
-    @available(*, deprecated)
-    @usableFromInline
-    func reset(_ atom: some Resettable) {
-        let (key, _) = lookupAtomKeyAndOverride(of: atom)
-
-        if let cache = lookupCache(of: atom, for: key) {
-            let localContext = switchContext(with: cache)
-            let currentContext = AtomCurrentContext(store: localContext)
-            atom.reset(context: currentContext)
         }
     }
 

@@ -95,42 +95,6 @@ struct TestAsyncPhaseAtom<Success, Failure: Error>: AsyncPhaseAtom, @unchecked S
     }
 }
 
-@available(*, deprecated)
-struct TestCustomRefreshableAtom<T: Sendable>: ValueAtom, Refreshable, @unchecked Sendable {
-    var getValue: (Context) -> T
-    var refresh: (CurrentContext) async -> T
-
-    var key: UniqueKey {
-        UniqueKey()
-    }
-
-    func value(context: Context) -> T {
-        getValue(context)
-    }
-
-    func refresh(context: CurrentContext) async -> T {
-        await refresh(context)
-    }
-}
-
-@available(*, deprecated)
-struct TestCustomResettableAtom<T>: StateAtom, Resettable, @unchecked Sendable {
-    var defaultValue: (Context) -> T
-    var reset: (CurrentContext) -> Void
-
-    var key: UniqueKey {
-        UniqueKey()
-    }
-
-    func defaultValue(context: Context) -> T {
-        defaultValue(context)
-    }
-
-    func reset(context: CurrentContext) {
-        reset(context)
-    }
-}
-
 struct TestPublisherAtom<Publisher: Combine.Publisher>: PublisherAtom, @unchecked Sendable where Publisher.Output: Sendable {
     var effect: TestEffect?
     var makePublisher: () -> Publisher
