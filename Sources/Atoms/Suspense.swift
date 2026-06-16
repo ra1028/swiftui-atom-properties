@@ -206,6 +206,7 @@ private extension Suspense {
             }
         }
 
+        // TODO: Replace with `isolated deinit` (SE-0371) once swiftlang/swift#85663 is fixed.
         deinit {
             suspensionTask?.cancel()
         }

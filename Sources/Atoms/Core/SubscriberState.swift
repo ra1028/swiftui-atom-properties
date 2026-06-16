@@ -4,8 +4,7 @@ internal final class SubscriberState {
 
     nonisolated(unsafe) var unsubscribe: (@MainActor () -> Void)?
 
-    // TODO: Use isolated synchronous deinit once it's available.
-    // 0371-isolated-synchronous-deinit
+    // TODO: Replace with `isolated deinit` (SE-0371) once swiftlang/swift#85663 is fixed.
     deinit {
         MainActor.performIsolated { [unsubscribe] in
             unsubscribe?()

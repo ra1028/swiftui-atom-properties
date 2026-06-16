@@ -5,8 +5,7 @@ internal final class ScopeState {
 
     nonisolated(unsafe) var unregister: (@MainActor () -> Void)?
 
-    // TODO: Use isolated synchronous deinit once it's available.
-    // 0371-isolated-synchronous-deinit
+    // TODO: Replace with `isolated deinit` (SE-0371) once swiftlang/swift#85663 is fixed.
     deinit {
         MainActor.performIsolated { [unregister] in
             unregister?()
