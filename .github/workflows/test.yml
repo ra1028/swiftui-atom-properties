@@ -38,11 +38,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test example iOS
         run: scripts/test.sh example-ios -destinations ${{ env.IOS_SIMULATOR }}
-      - name: Test example cross platform
-        run: |
-          scripts/test.sh example-cross-platform -destinations \
-            ${{ env.MACOS }} \
-            ${{ env.TVOS_SIMULATOR }}
+      - name: Test example cross platform macOS
+        run: scripts/test.sh example-cross-platform -destinations ${{ env.MACOS }}
+      - name: Test example cross platform tvOS
+        run: scripts/test.sh example-cross-platform -destinations ${{ env.TVOS_SIMULATOR }}
 
   benchmark:
     name: Benchmark
