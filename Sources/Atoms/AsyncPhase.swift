@@ -30,7 +30,7 @@ public enum AsyncPhase<Success, Failure: Error> {
     /// - Parameters:
     ///   - isolation: The actor isolation of the calling context. The default value is
     ///     always used; do not pass a value for this parameter.
-    ///   - body: A async throwing closure to evaluate.
+    ///   - body: An async throwing closure to evaluate.
     public init(
         isolation: isolated (any Actor)? = #isolation,
         catching body: () async throws(Failure) -> Success

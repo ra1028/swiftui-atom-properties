@@ -102,11 +102,9 @@ final class AsyncPhaseTests: XCTestCase {
 
     nonisolated func testInitBodyFromNonisolatedContext() async {
         // body should run nonisolated when init is called from nonisolated context
-        var called = false
         let phase = await AsyncPhase<Bool, Never> {
-            // No actor assertion — nonisolated context, body should simply run
-            called = true
-            return called
+            XCTAssertNil(#isolation)
+            return true
         }
 
         XCTAssertEqual(phase.value, true)
