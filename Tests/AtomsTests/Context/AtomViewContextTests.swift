@@ -58,30 +58,6 @@ final class AtomViewContextTests: XCTestCase {
         XCTAssertEqual(context.watch(atom).value, 100)
     }
 
-    @available(*, deprecated)
-    @MainActor
-    func testCustomRefresh() async {
-        let atom = TestCustomRefreshableAtom { _ in
-            100
-        } refresh: { _ in
-            200
-        }
-        let store = AtomStore()
-        let rootScopeToken = ScopeKey.Token()
-        let subscriberState = SubscriberState()
-        let context = AtomViewContext(
-            store: .root(store: store, scopeKey: rootScopeToken.key),
-            subscriber: Subscriber(subscriberState),
-            subscription: Subscription()
-        )
-
-        XCTAssertEqual(context.watch(atom), 100)
-
-        let value = await context.refresh(atom)
-        XCTAssertEqual(value, 200)
-        XCTAssertEqual(context.watch(atom), 200)
-    }
-
     @MainActor
     func testReset() {
         let atom = TestStateAtom(defaultValue: 0)
@@ -103,42 +79,6 @@ final class AtomViewContextTests: XCTestCase {
         context.reset(atom)
 
         XCTAssertEqual(context.read(atom), 0)
-    }
-
-    @available(*, deprecated)
-    @MainActor
-    func testCustomReset() {
-        let store = AtomStore()
-        let rootScopeToken = ScopeKey.Token()
-        let subscriberState = SubscriberState()
-        let context = AtomViewContext(
-            store: .root(store: store, scopeKey: rootScopeToken.key),
-            subscriber: Subscriber(subscriberState),
-            subscription: Subscription()
-        )
-
-        let atom = TestStateAtom(defaultValue: 0)
-        let resettableAtom = TestCustomResettableAtom(
-            defaultValue: { context in
-                context.watch(atom)
-            },
-            reset: { context in
-                context[atom] = 300
-            }
-        )
-
-        XCTAssertEqual(context.watch(atom), 0)
-        XCTAssertEqual(context.watch(resettableAtom), 0)
-
-        context[atom] = 100
-
-        XCTAssertEqual(context.watch(atom), 100)
-        XCTAssertEqual(context.watch(resettableAtom), 100)
-
-        context.reset(resettableAtom)
-
-        XCTAssertEqual(context.watch(atom), 300)
-        XCTAssertEqual(context.watch(resettableAtom), 300)
     }
 
     @MainActor
