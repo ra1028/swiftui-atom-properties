@@ -7,6 +7,11 @@ final class AsyncPhaseTests: XCTestCase {
         let value: Int
     }
 
+    @globalActor
+    actor TestActor {
+        static let shared = TestActor()
+    }
+
     let phases: [AsyncPhase<Int, TestError>] = [
         .suspending,
         .success(0),
@@ -83,6 +88,36 @@ final class AsyncPhaseTests: XCTestCase {
 
         XCTAssertEqual(success.value, 100)
         XCTAssertEqual(failure.error as? URLError, URLError(.badURL))
+    }
+
+    @MainActor
+    func testInitBodyInheritsMainActorIsolation() async {
+        // body should run on @MainActor when init is called from @MainActor context
+        let phase = await AsyncPhase<Void, Never> {
+            MainActor.assertIsolated()
+        }
+
+        XCTAssertNotNil(phase.value)
+    }
+
+    nonisolated func testInitBodyFromNonisolatedContext() async {
+        // body should run nonisolated when init is called from nonisolated context
+        let phase = await AsyncPhase<Bool, Never> {
+            XCTAssertNil(#isolation)
+            return true
+        }
+
+        XCTAssertEqual(phase.value, true)
+    }
+
+    @TestActor
+    func testInitBodyInheritsCustomActorIsolation() async {
+        let phase = await AsyncPhase<Void, Never> {
+            // assertIsolated() precondition-fails if the current executor is not TestActor's
+            TestActor.shared.assertIsolated()
+        }
+
+        XCTAssertNotNil(phase.value)
     }
 
     func testMap() {

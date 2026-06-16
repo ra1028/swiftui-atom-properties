@@ -148,7 +148,7 @@ extension OverrideContainer {
 extension Task where Success == Never, Failure == Never {
     static func yield(
         isolation: isolated (any Actor)? = #isolation,
-        @_inheritActorContext until predicate: () -> Bool
+        until predicate: () -> Bool
     ) async {
         while !predicate() {
             await yield()
