@@ -1,9 +1,10 @@
 import Atoms
-import XCTest
+import Foundation
+import Testing
 
 @testable import ExampleTodo
 
-final class ExampleTodoTests: XCTestCase {
+struct ExampleTodoTests {
     let completedTodos = [
         Todo(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!,
@@ -30,6 +31,7 @@ final class ExampleTodoTests: XCTestCase {
     }
 
     @MainActor
+    @Test
     func testFilteredTodosAtom() {
         let context = AtomTestContext()
         let atom = FilteredTodosAtom()
@@ -38,22 +40,23 @@ final class ExampleTodoTests: XCTestCase {
 
         context[TodosAtom()] = []
 
-        XCTAssertEqual(context.watch(atom), [])
+        #expect(context.watch(atom) == [])
 
         context[TodosAtom()] = allTodos
 
-        XCTAssertEqual(context.watch(atom), allTodos)
+        #expect(context.watch(atom) == allTodos)
 
         context[FilterAtom()] = .completed
 
-        XCTAssertEqual(context.watch(atom), completedTodos)
+        #expect(context.watch(atom) == completedTodos)
 
         context[FilterAtom()] = .uncompleted
 
-        XCTAssertEqual(context.watch(atom), uncompleteTodos)
+        #expect(context.watch(atom) == uncompleteTodos)
     }
 
     @MainActor
+    @Test
     func testStatsAtom() {
         let context = AtomTestContext()
         let atom = StatsAtom()
@@ -62,50 +65,50 @@ final class ExampleTodoTests: XCTestCase {
 
         context[TodosAtom()] = []
 
-        XCTAssertEqual(
-            context.watch(atom),
-            Stats(
-                total: 0,
-                totalCompleted: 0,
-                totalUncompleted: 0,
-                percentCompleted: 0
-            )
+        #expect(
+            context.watch(atom)
+                == Stats(
+                    total: 0,
+                    totalCompleted: 0,
+                    totalUncompleted: 0,
+                    percentCompleted: 0
+                )
         )
 
         context[TodosAtom()] = completedTodos
 
-        XCTAssertEqual(
-            context.watch(atom),
-            Stats(
-                total: 1,
-                totalCompleted: 1,
-                totalUncompleted: 0,
-                percentCompleted: 1
-            )
+        #expect(
+            context.watch(atom)
+                == Stats(
+                    total: 1,
+                    totalCompleted: 1,
+                    totalUncompleted: 0,
+                    percentCompleted: 1
+                )
         )
 
         context[TodosAtom()] = uncompleteTodos
 
-        XCTAssertEqual(
-            context.watch(atom),
-            Stats(
-                total: 2,
-                totalCompleted: 0,
-                totalUncompleted: 2,
-                percentCompleted: 0
-            )
+        #expect(
+            context.watch(atom)
+                == Stats(
+                    total: 2,
+                    totalCompleted: 0,
+                    totalUncompleted: 2,
+                    percentCompleted: 0
+                )
         )
 
         context[TodosAtom()] = allTodos
 
-        XCTAssertEqual(
-            context.watch(atom),
-            Stats(
-                total: 3,
-                totalCompleted: 1,
-                totalUncompleted: 2,
-                percentCompleted: 1 / 3
-            )
+        #expect(
+            context.watch(atom)
+                == Stats(
+                    total: 3,
+                    totalCompleted: 1,
+                    totalUncompleted: 2,
+                    percentCompleted: 1 / 3
+                )
         )
     }
 }

@@ -1,9 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class AtomCacheTests: XCTestCase {
+struct AtomCacheTests {
     @MainActor
+    @Test
     func testUpdated() {
         let atom = TestAtom(value: 0)
         let scopeToken = ScopeKey.Token()
@@ -16,16 +17,17 @@ final class AtomCacheTests: XCTestCase {
         let cache = AtomCache(atom: atom, value: 0, scopeValues: scopeValues)
         let updated = cache.updated(value: 1)
 
-        XCTAssertEqual(updated.atom, atom)
-        XCTAssertEqual(updated.value, 1)
-        XCTAssertEqual(updated.scopeValues?.key, scopeToken.key)
+        #expect(updated.atom == atom)
+        #expect(updated.value == 1)
+        #expect(updated.scopeValues?.key == scopeToken.key)
     }
 
     @MainActor
+    @Test
     func testDescription() {
         let atom = TestAtom(value: 0)
         let cache = AtomCache(atom: atom, value: 0)
 
-        XCTAssertEqual(cache.description, "0")
+        #expect(cache.description == "0")
     }
 }

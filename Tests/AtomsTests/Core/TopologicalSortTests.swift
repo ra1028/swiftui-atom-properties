@@ -1,9 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class TopologicalSortTests: XCTestCase {
+struct TopologicalSortTests {
     @MainActor
+    @Test
     func testSort() {
         let store = AtomStore()
         let key0 = AtomKey(TestAtom(value: 0))
@@ -79,7 +80,7 @@ final class TopologicalSortTests: XCTestCase {
             ],
         ]
 
-        XCTAssertTrue(expectedEdges.contains(Array(sorted.edges)))
-        XCTAssertTrue(expectedRedundants.contains(sorted.redundantDependencies))
+        #expect(expectedEdges.contains(Array(sorted.edges)))
+        #expect(expectedRedundants.contains(sorted.redundantDependencies))
     }
 }

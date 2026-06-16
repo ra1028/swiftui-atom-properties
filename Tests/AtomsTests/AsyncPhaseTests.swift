@@ -1,8 +1,9 @@
-import XCTest
+import Foundation
+import Testing
 
 @testable import Atoms
 
-final class AsyncPhaseTests: XCTestCase {
+struct AsyncPhaseTests {
     struct TestError: Error, Equatable {
         let value: Int
     }
@@ -18,6 +19,7 @@ final class AsyncPhaseTests: XCTestCase {
         .failure(TestError(value: 0)),
     ]
 
+    @Test
     func testIsSuspending() {
         let expected = [
             true,
@@ -25,9 +27,10 @@ final class AsyncPhaseTests: XCTestCase {
             false,
         ]
 
-        XCTAssertEqual(phases.map(\.isSuspending), expected)
+        #expect(phases.map(\.isSuspending) == expected)
     }
 
+    @Test
     func testIsSuccess() {
         let expected = [
             false,
@@ -35,9 +38,10 @@ final class AsyncPhaseTests: XCTestCase {
             false,
         ]
 
-        XCTAssertEqual(phases.map(\.isSuccess), expected)
+        #expect(phases.map(\.isSuccess) == expected)
     }
 
+    @Test
     func testIsFailure() {
         let expected = [
             false,
@@ -45,9 +49,10 @@ final class AsyncPhaseTests: XCTestCase {
             true,
         ]
 
-        XCTAssertEqual(phases.map(\.isFailure), expected)
+        #expect(phases.map(\.isFailure) == expected)
     }
 
+    @Test
     func testValue() {
         let expected = [
             nil,
@@ -55,9 +60,10 @@ final class AsyncPhaseTests: XCTestCase {
             nil,
         ]
 
-        XCTAssertEqual(phases.map(\.value), expected)
+        #expect(phases.map(\.value) == expected)
     }
 
+    @Test
     func testError() {
         let expected = [
             nil,
@@ -65,9 +71,10 @@ final class AsyncPhaseTests: XCTestCase {
             TestError(value: 0),
         ]
 
-        XCTAssertEqual(phases.map(\.error), expected)
+        #expect(phases.map(\.error) == expected)
     }
 
+    @Test
     func testInitWithResult() {
         let results: [Result<Int, TestError>] = [
             .success(0),
@@ -79,158 +86,164 @@ final class AsyncPhaseTests: XCTestCase {
             .failure(TestError(value: 0)),
         ]
 
-        XCTAssertEqual(results.map(AsyncPhase.init), expected)
+        #expect(results.map(AsyncPhase.init) == expected)
     }
 
+    @Test
     func testAsyncInit() async {
         let success = await AsyncPhase { 100 }
         let failure = await AsyncPhase { throw URLError(.badURL) }
 
-        XCTAssertEqual(success.value, 100)
-        XCTAssertEqual(failure.error as? URLError, URLError(.badURL))
+        #expect(success.value == 100)
+        #expect(failure.error as? URLError == URLError(.badURL))
     }
 
     @MainActor
+    @Test
     func testInitBodyInheritsMainActorIsolation() async {
         // body should run on @MainActor when init is called from @MainActor context
         let phase = await AsyncPhase<Void, Never> {
             MainActor.assertIsolated()
         }
 
-        XCTAssertNotNil(phase.value)
+        #expect(phase.value != nil)
     }
 
+    @Test
     nonisolated func testInitBodyFromNonisolatedContext() async {
         // body should run nonisolated when init is called from nonisolated context
         let phase = await AsyncPhase<Bool, Never> {
-            XCTAssertNil(#isolation)
+            #expect(#isolation == nil)
             return true
         }
 
-        XCTAssertEqual(phase.value, true)
+        #expect(phase.value == true)
     }
 
     @TestActor
+    @Test
     func testInitBodyInheritsCustomActorIsolation() async {
         let phase = await AsyncPhase<Void, Never> {
             // assertIsolated() precondition-fails if the current executor is not TestActor's
             TestActor.shared.assertIsolated()
         }
 
-        XCTAssertNotNil(phase.value)
+        #expect(phase.value != nil)
     }
 
+    @Test
     func testMap() {
         let phase = AsyncPhase<Int, any Error>.success(0)
             .map(String.init)
 
-        XCTAssertEqual(phase.value, "0")
+        #expect(phase.value == "0")
     }
 
+    @Test
     func testMapError() {
         let phase = AsyncPhase<Int, TestError>.failure(TestError(value: 0))
             .mapError { _ in URLError(.badURL) }
 
-        XCTAssertEqual(phase.error, URLError(.badURL))
+        #expect(phase.error == URLError(.badURL))
     }
 
-    @MainActor
-    func testFlatMap() {
-        XCTContext.runActivity(named: "To suspending") { _ in
-            let transformed = phases.map { phase in
-                phase.flatMap { _ -> AsyncPhase<Int, _> in
-                    .suspending
-                }
+    @Test
+    func testFlatMapToSuspending() {
+        let transformed = phases.map { phase in
+            phase.flatMap { _ -> AsyncPhase<Int, _> in
+                .suspending
             }
-
-            let expected: [AsyncPhase<Int, TestError>] = [
-                .suspending,
-                .suspending,
-                .failure(TestError(value: 0)),
-            ]
-
-            XCTAssertEqual(transformed, expected)
         }
 
-        XCTContext.runActivity(named: "To success") { _ in
-            let transformed = phases.map { phase in
-                phase.flatMap { .success(String($0)) }
-            }
+        let expected: [AsyncPhase<Int, TestError>] = [
+            .suspending,
+            .suspending,
+            .failure(TestError(value: 0)),
+        ]
 
-            let expected: [AsyncPhase<String, TestError>] = [
-                .suspending,
-                .success("0"),
-                .failure(TestError(value: 0)),
-            ]
-
-            XCTAssertEqual(transformed, expected)
-        }
-
-        XCTContext.runActivity(named: "To failure") { _ in
-            let transformed = phases.map { phase in
-                phase.flatMap { _ -> AsyncPhase<Int, _> in
-                    .failure(TestError(value: 1))
-                }
-            }
-
-            let expected: [AsyncPhase<Int, TestError>] = [
-                .suspending,
-                .failure(TestError(value: 1)),
-                .failure(TestError(value: 0)),
-            ]
-
-            XCTAssertEqual(transformed, expected)
-        }
+        #expect(transformed == expected)
     }
 
-    @MainActor
-    func testFlatMapError() {
-        XCTContext.runActivity(named: "To suspending") { _ in
-            let transformed = phases.map { phase in
-                phase.flatMapError { _ -> AsyncPhase<_, TestError> in
-                    .suspending
-                }
-            }
-
-            let expected: [AsyncPhase<Int, TestError>] = [
-                .suspending,
-                .success(0),
-                .suspending,
-            ]
-
-            XCTAssertEqual(transformed, expected)
+    @Test
+    func testFlatMapToSuccess() {
+        let transformed = phases.map { phase in
+            phase.flatMap { .success(String($0)) }
         }
 
-        XCTContext.runActivity(named: "To success") { _ in
-            let transformed = phases.map { phase in
-                phase.flatMapError { _ -> AsyncPhase<_, TestError> in
-                    .success(1)
-                }
+        let expected: [AsyncPhase<String, TestError>] = [
+            .suspending,
+            .success("0"),
+            .failure(TestError(value: 0)),
+        ]
+
+        #expect(transformed == expected)
+    }
+
+    @Test
+    func testFlatMapToFailure() {
+        let transformed = phases.map { phase in
+            phase.flatMap { _ -> AsyncPhase<Int, _> in
+                .failure(TestError(value: 1))
             }
-
-            let expected: [AsyncPhase<Int, TestError>] = [
-                .suspending,
-                .success(0),
-                .success(1),
-            ]
-
-            XCTAssertEqual(transformed, expected)
         }
 
-        XCTContext.runActivity(named: "To failure") { _ in
-            let transformed = phases.map { phase in
-                phase.flatMapError { _ -> AsyncPhase<_, URLError> in
-                    .failure(URLError(.badURL))
-                }
+        let expected: [AsyncPhase<Int, TestError>] = [
+            .suspending,
+            .failure(TestError(value: 1)),
+            .failure(TestError(value: 0)),
+        ]
+
+        #expect(transformed == expected)
+    }
+
+    @Test
+    func testFlatMapErrorToSuspending() {
+        let transformed = phases.map { phase in
+            phase.flatMapError { _ -> AsyncPhase<_, TestError> in
+                .suspending
             }
-
-            let expected: [AsyncPhase<Int, URLError>] = [
-                .suspending,
-                .success(0),
-                .failure(URLError(.badURL)),
-            ]
-
-            XCTAssertEqual(transformed, expected)
         }
+
+        let expected: [AsyncPhase<Int, TestError>] = [
+            .suspending,
+            .success(0),
+            .suspending,
+        ]
+
+        #expect(transformed == expected)
+    }
+
+    @Test
+    func testFlatMapErrorToSuccess() {
+        let transformed = phases.map { phase in
+            phase.flatMapError { _ -> AsyncPhase<_, TestError> in
+                .success(1)
+            }
+        }
+
+        let expected: [AsyncPhase<Int, TestError>] = [
+            .suspending,
+            .success(0),
+            .success(1),
+        ]
+
+        #expect(transformed == expected)
+    }
+
+    @Test
+    func testFlatMapErrorToFailure() {
+        let transformed = phases.map { phase in
+            phase.flatMapError { _ -> AsyncPhase<_, URLError> in
+                .failure(URLError(.badURL))
+            }
+        }
+
+        let expected: [AsyncPhase<Int, URLError>] = [
+            .suspending,
+            .success(0),
+            .failure(URLError(.badURL)),
+        ]
+
+        #expect(transformed == expected)
     }
 }

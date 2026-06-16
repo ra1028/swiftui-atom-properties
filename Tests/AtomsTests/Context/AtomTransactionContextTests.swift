@@ -1,10 +1,11 @@
 import Combine
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class AtomTransactionContextTests: XCTestCase {
+struct AtomTransactionContextTests {
     @MainActor
+    @Test
     func testRead() {
         let atom = TestValueAtom(value: 100)
         let store = AtomStore()
@@ -15,10 +16,11 @@ final class AtomTransactionContextTests: XCTestCase {
             transactionState: transactionState
         )
 
-        XCTAssertEqual(context.read(atom), 100)
+        #expect(context.read(atom) == 100)
     }
 
     @MainActor
+    @Test
     func testSet() {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 100)
@@ -30,14 +32,15 @@ final class AtomTransactionContextTests: XCTestCase {
             transactionState: transactionState
         )
 
-        XCTAssertEqual(context.watch(dependency), 100)
+        #expect(context.watch(dependency) == 100)
 
         context.set(200, for: dependency)
 
-        XCTAssertEqual(context.watch(dependency), 200)
+        #expect(context.watch(dependency) == 200)
     }
 
     @MainActor
+    @Test
     func testRefresh() async {
         let atom0 = TestValueAtom(value: 0)
         let atom1 = TestPublisherAtom { Just(100) }
@@ -49,15 +52,16 @@ final class AtomTransactionContextTests: XCTestCase {
             transactionState: transactionState
         )
 
-        XCTAssertTrue(context.watch(atom1).isSuspending)
+        #expect(context.watch(atom1).isSuspending)
 
         let value = await context.refresh(atom1).value
 
-        XCTAssertEqual(value, 100)
-        XCTAssertEqual(context.watch(atom1).value, 100)
+        #expect(value == 100)
+        #expect(context.watch(atom1).value == 100)
     }
 
     @MainActor
+    @Test
     func testReset() {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)
@@ -69,18 +73,19 @@ final class AtomTransactionContextTests: XCTestCase {
             transactionState: transactionState
         )
 
-        XCTAssertEqual(context.watch(dependency), 0)
+        #expect(context.watch(dependency) == 0)
 
         context[dependency] = 100
 
-        XCTAssertEqual(context.watch(dependency), 100)
+        #expect(context.watch(dependency) == 100)
 
         context.reset(dependency)
 
-        XCTAssertEqual(context.read(dependency), 0)
+        #expect(context.read(dependency) == 0)
     }
 
     @MainActor
+    @Test
     func testWatch() {
         let atom0 = TestValueAtom(value: 100)
         let atom1 = TestStateAtom(defaultValue: 200)
@@ -94,8 +99,8 @@ final class AtomTransactionContextTests: XCTestCase {
 
         let value = context.watch(atom1)
 
-        XCTAssertEqual(value, 200)
-        XCTAssertEqual(store.children, [AtomKey(atom1): [AtomKey(atom0)]])
-        XCTAssertEqual(store.dependencies, [AtomKey(atom0): [AtomKey(atom1)]])
+        #expect(value == 200)
+        #expect(store.children == [AtomKey(atom1): [AtomKey(atom0)]])
+        #expect(store.dependencies == [AtomKey(atom0): [AtomKey(atom1)]])
     }
 }

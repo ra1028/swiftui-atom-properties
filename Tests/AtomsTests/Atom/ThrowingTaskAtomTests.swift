@@ -1,9 +1,11 @@
-import XCTest
+import Foundation
+import Testing
 
 @testable import Atoms
 
-final class ThrowingTaskAtomTests: XCTestCase {
+struct ThrowingTaskAtomTests {
     @MainActor
+    @Test
     func test() async throws {
         var result = Result<Int, any Error>.success(0)
         let atom = TestThrowingTaskAtom { result }
@@ -12,7 +14,7 @@ final class ThrowingTaskAtomTests: XCTestCase {
         do {
             // Initial value
             let value = try await context.watch(atom).value
-            XCTAssertEqual(value, 0)
+            #expect(value == 0)
         }
 
         do {
@@ -23,10 +25,10 @@ final class ThrowingTaskAtomTests: XCTestCase {
 
                 _ = try await context.watch(atom).value
 
-                XCTFail("Accessing to value should throw an error")
+                Issue.record("Accessing to value should throw an error")
             }
             catch {
-                XCTAssertEqual(error as? URLError, URLError(.badURL))
+                #expect(error as? URLError == URLError(.badURL))
             }
         }
 
@@ -35,7 +37,7 @@ final class ThrowingTaskAtomTests: XCTestCase {
             let task = context.watch(atom)
             context.unwatch(atom)
 
-            XCTAssertTrue(task.isCancelled)
+            #expect(task.isCancelled)
         }
 
         do {
@@ -43,7 +45,7 @@ final class ThrowingTaskAtomTests: XCTestCase {
             context.override(atom) { _ in Task { 200 } }
 
             let value = try await context.watch(atom).value
-            XCTAssertEqual(value, 200)
+            #expect(value == 200)
 
             // Override termination
 
@@ -52,11 +54,12 @@ final class ThrowingTaskAtomTests: XCTestCase {
             let task = context.watch(atom)
             context.unwatch(atom)
 
-            XCTAssertTrue(task.isCancelled)
+            #expect(task.isCancelled)
         }
     }
 
     @MainActor
+    @Test
     func testRefresh() async throws {
         var result = Result<Int, any Error>.success(0)
         let atom = TestThrowingTaskAtom { result }
@@ -69,14 +72,14 @@ final class ThrowingTaskAtomTests: XCTestCase {
             context.watch(atom)
 
             let value0 = try await context.refresh(atom).value
-            XCTAssertEqual(value0, 0)
-            XCTAssertEqual(updateCount, 1)
+            #expect(value0 == 0)
+            #expect(updateCount == 1)
 
             result = .success(1)
 
             let value1 = try await context.refresh(atom).value
-            XCTAssertEqual(value1, 1)
-            XCTAssertEqual(updateCount, 2)
+            #expect(value1 == 1)
+            #expect(updateCount == 2)
         }
 
         do {
@@ -88,7 +91,7 @@ final class ThrowingTaskAtomTests: XCTestCase {
             refreshTask.cancel()
 
             let task = await refreshTask.value
-            XCTAssertTrue(task.isCancelled)
+            #expect(task.isCancelled)
         }
 
         do {
@@ -96,7 +99,7 @@ final class ThrowingTaskAtomTests: XCTestCase {
             context.override(atom) { _ in Task { 300 } }
 
             let value = try await context.refresh(atom).value
-            XCTAssertEqual(value, 300)
+            #expect(value == 300)
         }
 
         do {
@@ -110,11 +113,12 @@ final class ThrowingTaskAtomTests: XCTestCase {
             refreshTask.cancel()
 
             let task = await refreshTask.value
-            XCTAssertTrue(task.isCancelled)
+            #expect(task.isCancelled)
         }
     }
 
     @MainActor
+    @Test
     func testReleaseDependencies() async throws {
         struct DependencyAtom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
@@ -133,23 +137,24 @@ final class ThrowingTaskAtomTests: XCTestCase {
 
         let value0 = try await context.watch(TestAtom()).value
 
-        XCTAssertEqual(value0, 0)
+        #expect(value0 == 0)
 
         context[DependencyAtom()] = 100
 
         let value1 = try await context.watch(TestAtom()).value
 
         // Dependencies should not be released until task value is returned.
-        XCTAssertEqual(value1, 100)
+        #expect(value1 == 100)
 
         context.unwatch(TestAtom())
 
         let dependencyValue = context.read(DependencyAtom())
 
-        XCTAssertEqual(dependencyValue, 0)
+        #expect(dependencyValue == 0)
     }
 
     @MainActor
+    @Test
     func testEffect() {
         let effect = TestEffect()
         let atom = TestThrowingTaskAtom(effect: effect) { .success(0) }
@@ -157,22 +162,22 @@ final class ThrowingTaskAtomTests: XCTestCase {
 
         context.watch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 0)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 0)
+        #expect(effect.releasedCount == 0)
 
         context.reset(atom)
         context.reset(atom)
         context.reset(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 0)
 
         context.unwatch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 1)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 1)
     }
 }

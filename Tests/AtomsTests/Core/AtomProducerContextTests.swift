@@ -1,9 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class AtomProducerContextTests: XCTestCase {
+struct AtomProducerContextTests {
     @MainActor
+    @Test
     func testUpdate() {
         let atom = TestValueAtom(value: 0)
         let transactionState = TransactionState(key: AtomKey(atom))
@@ -15,26 +16,28 @@ final class AtomProducerContextTests: XCTestCase {
 
         context.update(with: 1)
 
-        XCTAssertEqual(updatedValue, 1)
+        #expect(updatedValue == 1)
     }
 
     @MainActor
+    @Test
     func testOnTermination() {
         let atom = TestValueAtom(value: 0)
         let transactionState = TransactionState(key: AtomKey(atom))
         let context = AtomProducerContext<Int>(store: .dummy, transactionState: transactionState) { _ in }
 
         context.onTermination = {}
-        XCTAssertNotNil(context.onTermination)
+        #expect(context.onTermination != nil)
 
         transactionState.terminate()
-        XCTAssertNil(context.onTermination)
+        #expect(context.onTermination == nil)
 
         context.onTermination = {}
-        XCTAssertNil(context.onTermination)
+        #expect(context.onTermination == nil)
     }
 
     @MainActor
+    @Test
     func testTransaction() {
         let atom = TestValueAtom(value: 0)
         var didBegin = false
@@ -47,11 +50,12 @@ final class AtomProducerContextTests: XCTestCase {
 
         context.transaction { _ in }
 
-        XCTAssertTrue(didBegin)
-        XCTAssertTrue(didCommit)
+        #expect(didBegin)
+        #expect(didCommit)
     }
 
     @MainActor
+    @Test
     func testAsyncTransaction() async {
         let atom = TestValueAtom(value: 0)
         var didBegin = false
@@ -66,7 +70,7 @@ final class AtomProducerContextTests: XCTestCase {
             try? await Task.sleep(seconds: 0)
         }
 
-        XCTAssertTrue(didBegin)
-        XCTAssertTrue(didCommit)
+        #expect(didBegin)
+        #expect(didCommit)
     }
 }

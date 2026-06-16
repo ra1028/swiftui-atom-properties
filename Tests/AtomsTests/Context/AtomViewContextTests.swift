@@ -1,10 +1,11 @@
 import Combine
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class AtomViewContextTests: XCTestCase {
+struct AtomViewContextTests {
     @MainActor
+    @Test
     func testRead() {
         let atom = TestValueAtom(value: 100)
         let store = AtomStore()
@@ -16,10 +17,11 @@ final class AtomViewContextTests: XCTestCase {
             subscription: Subscription()
         )
 
-        XCTAssertEqual(context.read(atom), 100)
+        #expect(context.read(atom) == 100)
     }
 
     @MainActor
+    @Test
     func testSet() {
         let atom = TestStateAtom(defaultValue: 100)
         let store = AtomStore()
@@ -31,14 +33,15 @@ final class AtomViewContextTests: XCTestCase {
             subscription: Subscription()
         )
 
-        XCTAssertEqual(context.watch(atom), 100)
+        #expect(context.watch(atom) == 100)
 
         context.set(200, for: atom)
 
-        XCTAssertEqual(context.watch(atom), 200)
+        #expect(context.watch(atom) == 200)
     }
 
     @MainActor
+    @Test
     func testRefresh() async {
         let atom = TestPublisherAtom { Just(100) }
         let store = AtomStore()
@@ -50,15 +53,16 @@ final class AtomViewContextTests: XCTestCase {
             subscription: Subscription()
         )
 
-        XCTAssertTrue(context.watch(atom).isSuspending)
+        #expect(context.watch(atom).isSuspending)
 
         let value = await context.refresh(atom).value
 
-        XCTAssertEqual(value, 100)
-        XCTAssertEqual(context.watch(atom).value, 100)
+        #expect(value == 100)
+        #expect(context.watch(atom).value == 100)
     }
 
     @MainActor
+    @Test
     func testReset() {
         let atom = TestStateAtom(defaultValue: 0)
         let store = AtomStore()
@@ -70,18 +74,19 @@ final class AtomViewContextTests: XCTestCase {
             subscription: Subscription()
         )
 
-        XCTAssertEqual(context.watch(atom), 0)
+        #expect(context.watch(atom) == 0)
 
         context[atom] = 100
 
-        XCTAssertEqual(context.watch(atom), 100)
+        #expect(context.watch(atom) == 100)
 
         context.reset(atom)
 
-        XCTAssertEqual(context.read(atom), 0)
+        #expect(context.read(atom) == 0)
     }
 
     @MainActor
+    @Test
     func testWatch() {
         let atom = TestStateAtom(defaultValue: 100)
         let store = AtomStore()
@@ -93,14 +98,15 @@ final class AtomViewContextTests: XCTestCase {
             subscription: Subscription()
         )
 
-        XCTAssertEqual(context.watch(atom), 100)
+        #expect(context.watch(atom) == 100)
 
         context[atom] = 200
 
-        XCTAssertEqual(context.watch(atom), 200)
+        #expect(context.watch(atom) == 200)
     }
 
     @MainActor
+    @Test
     func testBinding() {
         let atom = TestStateAtom(defaultValue: 0)
         let store = AtomStore()
@@ -114,15 +120,16 @@ final class AtomViewContextTests: XCTestCase {
 
         let binding = context.binding(atom)
 
-        XCTAssertEqual(context.read(atom), 0)
+        #expect(context.read(atom) == 0)
 
         binding.wrappedValue = 100
 
-        XCTAssertEqual(binding.wrappedValue, 100)
-        XCTAssertEqual(context.read(atom), 100)
+        #expect(binding.wrappedValue == 100)
+        #expect(context.read(atom) == 100)
     }
 
     @MainActor
+    @Test
     func testSnapshot() {
         let store = AtomStore()
         let rootScopeToken = ScopeKey.Token()
@@ -153,15 +160,13 @@ final class AtomViewContextTests: XCTestCase {
 
         let snapshot = context.snapshot()
 
-        XCTAssertEqual(snapshot.dependencies, dependencies)
-        XCTAssertEqual(snapshot.children, children)
-        XCTAssertEqual(
-            snapshot.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> },
-            caches
-        )
+        #expect(snapshot.dependencies == dependencies)
+        #expect(snapshot.children == children)
+        #expect(snapshot.caches.mapValues { $0 as? AtomCache<TestAtom<Int>> } == caches)
     }
 
     @MainActor
+    @Test
     func testUnsubscription() {
         let atom = TestValueAtom(value: 100)
         let key = AtomKey(atom)
@@ -175,9 +180,9 @@ final class AtomViewContextTests: XCTestCase {
         )
 
         context.watch(atom)
-        XCTAssertNotNil(store.caches[key])
+        #expect(store.caches[key] != nil)
 
         subscriberState = nil
-        XCTAssertNil(store.caches[key])
+        #expect(store.caches[key] == nil)
     }
 }

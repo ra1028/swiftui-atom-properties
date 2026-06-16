@@ -1,9 +1,11 @@
-import XCTest
+import Foundation
+import Testing
 
 @testable import Atoms
 
-final class AsyncPhaseAtomTests: XCTestCase {
+struct AsyncPhaseAtomTests {
     @MainActor
+    @Test
     func test() async {
         var result = Result<Int, URLError>.success(0)
         let atom = TestAsyncPhaseAtom { result }
@@ -12,14 +14,14 @@ final class AsyncPhaseAtomTests: XCTestCase {
         do {
             // Initial value
             let phase = context.watch(atom)
-            XCTAssertTrue(phase.isSuspending)
+            #expect(phase.isSuspending)
         }
 
         do {
             // Value
             await context.wait(for: atom, until: \.isSuccess)
             let phase = context.watch(atom)
-            XCTAssertEqual(phase.value, 0)
+            #expect(phase.value == 0)
         }
 
         do {
@@ -31,7 +33,7 @@ final class AsyncPhaseAtomTests: XCTestCase {
 
             let phase = context.watch(atom)
 
-            XCTAssertEqual(phase.error, URLError(.badURL))
+            #expect(phase.error == URLError(.badURL))
         }
 
         do {
@@ -40,11 +42,12 @@ final class AsyncPhaseAtomTests: XCTestCase {
             context.override(atom) { _ in .success(200) }
 
             let phase = context.watch(atom)
-            XCTAssertEqual(phase.value, 200)
+            #expect(phase.value == 200)
         }
     }
 
     @MainActor
+    @Test
     func testRefresh() async {
         let atom = TestAsyncPhaseAtom<Int, any Error> { .success(0) }
         let context = AtomTestContext()
@@ -56,8 +59,8 @@ final class AsyncPhaseAtomTests: XCTestCase {
             context.watch(atom)
 
             let phase0 = await context.refresh(atom)
-            XCTAssertEqual(phase0.value, 0)
-            XCTAssertEqual(updateCount, 1)
+            #expect(phase0.value == 0)
+            #expect(updateCount == 1)
         }
 
         do {
@@ -69,7 +72,7 @@ final class AsyncPhaseAtomTests: XCTestCase {
             refreshTask.cancel()
 
             let phase = await refreshTask.value
-            XCTAssertTrue(phase.isSuspending)
+            #expect(phase.isSuspending)
         }
 
         do {
@@ -77,11 +80,12 @@ final class AsyncPhaseAtomTests: XCTestCase {
             context.override(atom) { _ in .success(300) }
 
             let phase = await context.refresh(atom)
-            XCTAssertEqual(phase.value, 300)
+            #expect(phase.value == 300)
         }
     }
 
     @MainActor
+    @Test
     func testReleaseDependencies() async {
         struct DependencyAtom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
@@ -103,22 +107,23 @@ final class AsyncPhaseAtomTests: XCTestCase {
         await context.wait(for: atom, until: \.isSuccess)
 
         let phase0 = context.watch(atom)
-        XCTAssertEqual(phase0.value, 0)
+        #expect(phase0.value == 0)
 
         context[DependencyAtom()] = 100
         await context.wait(for: atom, until: \.isSuccess)
 
         let phase1 = context.watch(atom)
         // Dependencies should not be released until task value is returned.
-        XCTAssertEqual(phase1.value, 100)
+        #expect(phase1.value == 100)
 
         context.unwatch(atom)
 
         let dependencyValue = context.read(DependencyAtom())
-        XCTAssertEqual(dependencyValue, 0)
+        #expect(dependencyValue == 0)
     }
 
     @MainActor
+    @Test
     func testEffect() {
         let effect = TestEffect()
         let atom = TestAsyncPhaseAtom<Int, any Error>(effect: effect) { .success(0) }
@@ -126,22 +131,22 @@ final class AsyncPhaseAtomTests: XCTestCase {
 
         context.watch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 0)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 0)
+        #expect(effect.releasedCount == 0)
 
         context.reset(atom)
         context.reset(atom)
         context.reset(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 0)
 
         context.unwatch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 1)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 1)
     }
 }

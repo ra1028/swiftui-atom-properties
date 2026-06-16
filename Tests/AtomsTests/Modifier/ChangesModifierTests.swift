@@ -1,9 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class ChangesModifierTests: XCTestCase {
+struct ChangesModifierTests {
     @MainActor
+    @Test
     func testChanges() {
         let atom = TestStateAtom(defaultValue: "")
         let context = AtomTestContext()
@@ -13,25 +14,26 @@ final class ChangesModifierTests: XCTestCase {
             updatedCount += 1
         }
 
-        XCTAssertEqual(updatedCount, 0)
-        XCTAssertEqual(context.watch(atom.changes), "")
+        #expect(updatedCount == 0)
+        #expect(context.watch(atom.changes) == "")
 
         context[atom] = "modified"
 
-        XCTAssertEqual(updatedCount, 1)
-        XCTAssertEqual(context.watch(atom.changes), "modified")
+        #expect(updatedCount == 1)
+        #expect(context.watch(atom.changes) == "modified")
 
         context[atom] = "modified"
 
         // Should not be updated with an equivalent value.
-        XCTAssertEqual(updatedCount, 1)
+        #expect(updatedCount == 1)
     }
 
     @MainActor
+    @Test
     func testKey() {
         let modifier = ChangesModifier<Int>()
 
-        XCTAssertEqual(modifier.key, modifier.key)
-        XCTAssertEqual(modifier.key.hashValue, modifier.key.hashValue)
+        #expect(modifier.key == modifier.key)
+        #expect(modifier.key.hashValue == modifier.key.hashValue)
     }
 }
