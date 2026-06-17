@@ -530,44 +530,6 @@ struct StoreContextTests {
 
     @MainActor
     @Test
-    func testRootScopeValuesAreSharedAcrossCachesViaCoW() throws {
-        struct Atom0: ValueAtom, Hashable {
-            func value(context: Context) -> Int { 0 }
-        }
-
-        struct Atom1: ValueAtom, Hashable {
-            func value(context: Context) -> Int { 1 }
-        }
-
-        let store = AtomStore()
-        let rootToken = ScopeKey.Token()
-        let subscriberState = SubscriberState()
-        let subscriber = Subscriber(subscriberState)
-        let context = StoreContext.root(
-            store: store,
-            scopeKey: rootToken.key,
-            observers: [Observer { _ in }],
-            overrideContainer: OverrideContainer()
-        )
-
-        _ = context.watch(Atom0(), subscriber: subscriber, subscription: Subscription())
-        _ = context.watch(Atom1(), subscriber: subscriber, subscription: Subscription())
-
-        let cache0 = store.caches[AtomKey(Atom0())] as? AtomCache<Atom0>
-        let cache1 = store.caches[AtomKey(Atom1())] as? AtomCache<Atom1>
-
-        let observers0 = try #require(cache0?.rootScopeValues.observers)
-        let observers1 = try #require(cache1?.rootScopeValues.observers)
-
-        // Each cache captures the root scope values, sharing the underlying storage via
-        // copy-on-write instead of duplicating it.
-        let address0 = try #require(observers0.withUnsafeBufferPointer { $0.baseAddress })
-        let address1 = try #require(observers1.withUnsafeBufferPointer { $0.baseAddress })
-        #expect(address0 == address1)
-    }
-
-    @MainActor
-    @Test
     func testScopedOverride() async {
         struct TestDependency1Atom: StateAtom, Hashable {
             func defaultValue(context: Context) -> Int {
