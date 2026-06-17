@@ -75,6 +75,55 @@ public struct AtomTestContext: AtomWatchableContext {
         }
     }
 
+    /// Waits until any of the atoms watched through this context have been updated within the
+    /// specified timeout, throwing an error if the timeout elapses first.
+    ///
+    /// Unlike ``waitForUpdate(timeout:)`` which returns a boolean value, this throwing variant
+    /// surfaces a timeout as an ``AtomTestContextTimeoutError`` so that it fails the test instead
+    /// of being silently ignored.
+    ///
+    /// ```swift
+    /// func testAsyncUpdate() async throws {
+    ///     let context = AtomTestContext()
+    ///
+    ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
+    ///     XCTAssertEqual(initialPhase, .suspending)
+    ///
+    ///     try await context.waitForUpdate(within: 1)
+    ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
+    ///
+    ///     XCTAssertEqual(currentPhase, .success(123))
+    /// }
+    /// ```
+    ///
+    /// - Parameter timeout: The maximum duration, in seconds, that this function waits for
+    ///                      the next update.
+    ///
+    /// - Throws: ``AtomTestContextTimeoutError`` if no update happens within the timeout.
+    ///           A `CancellationError` is thrown if the current task is cancelled.
+    @inlinable
+    public func waitForUpdate(within timeout: Double) async throws {
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            let updates = _state.makeUpdateStream()
+
+            group.addTask(priority: .high) { @MainActor @Sendable in
+                for await _ in updates {
+                    return
+                }
+                // The update stream only finishes when the task is cancelled.
+                try Task.checkCancellation()
+            }
+
+            group.addTask(priority: .high) {
+                try await Task.sleep(seconds: timeout)
+                throw AtomTestContextTimeoutError(timeout: timeout)
+            }
+
+            defer { group.cancelAll() }
+            try await group.next()
+        }
+    }
+
     /// Waits for the given atom until it will be in a certain state within a specified timeout,
     /// and then returns a boolean value indicating whether an update has happened.
     ///
@@ -148,6 +197,80 @@ public struct AtomTestContext: AtomWatchableContext {
             }
 
             return false
+        }
+    }
+
+    /// Waits for the given atom until it will be in a certain state within a specified timeout,
+    /// throwing an error if the timeout elapses first.
+    ///
+    /// Unlike ``wait(for:timeout:until:)`` which returns a boolean value, this throwing variant
+    /// surfaces a timeout as an ``AtomTestContextTimeoutError`` so that it fails the test instead
+    /// of being silently ignored. If the atom already satisfies the predicate, this function
+    /// returns immediately without waiting for an update.
+    ///
+    /// ```swift
+    /// func testAsyncUpdate() async throws {
+    ///     let context = AtomTestContext()
+    ///
+    ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
+    ///     XCTAssertEqual(initialPhase, .suspending)
+    ///
+    ///     try await context.wait(for: AsyncCalculationAtom().phase, within: 1, until: \.isSuccess)
+    ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
+    ///
+    ///     XCTAssertEqual(currentPhase, .success(123))
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - atom: An atom expecting an update to a certain state.
+    ///   - timeout: The maximum duration, in seconds, that this function waits until
+    ///              the atom satisfies the predicate.
+    ///   - predicate: A predicate that determines when to stop waiting.
+    ///
+    /// - Throws: ``AtomTestContextTimeoutError`` if the atom does not satisfy the predicate
+    ///           within the timeout. A `CancellationError` is thrown if the current task is
+    ///           cancelled.
+    @inlinable
+    public func wait<Node: Atom>(
+        for atom: Node,
+        within timeout: Double,
+        until predicate: @escaping (Node.Produced) -> Bool
+    ) async throws {
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            @MainActor
+            func check() -> Bool {
+                guard let value = lookup(atom) else {
+                    return false
+                }
+
+                return predicate(value)
+            }
+
+            let updates = _state.makeUpdateStream()
+
+            group.addTask(priority: .high) { @MainActor @Sendable in
+                guard !check() else {
+                    return
+                }
+
+                for await _ in updates {
+                    if check() {
+                        return
+                    }
+                }
+
+                // The update stream only finishes when the task is cancelled.
+                try Task.checkCancellation()
+            }
+
+            group.addTask(priority: .high) {
+                try await Task.sleep(seconds: timeout)
+                throw AtomTestContextTimeoutError(timeout: timeout)
+            }
+
+            defer { group.cancelAll() }
+            try await group.next()
         }
     }
 
