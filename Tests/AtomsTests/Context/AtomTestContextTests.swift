@@ -96,6 +96,61 @@ struct AtomTestContextTests {
 
     @MainActor
     @Test
+    func testWaitForUpdateWithinTimeout() async throws {
+        let atom = TestStateAtom(defaultValue: 0)
+        let context = AtomTestContext()
+
+        context.watch(atom)
+
+        Task {
+            context[atom] = 1
+        }
+
+        // Returns normally when an update happens within the timeout.
+        try await context.waitForUpdate(within: 1)
+
+        // Throws when no update happens within the timeout.
+        let error = await #expect(throws: AtomTestContextTimeoutError.self) {
+            try await context.waitForUpdate(within: 0.1)
+        }
+
+        #expect(error?.timeout == 0.1)
+    }
+
+    @MainActor
+    @Test
+    func testWaitForWithinTimeout() async throws {
+        let atom = TestStateAtom(defaultValue: 0)
+        let context = AtomTestContext()
+
+        context.watch(atom)
+
+        // Returns immediately when the predicate is already satisfied.
+        try await context.wait(for: atom, within: 1) {
+            $0 == 0
+        }
+
+        Task {
+            context[atom] = 1
+        }
+
+        // Returns normally when the atom reaches the expected state within the timeout.
+        try await context.wait(for: atom, within: 1) {
+            $0 == 1
+        }
+
+        // Throws when the atom does not reach the expected state within the timeout.
+        let error = await #expect(throws: AtomTestContextTimeoutError.self) {
+            try await context.wait(for: atom, within: 0.1) {
+                $0 == 100
+            }
+        }
+
+        #expect(error?.timeout == 0.1)
+    }
+
+    @MainActor
+    @Test
     func testOverride() {
         let atom0 = TestValueAtom(value: 100)
         let atom1 = TestStateAtom(defaultValue: 200)
