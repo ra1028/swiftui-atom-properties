@@ -1,9 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class SnapshotTests: XCTestCase {
+struct SnapshotTests {
     @MainActor
+    @Test
     func testLookup() {
         let atom0 = TestAtom(value: 0)
         let atom1 = TestAtom(value: 1)
@@ -17,10 +18,11 @@ final class SnapshotTests: XCTestCase {
             subscriptions: [:]
         )
 
-        XCTAssertEqual(snapshot.lookup(atom0), 0)
-        XCTAssertNil(snapshot.lookup(atom1))
+        #expect(snapshot.lookup(atom0) == 0)
+        #expect(snapshot.lookup(atom1) == nil)
     }
 
+    @Test
     func testEmptyGraphDescription() {
         let snapshot = Snapshot(
             dependencies: [:],
@@ -29,10 +31,11 @@ final class SnapshotTests: XCTestCase {
             subscriptions: [:]
         )
 
-        XCTAssertEqual(snapshot.graphDescription(), "digraph {}")
+        #expect(snapshot.graphDescription() == "digraph {}")
     }
 
     @MainActor
+    @Test
     func testGraphDescription() {
         struct Value0: Hashable {}
         struct Value1: Hashable {}
@@ -82,25 +85,24 @@ final class SnapshotTests: XCTestCase {
             ]
         )
 
-        XCTAssertEqual(
-            snapshot.graphDescription(),
-            """
-            digraph {
-              node [shape=box]
-              "Module/View.swift" [style=filled]
-              "TestAtom<Value0>"
-              "TestAtom<Value0>" -> "TestAtom<Value1>"
-              "TestAtom<Value1>"
-              "TestAtom<Value1>" -> "TestAtom<Value2>"
-              "TestAtom<Value2>"
-              "TestAtom<Value2>" -> "Module/View.swift" [label="line:10"]
-              "TestAtom<Value2>" -> "TestAtom<Value3>"
-              "TestAtom<Value3>"
-              "TestAtom<Value3>" -> "Module/View.swift" [label="line:10"]
-              "TestAtom<Value4> scope:\(scopeToken.key.description)"
-              "TestAtom<Value4> scope:\(scopeToken.key.description)" -> "Module/View.swift" [label="line:10"]
-            }
-            """
+        #expect(
+            snapshot.graphDescription() == """
+                digraph {
+                  node [shape=box]
+                  "Module/View.swift" [style=filled]
+                  "TestAtom<Value0>"
+                  "TestAtom<Value0>" -> "TestAtom<Value1>"
+                  "TestAtom<Value1>"
+                  "TestAtom<Value1>" -> "TestAtom<Value2>"
+                  "TestAtom<Value2>"
+                  "TestAtom<Value2>" -> "Module/View.swift" [label="line:10"]
+                  "TestAtom<Value2>" -> "TestAtom<Value3>"
+                  "TestAtom<Value3>"
+                  "TestAtom<Value3>" -> "Module/View.swift" [label="line:10"]
+                  "TestAtom<Value4> scope:\(scopeToken.key.description)"
+                  "TestAtom<Value4> scope:\(scopeToken.key.description)" -> "Module/View.swift" [label="line:10"]
+                }
+                """
         )
     }
 }

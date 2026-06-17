@@ -1,10 +1,12 @@
 import Combine
-import XCTest
+import Foundation
+import Testing
 
 @testable import Atoms
 
-final class PublisherAtomTests: XCTestCase {
+struct PublisherAtomTests {
     @MainActor
+    @Test
     func testValue() async {
         let subject = ResettableSubject<Int, URLError>()
         let atom = TestPublisherAtom { subject }
@@ -13,7 +15,7 @@ final class PublisherAtomTests: XCTestCase {
         do {
             // Initial value
             let phase = context.watch(atom)
-            XCTAssertEqual(phase, .suspending)
+            #expect(phase == .suspending)
         }
 
         do {
@@ -21,7 +23,7 @@ final class PublisherAtomTests: XCTestCase {
             subject.send(0)
 
             await context.wait(for: atom, until: \.isSuccess)
-            XCTAssertEqual(context.watch(atom), .success(0))
+            #expect(context.watch(atom) == .success(0))
         }
 
         do {
@@ -29,7 +31,7 @@ final class PublisherAtomTests: XCTestCase {
             subject.send(completion: .failure(URLError(.badURL)))
 
             await context.wait(for: atom, until: \.isFailure)
-            XCTAssertEqual(context.watch(atom), .failure(URLError(.badURL)))
+            #expect(context.watch(atom) == .failure(URLError(.badURL)))
         }
 
         do {
@@ -37,7 +39,7 @@ final class PublisherAtomTests: XCTestCase {
             subject.send(1)
 
             let didUpdate = await context.waitForUpdate(timeout: 0.1)
-            XCTAssertFalse(didUpdate)
+            #expect(!(didUpdate))
         }
 
         do {
@@ -46,7 +48,7 @@ final class PublisherAtomTests: XCTestCase {
             subject.send(0)
 
             let didUpdate = await context.waitForUpdate(timeout: 0.1)
-            XCTAssertFalse(didUpdate)
+            #expect(!(didUpdate))
         }
 
         do {
@@ -55,25 +57,26 @@ final class PublisherAtomTests: XCTestCase {
             subject.send(completion: .failure(URLError(.badURL)))
 
             let didUpdate = await context.waitForUpdate(timeout: 0.1)
-            XCTAssertFalse(didUpdate)
+            #expect(!(didUpdate))
         }
 
         do {
             // Override
             context.override(atom) { _ in .success(100) }
 
-            XCTAssertEqual(context.watch(atom), .success(100))
+            #expect(context.watch(atom) == .success(100))
         }
     }
 
     @MainActor
+    @Test
     func testRefresh() async {
         let subject = ResettableSubject<Int, URLError>()
         let atom = TestPublisherAtom { subject }
         let context = AtomTestContext()
 
         do {
-            XCTAssertTrue(context.watch(atom).isSuspending)
+            #expect(context.watch(atom).isSuspending)
         }
 
         do {
@@ -89,8 +92,8 @@ final class PublisherAtomTests: XCTestCase {
 
             let phase = await context.refresh(atom)
 
-            XCTAssertEqual(phase.value, 0)
-            XCTAssertEqual(updateCount, 1)
+            #expect(phase.value == 0)
+            #expect(updateCount == 1)
         }
 
         do {
@@ -110,8 +113,8 @@ final class PublisherAtomTests: XCTestCase {
 
             let phase = await refreshTask.value
 
-            XCTAssertEqual(phase, .suspending)
-            XCTAssertEqual(updateCount, 0)
+            #expect(phase == .suspending)
+            #expect(updateCount == 0)
         }
 
         do {
@@ -122,16 +125,17 @@ final class PublisherAtomTests: XCTestCase {
             subject.reset()
 
             context.unwatch(atom)
-            XCTAssertEqual(context.watch(atom).value, 200)
+            #expect(context.watch(atom).value == 200)
 
             let phase = await context.refresh(atom)
 
-            XCTAssertEqual(phase.value, 200)
-            XCTAssertEqual(updateCount, 1)
+            #expect(phase.value == 200)
+            #expect(updateCount == 1)
         }
     }
 
     @MainActor
+    @Test
     func testEffect() async {
         let effect = TestEffect()
         let subject = ResettableSubject<Int, URLError>()
@@ -140,9 +144,9 @@ final class PublisherAtomTests: XCTestCase {
 
         context.watch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 0)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 0)
+        #expect(effect.releasedCount == 0)
 
         subject.send(0)
         await context.waitForUpdate()
@@ -153,14 +157,14 @@ final class PublisherAtomTests: XCTestCase {
         subject.send(2)
         await context.waitForUpdate()
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 0)
 
         context.unwatch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 1)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 1)
     }
 }

@@ -1,9 +1,11 @@
-import XCTest
+import Combine
+import Testing
 
 @testable import Atoms
 
-final class ObservableObjectAtomTests: XCTestCase {
+struct ObservableObjectAtomTests {
     @MainActor
+    @Test
     func test() async {
         let atom = TestObservableObjectAtom()
         let context = AtomTestContext()
@@ -11,7 +13,7 @@ final class ObservableObjectAtomTests: XCTestCase {
         do {
             // Initial value
             let object = context.watch(atom)
-            XCTAssertEqual(object.updatedCount, 0)
+            #expect(object.updatedCount == 0)
         }
 
         do {
@@ -27,7 +29,7 @@ final class ObservableObjectAtomTests: XCTestCase {
             object.update()
             await context.waitForUpdate()
 
-            XCTAssertEqual(snapshot, 1)
+            #expect(snapshot == 1)
         }
 
         do {
@@ -44,7 +46,7 @@ final class ObservableObjectAtomTests: XCTestCase {
             object.update()
             await context.waitForUpdate()
 
-            XCTAssertEqual(updateCount, 1)
+            #expect(updateCount == 1)
         }
 
         do {
@@ -62,8 +64,8 @@ final class ObservableObjectAtomTests: XCTestCase {
             object.update()
             await context.waitForUpdate()
 
-            XCTAssertTrue(object === overrideObject)
-            XCTAssertEqual(updateCount, 1)
+            #expect(object === overrideObject)
+            #expect(updateCount == 1)
         }
 
         do {
@@ -81,21 +83,22 @@ final class ObservableObjectAtomTests: XCTestCase {
             object.update()
             await context.waitForUpdate()
 
-            XCTAssertTrue(object === overrideObject)
-            XCTAssertEqual(updateCount, 1)
+            #expect(object === overrideObject)
+            #expect(updateCount == 1)
         }
     }
 
     @MainActor
+    @Test
     func testEffect() async {
         let effect = TestEffect()
         let atom = TestObservableObjectAtom(effect: effect)
         let context = AtomTestContext()
         let object = context.watch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 0)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 0)
+        #expect(effect.releasedCount == 0)
 
         object.update()
         await context.waitForUpdate()
@@ -106,19 +109,20 @@ final class ObservableObjectAtomTests: XCTestCase {
         object.update()
         await context.waitForUpdate()
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 0)
 
         context.unwatch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 1)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 1)
     }
 
     @MainActor
-    func testUpdateMultipletimes() async {
+    @Test
+    func testUpdateMultipleTimes() async {
         final class TestObject: ObservableObject {
             @Published
             var value0 = 0
@@ -149,12 +153,13 @@ final class ObservableObjectAtomTests: XCTestCase {
         object.update()
         await context.waitForUpdate()
 
-        XCTAssertEqual(updatedCount, 1)
-        XCTAssertEqual(object.value0, 1)
-        XCTAssertEqual(object.value1, 1)
+        #expect(updatedCount == 1)
+        #expect(object.value0 == 1)
+        #expect(object.value1 == 1)
     }
 
     @MainActor
+    @Test
     func testUpdateOnNonIsolatedContext() async {
         final class TestObject: ObservableObject, @unchecked Sendable {
             @Published
@@ -186,7 +191,7 @@ final class ObservableObjectAtomTests: XCTestCase {
 
         await context.waitForUpdate()
 
-        XCTAssertEqual(updatedCount, 1)
-        XCTAssertEqual(object.value, 1)
+        #expect(updatedCount == 1)
+        #expect(object.value == 1)
     }
 }

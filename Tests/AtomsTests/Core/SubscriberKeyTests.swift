@@ -1,22 +1,24 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class SubscriberKeyTests: XCTestCase {
+struct SubscriberKeyTests {
     @MainActor
+    @Test
     func testKeyHashableForSameToken() {
         let token = SubscriberKey.Token()
 
-        XCTAssertEqual(token.key, token.key)
-        XCTAssertEqual(token.key.hashValue, token.key.hashValue)
+        #expect(token.key == token.key)
+        #expect(token.key.hashValue == token.key.hashValue)
     }
 
     @MainActor
+    @Test
     func testKeyHashableForDifferentToken() {
         let token0 = SubscriberKey.Token()
         let token1 = SubscriberKey.Token()
 
-        XCTAssertNotEqual(token0.key, token1.key)
-        XCTAssertNotEqual(token0.key.hashValue, token1.key.hashValue)
+        #expect(token0.key != token1.key)
+        #expect(token0.key.hashValue != token1.key.hashValue)
     }
 }

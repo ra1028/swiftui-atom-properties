@@ -1,9 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class ValueAtomTests: XCTestCase {
+struct ValueAtomTests {
     @MainActor
+    @Test
     func testValue() {
         let atom = TestValueAtom(value: 0)
         let context = AtomTestContext()
@@ -11,7 +12,7 @@ final class ValueAtomTests: XCTestCase {
         do {
             // Initial value
             let value = context.watch(atom)
-            XCTAssertEqual(value, 0)
+            #expect(value == 0)
         }
 
         do {
@@ -19,11 +20,12 @@ final class ValueAtomTests: XCTestCase {
             context.unwatch(atom)
             context.override(atom) { _ in 1 }
 
-            XCTAssertEqual(context.watch(atom), 1)
+            #expect(context.watch(atom) == 1)
         }
     }
 
     @MainActor
+    @Test
     func testEffect() async {
         let effect = TestEffect()
         let atom = TestValueAtom(value: 0, effect: effect)
@@ -31,22 +33,22 @@ final class ValueAtomTests: XCTestCase {
 
         context.watch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 0)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 0)
+        #expect(effect.releasedCount == 0)
 
         context.reset(atom)
         context.reset(atom)
         context.reset(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 0)
 
         context.unwatch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 1)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 1)
     }
 }

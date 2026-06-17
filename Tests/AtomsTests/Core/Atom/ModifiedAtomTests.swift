@@ -1,23 +1,25 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class ModifiedAtomTests: XCTestCase {
+struct ModifiedAtomTests {
     @MainActor
+    @Test
     func testKey() {
         let base = TestAtom(value: 0)
         let modifier = ChangesOfModifier<Int, String>(keyPath: \.description)
         let atom = ModifiedAtom(atom: base, modifier: modifier)
 
-        XCTAssertEqual(atom.key, atom.key)
-        XCTAssertEqual(atom.key.hashValue, atom.key.hashValue)
-        XCTAssertNotEqual(AnyHashable(atom.key), AnyHashable(modifier.key))
-        XCTAssertNotEqual(AnyHashable(atom.key).hashValue, AnyHashable(modifier.key).hashValue)
-        XCTAssertNotEqual(AnyHashable(atom.key), AnyHashable(base.key))
-        XCTAssertNotEqual(AnyHashable(atom.key).hashValue, AnyHashable(base.key).hashValue)
+        #expect(atom.key == atom.key)
+        #expect(atom.key.hashValue == atom.key.hashValue)
+        #expect(AnyHashable(atom.key) != AnyHashable(modifier.key))
+        #expect(AnyHashable(atom.key).hashValue != AnyHashable(modifier.key).hashValue)
+        #expect(AnyHashable(atom.key) != AnyHashable(base.key))
+        #expect(AnyHashable(atom.key).hashValue != AnyHashable(base.key).hashValue)
     }
 
     @MainActor
+    @Test
     func testValue() async {
         let base = TestStateAtom(defaultValue: "test")
         let modifier = ChangesOfModifier<String, Int>(keyPath: \.count)
@@ -26,7 +28,7 @@ final class ModifiedAtomTests: XCTestCase {
 
         do {
             // Initial value
-            XCTAssertEqual(context.watch(atom), 4)
+            #expect(context.watch(atom) == 4)
         }
 
         do {
@@ -36,7 +38,7 @@ final class ModifiedAtomTests: XCTestCase {
             }
 
             await context.waitForUpdate()
-            XCTAssertEqual(context.watch(atom), 8)
+            #expect(context.watch(atom) == 8)
         }
 
         do {
@@ -46,7 +48,7 @@ final class ModifiedAtomTests: XCTestCase {
                 100
             }
 
-            XCTAssertEqual(context.watch(atom), 100)
+            #expect(context.watch(atom) == 100)
         }
     }
 }

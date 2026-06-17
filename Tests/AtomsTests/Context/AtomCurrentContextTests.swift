@@ -1,10 +1,11 @@
 import Combine
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class AtomCurrentContextTests: XCTestCase {
+struct AtomCurrentContextTests {
     @MainActor
+    @Test
     func testRead() {
         let atom = TestValueAtom(value: 100)
         let store = AtomStore()
@@ -13,10 +14,11 @@ final class AtomCurrentContextTests: XCTestCase {
             store: .root(store: store, scopeKey: rootScopeToken.key)
         )
 
-        XCTAssertEqual(context.read(atom), 100)
+        #expect(context.read(atom) == 100)
     }
 
     @MainActor
+    @Test
     func testSet() {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 100)
@@ -26,14 +28,15 @@ final class AtomCurrentContextTests: XCTestCase {
         let storeContext = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
         let context = AtomCurrentContext(store: storeContext)
 
-        XCTAssertEqual(storeContext.watch(dependency, in: transactionState), 100)
+        #expect(storeContext.watch(dependency, in: transactionState) == 100)
 
         context.set(200, for: dependency)
 
-        XCTAssertEqual(storeContext.watch(dependency, in: transactionState), 200)
+        #expect(storeContext.watch(dependency, in: transactionState) == 200)
     }
 
     @MainActor
+    @Test
     func testRefresh() async {
         let atom = TestPublisherAtom { Just(100) }
         let store = AtomStore()
@@ -43,10 +46,11 @@ final class AtomCurrentContextTests: XCTestCase {
         )
         let value = await context.refresh(atom).value
 
-        XCTAssertEqual(value, 100)
+        #expect(value == 100)
     }
 
     @MainActor
+    @Test
     func testReset() {
         let atom = TestValueAtom(value: 0)
         let dependency = TestStateAtom(defaultValue: 0)
@@ -56,15 +60,15 @@ final class AtomCurrentContextTests: XCTestCase {
         let storeContext = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
         let context = AtomTransactionContext(store: storeContext, transactionState: transactionState)
 
-        XCTAssertEqual(storeContext.watch(dependency, in: transactionState), 0)
+        #expect(storeContext.watch(dependency, in: transactionState) == 0)
 
         context[dependency] = 100
 
-        XCTAssertEqual(storeContext.watch(dependency, in: transactionState), 100)
+        #expect(storeContext.watch(dependency, in: transactionState) == 100)
 
         context.reset(dependency)
 
-        XCTAssertEqual(storeContext.read(dependency), 0)
+        #expect(storeContext.read(dependency) == 0)
     }
 
 }

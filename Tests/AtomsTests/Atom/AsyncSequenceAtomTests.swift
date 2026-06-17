@@ -1,16 +1,18 @@
-import XCTest
+import Foundation
+import Testing
 
 @testable import Atoms
 
-final class AsyncSequenceAtomTests: XCTestCase {
+struct AsyncSequenceAtomTests {
     @MainActor
+    @Test
     func testValue() async {
         let pipe = AsyncThrowingStreamPipe<Int>()
         let atom = TestAsyncSequenceAtom { pipe.stream }
         let context = AtomTestContext()
 
         do {
-            XCTAssertTrue(context.watch(atom).isSuspending)
+            #expect(context.watch(atom).isSuspending)
         }
 
         do {
@@ -18,7 +20,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
             pipe.continuation.yield(0)
             await context.wait(for: atom, until: \.isSuccess)
 
-            XCTAssertEqual(context.watch(atom).value, 0)
+            #expect(context.watch(atom).value == 0)
         }
 
         do {
@@ -26,7 +28,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
             pipe.continuation.finish(throwing: URLError(.badURL))
             await context.wait(for: atom, until: \.isFailure)
 
-            XCTAssertEqual(context.watch(atom).error as? URLError, URLError(.badURL))
+            #expect(context.watch(atom).error as? URLError == URLError(.badURL))
         }
 
         do {
@@ -34,7 +36,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
             pipe.continuation.yield(1)
             let didUpdate = await context.waitForUpdate(timeout: 0.1)
 
-            XCTAssertFalse(didUpdate)
+            #expect(!(didUpdate))
         }
 
         do {
@@ -45,7 +47,7 @@ final class AsyncSequenceAtomTests: XCTestCase {
             pipe.continuation.yield(0)
             let didUpdate = await context.waitForUpdate(timeout: 0.1)
 
-            XCTAssertFalse(didUpdate)
+            #expect(!(didUpdate))
         }
 
         do {
@@ -56,25 +58,26 @@ final class AsyncSequenceAtomTests: XCTestCase {
             pipe.continuation.finish(throwing: URLError(.badURL))
             let didUpdate = await context.waitForUpdate(timeout: 0.1)
 
-            XCTAssertFalse(didUpdate)
+            #expect(!(didUpdate))
         }
 
         do {
             // Override
             context.override(atom) { _ in .success(100) }
 
-            XCTAssertEqual(context.watch(atom).value, 100)
+            #expect(context.watch(atom).value == 100)
         }
     }
 
     @MainActor
+    @Test
     func testRefresh() async {
         let pipe = AsyncThrowingStreamPipe<Int>()
         let atom = TestAsyncSequenceAtom { pipe.stream }
         let context = AtomTestContext()
 
         do {
-            XCTAssertTrue(context.watch(atom).isSuspending)
+            #expect(context.watch(atom).isSuspending)
         }
 
         do {
@@ -90,8 +93,8 @@ final class AsyncSequenceAtomTests: XCTestCase {
 
             let phase = await context.refresh(atom)
 
-            XCTAssertEqual(phase.value, 0)
-            XCTAssertEqual(updateCount, 1)
+            #expect(phase.value == 0)
+            #expect(updateCount == 1)
         }
 
         do {
@@ -111,8 +114,8 @@ final class AsyncSequenceAtomTests: XCTestCase {
 
             let phase = await refreshTask.value
 
-            XCTAssertTrue(phase.isSuspending)
-            XCTAssertEqual(updateCount, 0)
+            #expect(phase.isSuspending)
+            #expect(updateCount == 0)
         }
 
         do {
@@ -123,16 +126,17 @@ final class AsyncSequenceAtomTests: XCTestCase {
             pipe.reset()
 
             context.unwatch(atom)
-            XCTAssertEqual(context.watch(atom).value, 200)
+            #expect(context.watch(atom).value == 200)
 
             let phase = await context.refresh(atom)
 
-            XCTAssertEqual(phase.value, 200)
-            XCTAssertEqual(updateCount, 1)
+            #expect(phase.value == 200)
+            #expect(updateCount == 1)
         }
     }
 
     @MainActor
+    @Test
     func testEffect() async {
         let effect = TestEffect()
         let pipe = AsyncThrowingStreamPipe<Int>()
@@ -141,9 +145,9 @@ final class AsyncSequenceAtomTests: XCTestCase {
 
         context.watch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 0)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 0)
+        #expect(effect.releasedCount == 0)
 
         pipe.continuation.yield(0)
         await context.waitForUpdate()
@@ -154,14 +158,14 @@ final class AsyncSequenceAtomTests: XCTestCase {
         pipe.continuation.yield(2)
         await context.waitForUpdate()
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 0)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 0)
 
         context.unwatch(atom)
 
-        XCTAssertEqual(effect.initializedCount, 1)
-        XCTAssertEqual(effect.updatedCount, 3)
-        XCTAssertEqual(effect.releasedCount, 1)
+        #expect(effect.initializedCount == 1)
+        #expect(effect.updatedCount == 3)
+        #expect(effect.releasedCount == 1)
     }
 }

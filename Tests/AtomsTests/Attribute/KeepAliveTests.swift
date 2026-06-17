@@ -1,137 +1,144 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class KeepAliveTests: XCTestCase {
+struct KeepAliveTests {
+    struct KeepAliveAtom<T: Hashable & Sendable>: ValueAtom, KeepAlive, Hashable {
+        let value: T
+
+        func value(context: Context) -> T {
+            value
+        }
+    }
+
+    struct ScopedKeepAliveAtom<T: Hashable & Sendable>: ValueAtom, KeepAlive, Scoped, Hashable {
+        let value: T
+
+        func value(context: Context) -> T {
+            value
+        }
+    }
+
     @MainActor
-    func testKeepAliveAtoms() {
-        struct KeepAliveAtom<T: Hashable & Sendable>: ValueAtom, KeepAlive, Hashable {
-            let value: T
+    @Test
+    func testShouldNotBeReleased() {
+        let store = AtomStore()
+        let rootScopeToken = ScopeKey.Token()
+        let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+        let atom = KeepAliveAtom(value: 0)
+        let key = AtomKey(atom)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
 
-            func value(context: Context) -> T {
-                value
-            }
-        }
+        _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
+        #expect(store.caches[key] != nil)
 
-        struct ScopedKeepAliveAtom<T: Hashable & Sendable>: ValueAtom, KeepAlive, Scoped, Hashable {
-            let value: T
+        context.unwatch(atom, subscriber: subscriber)
+        #expect(store.caches[key] != nil)
+    }
 
-            func value(context: Context) -> T {
-                value
-            }
-        }
+    @MainActor
+    @Test
+    func testShouldNotBeReleasedWhenNotScoped() {
+        let store = AtomStore()
+        let rootScopeToken = ScopeKey.Token()
+        let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+        let atom = ScopedKeepAliveAtom(value: 0)
+        let key = AtomKey(atom, scopeKey: nil)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
 
-        XCTContext.runActivity(named: "Should not be released") { _ in
-            let store = AtomStore()
-            let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
-            let atom = KeepAliveAtom(value: 0)
-            let key = AtomKey(atom)
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
+        _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
+        #expect(store.caches[key] != nil)
 
-            _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertNotNil(store.caches[key])
+        context.unwatch(atom, subscriber: subscriber)
+        #expect(store.caches[key] != nil)
+    }
 
-            context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNotNil(store.caches[key])
-        }
+    @MainActor
+    @Test
+    func testShouldNotBeReleasedUntilScopeIsReleasedWhenOverriddenInScope() {
+        let store = AtomStore()
+        let rootScopeToken = ScopeKey.Token()
+        let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+        let atom = KeepAliveAtom(value: 0)
+        var scopeState: ScopeState! = ScopeState()
+        let key = AtomKey(atom, scopeKey: scopeState.token.key)
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+        let scopedContext = context.scoped(
+            scopeID: ScopeID(DefaultScopeID()),
+            scopeKey: scopeState.token.key,
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: atom) { _ in
+                    10
+                }
+        )
 
-        XCTContext.runActivity(named: "Should not be released when not scoped") { _ in
-            let store = AtomStore()
-            let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
-            let atom = ScopedKeepAliveAtom(value: 0)
-            let key = AtomKey(atom, scopeKey: nil)
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
+        scopedContext.registerScope(state: scopeState)
 
-            _ = context.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertNotNil(store.caches[key])
+        _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
+        #expect(store.caches[key] != nil)
 
-            context.unwatch(atom, subscriber: subscriber)
-            XCTAssertNotNil(store.caches[key])
-        }
+        scopedContext.unwatch(atom, subscriber: subscriber)
+        #expect(store.caches[key] != nil)
 
-        XCTContext.runActivity(named: "Should not be released until scope is released when overridden in scope") { _ in
-            let store = AtomStore()
-            let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
-            let atom = KeepAliveAtom(value: 0)
-            var scopeState: ScopeState! = ScopeState()
-            let key = AtomKey(atom, scopeKey: scopeState.token.key)
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
-            let scopedContext = context.scoped(
-                scopeID: ScopeID(DefaultScopeID()),
-                scopeKey: scopeState.token.key,
-                observers: [],
-                overrideContainer: OverrideContainer()
-                    .addingOverride(for: atom) { _ in
-                        10
-                    }
-            )
+        scopeState = nil
+        #expect(store.caches[key] == nil)
+    }
 
-            scopedContext.registerScope(state: scopeState)
+    @MainActor
+    @Test
+    func testShouldNotBeReleasedUntilScopeIsReleasedWhenScoped() {
+        let store = AtomStore()
+        let rootScopeToken = ScopeKey.Token()
+        let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+        let atom = ScopedKeepAliveAtom(value: 0)
+        var scopeState: ScopeState! = ScopeState()
+        let key = AtomKey(atom, scopeKey: scopeState.token.key)
+        let scopedContext = context.scoped(
+            scopeID: ScopeID(DefaultScopeID()),
+            scopeKey: scopeState.token.key
+        )
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
 
-            _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertNotNil(store.caches[key])
+        scopedContext.registerScope(state: scopeState)
 
-            scopedContext.unwatch(atom, subscriber: subscriber)
-            XCTAssertNotNil(store.caches[key])
+        _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
+        #expect(store.caches[key] != nil)
 
-            scopeState = nil
-            XCTAssertNil(store.caches[key])
-        }
+        scopedContext.unwatch(atom, subscriber: subscriber)
+        #expect(store.caches[key] != nil)
 
-        XCTContext.runActivity(named: "Should not be released until scope is released when scoped") { _ in
-            let store = AtomStore()
-            let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
-            let atom = ScopedKeepAliveAtom(value: 0)
-            var scopeState: ScopeState! = ScopeState()
-            let key = AtomKey(atom, scopeKey: scopeState.token.key)
-            let scopedContext = context.scoped(
-                scopeID: ScopeID(DefaultScopeID()),
-                scopeKey: scopeState.token.key
-            )
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
+        scopeState = nil
+        #expect(store.caches[key] == nil)
+    }
 
-            scopedContext.registerScope(state: scopeState)
+    @MainActor
+    @Test
+    func testShouldBeReleasedWhenScopeIsAlreadyReleasedWhenScoped() {
+        let store = AtomStore()
+        let rootScopeToken = ScopeKey.Token()
+        let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
+        let atom = ScopedKeepAliveAtom(value: 0)
+        var scopeState: ScopeState! = ScopeState()
+        let key = AtomKey(atom, scopeKey: scopeState.token.key)
+        let scopedContext = context.scoped(
+            scopeID: ScopeID(DefaultScopeID()),
+            scopeKey: scopeState.token.key
+        )
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
 
-            _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertNotNil(store.caches[key])
+        scopedContext.registerScope(state: scopeState)
+        scopeState = nil
 
-            scopedContext.unwatch(atom, subscriber: subscriber)
-            XCTAssertNotNil(store.caches[key])
+        _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
+        #expect(store.caches[key] != nil)
 
-            scopeState = nil
-            XCTAssertNil(store.caches[key])
-        }
-
-        XCTContext.runActivity(named: "Should be released when scope is already released when scoped") { _ in
-            let store = AtomStore()
-            let rootScopeToken = ScopeKey.Token()
-            let context = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
-            let atom = ScopedKeepAliveAtom(value: 0)
-            var scopeState: ScopeState! = ScopeState()
-            let key = AtomKey(atom, scopeKey: scopeState.token.key)
-            let scopedContext = context.scoped(
-                scopeID: ScopeID(DefaultScopeID()),
-                scopeKey: scopeState.token.key
-            )
-            let subscriberState = SubscriberState()
-            let subscriber = Subscriber(subscriberState)
-
-            scopedContext.registerScope(state: scopeState)
-            scopeState = nil
-
-            _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
-            XCTAssertNotNil(store.caches[key])
-
-            scopedContext.unwatch(atom, subscriber: subscriber)
-            XCTAssertNil(store.caches[key])
-        }
+        scopedContext.unwatch(atom, subscriber: subscriber)
+        #expect(store.caches[key] == nil)
     }
 }

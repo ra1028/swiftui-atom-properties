@@ -1,11 +1,12 @@
 import Atoms
 import CoreLocation
-import XCTest
+import Testing
 
 @testable import ExampleMap
 
-final class ExampleMapTests: XCTestCase {
+struct ExampleMapTests {
     @MainActor
+    @Test
     func testLocationObserverAtom() {
         let atom = LocationObserverAtom()
         let context = AtomTestContext()
@@ -17,15 +18,16 @@ final class ExampleMapTests: XCTestCase {
 
         context.watch(atom)
 
-        XCTAssertNotNil(manager.delegate)
-        XCTAssertTrue(manager.isUpdatingLocation)
+        #expect(manager.delegate != nil)
+        #expect(manager.isUpdatingLocation)
 
         context.unwatch(atom)
 
-        XCTAssertFalse(manager.isUpdatingLocation)
+        #expect(!manager.isUpdatingLocation)
     }
 
     @MainActor
+    @Test
     func testCoordinateAtom() {
         let atom = CoordinateAtom()
         let context = AtomTestContext()
@@ -37,11 +39,12 @@ final class ExampleMapTests: XCTestCase {
 
         manager.location = CLLocation(latitude: 1, longitude: 2)
 
-        XCTAssertEqual(context.watch(atom)?.latitude, 1)
-        XCTAssertEqual(context.watch(atom)?.longitude, 2)
+        #expect(context.watch(atom)?.latitude == 1)
+        #expect(context.watch(atom)?.longitude == 2)
     }
 
     @MainActor
+    @Test
     func testAuthorizationStatusAtom() async {
         let atom = AuthorizationStatusAtom()
         let manager = MockLocationManager()
@@ -54,7 +57,7 @@ final class ExampleMapTests: XCTestCase {
 
         manager.authorizationStatus = .authorizedWhenInUse
 
-        XCTAssertEqual(context.watch(atom), .authorizedWhenInUse)
+        #expect(context.watch(atom) == .authorizedWhenInUse)
 
         manager.authorizationStatus = .authorizedAlways
 
@@ -64,12 +67,12 @@ final class ExampleMapTests: XCTestCase {
 
         await context.waitForUpdate()
 
-        XCTAssertEqual(context.watch(atom), .authorizedAlways)
+        #expect(context.watch(atom) == .authorizedAlways)
 
         observer.objectWillChange.send()
         let didUpdate = await context.waitForUpdate(timeout: 0.1)
 
         // Should not update if authorizationStatus is not changed.
-        XCTAssertFalse(didUpdate)
+        #expect(!didUpdate)
     }
 }

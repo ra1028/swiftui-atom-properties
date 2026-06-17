@@ -1,10 +1,11 @@
 import SwiftUI
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class EnvironmentTests: XCTestCase {
+struct EnvironmentTests {
     @MainActor
+    @Test
     func testStore() {
         let store = AtomStore()
         let scopeToken = ScopeKey.Token()
@@ -14,6 +15,6 @@ final class EnvironmentTests: XCTestCase {
         store.caches = [AtomKey(atom): AtomCache(atom: atom, value: 100)]
         environment.store = .root(store: store, scopeKey: scopeToken.key)
 
-        XCTAssertEqual(environment.store?.read(atom), 100)
+        #expect(environment.store?.read(atom) == 100)
     }
 }

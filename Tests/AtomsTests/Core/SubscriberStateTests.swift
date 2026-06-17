@@ -1,9 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class SubscriberStateTests: XCTestCase {
+struct SubscriberStateTests {
     @MainActor
+    @Test
     func testUnsubscribeOnDeinit() {
         var subscriberState: SubscriberState? = SubscriberState()
         var unsubscribedCount = 0
@@ -14,6 +15,6 @@ final class SubscriberStateTests: XCTestCase {
 
         subscriberState = nil
 
-        XCTAssertEqual(unsubscribedCount, 1)
+        #expect(unsubscribedCount == 1)
     }
 }

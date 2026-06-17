@@ -1,9 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class UpdateEffectTests: XCTestCase {
+struct UpdateEffectTests {
     @MainActor
+    @Test
     func testEvent() {
         let context = AtomCurrentContext(store: .dummy)
         var performedCount = 0
@@ -12,15 +13,15 @@ final class UpdateEffectTests: XCTestCase {
         }
 
         effect.initializing(context: context)
-        XCTAssertEqual(performedCount, 0)
+        #expect(performedCount == 0)
 
         effect.initialized(context: context)
-        XCTAssertEqual(performedCount, 0)
+        #expect(performedCount == 0)
 
         effect.updated(context: context)
-        XCTAssertEqual(performedCount, 1)
+        #expect(performedCount == 1)
 
         effect.released(context: context)
-        XCTAssertEqual(performedCount, 1)
+        #expect(performedCount == 1)
     }
 }

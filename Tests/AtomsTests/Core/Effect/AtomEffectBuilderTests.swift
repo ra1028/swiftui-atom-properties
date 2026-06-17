@@ -1,9 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class AtomEffectBuilderTests: XCTestCase {
+struct AtomEffectBuilderTests {
     @MainActor
+    @Test
     func testSingleBlock() {
         let expected = TestEffect()
 
@@ -15,13 +16,14 @@ final class AtomEffectBuilderTests: XCTestCase {
         let effect = build()
         effect.callAll()
 
-        XCTAssertEqual(expected.initializingCount, 1)
-        XCTAssertEqual(expected.initializedCount, 1)
-        XCTAssertEqual(expected.updatedCount, 1)
-        XCTAssertEqual(expected.releasedCount, 1)
+        #expect(expected.initializingCount == 1)
+        #expect(expected.initializedCount == 1)
+        #expect(expected.updatedCount == 1)
+        #expect(expected.releasedCount == 1)
     }
 
     @MainActor
+    @Test
     func testMultipleBlock() {
         let expected0 = TestEffect()
         let expected1 = TestEffect()
@@ -38,14 +40,15 @@ final class AtomEffectBuilderTests: XCTestCase {
         effect.callAll()
 
         for expected in [expected0, expected1, expected2] {
-            XCTAssertEqual(expected.initializingCount, 1)
-            XCTAssertEqual(expected.initializedCount, 1)
-            XCTAssertEqual(expected.updatedCount, 1)
-            XCTAssertEqual(expected.releasedCount, 1)
+            #expect(expected.initializingCount == 1)
+            #expect(expected.initializedCount == 1)
+            #expect(expected.updatedCount == 1)
+            #expect(expected.releasedCount == 1)
         }
     }
 
     @MainActor
+    @Test
     func testIf() {
         let expected = TestEffect()
         var condition = true
@@ -60,22 +63,23 @@ final class AtomEffectBuilderTests: XCTestCase {
         let effectTrue = build()
         effectTrue.callAll()
 
-        XCTAssertEqual(expected.initializingCount, 1)
-        XCTAssertEqual(expected.initializedCount, 1)
-        XCTAssertEqual(expected.updatedCount, 1)
-        XCTAssertEqual(expected.releasedCount, 1)
+        #expect(expected.initializingCount == 1)
+        #expect(expected.initializedCount == 1)
+        #expect(expected.updatedCount == 1)
+        #expect(expected.releasedCount == 1)
 
         condition = false
         let effectFalse = build()
         effectFalse.callAll()
 
-        XCTAssertEqual(expected.initializingCount, 1)
-        XCTAssertEqual(expected.initializedCount, 1)
-        XCTAssertEqual(expected.updatedCount, 1)
-        XCTAssertEqual(expected.releasedCount, 1)
+        #expect(expected.initializingCount == 1)
+        #expect(expected.initializedCount == 1)
+        #expect(expected.updatedCount == 1)
+        #expect(expected.releasedCount == 1)
     }
 
     @MainActor
+    @Test
     func testEither() {
         let expectedTrue = TestEffect()
         let expectedFalse = TestEffect()
@@ -94,28 +98,29 @@ final class AtomEffectBuilderTests: XCTestCase {
         let effectTrue = build()
         effectTrue.callAll()
 
-        XCTAssertEqual(expectedTrue.initializingCount, 1)
-        XCTAssertEqual(expectedTrue.initializedCount, 1)
-        XCTAssertEqual(expectedTrue.updatedCount, 1)
-        XCTAssertEqual(expectedTrue.releasedCount, 1)
-        XCTAssertEqual(expectedFalse.initializingCount, 0)
-        XCTAssertEqual(expectedFalse.initializedCount, 0)
-        XCTAssertEqual(expectedFalse.updatedCount, 0)
-        XCTAssertEqual(expectedFalse.releasedCount, 0)
+        #expect(expectedTrue.initializingCount == 1)
+        #expect(expectedTrue.initializedCount == 1)
+        #expect(expectedTrue.updatedCount == 1)
+        #expect(expectedTrue.releasedCount == 1)
+        #expect(expectedFalse.initializingCount == 0)
+        #expect(expectedFalse.initializedCount == 0)
+        #expect(expectedFalse.updatedCount == 0)
+        #expect(expectedFalse.releasedCount == 0)
 
         condition = false
         let effectFalse = build()
         effectFalse.callAll()
 
         for expected in [expectedTrue, expectedFalse] {
-            XCTAssertEqual(expected.initializingCount, 1)
-            XCTAssertEqual(expected.initializedCount, 1)
-            XCTAssertEqual(expected.updatedCount, 1)
-            XCTAssertEqual(expected.releasedCount, 1)
+            #expect(expected.initializingCount == 1)
+            #expect(expected.initializedCount == 1)
+            #expect(expected.updatedCount == 1)
+            #expect(expected.releasedCount == 1)
         }
     }
 
     @MainActor
+    @Test
     func testLimitedAvailability() {
         let expected = TestEffect()
 
@@ -136,21 +141,22 @@ final class AtomEffectBuilderTests: XCTestCase {
         let effectTrue = buildTrue()
         effectTrue.callAll()
 
-        XCTAssertEqual(expected.initializingCount, 1)
-        XCTAssertEqual(expected.initializedCount, 1)
-        XCTAssertEqual(expected.updatedCount, 1)
-        XCTAssertEqual(expected.releasedCount, 1)
+        #expect(expected.initializingCount == 1)
+        #expect(expected.initializedCount == 1)
+        #expect(expected.updatedCount == 1)
+        #expect(expected.releasedCount == 1)
 
         let effectFalse = buildFalse()
         effectFalse.callAll()
 
-        XCTAssertEqual(expected.initializingCount, 1)
-        XCTAssertEqual(expected.initializedCount, 1)
-        XCTAssertEqual(expected.updatedCount, 1)
-        XCTAssertEqual(expected.releasedCount, 1)
+        #expect(expected.initializingCount == 1)
+        #expect(expected.initializedCount == 1)
+        #expect(expected.updatedCount == 1)
+        #expect(expected.releasedCount == 1)
     }
 
     @MainActor
+    @Test
     func testMixed() {
         let expected0 = TestEffect()
         let expected1 = TestEffect()
@@ -205,17 +211,17 @@ final class AtomEffectBuilderTests: XCTestCase {
         ]
 
         for expected in expectedEffects {
-            XCTAssertEqual(expected.initializingCount, 1)
-            XCTAssertEqual(expected.initializedCount, 1)
-            XCTAssertEqual(expected.updatedCount, 1)
-            XCTAssertEqual(expected.releasedCount, 1)
+            #expect(expected.initializingCount == 1)
+            #expect(expected.initializedCount == 1)
+            #expect(expected.updatedCount == 1)
+            #expect(expected.releasedCount == 1)
         }
 
         for unexpected in unexpectedEffects {
-            XCTAssertEqual(unexpected.initializingCount, 0)
-            XCTAssertEqual(unexpected.initializedCount, 0)
-            XCTAssertEqual(unexpected.updatedCount, 0)
-            XCTAssertEqual(unexpected.releasedCount, 0)
+            #expect(unexpected.initializingCount == 0)
+            #expect(unexpected.initializedCount == 0)
+            #expect(unexpected.updatedCount == 0)
+            #expect(unexpected.releasedCount == 0)
         }
     }
 }

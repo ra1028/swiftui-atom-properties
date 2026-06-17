@@ -1,58 +1,61 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class PreviousModifierTests: XCTestCase {
+struct PreviousModifierTests {
     @MainActor
+    @Test
     func testPrevious() {
         let atom = TestStateAtom(defaultValue: "initial")
         let context = AtomTestContext()
 
-        XCTAssertNil(context.watch(atom.previous))
+        #expect(context.watch(atom.previous) == nil)
 
         // Update the atom value
         context[atom] = "second"
 
         // Now previous should return the initial value
-        XCTAssertEqual(context.watch(atom.previous), "initial")
+        #expect(context.watch(atom.previous) == "initial")
 
         // Update again
         context[atom] = "third"
 
         // Previous should now return "second"
-        XCTAssertEqual(context.watch(atom.previous), "second")
+        #expect(context.watch(atom.previous) == "second")
 
         // Another update
         context[atom] = "fourth"
 
         // Previous should now return "third"
-        XCTAssertEqual(context.watch(atom.previous), "third")
+        #expect(context.watch(atom.previous) == "third")
     }
 
     @MainActor
+    @Test
     func testPreviousWithMultipleWatchers() {
         let atom = TestStateAtom(defaultValue: 100)
         let context = AtomTestContext()
 
         // Watch both current and previous
-        XCTAssertEqual(context.watch(atom), 100)
-        XCTAssertNil(context.watch(atom.previous))
+        #expect(context.watch(atom) == 100)
+        #expect(context.watch(atom.previous) == nil)
 
         // Update the value
         context[atom] = 200
 
         // Check both watchers
-        XCTAssertEqual(context.watch(atom), 200)
-        XCTAssertEqual(context.watch(atom.previous), 100)
+        #expect(context.watch(atom) == 200)
+        #expect(context.watch(atom.previous) == 100)
 
         // Update again
         context[atom] = 300
 
-        XCTAssertEqual(context.watch(atom), 300)
-        XCTAssertEqual(context.watch(atom.previous), 200)
+        #expect(context.watch(atom) == 300)
+        #expect(context.watch(atom.previous) == 200)
     }
 
     @MainActor
+    @Test
     func testPreviousUpdatesDownstream() {
         let atom = TestStateAtom(defaultValue: 0)
         let context = AtomTestContext()
@@ -63,29 +66,31 @@ final class PreviousModifierTests: XCTestCase {
         }
 
         // Initial watch
-        XCTAssertEqual(updatedCount, 0)
-        XCTAssertNil(context.watch(atom.previous))
+        #expect(updatedCount == 0)
+        #expect(context.watch(atom.previous) == nil)
 
         // First update
         context[atom] = 1
-        XCTAssertEqual(updatedCount, 1)
-        XCTAssertEqual(context.watch(atom.previous), 0)
+        #expect(updatedCount == 1)
+        #expect(context.watch(atom.previous) == 0)
 
         // Second update
         context[atom] = 2
-        XCTAssertEqual(updatedCount, 2)
-        XCTAssertEqual(context.watch(atom.previous), 1)
+        #expect(updatedCount == 2)
+        #expect(context.watch(atom.previous) == 1)
     }
 
     @MainActor
+    @Test
     func testKey() {
         let modifier = PreviousModifier<Int>()
 
-        XCTAssertEqual(modifier.key, modifier.key)
-        XCTAssertEqual(modifier.key.hashValue, modifier.key.hashValue)
+        #expect(modifier.key == modifier.key)
+        #expect(modifier.key.hashValue == modifier.key.hashValue)
     }
 
     @MainActor
+    @Test
     func testPreviousIsolatedPerScope() {
         struct ScopedIntAtom: StateAtom, Scoped, Hashable, @unchecked Sendable {
             let key = UniqueKey()
@@ -106,16 +111,17 @@ final class PreviousModifierTests: XCTestCase {
         let atom = ScopedIntAtom()
 
         // Drive `previous` in scope1 so its StorageAtom holds the latest value.
-        XCTAssertNil(scope1.watch(atom.previous, subscriber: subscriber1, subscription: Subscription()))
+        #expect(scope1.watch(atom.previous, subscriber: subscriber1, subscription: Subscription()) == nil)
         scope1.set(1, for: atom)
-        XCTAssertEqual(scope1.watch(atom.previous, subscriber: subscriber1, subscription: Subscription()), 0)
+        #expect(scope1.watch(atom.previous, subscriber: subscriber1, subscription: Subscription()) == 0)
 
         // First read of `previous` in scope2. With un-scoped storage this would
         // leak scope1's value; with per-scope storage it must be nil.
-        XCTAssertNil(scope2.watch(atom.previous, subscriber: subscriber2, subscription: Subscription()))
+        #expect(scope2.watch(atom.previous, subscriber: subscriber2, subscription: Subscription()) == nil)
     }
 
     @MainActor
+    @Test
     func testPreviousIsolatedPerBaseAtomInstance() {
         struct ItemAtom: StateAtom, Hashable {
             let id: Int
@@ -131,12 +137,12 @@ final class PreviousModifierTests: XCTestCase {
 
         // Drive `a.previous` so that — under the shared-storage bug —
         // the StorageAtom's `previous` now holds `"a-new"`.
-        XCTAssertNil(context.watch(a.previous))
+        #expect(context.watch(a.previous) == nil)
         context[a] = "a-new"
-        XCTAssertEqual(context.watch(a.previous), "initial-1")
+        #expect(context.watch(a.previous) == "initial-1")
 
         // First read of `b.previous`. With shared storage this would leak
         // `"a-new"`; with per-base storage it must be nil.
-        XCTAssertNil(context.watch(b.previous))
+        #expect(context.watch(b.previous) == nil)
     }
 }

@@ -1,18 +1,19 @@
 import Atoms
-import XCTest
+import Testing
 
 @testable import ExampleCounter
 
-final class ExampleCounterTests: XCTestCase {
+struct ExampleCounterTests {
     @MainActor
+    @Test
     func testCounterAtom() {
         let context = AtomTestContext()
         let atom = CounterAtom()
 
-        XCTAssertEqual(context.watch(atom), 0)
+        #expect(context.watch(atom) == 0)
 
         context[atom] = 1
 
-        XCTAssertEqual(context.watch(atom), 1)
+        #expect(context.watch(atom) == 1)
     }
 }

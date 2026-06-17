@@ -1,10 +1,12 @@
 import Atoms
-import XCTest
+import Testing
+import UIKit
 
 @testable import ExampleMovieDB
 
-final class ExampleMovieDBTests: XCTestCase {
+struct ExampleMovieDBTests {
     @MainActor
+    @Test
     func testImageAtom() async {
         let apiClient = MockAPIClient()
         let atom = ImageAtom(path: "", size: .original)
@@ -17,7 +19,7 @@ final class ExampleMovieDBTests: XCTestCase {
 
         let successPhase = await AsyncPhase(context.watch(atom).result)
 
-        XCTAssertEqual(successPhase.value, image)
+        #expect(successPhase.value == image)
 
         context.reset(atom)
 
@@ -26,10 +28,11 @@ final class ExampleMovieDBTests: XCTestCase {
 
         let failurePhase = await AsyncPhase(context.watch(atom).result)
 
-        XCTAssertEqual(failurePhase.error as? URLError, error)
+        #expect(failurePhase.error as? URLError == error)
     }
 
     @MainActor
+    @Test
     func testMovieLoader() async {
         let apiClient = MockAPIClient()
         let atom = MovieLoaderAtom()
@@ -47,52 +50,55 @@ final class ExampleMovieDBTests: XCTestCase {
 
             await context.watch(atom).refresh()
 
-            XCTAssertEqual(context.watch(atom).pages.value, [expected])
+            #expect(context.watch(atom).pages.value == [expected])
 
             await context.watch(atom).loadNext()
 
-            XCTAssertEqual(context.watch(atom).pages.value, [expected, expected])
+            #expect(context.watch(atom).pages.value == [expected, expected])
 
             context.reset(atom)
             apiClient.filteredMovieResponse = .failure(error)
 
             await context.watch(atom).refresh()
 
-            XCTAssertEqual(context.watch(atom).pages.error as? URLError, error)
+            #expect(context.watch(atom).pages.error as? URLError == error)
         }
     }
 
     @MainActor
+    @Test
     func testMyListAtom() {
         let atom = MyListAtom()
         let context = AtomTestContext()
 
-        XCTAssertEqual(context.watch(atom).movies, [])
+        #expect(context.watch(atom).movies == [])
 
         context.watch(atom).insert(movie: .stub(id: 0))
 
-        XCTAssertEqual(context.watch(atom).movies, [.stub(id: 0)])
+        #expect(context.watch(atom).movies == [.stub(id: 0)])
 
         context.watch(atom).insert(movie: .stub(id: 1))
 
-        XCTAssertEqual(context.watch(atom).movies, [.stub(id: 0), .stub(id: 1)])
+        #expect(context.watch(atom).movies == [.stub(id: 0), .stub(id: 1)])
 
         context.watch(atom).insert(movie: .stub(id: 0))
 
-        XCTAssertEqual(context.watch(atom).movies, [.stub(id: 1)])
+        #expect(context.watch(atom).movies == [.stub(id: 1)])
     }
 
     @MainActor
+    @Test
     func testIsInMyListAtom() {
         let context = AtomTestContext()
 
         context.watch(MyListAtom()).insert(movie: .stub(id: 0))
 
-        XCTAssertTrue(context.watch(IsInMyListAtom(movie: .stub(id: 0))))
-        XCTAssertFalse(context.watch(IsInMyListAtom(movie: .stub(id: 1))))
+        #expect(context.watch(IsInMyListAtom(movie: .stub(id: 0))))
+        #expect(!context.watch(IsInMyListAtom(movie: .stub(id: 1))))
     }
 
     @MainActor
+    @Test
     func testCastsAtom() async {
         let apiClient = MockAPIClient()
         let atom = CastsAtom(movieID: 0)
@@ -107,17 +113,18 @@ final class ExampleMovieDBTests: XCTestCase {
 
         let successPhase = await AsyncPhase(context.watch(atom).result)
 
-        XCTAssertEqual(successPhase.value, expected)
+        #expect(successPhase.value == expected)
 
         apiClient.creditsResponse = .failure(error)
         context.reset(atom)
 
         let failurePhase = await AsyncPhase(context.watch(atom).result)
 
-        XCTAssertEqual(failurePhase.error as? URLError, error)
+        #expect(failurePhase.error as? URLError == error)
     }
 
     @MainActor
+    @Test
     func testSearchMoviesAtom() async {
         let apiClient = MockAPIClient()
         let atom = SearchMoviesAtom()
@@ -132,19 +139,19 @@ final class ExampleMovieDBTests: XCTestCase {
 
         let empty = await context.refresh(atom)
 
-        XCTAssertEqual(empty.value, [])
+        #expect(empty.value == [])
 
         context[SearchQueryAtom()] = "query"
 
         let success = await context.refresh(atom)
 
-        XCTAssertEqual(success.value, expected.results)
+        #expect(success.value == expected.results)
 
         apiClient.searchMoviesResponse = .failure(expectedError)
 
         let failure = await context.refresh(atom)
 
-        XCTAssertEqual(failure.error as? URLError, expectedError)
+        #expect(failure.error as? URLError == expectedError)
     }
 }
 

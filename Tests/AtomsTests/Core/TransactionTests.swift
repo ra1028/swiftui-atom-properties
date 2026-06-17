@@ -1,9 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Atoms
 
-final class TransactionTests: XCTestCase {
+struct TransactionTests {
     @MainActor
+    @Test
     func testCommit() {
         let key = AtomKey(TestValueAtom(value: 0))
         var beginCount = 0
@@ -13,49 +14,51 @@ final class TransactionTests: XCTestCase {
             return { commitCount += 1 }
         }
 
-        XCTAssertEqual(beginCount, 0)
-        XCTAssertEqual(commitCount, 0)
+        #expect(beginCount == 0)
+        #expect(commitCount == 0)
 
         transactionState.commit()
 
-        XCTAssertEqual(beginCount, 0)
-        XCTAssertEqual(commitCount, 0)
+        #expect(beginCount == 0)
+        #expect(commitCount == 0)
 
         transactionState.begin()
 
-        XCTAssertEqual(beginCount, 1)
-        XCTAssertEqual(commitCount, 0)
+        #expect(beginCount == 1)
+        #expect(commitCount == 0)
 
         transactionState.commit()
 
-        XCTAssertEqual(beginCount, 1)
-        XCTAssertEqual(commitCount, 1)
+        #expect(beginCount == 1)
+        #expect(commitCount == 1)
 
         transactionState.begin()
         transactionState.commit()
 
-        XCTAssertEqual(beginCount, 1)
-        XCTAssertEqual(commitCount, 1)
+        #expect(beginCount == 1)
+        #expect(commitCount == 1)
     }
 
     @MainActor
+    @Test
     func testOnTermination() {
         let key = AtomKey(TestValueAtom(value: 0))
         let transactionState = TransactionState(key: key)
 
-        XCTAssertNil(transactionState.onTermination)
+        #expect(transactionState.onTermination == nil)
 
         transactionState.onTermination = {}
-        XCTAssertNotNil(transactionState.onTermination)
+        #expect(transactionState.onTermination != nil)
 
         transactionState.terminate()
-        XCTAssertNil(transactionState.onTermination)
+        #expect(transactionState.onTermination == nil)
 
         transactionState.onTermination = {}
-        XCTAssertNil(transactionState.onTermination)
+        #expect(transactionState.onTermination == nil)
     }
 
     @MainActor
+    @Test
     func testTerminate() {
         let key = AtomKey(TestValueAtom(value: 0))
         var didBegin = false
@@ -70,27 +73,27 @@ final class TransactionTests: XCTestCase {
             didTerminate = true
         }
 
-        XCTAssertFalse(didBegin)
-        XCTAssertFalse(didCommit)
-        XCTAssertFalse(didTerminate)
-        XCTAssertFalse(transactionState.isTerminated)
-        XCTAssertNotNil(transactionState.onTermination)
+        #expect(!(didBegin))
+        #expect(!(didCommit))
+        #expect(!(didTerminate))
+        #expect(!(transactionState.isTerminated))
+        #expect(transactionState.onTermination != nil)
 
         transactionState.begin()
         transactionState.terminate()
 
-        XCTAssertTrue(didBegin)
-        XCTAssertTrue(didCommit)
-        XCTAssertTrue(didTerminate)
-        XCTAssertTrue(transactionState.isTerminated)
-        XCTAssertNil(transactionState.onTermination)
+        #expect(didBegin)
+        #expect(didCommit)
+        #expect(didTerminate)
+        #expect(transactionState.isTerminated)
+        #expect(transactionState.onTermination == nil)
 
         didTerminate = false
         transactionState.onTermination = {
             didTerminate = true
         }
 
-        XCTAssertTrue(didTerminate)
-        XCTAssertNil(transactionState.onTermination)
+        #expect(didTerminate)
+        #expect(transactionState.onTermination == nil)
     }
 }
