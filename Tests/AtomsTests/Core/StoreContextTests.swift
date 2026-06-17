@@ -46,6 +46,12 @@ struct StoreContextTests {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
+        let rootScopeValues = ScopeValues(
+            key: rootScopeToken.key,
+            observers: [observer],
+            overrideContainer: OverrideContainer(),
+            ancestorScopeKeys: [:]
+        )
         let context = StoreContext.root(
             store: store,
             scopeKey: rootScopeToken.key,
@@ -60,7 +66,7 @@ struct StoreContextTests {
         #expect(snapshots.isEmpty)
 
         snapshots.removeAll()
-        store.caches[key] = AtomCache(atom: atom, value: 0)
+        store.caches[key] = AtomCache(atom: atom, value: 0, rootScopeValues: rootScopeValues, scopeValues: nil)
         store.states[key] = AtomState(effect: TestEffect())
         store.subscriptions[key, default: [:]][subscriberToken.key] = Subscription(
             location: SourceLocation(),
@@ -92,6 +98,12 @@ struct StoreContextTests {
         var snapshots = [Snapshot]()
         let observer = Observer { snapshots.append($0) }
         let rootScopeToken = ScopeKey.Token()
+        let rootScopeValues = ScopeValues(
+            key: rootScopeToken.key,
+            observers: [observer],
+            overrideContainer: OverrideContainer(),
+            ancestorScopeKeys: [:]
+        )
         let context = StoreContext.root(
             store: store,
             scopeKey: rootScopeToken.key,
@@ -106,7 +118,7 @@ struct StoreContextTests {
         #expect(snapshots.isEmpty)
 
         snapshots.removeAll()
-        store.caches[key] = AtomCache(atom: atom, value: 0)
+        store.caches[key] = AtomCache(atom: atom, value: 0, rootScopeValues: rootScopeValues, scopeValues: nil)
         store.states[key] = AtomState(effect: TestEffect())
         store.subscriptions[key, default: [:]][subscriberToken.key] = Subscription(
             location: SourceLocation(),
@@ -466,6 +478,54 @@ struct StoreContextTests {
                 AtomKey(atom1, scopeKey: scope2Token.key): AtomCache(atom: atom1, value: 30),
             ]
         )
+    }
+
+    @MainActor
+    @Test
+    func testRootOverrideCapturedForDependencyRecompute() {
+        // -1 is a sentinel; in practice this default would be `fatalError()`.
+        struct OverriddenAtom: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                -1
+            }
+        }
+
+        struct DependentAtom: ValueAtom, Hashable {
+            func value(context: Context) -> Int {
+                context.watch(OverriddenAtom())
+            }
+        }
+
+        let store = AtomStore()
+        let rootToken1 = ScopeKey.Token()
+        let rootToken2 = ScopeKey.Token()
+        let subscriberState = SubscriberState()
+        let subscriber = Subscriber(subscriberState)
+        let context1 = StoreContext.root(
+            store: store,
+            scopeKey: rootToken1.key,
+            observers: [],
+            overrideContainer: OverrideContainer()
+                .addingOverride(for: OverriddenAtom()) { _ in 100 }
+        )
+
+        #expect(context1.watch(DependentAtom(), subscriber: subscriber, subscription: Subscription()) == 100)
+
+        // Drop the dependency's cache so it must be re-resolved on recompute.
+        store.caches[AtomKey(OverriddenAtom())] = nil
+
+        // A different root context that no longer carries the override.
+        let context2 = StoreContext.root(
+            store: store,
+            scopeKey: rootToken2.key,
+            observers: [],
+            overrideContainer: OverrideContainer()
+        )
+
+        // The dependency must still resolve via the scope captured when the dependent
+        // was initialized, even though the recompute happens through `context2`.
+        context2.reset(DependentAtom())
+        #expect(context2.lookup(DependentAtom()) == 100)
     }
 
     @MainActor
