@@ -267,7 +267,12 @@ private extension StoreContext {
         state.effect.initializing(context: currentContext)
 
         let value = getValue(of: atom, for: key, override: override)
-        store.caches[key] = AtomCache(atom: atom, value: value, scopeValues: currentScopeValues)
+        store.caches[key] = AtomCache(
+            atom: atom,
+            value: value,
+            rootScopeValues: rootScopeValues,
+            scopeValues: currentScopeValues
+        )
 
         if let scopeKey = key.scopeKey {
             store.scopes[scopeKey]?.atoms.insert(key)
@@ -648,7 +653,7 @@ private extension StoreContext {
     func switchContext(with cache: some AtomCacheProtocol) -> StoreContext {
         StoreContext(
             store: store,
-            rootScopeValues: rootScopeValues,
+            rootScopeValues: cache.rootScopeValues,
             currentScopeValues: cache.scopeValues
         )
     }

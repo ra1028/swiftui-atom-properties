@@ -116,8 +116,19 @@ extension Atoms.Subscription {
 }
 
 extension AtomCache {
+    @MainActor
     init(atom: Node, value: Node.Produced) {
-        self.init(atom: atom, value: value, scopeValues: nil)
+        self.init(
+            atom: atom,
+            value: value,
+            rootScopeValues: ScopeValues(
+                key: ScopeKey.Token().key,
+                observers: [],
+                overrideContainer: OverrideContainer(),
+                ancestorScopeKeys: [:]
+            ),
+            scopeValues: nil
+        )
     }
 }
 
