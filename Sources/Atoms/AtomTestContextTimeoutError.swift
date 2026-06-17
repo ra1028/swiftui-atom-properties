@@ -16,6 +16,7 @@ public struct AtomTestContextTimeoutError: Error, CustomStringConvertible {
         self.timeout = timeout
     }
 
+    /// A textual representation of the timeout error.
     public var description: String {
         "The wait timed out after \(timeout) second(s)."
     }
