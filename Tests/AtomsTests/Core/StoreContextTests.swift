@@ -1000,13 +1000,13 @@ struct StoreContextTests {
         // Initialize the atom state in the scoped context.
         _ = scopedContext.watch(atom, subscriber: subscriber, subscription: Subscription())
 
-        // The scoped observer should recive the update event.
+        // The scoped observer should receive the update event.
         #expect(snapshots.map(\.dependencies) == [expectedDependencies])
         #expect(snapshots.map(\.children) == [expectedChildren])
 
         context.set(20, for: TestDependency2Atom())
 
-        // The scoped observer should recive the update event.
+        // The scoped observer should receive the update event.
         #expect(snapshots.map(\.dependencies) == [expectedDependencies, expectedDependencies])
         #expect(snapshots.map(\.children) == [expectedChildren, expectedChildren])
     }

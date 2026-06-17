@@ -76,7 +76,7 @@ struct StateAtomTests {
         let value1 = context.watch(TestAtom())
         #expect(value1 == 1)
 
-        // Updated by the depenency update.
+        // Updated by the dependency update.
 
         Task {
             context[Dependency1Atom()] = 0

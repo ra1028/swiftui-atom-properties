@@ -122,7 +122,7 @@ struct ObservableObjectAtomTests {
 
     @MainActor
     @Test
-    func testUpdateMultipletimes() async {
+    func testUpdateMultipleTimes() async {
         final class TestObject: ObservableObject {
             @Published
             var value0 = 0

@@ -25,7 +25,7 @@ struct ThrowingTaskAtomTests {
 
                 _ = try await context.watch(atom).value
 
-                Issue.record("Accessing to value should throw an error")
+                Issue.record("Accessing the value should throw an error")
             }
             catch {
                 #expect(error as? URLError == URLError(.badURL))
