@@ -32,6 +32,7 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``Atom/latest(_:)``
 - ``Atom/changes``
 - ``Atom/changes(of:)``
+- ``Atom/debounce(for:)``
 - ``Atom/animation(_:)``
 - ``TaskAtom/phase``
 - ``ThrowingTaskAtom/phase``
@@ -90,6 +91,7 @@ Building state by compositing atoms automatically optimizes rendering based on i
 - ``LatestModifier``
 - ``ChangesModifier``
 - ``ChangesOfModifier``
+- ``DebounceModifier``
 - ``TaskPhaseModifier``
 - ``AnimationModifier``
 - ``AtomProducer``
