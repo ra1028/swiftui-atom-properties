@@ -62,18 +62,19 @@ struct AtomTestContextTests {
 
         context.watch(atom)
 
-        for i in 1...3 {
-            Task {
-                try? await Task.sleep(seconds: Double(i) / 10)
-                context[atom] += 1
-            }
-        }
-
+        // Already satisfied, so no update is awaited.
         let didUpdate0 = await context.wait(for: atom) {
             $0 == 0
         }
 
-        #expect(!(didUpdate0))
+        #expect(!didUpdate0)
+
+        // The update is delayed so it lands after the wait starts observing, and is
+        // scheduled right before the wait so its timing is independent of the test's start.
+        Task {
+            try? await Task.sleep(seconds: 0.1)
+            context[atom] = 3
+        }
 
         let didUpdate1 = await context.wait(for: atom) {
             $0 == 3
@@ -81,17 +82,19 @@ struct AtomTestContextTests {
 
         #expect(didUpdate1)
 
+        // Never satisfied, so it returns after the timeout elapses.
         let didUpdate2 = await context.wait(for: atom, timeout: 0.1) {
             $0 == 100
         }
 
-        #expect(!(didUpdate2))
+        #expect(!didUpdate2)
 
+        // Already satisfied, so no update is awaited.
         let didUpdate3 = await context.wait(for: atom) {
             $0 == 3
         }
 
-        #expect(!(didUpdate3))
+        #expect(!didUpdate3)
     }
 
     @MainActor
@@ -106,8 +109,10 @@ struct AtomTestContextTests {
             context[atom] = 1
         }
 
-        // Returns normally when an update happens within the timeout.
-        try await context.waitForUpdate(within: 1)
+        // Returns normally once the update is observed. The timeout is generous so a
+        // slow, contended CI host doesn't cause a spurious failure; it only fails if the
+        // update never arrives.
+        try await context.waitForUpdate(within: 10)
 
         // Throws when no update happens within the timeout.
         let error = await #expect(throws: AtomTestContextTimeoutError.self) {

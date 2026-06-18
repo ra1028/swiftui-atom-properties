@@ -1701,7 +1701,10 @@ struct StoreContextTests {
         }
 
         struct TestAtom: TaskAtom {
-            let pipe: AsyncThrowingStreamPipe<Void>
+            // Two one-way channels avoid the test and the atom consuming each other's
+            // signals from a shared buffer, which otherwise races under load.
+            let reachedSuspension: AsyncThrowingStreamPipe<Void>
+            let resume: AsyncThrowingStreamPipe<Void>
 
             var key: UniqueKey {
                 UniqueKey()
@@ -1719,8 +1722,8 @@ struct StoreContextTests {
                     let b = context.watch(BAtom())
                     let c = context.watch(CAtom())
 
-                    pipe.continuation.yield()
-                    await pipe.stream.next()
+                    reachedSuspension.continuation.yield()
+                    await resume.stream.next()
 
                     return a + b + c
 
@@ -1728,8 +1731,8 @@ struct StoreContextTests {
                     let a = context.watch(AAtom())
                     let d = context.watch(DAtom())
 
-                    pipe.continuation.yield()
-                    await pipe.stream.next()
+                    reachedSuspension.continuation.yield()
+                    await resume.stream.next()
 
                     let b = context.watch(BAtom())
                     return a + d + b
@@ -1738,8 +1741,8 @@ struct StoreContextTests {
                     let b = context.watch(BAtom())
                     let d = context.watch(DAtom())
 
-                    pipe.continuation.yield()
-                    await pipe.stream.next()
+                    reachedSuspension.continuation.yield()
+                    await resume.stream.next()
 
                     let c = context.watch(CAtom())
                     return b + c + d
@@ -1752,8 +1755,9 @@ struct StoreContextTests {
         let atomStore = StoreContext.root(store: store, scopeKey: rootScopeToken.key)
         var subscriberState: SubscriberState? = SubscriberState()
         let subscriber = Subscriber(subscriberState!)
-        let pipe = AsyncThrowingStreamPipe<Void>()
-        let atom = TestAtom(pipe: pipe)
+        let reachedSuspension = AsyncThrowingStreamPipe<Void>()
+        let resume = AsyncThrowingStreamPipe<Void>()
+        let atom = TestAtom(reachedSuspension: reachedSuspension, resume: resume)
         let a = AAtom()
         let b = BAtom()
         let c = CAtom()
@@ -1764,8 +1768,8 @@ struct StoreContextTests {
             // first
 
             Task {
-                await pipe.stream.next()
-                pipe.continuation.yield()
+                await reachedSuspension.stream.next()
+                resume.continuation.yield()
             }
 
             let value = await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
@@ -1784,12 +1788,13 @@ struct StoreContextTests {
             // second
 
             Task {
-                await pipe.stream.next()
+                await reachedSuspension.stream.next()
                 atomStore.set(1, for: d)
-                pipe.continuation.yield()
+                resume.continuation.yield()
             }
 
-            pipe.reset()
+            reachedSuspension.reset()
+            resume.reset()
             atomStore.set(.second, for: phase)
 
             let before = await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
@@ -1810,12 +1815,13 @@ struct StoreContextTests {
             // third
 
             Task {
-                await pipe.stream.next()
+                await reachedSuspension.stream.next()
                 atomStore.set(2, for: b)
-                pipe.continuation.yield()
+                resume.continuation.yield()
             }
 
-            pipe.reset()
+            reachedSuspension.reset()
+            resume.reset()
             atomStore.set(.third, for: phase)
             let before = await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
             let after = await atomStore.watch(atom, subscriber: subscriber, subscription: Subscription()).value
