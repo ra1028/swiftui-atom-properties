@@ -460,16 +460,6 @@ private extension StoreContext {
         return dependencies
     }
 
-    func attachDependencies(_ dependencies: Set<AtomKey>, for key: AtomKey) {
-        // Set dependencies.
-        store.dependencies[key] = dependencies
-
-        // Attach the atom to its children.
-        for dependency in dependencies {
-            store.children[dependency]?.insert(key)
-        }
-    }
-
     func unsubscribeAll(for subscriberKey: SubscriberKey) {
         let keys = store.subscribes.removeValue(forKey: subscriberKey)
 
