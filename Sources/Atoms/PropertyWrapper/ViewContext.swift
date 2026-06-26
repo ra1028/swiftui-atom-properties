@@ -109,18 +109,6 @@ private extension ViewContext {
                     }
                 }
                 ```
-
-                The modal screen presented by the `.sheet` modifier or etc, propagates the environment values,
-                but only in iOS14, there is a bug where the environment values will be dismantled during it is
-                dismissing. This also can be avoided by using `AtomDerivedScope` to explicitly propagate it.
-
-                ```
-                .sheet(isPresented: ...) {
-                    AtomDerivedScope(context) {
-                        ExampleView()
-                    }
-                }
-                ```
                 """,
                 file: file,
                 line: location.line
