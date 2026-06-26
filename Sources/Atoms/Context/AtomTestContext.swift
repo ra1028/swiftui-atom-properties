@@ -28,6 +28,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// specified timeout, and then returns a boolean value indicating whether an update has happened.
     ///
     /// ```swift
+    /// @MainActor
     /// @Test
     /// func asyncUpdate() async {
     ///     let context = AtomTestContext()
@@ -84,6 +85,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// of being silently ignored.
     ///
     /// ```swift
+    /// @MainActor
     /// @Test
     /// func asyncUpdate() async throws {
     ///     let context = AtomTestContext()
@@ -130,6 +132,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// and then returns a boolean value indicating whether an update has happened.
     ///
     /// ```swift
+    /// @MainActor
     /// @Test
     /// func asyncUpdate() async {
     ///     let context = AtomTestContext()
@@ -212,6 +215,7 @@ public struct AtomTestContext: AtomWatchableContext {
     /// returns immediately without waiting for an update.
     ///
     /// ```swift
+    /// @MainActor
     /// @Test
     /// func asyncUpdate() async throws {
     ///     let context = AtomTestContext()
