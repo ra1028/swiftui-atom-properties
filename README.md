@@ -823,6 +823,36 @@ struct CountDisplayView: View {
 
 </details>
 
+#### [debounce(for:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/debounce(for:))
+
+|               |Description|
+|:--------------|:----------|
+|Summary        |Delays delivering the atom's value until it stops changing for the specified duration. The initial value is delivered immediately.|
+|Output         |`T`|
+|Compatible     |All atom types.|
+|Use Case       |Deferring reaction to a rapidly changing value, such as a search query while typing|
+
+<details><summary><code>📖 Example</code></summary>
+
+```swift
+struct QueryAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> String {
+        ""
+    }
+}
+
+struct SearchView: View {
+    @Watch(QueryAtom().debounce(for: 0.3))
+    var query  // : String
+
+    var body: some View {
+        Text(query)
+    }
+}
+```
+
+</details>
+
 #### [animation(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atom/animation(_:))
 
 |               |Description|
@@ -1241,7 +1271,9 @@ A context that can simulate any scenarios in which atoms are used from a view or
 |[unwatch(_:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/unwatch(_:))|Simulates a scenario in which the atom is no longer watched.|
 |[override(_:with:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/override(_:with:)-82t4q)|Overwrites the output of a specific atom or all atoms of the given type with the fixed value.|
 |[waitForUpdate(timeout:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/waitforupdate(timeout:))|Waits until any of the atoms watched through this context have been updated.|
+|[waitForUpdate(within:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/waitforupdate(within:))|Waits for an update within the duration, throwing an error if it elapses first.|
 |[wait(for:timeout:until:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/wait(for:timeout:until:))|Waits for the given atom until it will be a certain state.|
+|[wait(for:within:until:)](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/wait(for:within:until:))|Waits for the given atom to reach a certain state, throwing an error if the duration elapses first.|
 |[onUpdate](https://ra1028.github.io/swiftui-atom-properties/documentation/atoms/atomtestcontext/onupdate)|Sets a closure that notifies there has been an update to one of the atoms.|
 
 <details><summary><code>📖 Example</code></summary>
@@ -1267,9 +1299,10 @@ struct FetchMusicsAtom: ThrowingTaskAtom, Hashable {
     }
 }
 
-@MainActor
-class FetchMusicsTests: XCTestCase {
-    func testFetchMusicsAtom() async throws {
+struct FetchMusicsTests {
+    @MainActor
+    @Test
+    func fetchMusicsAtom() async throws {
         let context = AtomTestContext()
 
         context.override(APIClientAtom()) { _ in
@@ -1278,7 +1311,7 @@ class FetchMusicsTests: XCTestCase {
 
         let musics = try await context.watch(FetchMusicsAtom()).value
 
-        XCTAssertTrue(musics.isEmpty)
+        #expect(musics.isEmpty)
     }
 }
 ```
@@ -1570,9 +1603,10 @@ struct FetchBookAtom: ThrowingTaskAtom, Hashable {
 
 ```swift
 
-class FetchBookTests: XCTestCase {
+struct FetchBookTests {
     @MainActor
-    func testFetch() async throws {
+    @Test
+    func fetch() async throws {
         let context = AtomTestContext()
         let api = MockAPIClient()
 
@@ -1588,7 +1622,7 @@ class FetchBookTests: XCTestCase {
 
         let book = try await context.watch(FetchBookAtom(isbn: "ISBN000–0–0000–0000–0")).value
 
-        XCTAssertEqual(book, expected)
+        #expect(book == expected)
     }
 }
 ```
