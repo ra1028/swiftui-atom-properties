@@ -28,17 +28,18 @@ public struct AtomTestContext: AtomWatchableContext {
     /// specified timeout, and then returns a boolean value indicating whether an update has happened.
     ///
     /// ```swift
-    /// func testAsyncUpdate() async {
+    /// @Test
+    /// func asyncUpdate() async {
     ///     let context = AtomTestContext()
     ///
     ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
-    ///     XCTAssertEqual(initialPhase, .suspending)
+    ///     #expect(initialPhase == .suspending)
     ///
     ///     let didUpdate = await context.waitForUpdate()
     ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
     ///
-    ///     XCTAssertTure(didUpdate)
-    ///     XCTAssertEqual(currentPhase, .success(123))
+    ///     #expect(didUpdate)
+    ///     #expect(currentPhase == .success(123))
     /// }
     /// ```
     ///
@@ -83,16 +84,17 @@ public struct AtomTestContext: AtomWatchableContext {
     /// of being silently ignored.
     ///
     /// ```swift
-    /// func testAsyncUpdate() async throws {
+    /// @Test
+    /// func asyncUpdate() async throws {
     ///     let context = AtomTestContext()
     ///
     ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
-    ///     XCTAssertEqual(initialPhase, .suspending)
+    ///     #expect(initialPhase == .suspending)
     ///
     ///     try await context.waitForUpdate(within: 1)
     ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
     ///
-    ///     XCTAssertEqual(currentPhase, .success(123))
+    ///     #expect(currentPhase == .success(123))
     /// }
     /// ```
     ///
@@ -128,17 +130,18 @@ public struct AtomTestContext: AtomWatchableContext {
     /// and then returns a boolean value indicating whether an update has happened.
     ///
     /// ```swift
-    /// func testAsyncUpdate() async {
+    /// @Test
+    /// func asyncUpdate() async {
     ///     let context = AtomTestContext()
     ///
     ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
-    ///     XCTAssertEqual(initialPhase, .suspending)
+    ///     #expect(initialPhase == .suspending)
     ///
     ///     let didUpdate = await context.wait(for: AsyncCalculationAtom().phase, until: \.isSuccess)
     ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
     ///
-    ///     XCTAssertTure(didUpdate)
-    ///     XCTAssertEqual(currentPhase, .success(123))
+    ///     #expect(didUpdate)
+    ///     #expect(currentPhase == .success(123))
     /// }
     /// ```
     ///
@@ -209,16 +212,17 @@ public struct AtomTestContext: AtomWatchableContext {
     /// returns immediately without waiting for an update.
     ///
     /// ```swift
-    /// func testAsyncUpdate() async throws {
+    /// @Test
+    /// func asyncUpdate() async throws {
     ///     let context = AtomTestContext()
     ///
     ///     let initialPhase = context.watch(AsyncCalculationAtom().phase)
-    ///     XCTAssertEqual(initialPhase, .suspending)
+    ///     #expect(initialPhase == .suspending)
     ///
     ///     try await context.wait(for: AsyncCalculationAtom().phase, within: 1, until: \.isSuccess)
     ///     let currentPhase = context.watch(AsyncCalculationAtom().phase)
     ///
-    ///     XCTAssertEqual(currentPhase, .success(123))
+    ///     #expect(currentPhase == .success(123))
     /// }
     /// ```
     ///
